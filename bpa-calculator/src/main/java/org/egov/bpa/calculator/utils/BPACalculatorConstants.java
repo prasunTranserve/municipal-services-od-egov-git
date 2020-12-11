@@ -261,4 +261,5 @@ public class BPACalculatorConstants {
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
 
+	
 }
