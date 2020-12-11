@@ -31,10 +31,20 @@ public class CalulationCriteria {
 	@NotNull
 	@Size(min = 2, max = 256)
 	private String tenantId;
-	
+
 	@JsonProperty("feeType")
 	@NotNull
 	@Size(min = 2, max = 64)
 	private String feeType;
+
+	@JsonProperty("applicationType")
+	@NotNull
+	@Size(min = 2, max = 64)
+	private String applicationType;
+
+	@JsonProperty("serviceType")
+	@NotNull
+	@Size(min = 2, max = 64)
+	private String serviceType;
 
 }

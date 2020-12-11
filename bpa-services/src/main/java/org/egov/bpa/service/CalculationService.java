@@ -26,6 +26,7 @@ public class CalculationService {
 
 	/**
 	 * add calculation for the bpa object based on the FeeType
+	 * 
 	 * @param bpaRequest
 	 * @param feeType
 	 */
@@ -45,6 +46,27 @@ public class CalculationService {
 		url.append(this.config.getCalulatorEndPoint());
 
 		this.serviceRequestRepository.fetchResult(url, calulcationRequest);
+	}
+
+	public void addCalculationV2(BPARequest bpaRequest, String feeType, String applicationType, String serviceType) {
+
+		CalculationReq calulcationRequest = new CalculationReq();
+		calulcationRequest.setRequestInfo(bpaRequest.getRequestInfo());
+		CalulationCriteria calculationCriteria = new CalulationCriteria();
+		calculationCriteria.setApplicationNo(bpaRequest.getBPA().getApplicationNo());
+		calculationCriteria.setBpa(bpaRequest.getBPA());
+		calculationCriteria.setFeeType(feeType);
+		calculationCriteria.setApplicationType(applicationType);
+		calculationCriteria.setServiceType(serviceType);
+		calculationCriteria.setTenantId(bpaRequest.getBPA().getTenantId());
+		List<CalulationCriteria> criterias = Arrays.asList(calculationCriteria);
+		calulcationRequest.setCalulationCriteria(criterias);
+		StringBuilder url = new StringBuilder();
+		url.append(this.config.getCalculatorHost());
+		url.append(this.config.getCalulatorEndPoint());
+
+		this.serviceRequestRepository.fetchResult(url, calulcationRequest);
+
 	}
 
 }

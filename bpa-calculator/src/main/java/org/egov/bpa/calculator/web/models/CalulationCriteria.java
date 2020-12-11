@@ -38,5 +38,16 @@ public class CalulationCriteria {
 	@NotNull
 	@Size(min = 2, max = 64)
 	private String feeType = null;
+	
+	@JsonProperty("applicationType")
+	@NotNull
+	@Size(min = 2, max = 64)
+	private String applicationType = null;
+	
+	@JsonProperty("serviceType")
+	@NotNull
+	@Size(min = 2, max = 64)
+	private String serviceType = null;
+
 
 }

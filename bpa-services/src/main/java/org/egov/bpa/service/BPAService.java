@@ -122,6 +122,7 @@ public class BPAService {
 		
 		Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
 		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
+		String serviceType = values.get(BPAConstants.SERVICETYPE);
 		this.validateCreateOC(applicationType, values, requestInfo, bpaRequest);
 		bpaValidator.validateCreate(bpaRequest, mdmsData, values);
 		if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
@@ -130,10 +131,12 @@ public class BPAService {
 		enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
 		wfIntegrator.callWorkFlow(bpaRequest);
 		nocService.createNocRequest(bpaRequest, mdmsData);
-		this.addCalculation(applicationType, bpaRequest);
+		//this.addCalculation(applicationType, bpaRequest);
+		calculationService.addCalculationV2(bpaRequest, BPAConstants.APPLICATION_FEE_KEY, applicationType, serviceType);
 		repository.save(bpaRequest);
 		return bpaRequest.getBPA();
 	}
+
 
 	/**
 	 * applies the required vlaidation for OC on Create
@@ -378,6 +381,7 @@ public class BPAService {
 
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
+		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
 		log.debug("applicationType is " + applicationType);
 		BusinessService businessService = workflowService.getBusinessService(bpa, bpaRequest.getRequestInfo(),
 				bpa.getApplicationNo());
@@ -416,7 +420,8 @@ public class BPAService {
 
 		// Generate the sanction Demand
 		if (bpa.getStatus().equalsIgnoreCase(BPAConstants.SANC_FEE_STATE)) {
-			calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
+			//calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
+			calculationService.addCalculationV2(bpaRequest, BPAConstants.SANCTION_FEE_KEY, applicationType, serviceType);
 		}
 
 		if (Arrays.asList(config.getSkipPaymentStatuses().split(",")).contains(bpa.getStatus())) {
