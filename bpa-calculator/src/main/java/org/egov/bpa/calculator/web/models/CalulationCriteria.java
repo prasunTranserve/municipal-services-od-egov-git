@@ -49,5 +49,6 @@ public class CalulationCriteria {
 	@Size(min = 2, max = 64)
 	private String serviceType = null;
 
+	
 
 }

@@ -48,8 +48,13 @@ public class CalculationService {
 		this.serviceRequestRepository.fetchResult(url, calulcationRequest);
 	}
 
-	public void addCalculationV2(BPARequest bpaRequest, String feeType, String applicationType, String serviceType) {
-
+	/**
+	 * @param bpaRequest
+	 * @param feeType
+	 * @param applicationType
+	 * @param serviceType
+	 */
+	public void addCalculationV2(BPARequest bpaRequest, String feeType, String applicationType, String serviceType) { 
 		CalculationReq calulcationRequest = new CalculationReq();
 		calulcationRequest.setRequestInfo(bpaRequest.getRequestInfo());
 		CalulationCriteria calculationCriteria = new CalulationCriteria();
