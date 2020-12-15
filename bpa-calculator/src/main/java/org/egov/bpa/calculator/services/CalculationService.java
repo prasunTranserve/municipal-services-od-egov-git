@@ -360,8 +360,9 @@ public class CalculationService {
 		Double totalEWSArea = context.read(BPACalculatorConstants.EWS_AREA_PATH);
 		boolean isShelterFeeRequired = context.read(BPACalculatorConstants.SHELTER_FEE_PATH);
 		Double benchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
-		Double providedFar = context.read(BPACalculatorConstants.PROVIDED_FAR_PATH);
+		Double baseFar = context.read(BPACalculatorConstants.BASE_FAR_PATH);
 		Double permissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
+		int totalNoOfDwellingUnits = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
 
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
@@ -378,8 +379,10 @@ public class CalculationService {
 		paramMap.put(BPACalculatorConstants.SHELTER_FEE, isShelterFeeRequired);
 
 		paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
-		paramMap.put(BPACalculatorConstants.PROVIDED_FAR, providedFar);
+		paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
 		paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
+
+		paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS, totalNoOfDwellingUnits);
 
 		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
 
@@ -466,7 +469,7 @@ public class CalculationService {
 		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		Double benchmarkValuePerAcre = (Double) paramMap.get(BPACalculatorConstants.BMV_ACRE);
-		Double providedFar = (Double) paramMap.get(BPACalculatorConstants.PROVIDED_FAR);
+		Double providedFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
 		Double permissableFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR);
 
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
@@ -598,14 +601,11 @@ public class CalculationService {
 						|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR)
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_DH)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_D)
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_E)
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_LIH)
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_H)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SH)
 						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SQ)) {
+
 					securityDeposit = calculateConstantFee(paramMap, 100);
 
 				}
@@ -666,15 +666,19 @@ public class CalculationService {
 		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		Double totalEWSArea = (Double) paramMap.get(BPACalculatorConstants.EWS_AREA);
 		boolean isShelterFeeRequired = (boolean) paramMap.get(BPACalculatorConstants.SHELTER_FEE);
+		int totalNoOfDwellingUnits = (int) paramMap.get(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS);
 
 		BigDecimal shelterFee = BigDecimal.ZERO;
-		if (isShelterFeeRequired) {
+		if (isShelterFeeRequired && totalNoOfDwellingUnits > 8) {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 				if ((StringUtils.hasText(applicationType)
 						&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 						&& (StringUtils.hasText(serviceType)
 								&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-					if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
+					if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
+							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
+							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R))
+							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
 							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
 							|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR)
 							|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA)
@@ -1385,6 +1389,5 @@ public class CalculationService {
 		return amount;
 
 	}
-	
 
 }

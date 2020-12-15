@@ -1,5 +1,7 @@
 package org.egov.bpa.calculator.utils;
 
+import com.jayway.jsonpath.JsonPath;
+
 public class BPACalculatorConstants {
 
 	public static final String MDMS_EGF_MASTER = "egf-master";
@@ -241,9 +243,9 @@ public class BPACalculatorConstants {
 	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
 	public static final String BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea";
 	public static final String EWS_AREA_PATH = "edcrDetail.*.planDetail.totalEWSArea";
-	public static final String SHELTER_FEE_PATH = "edcrDetail.*.planDetail.isShelterFeeRequired";
-	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.benchmarkValuePerAcre";
-	public static final String PROVIDED_FAR_PATH = "edcrDetail.*.planDetail.farDetails.providedFar";
+	public static final String SHELTER_FEE_PATH = "edcrDetail.*.planDetail.planInformation.isShelterFeeRequired";
+	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre";
+	public static final String BASE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.baseFar";
 	public static final String PERMISSIBLE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.permissableFar";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
@@ -256,12 +258,11 @@ public class BPACalculatorConstants {
 	public static final String EWS_AREA = "EWS_AREA";
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
-	public static final String PROVIDED_FAR = "PROVIDED_FAR";
+	public static final String BASE_FAR = "BASE_FAR";
 	public static final String PERMISSIBLE_FAR = "PERMISSIBLE_FAR";
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
-	
-	
+	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
+	public static final String TOTAL_NO_OF_DWELLING_UNITS = "TOTAL_NO_OF_DWELLING_UNITS";
 
-	
 }
