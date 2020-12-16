@@ -102,7 +102,7 @@ public class EDCRService {
 		TypeRef<List<Double>> typeRef = new TypeRef<List<Double>>(){};
 		Map<String, String> additionalDetails = bpa.getAdditionalDetails() != null ? (Map)bpa.getAdditionalDetails()
 				: new HashMap<String, String>();
-		LinkedList<String> serviceType = context.read("edcrDetail.*.planDetail.planInformation.serviceType");
+		LinkedList<String> serviceType = context.read("edcrDetail.*.applicationSubType");
 		if(serviceType == null || serviceType.size() == 0){
 			serviceType.add("NEW_CONSTRUCTION");
 		}
