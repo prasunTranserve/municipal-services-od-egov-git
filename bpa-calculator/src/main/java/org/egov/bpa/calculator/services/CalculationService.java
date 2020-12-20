@@ -352,37 +352,73 @@ public class CalculationService {
 		String jsonString = new JSONObject(edcr).toString();
 		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
 
-		String occupancyType = context.read(BPACalculatorConstants.OCCUPANCY_TYPE_PATH);
-		String subOccupancyType = context.read(BPACalculatorConstants.SUB_OCCUPANCY_TYPE_PATH);
-		Double plotArea = context.read(BPACalculatorConstants.PLOT_AREA_PATH, new TypeRef<List<Double>>() {
-		}).get(0);
-		Double totalBuitUpArea = context.read(BPACalculatorConstants.BUILTUP_AREA_PATH);
-		Double totalEWSArea = context.read(BPACalculatorConstants.EWS_AREA_PATH);
-		boolean isShelterFeeRequired = context.read(BPACalculatorConstants.SHELTER_FEE_PATH);
-		Double benchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
-		Double baseFar = context.read(BPACalculatorConstants.BASE_FAR_PATH);
-		Double permissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
-		int totalNoOfDwellingUnits = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
-
 		Map<String, Object> paramMap = new HashMap<>();
+
+		JSONArray occupancyTypeJSONArray = context.read(BPACalculatorConstants.OCCUPANCY_TYPE_PATH);
+		if (!CollectionUtils.isEmpty(occupancyTypeJSONArray)) {
+			String occupancyType = occupancyTypeJSONArray.get(0).toString();
+			paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+		}
+
+		JSONArray subOccupancyTypeJSONArray = context.read(BPACalculatorConstants.SUB_OCCUPANCY_TYPE_PATH);
+		if (!CollectionUtils.isEmpty(subOccupancyTypeJSONArray)) {
+			String subOccupancyType = subOccupancyTypeJSONArray.get(0).toString();
+			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE, subOccupancyType);
+
+		}
+
+		JSONArray plotAreas = context.read(BPACalculatorConstants.PLOT_AREA_PATH);
+		if (!CollectionUtils.isEmpty(plotAreas)) {
+			Double plotArea = (Double) plotAreas.get(0);
+			paramMap.put(BPACalculatorConstants.PLOT_AREA, plotArea);
+		}
+
+		JSONArray totalBuitUpAreas = context.read(BPACalculatorConstants.BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(totalBuitUpAreas)) {
+			Double totalBuitUpArea = (Double) totalBuitUpAreas.get(0);
+			paramMap.put(BPACalculatorConstants.BUILTUP_AREA, totalBuitUpArea);
+		}
+
+		JSONArray totalEWSAreas = context.read(BPACalculatorConstants.EWS_AREA_PATH);
+		if (!CollectionUtils.isEmpty(totalEWSAreas)) {
+			Double totalEWSArea = (Double) totalEWSAreas.get(0);
+			paramMap.put(BPACalculatorConstants.EWS_AREA, totalEWSArea);
+		}
+
+		JSONArray totalbenchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
+		if (!CollectionUtils.isEmpty(totalbenchmarkValuePerAcre)) {
+			Integer benchmarkValuePerAcre = (Integer) totalbenchmarkValuePerAcre.get(0);
+			paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
+		}
+
+		JSONArray totalbaseFar = context.read(BPACalculatorConstants.BASE_FAR_PATH);
+		if (!CollectionUtils.isEmpty(totalbaseFar)) {
+			Integer baseFar = (Integer) totalbaseFar.get(0);
+			paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
+		}
+
+		JSONArray totalpermissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
+		if (!CollectionUtils.isEmpty(totalpermissibleFar)) {
+			Integer permissibleFar = (Integer) totalpermissibleFar.get(0);
+			paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
+		}
+
+		JSONArray totalNoOfDwellingUnitsArray = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
+		if (!CollectionUtils.isEmpty(totalNoOfDwellingUnitsArray)) {
+			Integer totalNoOfDwellingUnits = (Integer) totalNoOfDwellingUnitsArray.get(0);
+			paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS, totalNoOfDwellingUnits);
+		}
+
+		JSONArray isShelterFeeRequiredArray = context.read(BPACalculatorConstants.SHELTER_FEE_PATH);
+		if (!CollectionUtils.isEmpty(isShelterFeeRequiredArray)) {
+			boolean isShelterFeeRequired = (boolean) isShelterFeeRequiredArray.get(0);
+			paramMap.put(BPACalculatorConstants.SHELTER_FEE, isShelterFeeRequired);
+		}
+
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
 		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
 		paramMap.put(BPACalculatorConstants.RISK_TYPE, riskType);
 		paramMap.put(BPACalculatorConstants.FEE_TYPE, feeType);
-		paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
-		paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE, subOccupancyType);
-
-		paramMap.put(BPACalculatorConstants.PLOT_AREA, plotArea);
-		paramMap.put(BPACalculatorConstants.BUILTUP_AREA, totalBuitUpArea);
-		paramMap.put(BPACalculatorConstants.EWS_AREA, totalEWSArea);
-
-		paramMap.put(BPACalculatorConstants.SHELTER_FEE, isShelterFeeRequired);
-
-		paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
-		paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
-		paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
-
-		paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS, totalNoOfDwellingUnits);
 
 		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
 
@@ -1016,17 +1052,34 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap) {
 		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
+		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
 		if (totalBuitUpArea != null) {
-			feeForBuildingOperation = calculateBuildingOperationFeeForResidentialOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForCommercialOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForPublicSemiPublicInstitutionalOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForPublicUtilityOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForIndustrialZoneOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForEducationOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForTransportationOccupancy(paramMap);
-			feeForBuildingOperation = calculateBuildingOperationFeeForAgricultureOccupancy(paramMap);
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForResidentialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForCommercialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForPublicSemiPublicInstitutionalOccupancy(
+						paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForPublicUtilityOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForIndustrialZoneOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForEducationOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForTransportationOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
+				feeForBuildingOperation = calculateBuildingOperationFeeForAgricultureOccupancy(paramMap);
+			}
 
 		}
 		return feeForBuildingOperation;
