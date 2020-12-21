@@ -1353,6 +1353,8 @@ public class CalculationService {
 		}
 		return feeForBuildingOperation;
 	}
+	
+	
 
 	/**
 	 * @param applicationType
