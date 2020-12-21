@@ -125,11 +125,8 @@ public class EDCRService {
 		}
 		List<String> lowRiskBuilding = context.read("edcrDetail.*.planDetail.planInformation.lowRiskBuilding");
 		
-		
-		if (lowRiskBuilding!=null && lowRiskBuilding.get(0).equalsIgnoreCase("true")) {
-			expectedRiskType = BPAConstants.LOW_RISKTYPE;
-		}
-		else {
+		String expectedRiskType = BPAConstants.LOW_RISKTYPE;
+		if (lowRiskBuilding!=null && lowRiskBuilding.get(0).equalsIgnoreCase("false")) {
 			expectedRiskType = BPAConstants.OTHER_RISKTYPE;
 		}		
 		
@@ -151,12 +148,12 @@ public class EDCRService {
 			LinkedList<String> applicationType,Map<String, List<String>> masterData, String riskType, String expectedRiskType) {
 		if (!CollectionUtils.isEmpty(OccupancyTypes) && !CollectionUtils.isEmpty(plotAreas)
 				&& !CollectionUtils.isEmpty(buildingHeights) && !applicationType.get(0).equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
-			/*Double buildingHeight = Collections.max(buildingHeights);
+			Double buildingHeight = Collections.max(buildingHeights);
 			String OccupancyType = OccupancyTypes.get(0); // Assuming
 															// OccupancyType
 															// would be same in
 															// the list
-			Double plotArea = plotAreas.get(0);
+			/*Double plotArea = plotAreas.get(0);
 			List jsonOutput = JsonPath.read(masterData, BPAConstants.RISKTYPE_COMPUTATION);
 			String filterExp = "$.[?((@.fromPlotArea < " + plotArea + " && @.toPlotArea >= " + plotArea
 					+ ") || ( @.fromBuildingHeight < " + buildingHeight + "  &&  @.toBuildingHeight >= "
