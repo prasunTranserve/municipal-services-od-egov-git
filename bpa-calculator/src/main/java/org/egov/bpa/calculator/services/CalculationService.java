@@ -32,7 +32,6 @@ import org.springframework.util.StringUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.TypeRef;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -343,6 +342,31 @@ public class CalculationService {
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, String feeType) {
 
+		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType);
+
+		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
+
+		TaxHeadEstimate estimate = new TaxHeadEstimate();
+
+		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
+			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
+		}
+
+		estimate.setEstimateAmount(calculatedTotalAmout);
+		estimate.setCategory(Category.FEE);
+
+		String taxHeadCode = utils.getTaxHeadCode(criteria.getBpa().getBusinessService(), criteria.getFeeType());
+		estimate.setTaxHeadCode(taxHeadCode);
+		estimates.add(estimate);
+	}
+
+	/**
+	 * @param requestInfo
+	 * @param criteria
+	 * @param feeType
+	 * @return
+	 */
+	private Map<String, Object> prepareMaramMap(RequestInfo requestInfo, CalulationCriteria criteria, String feeType) {
 		String applicationType = criteria.getApplicationType();
 		String serviceType = criteria.getServiceType();
 		String riskType = criteria.getBpa().getRiskType();
@@ -419,21 +443,7 @@ public class CalculationService {
 		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
 		paramMap.put(BPACalculatorConstants.RISK_TYPE, riskType);
 		paramMap.put(BPACalculatorConstants.FEE_TYPE, feeType);
-
-		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
-
-		TaxHeadEstimate estimate = new TaxHeadEstimate();
-
-		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
-			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
-		}
-
-		estimate.setEstimateAmount(calculatedTotalAmout);
-		estimate.setCategory(Category.FEE);
-
-		String taxHeadCode = utils.getTaxHeadCode(criteria.getBpa().getBusinessService(), criteria.getFeeType());
-		estimate.setTaxHeadCode(taxHeadCode);
-		estimates.add(estimate);
+		return paramMap;
 	}
 
 	/**
