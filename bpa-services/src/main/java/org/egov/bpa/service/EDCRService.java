@@ -123,7 +123,17 @@ public class EDCRService {
 		if (CollectionUtils.isEmpty(edcrStatus) || !edcrStatus.get(0).equalsIgnoreCase("Accepted")) {
 			throw new CustomException(BPAErrorConstants.INVALID_EDCR_NUMBER, "The EDCR Number is not Accepted " + edcrNo);
 		}
-		this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType);
+		List<String> lowRiskBuilding = context.read("edcrDetail.*.planDetail.planInformation.lowRiskBuilding");
+		
+		
+		if (lowRiskBuilding!=null && lowRiskBuilding.get(0).equalsIgnoreCase("true")) {
+			expectedRiskType = BPAConstants.LOW_RISKTYPE
+		}
+		else {
+			expectedRiskType = BPAConstants.OTHER_RISKTYPE
+		}		
+		
+		this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType, expectedRiskType);
 		
 		return additionalDetails;
 	}
@@ -138,10 +148,10 @@ public class EDCRService {
 	 * @param riskType
 	 */
 	private void validateOCEdcr(List<String> OccupancyTypes, List<Double> plotAreas,List<Double> buildingHeights, 
-			LinkedList<String> applicationType,Map<String, List<String>> masterData, String riskType) {
+			LinkedList<String> applicationType,Map<String, List<String>> masterData, String riskType, String expectedRiskType) {
 		if (!CollectionUtils.isEmpty(OccupancyTypes) && !CollectionUtils.isEmpty(plotAreas)
 				&& !CollectionUtils.isEmpty(buildingHeights) && !applicationType.get(0).equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
-			Double buildingHeight = Collections.max(buildingHeights);
+			/*Double buildingHeight = Collections.max(buildingHeights);
 			String OccupancyType = OccupancyTypes.get(0); // Assuming
 															// OccupancyType
 															// would be same in
@@ -152,10 +162,10 @@ public class EDCRService {
 					+ ") || ( @.fromBuildingHeight < " + buildingHeight + "  &&  @.toBuildingHeight >= "
 					+ buildingHeight + "  ))].riskType";
 
-			List<String> riskTypes = JsonPath.read(jsonOutput, filterExp);
+			List<String> riskTypes = JsonPath.read(jsonOutput, filterExp);*/
 
 			if (!CollectionUtils.isEmpty(riskTypes) && OccupancyType.equals(BPAConstants.RESIDENTIAL_OCCUPANCY)) {
-				String expectedRiskType  = riskTypes.get(0);
+				//String expectedRiskType  = riskTypes.get(0);
 
 				if (expectedRiskType == null || !expectedRiskType.equals(riskType)) {
 					throw new CustomException(BPAErrorConstants.INVALID_RISK_TYPE, "The Risk Type is not valid " + riskType);
