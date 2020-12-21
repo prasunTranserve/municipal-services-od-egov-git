@@ -127,10 +127,10 @@ public class EDCRService {
 		
 		
 		if (lowRiskBuilding!=null && lowRiskBuilding.get(0).equalsIgnoreCase("true")) {
-			expectedRiskType = BPAConstants.LOW_RISKTYPE
+			expectedRiskType = BPAConstants.LOW_RISKTYPE;
 		}
 		else {
-			expectedRiskType = BPAConstants.OTHER_RISKTYPE
+			expectedRiskType = BPAConstants.OTHER_RISKTYPE;
 		}		
 		
 		this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType, expectedRiskType);
