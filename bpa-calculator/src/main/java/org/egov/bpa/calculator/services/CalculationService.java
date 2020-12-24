@@ -353,7 +353,7 @@ public class CalculationService {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
 		}
 
-		estimate.setEstimateAmount(calculatedTotalAmout);
+		estimate.setEstimateAmount(calculatedTotalAmout.setScale(0, BigDecimal.ROUND_UP));
 		estimate.setCategory(Category.FEE);
 
 		String taxHeadCode = utils.getTaxHeadCode(criteria.getBpa().getBusinessService(), criteria.getFeeType());
