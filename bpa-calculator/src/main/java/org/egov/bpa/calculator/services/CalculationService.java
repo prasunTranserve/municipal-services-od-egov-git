@@ -434,6 +434,12 @@ public class CalculationService {
 			paramMap.put(BPACalculatorConstants.SHELTER_FEE, isShelterFeeRequired);
 		}
 
+		JSONArray isSecurityDepositRequiredArray = context.read(BPACalculatorConstants.SECURITY_DEPOSIT_PATH);
+		if (!CollectionUtils.isEmpty(isSecurityDepositRequiredArray)) {
+			boolean isSecurityDepositRequired = (boolean) isSecurityDepositRequiredArray.get(0);
+			paramMap.put(BPACalculatorConstants.SECURITY_DEPOSIT, isSecurityDepositRequired);
+		}
+
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
 		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
 		paramMap.put(BPACalculatorConstants.RISK_TYPE, riskType);
@@ -552,6 +558,7 @@ public class CalculationService {
 			purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_HALF_UP);
 
 		}
+		System.out.println("purchasableFARFee:::::::::::::::::" + purchasableFARFee);
 		return purchasableFARFee;
 
 	}
@@ -566,12 +573,34 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
+		Double totalBuitUpArea = null;
+		String occupancyType = null;
+		boolean isSecurityDepositRequired = false;
 		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
-			securityDeposit = calculateSecurityDepositForResidentialOccupancy(paramMap);
-			securityDeposit = calculateSecurityDepositForCommercialOccupancy(paramMap);
-			securityDeposit = calculateSecurityDepositForPublicSemiPublicInstitutionalOccupancy(paramMap);
-			securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SECURITY_DEPOSIT)) {
+			isSecurityDepositRequired = (boolean) paramMap.get(BPACalculatorConstants.SECURITY_DEPOSIT);
+		}
+
+		if (totalBuitUpArea != null && isSecurityDepositRequired) {
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
+				securityDeposit = calculateSecurityDepositForResidentialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
+				securityDeposit = calculateSecurityDepositForCommercialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) {
+				securityDeposit = calculateSecurityDepositForPublicSemiPublicInstitutionalOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
+				securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
+			}
+		}
+		System.out.println("securityDeposit::::::::::::::" + securityDeposit);
 		return securityDeposit;
 
 	}
@@ -749,6 +778,7 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			retentionFee = BigDecimal.valueOf(2000);
 		}
+		System.out.println("retentionFee:::::::::::" + retentionFee);
 		return retentionFee;
 
 	}
@@ -770,6 +800,7 @@ public class CalculationService {
 		if (totalBuitUpArea != null) {
 			shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
 		}
+		System.out.println("shelterFee::::::::::::::::" + shelterFee);
 		return shelterFee;
 
 	}
@@ -859,11 +890,12 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			Double costOfConstruction = (1750 * totalBuitUpArea);
 			if (costOfConstruction > 1000000) {
-				welfareCess = (SEVENTEEN_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))).setScale(2,
-						BigDecimal.ROUND_UP);
+				welfareCess = (SEVENTEEN_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))
+						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
 
 		}
+		System.out.println("welfareCess::::::::::::::" + welfareCess);
 		return welfareCess;
 
 	}
@@ -878,17 +910,42 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		Double totalBuitUpArea = null;
+		String occupancyType = null;
 		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
-			sanctionFee = calculateSanctionFeeForResidentialOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForCommercialOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForPublicSemiPublicInstitutionalOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForPublicUtilityOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForIndustrialZoneOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForEducationOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForTransportationOccupancy(paramMap);
-			sanctionFee = calculateSanctionFeeForAgricultureOccupancy(paramMap);
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (totalBuitUpArea != null) {
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
+				sanctionFee = calculateSanctionFeeForResidentialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
+				sanctionFee = calculateSanctionFeeForCommercialOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) {
+				sanctionFee = calculateSanctionFeeForPublicSemiPublicInstitutionalOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
+				sanctionFee = calculateSanctionFeeForPublicUtilityOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
+				sanctionFee = calculateSanctionFeeForIndustrialZoneOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
+				sanctionFee = calculateSanctionFeeForEducationOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
+				sanctionFee = calculateSanctionFeeForTransportationOccupancy(paramMap);
+			}
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
+				sanctionFee = calculateSanctionFeeForAgricultureOccupancy(paramMap);
+			}
 
 		}
+		System.out.println("sanctionFee::::::::" + sanctionFee);
 		return sanctionFee;
 	}
 
@@ -1219,6 +1276,7 @@ public class CalculationService {
 			}
 
 		}
+		System.out.println("feeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
 		return feeForDevelopmentOfLand;
 
 	}
@@ -1269,6 +1327,7 @@ public class CalculationService {
 			}
 
 		}
+		System.out.println("feeForBuildingOperation:::::::::::" + feeForBuildingOperation);
 		return feeForBuildingOperation;
 	}
 
