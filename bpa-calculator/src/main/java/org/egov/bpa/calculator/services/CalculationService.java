@@ -32,6 +32,7 @@ import org.springframework.util.StringUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.sun.javafx.css.CalculatedValue;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -1207,6 +1208,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
 			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
 		}
+		paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
@@ -1697,15 +1699,35 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateConstantFee(Map<String, Object> paramMap, int multiplicationFactor) {
 		BigDecimal totalAmount = BigDecimal.ZERO;
+		Double plotArea = null;
 		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
+			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
+		}
 		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
 			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+
+		}
+		if ((null != paramMap.get(BPACalculatorConstants.AREA_TYPE))
+				&& (paramMap.get(BPACalculatorConstants.AREA_TYPE).equals(BPACalculatorConstants.AREA_TYPE_PLOT))) {
+			totalAmount = (BigDecimal.valueOf(plotArea).multiply(BigDecimal.valueOf(multiplicationFactor))).setScale(2,
+					BigDecimal.ROUND_UP);
+
+		} else {
 			totalAmount = (BigDecimal.valueOf(totalBuitUpArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
 					.setScale(2, BigDecimal.ROUND_UP);
-
 		}
 
 		return totalAmount;
 	}
 
+	/*
+	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
+	 * paramMap) { return calculateTotalFeeAmount(paramMap);
+	 * 
+	 * }
+	 * 
+	 * public static void main(String[] args) { System.out.println("Main Method");
+	 * Map<String, Object> paramMap = new HashMap<>(); }
+	 */
 }
