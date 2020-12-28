@@ -39,7 +39,6 @@ import net.minidev.json.JSONArray;
 @Service
 @Slf4j
 public class CalculationService {
-	
 
 	@Autowired
 	private MDMSService mdmsService;
@@ -459,14 +458,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap) {
-
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String feeType = (String) paramMap.get(BPACalculatorConstants.FEE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal calculatedTotalAmout = BigDecimal.ZERO;
-
+		String applicationType = null;
+		String serviceType = null;
+		String feeType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.FEE_TYPE)) {
+			feeType = (String) paramMap.get(BPACalculatorConstants.FEE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if (StringUtils.hasText(applicationType) && (StringUtils.hasText(serviceType))
 				&& StringUtils.hasText(occupancyType) && (StringUtils.hasText(feeType))) {
 			if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE)) {
@@ -492,7 +500,6 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap) {
-
 		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
 		BigDecimal sanctionFee = calculateSanctionFee(paramMap);
 		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap);
@@ -504,7 +511,6 @@ public class CalculationService {
 		calculatedTotalPermitFee = (calculatedTotalPermitFee.add(sanctionFee).add(constructionWorkerWelfareCess)
 				.add(shelterFee).add(temporaryRetentionFee).add(securityDeposit).add(purchasableFAR)).setScale(2,
 						BigDecimal.ROUND_UP);
-
 		return calculatedTotalPermitFee;
 	}
 
@@ -513,13 +519,27 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculatePurchasableFAR(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		Double benchmarkValuePerAcre = (Double) paramMap.get(BPACalculatorConstants.BMV_ACRE);
-		Double providedFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
-		Double permissableFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR);
-
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		Double benchmarkValuePerAcre = null;
+		Double baseFar = null;
+		Double permissableFar = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BMV_ACRE)) {
+			benchmarkValuePerAcre = (Double) paramMap.get(BPACalculatorConstants.BMV_ACRE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BASE_FAR)) {
+			baseFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR)) {
+			permissableFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR);
+		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
@@ -531,8 +551,8 @@ public class CalculationService {
 			BigDecimal purchasableFARRate = (benchmarkValuePerSQM.multiply(ZERO_TWO_FIVE)).setScale(2,
 					BigDecimal.ROUND_HALF_UP);
 
-			BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(permissableFar)))
-					.setScale(2, BigDecimal.ROUND_HALF_UP);
+			BigDecimal deltaFAR = (BigDecimal.valueOf(baseFar).subtract(BigDecimal.valueOf(permissableFar))).setScale(2,
+					BigDecimal.ROUND_HALF_UP);
 
 			purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_HALF_UP);
 
@@ -550,35 +570,45 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap) {
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal securityDeposit = BigDecimal.ZERO;
-		if (totalBuitUpArea != null) {
-
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
 			securityDeposit = calculateSecurityDepositForResidentialOccupancy(paramMap);
 			securityDeposit = calculateSecurityDepositForCommercialOccupancy(paramMap);
 			securityDeposit = calculateSecurityDepositForPublicSemiPublicInstitutionalOccupancy(paramMap);
 			securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
-
 		}
 		return securityDeposit;
 
 	}
 
 	private BigDecimal calculateSecurityDepositForEducationOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal securityDeposit = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				if (totalBuitUpArea >= 200) {
+				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
 					securityDeposit = calculateConstantFee(paramMap, 100);
 
 				}
@@ -588,19 +618,33 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSecurityDepositForPublicSemiPublicInstitutionalOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal securityDeposit = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				if (totalBuitUpArea >= 200) {
+				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
 					securityDeposit = calculateConstantFee(paramMap, 100);
 
 				}
@@ -610,19 +654,33 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSecurityDepositForCommercialOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal securityDeposit = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				if (totalBuitUpArea >= 200) {
+				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
 					securityDeposit = calculateConstantFee(paramMap, 100);
 
 				}
@@ -632,13 +690,23 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSecurityDepositForResidentialOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-
 		BigDecimal securityDeposit = BigDecimal.ZERO;
-
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -671,10 +739,15 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-
 		BigDecimal retentionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
@@ -694,11 +767,12 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateShelterFee(Map<String, Object> paramMap) {
-
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
 		BigDecimal shelterFee = BigDecimal.ZERO;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if (totalBuitUpArea != null) {
-
 			shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
 		}
 		return shelterFee;
@@ -706,16 +780,35 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateShelterFeeForResidentialOccupancy(Map<String, Object> paramMap) {
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		Double totalEWSArea = (Double) paramMap.get(BPACalculatorConstants.EWS_AREA);
-		boolean isShelterFeeRequired = (boolean) paramMap.get(BPACalculatorConstants.SHELTER_FEE);
-		int totalNoOfDwellingUnits = (int) paramMap.get(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS);
-
 		BigDecimal shelterFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		Double totalEWSArea = null;
+		boolean isShelterFeeRequired = false;
+		int totalNoOfDwellingUnits = 0;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.EWS_AREA)) {
+			totalEWSArea = (Double) paramMap.get(BPACalculatorConstants.EWS_AREA);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SHELTER_FEE)) {
+			isShelterFeeRequired = (boolean) paramMap.get(BPACalculatorConstants.SHELTER_FEE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS)) {
+			totalNoOfDwellingUnits = (int) paramMap.get(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS);
+		}
 		if (isShelterFeeRequired && totalNoOfDwellingUnits > 8) {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 				if ((StringUtils.hasText(applicationType)
@@ -752,12 +845,19 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateConstructionWorkerWelfareCess(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal welfareCess = BigDecimal.ZERO;
-
+		String applicationType = null;
+		String serviceType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
@@ -782,11 +882,8 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap) {
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
-		if (totalBuitUpArea != null) {
-
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
 			sanctionFee = calculateSanctionFeeForResidentialOccupancy(paramMap);
 			sanctionFee = calculateSanctionFeeForCommercialOccupancy(paramMap);
 			sanctionFee = calculateSanctionFeeForPublicSemiPublicInstitutionalOccupancy(paramMap);
@@ -801,12 +898,23 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForPublicSemiPublicInstitutionalOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C)) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -874,12 +982,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForAgricultureOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
-
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -892,11 +1007,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForTransportationOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -909,11 +1032,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForEducationOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -926,11 +1057,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForPublicUtilityOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -943,11 +1082,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForIndustrialZoneOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get("OCCUPANCY_TYPE");
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -960,11 +1107,19 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForCommercialOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -977,12 +1132,23 @@ public class CalculationService {
 	}
 
 	private BigDecimal calculateSanctionFeeForResidentialOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1014,9 +1180,7 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap) {
-
 		BigDecimal calculatedTotalScrutinyFee = BigDecimal.ZERO;
-
 		BigDecimal feeForDevelopmentOfLand = calculateFeeForDevelopmentOfLand(paramMap);
 		BigDecimal feeForBuildingOperation = calculateFeeForBuildingOperation(paramMap);
 		calculatedTotalScrutinyFee = (calculatedTotalScrutinyFee.add(feeForDevelopmentOfLand)
@@ -1032,13 +1196,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateFeeForDevelopmentOfLand(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String riskType = (String) paramMap.get(BPACalculatorConstants.RISK_TYPE);
-		Double plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
-
 		BigDecimal feeForDevelopmentOfLand = BigDecimal.ZERO;
-
+		String applicationType = null;
+		String serviceType = null;
+		String riskType = null;
+		Double plotArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.RISK_TYPE)) {
+			riskType = (String) paramMap.get(BPACalculatorConstants.RISK_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
+			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
+		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
@@ -1062,9 +1236,15 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap) {
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		Double totalBuitUpArea = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if (totalBuitUpArea != null) {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 				feeForBuildingOperation = calculateBuildingOperationFeeForResidentialOccupancy(paramMap);
@@ -1105,12 +1285,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForAgricultureOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1131,11 +1322,19 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForTransportationOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1156,11 +1355,15 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateConstantFee(Map<String, Object> paramMap, int multiplicationFactor) {
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal totalAmount = BigDecimal.ZERO;
-		totalAmount = (BigDecimal.valueOf(totalBuitUpArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
-				.setScale(2, BigDecimal.ROUND_UP);
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+			totalAmount = (BigDecimal.valueOf(totalBuitUpArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
+					.setScale(2, BigDecimal.ROUND_UP);
+
+		}
+
 		return totalAmount;
 	}
 
@@ -1173,11 +1376,19 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForEducationOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1198,12 +1409,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForIndustrialZoneOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1244,11 +1466,19 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForPublicUtilityOccupancy(Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1272,13 +1502,27 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateBuildingOperationFeeForPublicSemiPublicInstitutionalOccupancy(
 			Map<String, Object> paramMap) {
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		String subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if (((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1353,8 +1597,6 @@ public class CalculationService {
 		}
 		return feeForBuildingOperation;
 	}
-	
-	
 
 	/**
 	 * @param applicationType
@@ -1365,13 +1607,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForCommercialOccupancy(Map<String, Object> paramMap) {
-
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1390,7 +1642,6 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateVariableFee2(Double totalBuitUpArea) {
-
 		BigDecimal amount = BigDecimal.ZERO;
 		if (totalBuitUpArea <= 20) {
 			amount = BigDecimal.valueOf(500);
@@ -1403,7 +1654,6 @@ public class CalculationService {
 							BigDecimal.ROUND_UP);
 		}
 		return amount;
-
 	}
 
 	/**
@@ -1415,13 +1665,23 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForResidentialOccupancy(Map<String, Object> paramMap) {
-
-		String applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
-		String serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
-		String occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
-		Double totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		String applicationType = null;
+		String serviceType = null;
+		String occupancyType = null;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
+			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
+			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1440,7 +1700,6 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateVariableFee1(Double totalBuitUpArea) {
-
 		BigDecimal amount = BigDecimal.ZERO;
 		if (totalBuitUpArea <= 100) {
 			amount = TWO_HUNDRED_FIFTY;
@@ -1453,7 +1712,6 @@ public class CalculationService {
 							BigDecimal.ROUND_UP);
 		}
 		return amount;
-
 	}
 
 }
