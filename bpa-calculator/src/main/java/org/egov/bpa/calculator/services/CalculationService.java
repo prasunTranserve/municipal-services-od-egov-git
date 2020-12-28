@@ -341,20 +341,14 @@ public class CalculationService {
 	 */
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, String feeType) {
-
 		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType);
-
 		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
-
-		TaxHeadEstimate estimate = new TaxHeadEstimate();
-
 		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
 		}
-
+		TaxHeadEstimate estimate = new TaxHeadEstimate();
 		estimate.setEstimateAmount(calculatedTotalAmout.setScale(0, BigDecimal.ROUND_UP));
 		estimate.setCategory(Category.FEE);
-
 		String taxHeadCode = utils.getTaxHeadCode(criteria.getBpa().getBusinessService(), criteria.getFeeType());
 		estimate.setTaxHeadCode(taxHeadCode);
 		estimates.add(estimate);
@@ -1349,27 +1343,6 @@ public class CalculationService {
 	/**
 	 * @param applicationType
 	 * @param serviceType
-	 * @param riskType
-	 * @param totalBuitUpArea
-	 * @param multiplicationFactor
-	 * @return
-	 */
-	private BigDecimal calculateConstantFee(Map<String, Object> paramMap, int multiplicationFactor) {
-		BigDecimal totalAmount = BigDecimal.ZERO;
-		Double totalBuitUpArea = null;
-		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
-			totalAmount = (BigDecimal.valueOf(totalBuitUpArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
-					.setScale(2, BigDecimal.ROUND_UP);
-
-		}
-
-		return totalAmount;
-	}
-
-	/**
-	 * @param applicationType
-	 * @param serviceType
 	 * @param occupancyType
 	 * @param totalBuitUpArea
 	 * @param feeForBuildingOperation
@@ -1435,26 +1408,6 @@ public class CalculationService {
 			}
 		}
 		return feeForBuildingOperation;
-	}
-
-	/**
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
-	 * @return
-	 */
-	private BigDecimal calculateVariableFee3(Double totalBuitUpArea) {
-		BigDecimal amount = BigDecimal.ZERO;
-		if (totalBuitUpArea <= 100) {
-			amount = BigDecimal.valueOf(1500);
-		} else if (totalBuitUpArea <= 300) {
-			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED))))
-					.setScale(2, BigDecimal.ROUND_UP);
-		} else if (totalBuitUpArea > 300) {
-			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(TWO_HUNDRED))
-					.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
-							BigDecimal.ROUND_UP);
-		}
-		return amount;
 	}
 
 	/**
@@ -1637,26 +1590,6 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
-	 * @return
-	 */
-	private BigDecimal calculateVariableFee2(Double totalBuitUpArea) {
-		BigDecimal amount = BigDecimal.ZERO;
-		if (totalBuitUpArea <= 20) {
-			amount = BigDecimal.valueOf(500);
-		} else if (totalBuitUpArea <= 50) {
-			amount = (FIVE_HUNDRED.add(FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(TWENTY))))
-					.setScale(2, BigDecimal.ROUND_UP);
-		} else if (totalBuitUpArea > 50) {
-			amount = (FIVE_HUNDRED.add(FIFTY.multiply(THIRTY))
-					.add(TWENTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(FIFTY)))).setScale(2,
-							BigDecimal.ROUND_UP);
-		}
-		return amount;
-	}
-
-	/**
 	 * @param applicationType
 	 * @param serviceType
 	 * @param occupancyType
@@ -1712,6 +1645,67 @@ public class CalculationService {
 							BigDecimal.ROUND_UP);
 		}
 		return amount;
+	}
+
+	/**
+	 * @param totalBuitUpArea
+	 * @param feeForBuildingOperation
+	 * @return
+	 */
+	private BigDecimal calculateVariableFee2(Double totalBuitUpArea) {
+		BigDecimal amount = BigDecimal.ZERO;
+		if (totalBuitUpArea <= 20) {
+			amount = BigDecimal.valueOf(500);
+		} else if (totalBuitUpArea <= 50) {
+			amount = (FIVE_HUNDRED.add(FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(TWENTY))))
+					.setScale(2, BigDecimal.ROUND_UP);
+		} else if (totalBuitUpArea > 50) {
+			amount = (FIVE_HUNDRED.add(FIFTY.multiply(THIRTY))
+					.add(TWENTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(FIFTY)))).setScale(2,
+							BigDecimal.ROUND_UP);
+		}
+		return amount;
+	}
+
+	/**
+	 * @param totalBuitUpArea
+	 * @param feeForBuildingOperation
+	 * @return
+	 */
+	private BigDecimal calculateVariableFee3(Double totalBuitUpArea) {
+		BigDecimal amount = BigDecimal.ZERO;
+		if (totalBuitUpArea <= 100) {
+			amount = BigDecimal.valueOf(1500);
+		} else if (totalBuitUpArea <= 300) {
+			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED))))
+					.setScale(2, BigDecimal.ROUND_UP);
+		} else if (totalBuitUpArea > 300) {
+			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(TWO_HUNDRED))
+					.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
+							BigDecimal.ROUND_UP);
+		}
+		return amount;
+	}
+
+	/**
+	 * @param applicationType
+	 * @param serviceType
+	 * @param riskType
+	 * @param totalBuitUpArea
+	 * @param multiplicationFactor
+	 * @return
+	 */
+	private BigDecimal calculateConstantFee(Map<String, Object> paramMap, int multiplicationFactor) {
+		BigDecimal totalAmount = BigDecimal.ZERO;
+		Double totalBuitUpArea = null;
+		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
+			totalAmount = (BigDecimal.valueOf(totalBuitUpArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
+					.setScale(2, BigDecimal.ROUND_UP);
+
+		}
+
+		return totalAmount;
 	}
 
 }
