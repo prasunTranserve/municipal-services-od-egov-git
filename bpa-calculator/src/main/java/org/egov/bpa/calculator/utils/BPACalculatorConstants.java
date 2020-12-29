@@ -21,6 +21,8 @@ public class BPACalculatorConstants {
 	public static final String MDMS_BPA_PATH = "$.MdmsRes.BPA";
 
 	public static final String MDMS_BPA = "BPA";
+	
+	public static final String MDMS_BPA_LOW = "BPA_LOW";
 
 	public static final String MDMS_CALCULATIONTYPE_FINANCIALYEAR = "financialYear";
 
