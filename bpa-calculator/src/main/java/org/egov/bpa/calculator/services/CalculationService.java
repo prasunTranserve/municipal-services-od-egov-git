@@ -736,18 +736,20 @@ public class CalculationService {
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
-						|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_E)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_LIH)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH)
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SQ)) {
+
+				if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_E))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_LIH))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SQ))) {
 
 					securityDeposit = calculateConstantFee(paramMap, 100);
 
 				}
+
 			}
 
 		}
@@ -794,11 +796,17 @@ public class CalculationService {
 	private BigDecimal calculateShelterFee(Map<String, Object> paramMap) {
 		BigDecimal shelterFee = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
+		String occupancyType = null;
 		if (null != paramMap.get(BPACalculatorConstants.BUILTUP_AREA)) {
 			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.BUILTUP_AREA);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+		}
 		if (totalBuitUpArea != null) {
-			shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
+			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
+				shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
+			}
 		}
 		System.out.println("shelterFee::::::::::::::::" + shelterFee);
 		return shelterFee;
@@ -841,19 +849,22 @@ public class CalculationService {
 						&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 						&& (StringUtils.hasText(serviceType)
 								&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-					if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
-							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
-							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R))
-							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
-							|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
-							|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR)
-							|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA)
-							|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH)) {
+
+					if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_AB))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_HP))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_WCR))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SA))
+							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH))) {
 
 						shelterFee = (BigDecimal.valueOf(totalEWSArea).multiply(SQMT_SQFT_MULTIPLIER)
 								.multiply(BigDecimal.valueOf(1750)).multiply(ZERO_TWO_FIVE)).setScale(2,
 										BigDecimal.ROUND_UP);
+
 					}
+
 				}
 
 			}
@@ -979,17 +990,17 @@ public class CalculationService {
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_MP))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_CH))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_O))
-						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_OAH)
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SC))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_C1H))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_C2H))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SCC))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_CC))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_EC))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_G))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_MH))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_ML))
-								|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_M)))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_OAH))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SC))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_C1H))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_C2H))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SCC))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_CC))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_EC))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_G))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_MH))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_ML))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_M))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PW))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PL))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_REB))
