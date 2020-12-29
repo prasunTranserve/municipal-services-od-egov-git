@@ -266,5 +266,9 @@ public class BPACalculatorConstants {
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
 	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
 	public static final String TOTAL_NO_OF_DWELLING_UNITS = "TOTAL_NO_OF_DWELLING_UNITS";
+	public static final String AREA_TYPE = "AREA_TYPE";
+	public static final String AREA_TYPE_PLOT = "PLOT";
+	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
+	public static final String SECURITY_DEPOSIT = "SECURITY_DEPOSIT";
 
 }
