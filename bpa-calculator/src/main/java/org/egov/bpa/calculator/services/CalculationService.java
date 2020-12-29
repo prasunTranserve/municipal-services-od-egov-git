@@ -32,7 +32,6 @@ import org.springframework.util.StringUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.sun.javafx.css.CalculatedValue;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
