@@ -405,19 +405,19 @@ public class CalculationService {
 
 		JSONArray totalbenchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
 		if (!CollectionUtils.isEmpty(totalbenchmarkValuePerAcre)) {
-			Integer benchmarkValuePerAcre = (Integer) totalbenchmarkValuePerAcre.get(0);
+			Double benchmarkValuePerAcre = (Double) totalbenchmarkValuePerAcre.get(0);
 			paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
 		}
 
 		JSONArray totalbaseFar = context.read(BPACalculatorConstants.BASE_FAR_PATH);
 		if (!CollectionUtils.isEmpty(totalbaseFar)) {
-			Integer baseFar = (Integer) totalbaseFar.get(0);
+			Double baseFar = (Double) totalbaseFar.get(0);
 			paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
 		}
 
 		JSONArray totalpermissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
 		if (!CollectionUtils.isEmpty(totalpermissibleFar)) {
-			Integer permissibleFar = (Integer) totalpermissibleFar.get(0);
+			Double permissibleFar = (Double) totalpermissibleFar.get(0);
 			paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
 		}
 
@@ -1789,7 +1789,6 @@ public class CalculationService {
 
 		return totalAmount;
 	}
-	
 
 	/*
 	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
