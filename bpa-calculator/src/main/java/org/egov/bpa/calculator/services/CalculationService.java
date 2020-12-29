@@ -1789,6 +1789,7 @@ public class CalculationService {
 
 		return totalAmount;
 	}
+	
 
 	/*
 	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
