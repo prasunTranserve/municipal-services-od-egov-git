@@ -387,44 +387,65 @@ public class CalculationService {
 
 		JSONArray plotAreas = context.read(BPACalculatorConstants.PLOT_AREA_PATH);
 		if (!CollectionUtils.isEmpty(plotAreas)) {
-			Double plotArea = (Double) plotAreas.get(0);
-			paramMap.put(BPACalculatorConstants.PLOT_AREA, plotArea);
+			if (null != plotAreas.get(0)) {
+				String plotAreaString = plotAreas.get(0).toString();
+				Double plotArea = Double.parseDouble(plotAreaString);
+				paramMap.put(BPACalculatorConstants.PLOT_AREA, plotArea);
+			}
 		}
 
 		JSONArray totalBuitUpAreas = context.read(BPACalculatorConstants.BUILTUP_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalBuitUpAreas)) {
-			Double totalBuitUpArea = (Double) totalBuitUpAreas.get(0);
-			paramMap.put(BPACalculatorConstants.BUILTUP_AREA, totalBuitUpArea);
+			if (null != totalBuitUpAreas.get(0)) {
+				String totalBuitUpAreaString = totalBuitUpAreas.get(0).toString();
+				Double totalBuitUpArea = Double.parseDouble(totalBuitUpAreaString);
+				paramMap.put(BPACalculatorConstants.BUILTUP_AREA, totalBuitUpArea);
+			}
 		}
 
 		JSONArray totalEWSAreas = context.read(BPACalculatorConstants.EWS_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalEWSAreas)) {
-			Double totalEWSArea = (Double) totalEWSAreas.get(0);
-			paramMap.put(BPACalculatorConstants.EWS_AREA, totalEWSArea);
+			if (null != totalEWSAreas.get(0)) {
+				String totalEWSAreaString = totalEWSAreas.get(0).toString();
+				Double totalEWSArea = Double.parseDouble(totalEWSAreaString);
+				paramMap.put(BPACalculatorConstants.EWS_AREA, totalEWSArea);
+			}
 		}
 
 		JSONArray totalbenchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
 		if (!CollectionUtils.isEmpty(totalbenchmarkValuePerAcre)) {
-			Integer benchmarkValuePerAcre = (Integer) totalbenchmarkValuePerAcre.get(0);
-			paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
+			if (null != totalbenchmarkValuePerAcre.get(0)) {
+				String benchmarkValuePerAcreString = totalbenchmarkValuePerAcre.get(0).toString();
+				Double benchmarkValuePerAcre = Double.parseDouble(benchmarkValuePerAcreString);
+				paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
+			}
 		}
 
 		JSONArray totalbaseFar = context.read(BPACalculatorConstants.BASE_FAR_PATH);
 		if (!CollectionUtils.isEmpty(totalbaseFar)) {
-			Double baseFar = (Double) totalbaseFar.get(0);
-			paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
+			if (null != totalbaseFar.get(0)) {
+				String baseFarString = totalbaseFar.get(0).toString();
+				Double baseFar = Double.parseDouble(baseFarString);
+				paramMap.put(BPACalculatorConstants.BASE_FAR, baseFar);
+			}
 		}
 
 		JSONArray totalpermissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
 		if (!CollectionUtils.isEmpty(totalpermissibleFar)) {
-			Double permissibleFar = (Double) totalpermissibleFar.get(0);
-			paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
+			if (null != totalpermissibleFar.get(0)) {
+				String permissibleFarString = totalpermissibleFar.get(0).toString();
+				Double permissibleFar = Double.parseDouble(permissibleFarString);
+				paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
+			}
 		}
 
 		JSONArray totalNoOfDwellingUnitsArray = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
 		if (!CollectionUtils.isEmpty(totalNoOfDwellingUnitsArray)) {
-			Integer totalNoOfDwellingUnits = (Integer) totalNoOfDwellingUnitsArray.get(0);
-			paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS, totalNoOfDwellingUnits);
+			if (null != totalNoOfDwellingUnitsArray.get(0)) {
+				String totalNoOfDwellingUnitsString = totalNoOfDwellingUnitsArray.get(0).toString();
+				Integer totalNoOfDwellingUnits = Integer.parseInt(totalNoOfDwellingUnitsString);
+				paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS, totalNoOfDwellingUnits);
+			}
 		}
 
 		JSONArray isShelterFeeRequiredArray = context.read(BPACalculatorConstants.SHELTER_FEE_PATH);
@@ -522,7 +543,7 @@ public class CalculationService {
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
-		Integer benchmarkValuePerAcre = null;
+		Double benchmarkValuePerAcre = null;
 		Double baseFar = null;
 		Double permissableFar = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
@@ -532,7 +553,7 @@ public class CalculationService {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.BMV_ACRE)) {
-			benchmarkValuePerAcre = (Integer) paramMap.get(BPACalculatorConstants.BMV_ACRE);
+			benchmarkValuePerAcre = (Double) paramMap.get(BPACalculatorConstants.BMV_ACRE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.BASE_FAR)) {
 			baseFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
