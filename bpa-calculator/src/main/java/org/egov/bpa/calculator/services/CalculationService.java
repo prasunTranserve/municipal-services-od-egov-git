@@ -405,7 +405,7 @@ public class CalculationService {
 
 		JSONArray totalbenchmarkValuePerAcre = context.read(BPACalculatorConstants.BENCHMARK_VALUE_PATH);
 		if (!CollectionUtils.isEmpty(totalbenchmarkValuePerAcre)) {
-			Double benchmarkValuePerAcre = (Double) totalbenchmarkValuePerAcre.get(0);
+			Integer benchmarkValuePerAcre = (Integer) totalbenchmarkValuePerAcre.get(0);
 			paramMap.put(BPACalculatorConstants.BMV_ACRE, benchmarkValuePerAcre);
 		}
 
@@ -522,7 +522,7 @@ public class CalculationService {
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
-		Double benchmarkValuePerAcre = null;
+		Integer benchmarkValuePerAcre = null;
 		Double baseFar = null;
 		Double permissableFar = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
@@ -532,7 +532,7 @@ public class CalculationService {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.BMV_ACRE)) {
-			benchmarkValuePerAcre = (Double) paramMap.get(BPACalculatorConstants.BMV_ACRE);
+			benchmarkValuePerAcre = (Integer) paramMap.get(BPACalculatorConstants.BMV_ACRE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.BASE_FAR)) {
 			baseFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
