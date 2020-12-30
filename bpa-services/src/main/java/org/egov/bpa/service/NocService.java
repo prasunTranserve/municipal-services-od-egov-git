@@ -64,24 +64,32 @@ public class NocService {
 
 		Map<String, String> nocSourceCnofig = config.getNocSourceConfig();
 
-		String reqNocData = edcrResponse.get(BPAConstants.REQUIRED_NOCS);
-		List<String> requiredNOCs = getStringToList(reqNocData);
+//		String reqNocData = edcrResponse.get(BPAConstants.REQUIRED_NOCS);
+//		List<String> requiredNOCs = getStringToList(reqNocData);
 
 		List<Object> nocMappingResponse = (List<Object>) JsonPath.read(mdmsData, nocPath);
 		List<String> nocTypes = JsonPath.read(nocMappingResponse, "$..type");
 		if (!CollectionUtils.isEmpty(nocTypes)) {
 			for (String nocType : nocTypes) {
-				if (requiredNOCs.contains(nocType)) {
-					NocRequest nocRequest = NocRequest.builder()
-							.noc(Noc.builder().tenantId(bpa.getTenantId())
-									.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
-									.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
-									.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
-									.build())
-							.requestInfo(bpaRequest.getRequestInfo()).build();
-					createNoc(nocRequest);
-
-				}
+//				if (requiredNOCs.contains(nocType)) {
+//					NocRequest nocRequest = NocRequest.builder()
+//							.noc(Noc.builder().tenantId(bpa.getTenantId())
+//									.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
+//									.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
+//									.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+//									.build())
+//							.requestInfo(bpaRequest.getRequestInfo()).build();
+//					createNoc(nocRequest);
+//
+//				}
+				NocRequest nocRequest = NocRequest.builder()
+						.noc(Noc.builder().tenantId(bpa.getTenantId())
+								.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
+								.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
+								.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+								.build())
+						.requestInfo(bpaRequest.getRequestInfo()).build();
+				createNoc(nocRequest);
 
 			}
 		} else {
@@ -276,12 +284,12 @@ public class NocService {
 		});
 	}
 
-	private List<String> getStringToList(String data) {
-		List<String> list = new ArrayList<String>();
-		if (data != null) {
-			data = data.replace("[", "").replace("]", "");
-			list = Arrays.asList(data.split(",", -1));
-		}
-		return list;
-	}
+//	private List<String> getStringToList(String data) {
+//		List<String> list = new ArrayList<String>();
+//		if (data != null) {
+//			data = data.replace("[", "").replace("]", "");
+//			list = Arrays.asList(data.split(",", -1));
+//		}
+//		return list;
+//	}
 }

@@ -361,5 +361,5 @@ public class BPAConstants {
 
 	public static final String NOC_SOURCE = "BPA";
 	
-	public static final String REQUIRED_NOCS="requiredNOCs";
+//	public static final String REQUIRED_NOCS="requiredNOCs";
 }

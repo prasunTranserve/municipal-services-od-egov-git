@@ -130,9 +130,9 @@ public class EDCRService {
 			expectedRiskType = BPAConstants.LOW_RISKTYPE;
 		}
 		
-		LinkedList<String> nocsType = context.read("edcrDetail.*.planDetail.planInformation.requiredNOCs");
-		if(nocsType!=null && nocsType.size()>0)
-			additionalDetails.put(BPAConstants.REQUIRED_NOCS, nocsType.toString());
+//		LinkedList<String> nocsType = context.read("edcrDetail.*.planDetail.planInformation.requiredNOCs");
+//		if(nocsType!=null && nocsType.size()>0)
+//			additionalDetails.put(BPAConstants.REQUIRED_NOCS, nocsType.toString());
 		
 		this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType, expectedRiskType);
 		
