@@ -1821,14 +1821,13 @@ public class CalculationService {
 		return totalAmount;
 	}
 
-	public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object> paramMap) {
-		return calculateTotalFeeAmount(paramMap);
-
-	}
-
-	public static void main(String[] args) {
-		System.out.println("Main Method");
-		Map<String, Object> paramMap = new HashMap<>();
-	}
-
+	/*
+	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
+	 * paramMap) { return calculateTotalFeeAmount(paramMap);
+	 * 
+	 * }
+	 * 
+	 * public static void main(String[] args) { System.out.println("Main Method");
+	 * Map<String, Object> paramMap = new HashMap<>(); }
+	 */
 }
