@@ -1783,6 +1783,7 @@ public class CalculationService {
 		return amount;
 	}
 
+	
 	/**
 	 * @param applicationType
 	 * @param serviceType
