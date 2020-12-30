@@ -76,6 +76,7 @@ public class CalculationService {
 	private static final BigDecimal FIVE_HUNDRED = new BigDecimal("500");// BigDecimal.valueOf(500);
 	private static final BigDecimal FIFTEEN_HUNDRED = new BigDecimal("1500");// BigDecimal.valueOf(1500);
 	private static final BigDecimal SEVENTEEN_FIFTY = new BigDecimal("1750");// BigDecimal.valueOf(1750);
+	private static final BigDecimal TWO_THOUSAND = new BigDecimal("2000");// BigDecimal.valueOf(2000);
 	private static final BigDecimal TEN_LAC = new BigDecimal("1000000");// BigDecimal.valueOf(1000000);
 	private static final BigDecimal SQMT_SQFT_MULTIPLIER = new BigDecimal("10.764");// BigDecimal.valueOf(10.764);
 	private static final BigDecimal ACRE_SQMT_MULTIPLIER = new BigDecimal("4046.85");// BigDecimal.valueOf(4046.85);
@@ -807,7 +808,7 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-			retentionFee = BigDecimal.valueOf(2000);
+			retentionFee = TWO_THOUSAND;
 		}
 		System.out.println("retentionFee:::::::::::" + retentionFee);
 		return retentionFee;
@@ -1820,7 +1821,6 @@ public class CalculationService {
 
 		return totalAmount;
 	}
-
 	/*
 	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
 	 * paramMap) { return calculateTotalFeeAmount(paramMap);
@@ -1829,5 +1829,7 @@ public class CalculationService {
 	 * 
 	 * public static void main(String[] args) { System.out.println("Main Method");
 	 * Map<String, Object> paramMap = new HashMap<>(); }
+	 * 
 	 */
+
 }
