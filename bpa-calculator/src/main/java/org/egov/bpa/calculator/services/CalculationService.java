@@ -568,7 +568,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PROVIDED_FAR)) {
 			providedFar = (Double) paramMap.get(BPACalculatorConstants.PROVIDED_FAR);
 		}
-		if (providedFar > baseFar) {
+		if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar)) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
@@ -1248,9 +1248,9 @@ public class CalculationService {
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
-						|| (occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
-						|| occupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R)) {
+				if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
+						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R))) {
 					sanctionFee = calculateConstantFee(paramMap, 15);
 
 				} else {
@@ -1821,15 +1821,11 @@ public class CalculationService {
 
 		return totalAmount;
 	}
+
 	/*
 	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
 	 * paramMap) { return calculateTotalFeeAmount(paramMap);
 	 * 
 	 * }
-	 * 
-	 * public static void main(String[] args) { System.out.println("Main Method");
-	 * Map<String, Object> paramMap = new HashMap<>(); }
-	 * 
 	 */
-
 }
