@@ -571,15 +571,15 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 
 			BigDecimal benchmarkValuePerSQM = BigDecimal.valueOf(benchmarkValuePerAcre).divide(ACRE_SQMT_MULTIPLIER, 2,
-					BigDecimal.ROUND_HALF_UP);
+					BigDecimal.ROUND_UP);
 
 			BigDecimal purchasableFARRate = (benchmarkValuePerSQM.multiply(ZERO_TWO_FIVE)).setScale(2,
-					BigDecimal.ROUND_HALF_UP);
+					BigDecimal.ROUND_UP);
 
 			BigDecimal deltaFAR = (BigDecimal.valueOf(baseFar).subtract(BigDecimal.valueOf(permissableFar))).setScale(2,
-					BigDecimal.ROUND_HALF_UP);
+					BigDecimal.ROUND_UP);
 
-			purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_HALF_UP);
+			purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_UP);
 
 		}
 		System.out.println("purchasableFARFee:::::::::::::::::" + purchasableFARFee);
