@@ -221,7 +221,7 @@ public class EnrichmentService {
 		if ((bpa.getBusinessService().equalsIgnoreCase(BPAConstants.BPA_OC_MODULE_CODE)
 				&& bpa.getStatus().equalsIgnoreCase(BPAConstants.APPROVED_STATE))
 				|| (!bpa.getBusinessService().equalsIgnoreCase(BPAConstants.BPA_OC_MODULE_CODE)
-						&& (state.equalsIgnoreCase(BPAConstants.APPROVED_STATE))
+						&& state.equalsIgnoreCase(BPAConstants.APPROVED_STATE))
 						) {
 			int vailidityInMonths = config.getValidityInMonths();
 			Calendar calendar = Calendar.getInstance();
