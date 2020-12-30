@@ -123,11 +123,11 @@ public class EDCRService {
 		if (CollectionUtils.isEmpty(edcrStatus) || !edcrStatus.get(0).equalsIgnoreCase("Accepted")) {
 			throw new CustomException(BPAErrorConstants.INVALID_EDCR_NUMBER, "The EDCR Number is not Accepted " + edcrNo);
 		}
-		List<String> lowRiskBuilding = context.read("edcrDetail.*.planDetail.planInformation.lowRiskBuilding");
+		List<String> dcrRiskType = context.read("edcrDetail.*.planDetail.planInformation.riskType");
 		
-		String expectedRiskType = BPAConstants.LOW_RISKTYPE;
-		if (lowRiskBuilding!=null && lowRiskBuilding.get(0).equalsIgnoreCase("false")) {
-			expectedRiskType = BPAConstants.OTHER_RISKTYPE;
+		String expectedRiskType = BPAConstants.OTHER_RISKTYPE;
+		if (dcrRiskType!=null && dcrRiskType.get(0).equalsIgnoreCase("LOW")) {
+			expectedRiskType = BPAConstants.LOW_RISKTYPE;
 		}
 		
 		LinkedList<String> nocsType = context.read("edcrDetail.*.planDetail.planInformation.requiredNOCs");
