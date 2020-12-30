@@ -374,14 +374,18 @@ public class CalculationService {
 
 		JSONArray occupancyTypeJSONArray = context.read(BPACalculatorConstants.OCCUPANCY_TYPE_PATH);
 		if (!CollectionUtils.isEmpty(occupancyTypeJSONArray)) {
-			String occupancyType = occupancyTypeJSONArray.get(0).toString();
-			paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+			if (null != occupancyTypeJSONArray.get(0)) {
+				String occupancyType = occupancyTypeJSONArray.get(0).toString();
+				paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+			}
 		}
 
 		JSONArray subOccupancyTypeJSONArray = context.read(BPACalculatorConstants.SUB_OCCUPANCY_TYPE_PATH);
 		if (!CollectionUtils.isEmpty(subOccupancyTypeJSONArray)) {
-			String subOccupancyType = subOccupancyTypeJSONArray.get(0).toString();
-			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE, subOccupancyType);
+			if (null != subOccupancyTypeJSONArray.get(0)) {
+				String subOccupancyType = subOccupancyTypeJSONArray.get(0).toString();
+				paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE, subOccupancyType);
+			}
 
 		}
 
