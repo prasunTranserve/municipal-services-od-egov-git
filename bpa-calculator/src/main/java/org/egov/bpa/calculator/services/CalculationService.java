@@ -61,22 +61,24 @@ public class CalculationService {
 	@Autowired
 	private BPAService bpaService;
 
-	private static final BigDecimal ZERO_TWO_FIVE = BigDecimal.valueOf(0.25);
-	private static final BigDecimal TEN = BigDecimal.valueOf(10);
-	private static final BigDecimal FIFTEEN = BigDecimal.valueOf(15);
-	private static final BigDecimal SEVENTEEN_FIVE = BigDecimal.valueOf(17.5);
-	private static final BigDecimal TWENTY = BigDecimal.valueOf(20);
-	private static final BigDecimal TWENTY_FIVE = BigDecimal.valueOf(25);
-	private static final BigDecimal THIRTY = BigDecimal.valueOf(30);
-	private static final BigDecimal FIFTY = BigDecimal.valueOf(50);
-	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-	private static final BigDecimal TWO_HUNDRED = BigDecimal.valueOf(200);
-	private static final BigDecimal TWO_HUNDRED_FIFTY = BigDecimal.valueOf(250);
-	private static final BigDecimal THREE_HUNDRED = BigDecimal.valueOf(300);
-	private static final BigDecimal FIVE_HUNDRED = BigDecimal.valueOf(500);
-	private static final BigDecimal FIFTEEN_HUNDRED = BigDecimal.valueOf(1500);
-	private static final BigDecimal SQMT_SQFT_MULTIPLIER = BigDecimal.valueOf(10.764);
-	private static final BigDecimal ACRE_SQMT_MULTIPLIER = BigDecimal.valueOf(4046.85);
+	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
+	private static final BigDecimal TEN = new BigDecimal("10");// BigDecimal.valueOf(10);
+	private static final BigDecimal FIFTEEN = new BigDecimal("15");// BigDecimal.valueOf(15);
+	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.5");// BigDecimal.valueOf(17.5);
+	private static final BigDecimal TWENTY = new BigDecimal("20");// BigDecimal.valueOf(20);
+	private static final BigDecimal TWENTY_FIVE = new BigDecimal("25");// BigDecimal.valueOf(25);
+	private static final BigDecimal THIRTY = new BigDecimal("30");// BigDecimal.valueOf(30);
+	private static final BigDecimal FIFTY = new BigDecimal("50");// BigDecimal.valueOf(50);
+	private static final BigDecimal HUNDRED = new BigDecimal("100");// BigDecimal.valueOf(100);
+	private static final BigDecimal TWO_HUNDRED = new BigDecimal("200");// BigDecimal.valueOf(200);
+	private static final BigDecimal TWO_HUNDRED_FIFTY = new BigDecimal("250");// BigDecimal.valueOf(250);
+	private static final BigDecimal THREE_HUNDRED = new BigDecimal("300");// BigDecimal.valueOf(300);
+	private static final BigDecimal FIVE_HUNDRED = new BigDecimal("500");// BigDecimal.valueOf(500);
+	private static final BigDecimal FIFTEEN_HUNDRED = new BigDecimal("1500");// BigDecimal.valueOf(1500);
+	private static final BigDecimal SEVENTEEN_FIFTY = new BigDecimal("1750");// BigDecimal.valueOf(1750);
+	private static final BigDecimal TEN_LAC = new BigDecimal("1000000");// BigDecimal.valueOf(1000000);
+	private static final BigDecimal SQMT_SQFT_MULTIPLIER = new BigDecimal("10.764");// BigDecimal.valueOf(10.764);
+	private static final BigDecimal ACRE_SQMT_MULTIPLIER = new BigDecimal("4046.85");// BigDecimal.valueOf(4046.85);
 
 	/**
 	 * Calculates tax estimates and creates demand
@@ -434,12 +436,12 @@ public class CalculationService {
 			}
 		}
 
-		JSONArray totalpermissibleFar = context.read(BPACalculatorConstants.PERMISSIBLE_FAR_PATH);
+		JSONArray totalpermissibleFar = context.read(BPACalculatorConstants.PROVIDED_FAR_PATH);
 		if (!CollectionUtils.isEmpty(totalpermissibleFar)) {
 			if (null != totalpermissibleFar.get(0)) {
 				String permissibleFarString = totalpermissibleFar.get(0).toString();
 				Double permissibleFar = Double.parseDouble(permissibleFarString);
-				paramMap.put(BPACalculatorConstants.PERMISSIBLE_FAR, permissibleFar);
+				paramMap.put(BPACalculatorConstants.PROVIDED_FAR, permissibleFar);
 			}
 		}
 
@@ -549,7 +551,7 @@ public class CalculationService {
 		String serviceType = null;
 		Double benchmarkValuePerAcre = null;
 		Double baseFar = null;
-		Double permissableFar = null;
+		Double providedFar = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -562,24 +564,27 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.BASE_FAR)) {
 			baseFar = (Double) paramMap.get(BPACalculatorConstants.BASE_FAR);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR)) {
-			permissableFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSIBLE_FAR);
+		if (null != paramMap.get(BPACalculatorConstants.PROVIDED_FAR)) {
+			providedFar = (Double) paramMap.get(BPACalculatorConstants.PROVIDED_FAR);
 		}
-		if ((StringUtils.hasText(applicationType)
-				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
-				&& (StringUtils.hasText(serviceType)
-						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
+		if (providedFar > baseFar) {
+			if ((StringUtils.hasText(applicationType)
+					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
+					&& (StringUtils.hasText(serviceType)
+							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 
-			BigDecimal benchmarkValuePerSQM = BigDecimal.valueOf(benchmarkValuePerAcre).divide(ACRE_SQMT_MULTIPLIER, 2,
-					BigDecimal.ROUND_UP);
+				BigDecimal benchmarkValuePerSQM = BigDecimal.valueOf(benchmarkValuePerAcre).divide(ACRE_SQMT_MULTIPLIER,
+						2, BigDecimal.ROUND_UP);
 
-			BigDecimal purchasableFARRate = (benchmarkValuePerSQM.multiply(ZERO_TWO_FIVE)).setScale(2,
-					BigDecimal.ROUND_UP);
+				BigDecimal purchasableFARRate = (benchmarkValuePerSQM.multiply(ZERO_TWO_FIVE)).setScale(2,
+						BigDecimal.ROUND_UP);
 
-			BigDecimal deltaFAR = (BigDecimal.valueOf(baseFar).subtract(BigDecimal.valueOf(permissableFar))).setScale(2,
-					BigDecimal.ROUND_UP);
+				BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(baseFar)))
+						.setScale(2, BigDecimal.ROUND_UP);
 
-			purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_UP);
+				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_UP);
+
+			}
 
 		}
 		System.out.println("purchasableFARFee:::::::::::::::::" + purchasableFARFee);
@@ -884,8 +889,7 @@ public class CalculationService {
 							|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH))) {
 
 						shelterFee = (BigDecimal.valueOf(totalEWSArea).multiply(SQMT_SQFT_MULTIPLIER)
-								.multiply(BigDecimal.valueOf(1750)).multiply(ZERO_TWO_FIVE)).setScale(2,
-										BigDecimal.ROUND_UP);
+								.multiply(SEVENTEEN_FIFTY).multiply(ZERO_TWO_FIVE)).setScale(2, BigDecimal.ROUND_UP);
 
 					}
 
@@ -923,8 +927,10 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-			Double costOfConstruction = (1750 * totalBuitUpArea);
-			if (costOfConstruction > 1000000) {
+			// Double costOfConstruction = (1750 * totalBuitUpArea * 10.764);
+			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea))
+					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
+			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
 				welfareCess = (SEVENTEEN_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
@@ -1815,13 +1821,14 @@ public class CalculationService {
 		return totalAmount;
 	}
 
-	/*
-	 * public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object>
-	 * paramMap) { return calculateTotalFeeAmount(paramMap);
-	 * 
-	 * }
-	 * 
-	 * public static void main(String[] args) { System.out.println("Main Method");
-	 * Map<String, Object> paramMap = new HashMap<>(); }
-	 */
+	public BigDecimal calculateTotalFeeAmountDuplicate(Map<String, Object> paramMap) {
+		return calculateTotalFeeAmount(paramMap);
+
+	}
+
+	public static void main(String[] args) {
+		System.out.println("Main Method");
+		Map<String, Object> paramMap = new HashMap<>();
+	}
+
 }

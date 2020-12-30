@@ -248,7 +248,7 @@ public class BPACalculatorConstants {
 	public static final String SHELTER_FEE_PATH = "edcrDetail.*.planDetail.planInformation.isShelterFeeRequired";
 	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre";
 	public static final String BASE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.baseFar";
-	public static final String PERMISSIBLE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.permissableFar";
+	public static final String PROVIDED_FAR_PATH = "edcrDetail.*.planDetail.farDetails.providedFar";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
 	public static final String RISK_TYPE = "RISK_TYPE";
@@ -261,7 +261,7 @@ public class BPACalculatorConstants {
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
 	public static final String BASE_FAR = "BASE_FAR";
-	public static final String PERMISSIBLE_FAR = "PERMISSIBLE_FAR";
+	public static final String PROVIDED_FAR = "PROVIDED_FAR";
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
 	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
