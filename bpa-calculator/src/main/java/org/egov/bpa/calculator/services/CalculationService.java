@@ -1308,6 +1308,7 @@ public class CalculationService {
 			if (((StringUtils.hasText(riskType)) && !(riskType.equalsIgnoreCase("LOW"))) && (null != plotArea)) {
 
 				feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
+				paramMap.put(BPACalculatorConstants.AREA_TYPE, null);
 			}
 
 		}
@@ -1751,7 +1752,7 @@ public class CalculationService {
 	private BigDecimal calculateVariableFee2(Double totalBuitUpArea) {
 		BigDecimal amount = BigDecimal.ZERO;
 		if (totalBuitUpArea <= 20) {
-			amount = BigDecimal.valueOf(500);
+			amount = FIVE_HUNDRED;
 		} else if (totalBuitUpArea <= 50) {
 			amount = (FIVE_HUNDRED.add(FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(TWENTY))))
 					.setScale(2, BigDecimal.ROUND_UP);
@@ -1771,7 +1772,7 @@ public class CalculationService {
 	private BigDecimal calculateVariableFee3(Double totalBuitUpArea) {
 		BigDecimal amount = BigDecimal.ZERO;
 		if (totalBuitUpArea <= 100) {
-			amount = BigDecimal.valueOf(1500);
+			amount = FIFTEEN_HUNDRED;
 		} else if (totalBuitUpArea <= 300) {
 			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED))))
 					.setScale(2, BigDecimal.ROUND_UP);
