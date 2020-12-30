@@ -1300,13 +1300,12 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
 			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
 		}
-		paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			if (((StringUtils.hasText(riskType)) && !(riskType.equalsIgnoreCase("LOW"))) && (null != plotArea)) {
-
+				paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
 				feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
 				paramMap.put(BPACalculatorConstants.AREA_TYPE, null);
 			}
@@ -1784,7 +1783,6 @@ public class CalculationService {
 		return amount;
 	}
 
-	
 	/**
 	 * @param applicationType
 	 * @param serviceType
