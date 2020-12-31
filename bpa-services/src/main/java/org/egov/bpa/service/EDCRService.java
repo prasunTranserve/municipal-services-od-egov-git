@@ -134,7 +134,7 @@ public class EDCRService {
 //		if(nocsType!=null && nocsType.size()>0)
 //			additionalDetails.put(BPAConstants.REQUIRED_NOCS, nocsType.toString());
 		
-		this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType, expectedRiskType);
+		//this.validateOCEdcr(OccupancyTypes, plotAreas, buildingHeights, applicationType, masterData, riskType, expectedRiskType);
 		
 		return additionalDetails;
 	}
