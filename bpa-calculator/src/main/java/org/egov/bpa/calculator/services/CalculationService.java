@@ -553,6 +553,7 @@ public class CalculationService {
 		Double benchmarkValuePerAcre = null;
 		Double baseFar = null;
 		Double providedFar = null;
+		Double plotArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -568,7 +569,11 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PROVIDED_FAR)) {
 			providedFar = (Double) paramMap.get(BPACalculatorConstants.PROVIDED_FAR);
 		}
-		if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar)) {
+		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
+			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
+		}
+
+		if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar) && (null != plotArea)) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
@@ -583,7 +588,8 @@ public class CalculationService {
 				BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(baseFar)))
 						.setScale(2, BigDecimal.ROUND_UP);
 
-				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR)).setScale(2, BigDecimal.ROUND_UP);
+				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR).multiply(BigDecimal.valueOf(plotArea)))
+						.setScale(2, BigDecimal.ROUND_UP);
 
 			}
 
@@ -1811,6 +1817,7 @@ public class CalculationService {
 		}
 		if ((null != paramMap.get(BPACalculatorConstants.AREA_TYPE))
 				&& (paramMap.get(BPACalculatorConstants.AREA_TYPE).equals(BPACalculatorConstants.AREA_TYPE_PLOT))) {
+
 			totalAmount = (BigDecimal.valueOf(plotArea).multiply(BigDecimal.valueOf(multiplicationFactor))).setScale(2,
 					BigDecimal.ROUND_UP);
 
