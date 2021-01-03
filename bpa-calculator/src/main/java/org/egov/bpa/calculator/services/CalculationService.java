@@ -102,6 +102,11 @@ public class CalculationService {
 		return calculations;
 	}
 
+	/**
+	 * @param requestInfo
+	 * @param calulationCriteria
+	 * @return
+	 */
 	private List<Calculation> getCalculationV2(RequestInfo requestInfo, List<CalulationCriteria> calulationCriteria) {
 		List<Calculation> calculations = new LinkedList<>();
 		if (!CollectionUtils.isEmpty(calulationCriteria)) {
@@ -129,6 +134,11 @@ public class CalculationService {
 		return calculations;
 	}
 
+	/**
+	 * @param criteria
+	 * @param requestInfo
+	 * @return
+	 */
 	private EstimatesAndSlabs getTaxHeadEstimatesV2(CalulationCriteria criteria, RequestInfo requestInfo) {
 		List<TaxHeadEstimate> estimates = new LinkedList<>();
 		EstimatesAndSlabs estimatesAndSlabs;
@@ -307,6 +317,11 @@ public class CalculationService {
 		return estimatesAndSlabs;
 	}
 
+	/**
+	 * @param criteria
+	 * @param requestInfo
+	 * @return
+	 */
 	private EstimatesAndSlabs getBaseTaxV2(CalulationCriteria criteria, RequestInfo requestInfo) {
 		BPA bpa = criteria.getBpa();
 		String feeType = criteria.getFeeType();
@@ -338,9 +353,8 @@ public class CalculationService {
 	/**
 	 * @param requestInfo
 	 * @param criteria
-	 * @param bpa
 	 * @param estimates
-	 * @param mdmsCalculationtypeAplFeetype
+	 * @param feeType
 	 */
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, String feeType) {
@@ -475,14 +489,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param riskType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param plotArea
-	 * @param totalBuitUpArea
-	 * @param feeType
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap) {
@@ -518,13 +525,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param riskType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param plotArea
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap) {
@@ -600,11 +601,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap) {
@@ -641,6 +638,10 @@ public class CalculationService {
 
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSecurityDepositForEducationOccupancy(Map<String, Object> paramMap) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
 		String applicationType = null;
@@ -677,6 +678,10 @@ public class CalculationService {
 		return securityDeposit;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSecurityDepositForPublicSemiPublicInstitutionalOccupancy(Map<String, Object> paramMap) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
 		String applicationType = null;
@@ -714,6 +719,10 @@ public class CalculationService {
 		return securityDeposit;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSecurityDepositForCommercialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
 		String applicationType = null;
@@ -751,6 +760,10 @@ public class CalculationService {
 		return securityDeposit;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSecurityDepositForResidentialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
 		String applicationType = null;
@@ -800,11 +813,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap) {
@@ -829,11 +838,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateShelterFee(Map<String, Object> paramMap) {
@@ -856,6 +861,10 @@ public class CalculationService {
 
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateShelterFeeForResidentialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal shelterFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -916,11 +925,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateConstructionWorkerWelfareCess(Map<String, Object> paramMap) {
@@ -956,11 +961,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param subOccupancyType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap) {
@@ -1004,6 +1005,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForPublicSemiPublicInstitutionalOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1096,6 +1101,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForAgricultureOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1126,6 +1135,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForTransportationOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1156,6 +1169,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForEducationOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1186,6 +1203,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForPublicUtilityOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1216,6 +1237,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForIndustrialZoneOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1246,6 +1271,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForCommercialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1276,6 +1305,10 @@ public class CalculationService {
 		return sanctionFee;
 	}
 
+	/**
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateSanctionFeeForResidentialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1321,13 +1354,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param riskType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param plotArea
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap) {
@@ -1340,10 +1367,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param riskType
-	 * @param plotArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateFeeForDevelopmentOfLand(Map<String, Object> paramMap) {
@@ -1382,11 +1406,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap) {
@@ -1432,11 +1452,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForAgricultureOccupancy(Map<String, Object> paramMap) {
@@ -1469,11 +1485,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForTransportationOccupancy(Map<String, Object> paramMap) {
@@ -1507,11 +1519,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForEducationOccupancy(Map<String, Object> paramMap) {
@@ -1545,11 +1553,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForIndustrialZoneOccupancy(Map<String, Object> paramMap) {
@@ -1582,11 +1586,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForPublicUtilityOccupancy(Map<String, Object> paramMap) {
@@ -1621,12 +1621,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param subOccupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForPublicSemiPublicInstitutionalOccupancy(
@@ -1731,11 +1726,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForCommercialOccupancy(Map<String, Object> paramMap) {
@@ -1769,11 +1760,7 @@ public class CalculationService {
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param occupancyType
-	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
+	 * @param paramMap
 	 * @return
 	 */
 	private BigDecimal calculateBuildingOperationFeeForResidentialOccupancy(Map<String, Object> paramMap) {
@@ -1808,69 +1795,74 @@ public class CalculationService {
 
 	/**
 	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
 	 * @return
 	 */
 	private BigDecimal calculateVariableFee1(Double totalBuitUpArea) {
 		BigDecimal amount = BigDecimal.ZERO;
-		if (totalBuitUpArea <= 100) {
-			amount = TWO_HUNDRED_FIFTY;
-		} else if (totalBuitUpArea <= 300) {
-			amount = (TWO_HUNDRED_FIFTY.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED))))
-					.setScale(2, BigDecimal.ROUND_UP);
-		} else if (totalBuitUpArea > 300) {
-			amount = (TWO_HUNDRED_FIFTY.add(FIFTEEN.multiply(TWO_HUNDRED))
-					.add(TEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
-							BigDecimal.ROUND_UP);
+		if (null != totalBuitUpArea) {
+			if (totalBuitUpArea <= 100) {
+				amount = TWO_HUNDRED_FIFTY;
+			} else if (totalBuitUpArea <= 300) {
+				amount = (TWO_HUNDRED_FIFTY
+						.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED)))).setScale(2,
+								BigDecimal.ROUND_UP);
+			} else if (totalBuitUpArea > 300) {
+				amount = (TWO_HUNDRED_FIFTY.add(FIFTEEN.multiply(TWO_HUNDRED))
+						.add(TEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
+								BigDecimal.ROUND_UP);
+			}
+
 		}
 		return amount;
 	}
 
 	/**
 	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
 	 * @return
 	 */
 	private BigDecimal calculateVariableFee2(Double totalBuitUpArea) {
 		BigDecimal amount = BigDecimal.ZERO;
-		if (totalBuitUpArea <= 20) {
-			amount = FIVE_HUNDRED;
-		} else if (totalBuitUpArea <= 50) {
-			amount = (FIVE_HUNDRED.add(FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(TWENTY))))
-					.setScale(2, BigDecimal.ROUND_UP);
-		} else if (totalBuitUpArea > 50) {
-			amount = (FIVE_HUNDRED.add(FIFTY.multiply(THIRTY))
-					.add(TWENTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(FIFTY)))).setScale(2,
-							BigDecimal.ROUND_UP);
+		if (null != totalBuitUpArea) {
+			if (totalBuitUpArea <= 20) {
+				amount = FIVE_HUNDRED;
+			} else if (totalBuitUpArea <= 50) {
+				amount = (FIVE_HUNDRED.add(FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(TWENTY))))
+						.setScale(2, BigDecimal.ROUND_UP);
+			} else if (totalBuitUpArea > 50) {
+				amount = (FIVE_HUNDRED.add(FIFTY.multiply(THIRTY))
+						.add(TWENTY.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(FIFTY)))).setScale(2,
+								BigDecimal.ROUND_UP);
+			}
+
 		}
 		return amount;
 	}
 
 	/**
 	 * @param totalBuitUpArea
-	 * @param feeForBuildingOperation
 	 * @return
 	 */
 	private BigDecimal calculateVariableFee3(Double totalBuitUpArea) {
 		BigDecimal amount = BigDecimal.ZERO;
-		if (totalBuitUpArea <= 100) {
-			amount = FIFTEEN_HUNDRED;
-		} else if (totalBuitUpArea <= 300) {
-			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED))))
-					.setScale(2, BigDecimal.ROUND_UP);
-		} else if (totalBuitUpArea > 300) {
-			amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(TWO_HUNDRED))
-					.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
-							BigDecimal.ROUND_UP);
+		if (null != totalBuitUpArea) {
+			if (totalBuitUpArea <= 100) {
+				amount = FIFTEEN_HUNDRED;
+			} else if (totalBuitUpArea <= 300) {
+				amount = (FIFTEEN_HUNDRED
+						.add(TWENTY_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(HUNDRED)))).setScale(2,
+								BigDecimal.ROUND_UP);
+			} else if (totalBuitUpArea > 300) {
+				amount = (FIFTEEN_HUNDRED.add(TWENTY_FIVE.multiply(TWO_HUNDRED))
+						.add(FIFTEEN.multiply(BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)))).setScale(2,
+								BigDecimal.ROUND_UP);
+			}
+
 		}
 		return amount;
 	}
 
 	/**
-	 * @param applicationType
-	 * @param serviceType
-	 * @param riskType
-	 * @param totalBuitUpArea
+	 * @param paramMap
 	 * @param multiplicationFactor
 	 * @return
 	 */
@@ -1900,6 +1892,11 @@ public class CalculationService {
 		return totalAmount;
 	}
 
+	/**
+	 * @param effectiveArea
+	 * @param multiplicationFactor
+	 * @return
+	 */
 	private BigDecimal calculateConstantFeeNew(Double effectiveArea, int multiplicationFactor) {
 		BigDecimal totalAmount = BigDecimal.ZERO;
 		if (null != effectiveArea) {
