@@ -64,7 +64,7 @@ public class CalculationService {
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal TEN = new BigDecimal("10");// BigDecimal.valueOf(10);
 	private static final BigDecimal FIFTEEN = new BigDecimal("15");// BigDecimal.valueOf(15);
-	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.5");// BigDecimal.valueOf(17.5);
+	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.50");// BigDecimal.valueOf(17.50);
 	private static final BigDecimal TWENTY = new BigDecimal("20");// BigDecimal.valueOf(20);
 	private static final BigDecimal TWENTY_FIVE = new BigDecimal("25");// BigDecimal.valueOf(25);
 	private static final BigDecimal THIRTY = new BigDecimal("30");// BigDecimal.valueOf(30);
@@ -669,8 +669,8 @@ public class CalculationService {
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
-					securityDeposit = calculateConstantFee(paramMap, 100);
-
+					// securityDeposit = calculateConstantFee(paramMap, 100);
+					securityDeposit = calculateConstantFeeNew(totalBuitUpArea, 100);
 				}
 			}
 		}
@@ -705,7 +705,8 @@ public class CalculationService {
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
-					securityDeposit = calculateConstantFee(paramMap, 100);
+					// securityDeposit = calculateConstantFee(paramMap, 100);
+					securityDeposit = calculateConstantFeeNew(totalBuitUpArea, 100);
 
 				}
 			}
@@ -741,7 +742,8 @@ public class CalculationService {
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 				if (null != totalBuitUpArea && totalBuitUpArea >= 200) {
-					securityDeposit = calculateConstantFee(paramMap, 100);
+					// securityDeposit = calculateConstantFee(paramMap, 100);
+					securityDeposit = calculateConstantFeeNew(totalBuitUpArea, 100);
 
 				}
 			}
@@ -755,6 +757,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -766,6 +769,9 @@ public class CalculationService {
 		}
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
 		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
@@ -782,7 +788,8 @@ public class CalculationService {
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_MIH))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_SQ))) {
 
-					securityDeposit = calculateConstantFee(paramMap, 100);
+					// securityDeposit = calculateConstantFee(paramMap, 100);
+					securityDeposit = calculateConstantFeeNew(totalBuitUpArea, 100);
 
 				}
 
@@ -1003,6 +1010,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1014,6 +1022,9 @@ public class CalculationService {
 		}
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
 		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C)) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
@@ -1045,13 +1056,15 @@ public class CalculationService {
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_S))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_T))) {
 
-					sanctionFee = calculateConstantFee(paramMap, 30);
+					// sanctionFee = calculateConstantFee(paramMap, 30);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 30);
 
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_AB))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_GO))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_LSGO))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_P))) {
-					sanctionFee = calculateConstantFee(paramMap, 10);
+					// sanctionFee = calculateConstantFee(paramMap, 10);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 10);
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SWC))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_CI))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_D))
@@ -1069,12 +1082,14 @@ public class CalculationService {
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_RC))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_VHAB))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_RTI))) {
-					sanctionFee = calculateConstantFee(paramMap, 30);
+					// sanctionFee = calculateConstantFee(paramMap, 30);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 30);
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PS))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_FS))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_J))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PO))) {
-					sanctionFee = calculateConstantFee(paramMap, 10);
+					// sanctionFee = calculateConstantFee(paramMap, 10);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 10);
 				}
 			}
 		}
@@ -1086,6 +1101,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1095,12 +1111,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 10);
+				// sanctionFee = calculateConstantFee(paramMap, 30);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 30);
 			}
 		}
 		return sanctionFee;
@@ -1111,6 +1131,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1120,12 +1141,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 10);
+				// sanctionFee = calculateConstantFee(paramMap, 10);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 10);
 			}
 		}
 		return sanctionFee;
@@ -1136,6 +1161,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1145,12 +1171,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 30);
+				// sanctionFee = calculateConstantFee(paramMap, 30);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 30);
 			}
 		}
 		return sanctionFee;
@@ -1161,6 +1191,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1170,12 +1201,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 10);
+				// sanctionFee = calculateConstantFee(paramMap, 10);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 10);
 			}
 		}
 		return sanctionFee;
@@ -1186,6 +1221,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1195,12 +1231,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 60);
+				// sanctionFee = calculateConstantFee(paramMap, 60);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 60);
 			}
 		}
 		return sanctionFee;
@@ -1211,6 +1251,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1220,12 +1261,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				sanctionFee = calculateConstantFee(paramMap, 60);
+				// sanctionFee = calculateConstantFee(paramMap, 60);
+				sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 60);
 			}
 		}
 		return sanctionFee;
@@ -1237,6 +1282,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		String subOccupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1249,6 +1295,9 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1257,10 +1306,12 @@ public class CalculationService {
 				if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_P))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_S))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.A_R))) {
-					sanctionFee = calculateConstantFee(paramMap, 15);
+					// sanctionFee = calculateConstantFee(paramMap, 15);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 15);
 
 				} else {
-					sanctionFee = calculateConstantFee(paramMap, 50);
+					// sanctionFee = calculateConstantFee(paramMap, 50);
+					sanctionFee = calculateConstantFeeNew(totalBuitUpArea, 50);
 				}
 
 			}
@@ -1319,7 +1370,8 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			if (((StringUtils.hasText(riskType)) && !(riskType.equalsIgnoreCase("LOW"))) && (null != plotArea)) {
 				paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
-				feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
+				// feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
+				feeForDevelopmentOfLand = calculateConstantFeeNew(plotArea, 5);
 				paramMap.put(BPACalculatorConstants.AREA_TYPE, null);
 			}
 
@@ -1429,6 +1481,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1438,12 +1491,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 			}
 		}
 		return feeForBuildingOperation;
@@ -1462,6 +1519,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1471,12 +1529,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 			}
 		}
 		return feeForBuildingOperation;
@@ -1532,6 +1594,7 @@ public class CalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		String occupancyType = null;
+		Double totalBuitUpArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1541,12 +1604,16 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
+			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+		}
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 
 			}
 		}
@@ -1600,7 +1667,8 @@ public class CalculationService {
 
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_O))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_OAH))) {
-					feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SC))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_C1H))
@@ -1617,7 +1685,8 @@ public class CalculationService {
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PW))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PL))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_REB))) {
-					feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 
 				} else if ((subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_SPC))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_S))
@@ -1651,7 +1720,8 @@ public class CalculationService {
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_J))
 						|| (subOccupancyType.equalsIgnoreCase(BPACalculatorConstants.C_PO))) {
 
-					feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+					feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
 
 				}
 			}
@@ -1804,6 +1874,7 @@ public class CalculationService {
 	 * @param multiplicationFactor
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private BigDecimal calculateConstantFee(Map<String, Object> paramMap, int multiplicationFactor) {
 		BigDecimal totalAmount = BigDecimal.ZERO;
 		Double plotArea = null;
@@ -1826,6 +1897,16 @@ public class CalculationService {
 					.setScale(2, BigDecimal.ROUND_UP);
 		}
 
+		return totalAmount;
+	}
+
+	private BigDecimal calculateConstantFeeNew(Double effectiveArea, int multiplicationFactor) {
+		BigDecimal totalAmount = BigDecimal.ZERO;
+		if (null != effectiveArea) {
+			totalAmount = (BigDecimal.valueOf(effectiveArea).multiply(BigDecimal.valueOf(multiplicationFactor)))
+					.setScale(2, BigDecimal.ROUND_UP);
+
+		}
 		return totalAmount;
 	}
 

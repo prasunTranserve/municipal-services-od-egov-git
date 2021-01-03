@@ -218,6 +218,7 @@ public class BPACalculatorConstants {
 	public static final String F_VI = "F-VI";// Veterinary Institute
 	public static final String F_MC = "F-MC";// Medical College
 	public static final String F_RTC = "F-RTC";// Research and Training Center
+		
 	public static final String G_A = "G-A";// Airport
 	public static final String G_AS = "G-AS";// Auto Stand
 	public static final String G_MS = "G-MS";// Metro Station
@@ -230,6 +231,7 @@ public class BPACalculatorConstants {
 	public static final String G_PP = "G-PP";// Public Parking
 	public static final String G_TP = "G-TP";// Toll Plaza
 	public static final String G_TT = "G-TT";// Truck Terminal
+	
 	public static final String H_AF = "H-AF";// Agriculture Farm
 	public static final String H_AG = "H-AG";// Agro Godown
 	public static final String H_ARF = "H-ARF";// Agro-Research Farm
