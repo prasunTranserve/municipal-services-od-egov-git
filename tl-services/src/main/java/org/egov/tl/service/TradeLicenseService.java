@@ -115,7 +115,11 @@ public class TradeLicenseService {
                break;
        }
        userService.createUser(tradeLicenseRequest, false);
-       calculationService.addCalculation(tradeLicenseRequest);
+	   
+	   if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA)
+	   {
+			calculationService.addCalculation(tradeLicenseRequest);
+	   }
 
         /*
          * call workflow service if it's enable else uses internal workflow process
