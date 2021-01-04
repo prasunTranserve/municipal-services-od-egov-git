@@ -322,7 +322,10 @@ public class TradeLicenseService {
             }
             enrichmentService.postStatusEnrichment(tradeLicenseRequest,endStates,mdmsData);
             userService.createUser(tradeLicenseRequest, false);
-            calculationService.addCalculation(tradeLicenseRequest);
+			if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+			{
+				calculationService.addCalculation(tradeLicenseRequest);
+			}
             switch (businessServicefromPath) {
                 case businessService_TL:
                     editNotificationService.sendEditNotification(tradeLicenseRequest, diffMap);
