@@ -116,7 +116,7 @@ public class TradeLicenseService {
        }
        userService.createUser(tradeLicenseRequest, false);
 	   
-	   if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA)
+	   if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
 	   {
 			calculationService.addCalculation(tradeLicenseRequest);
 	   }
