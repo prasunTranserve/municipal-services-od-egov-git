@@ -347,6 +347,10 @@ public class BPAConstants {
 
 	public static final String OC_PLOTNO = "$.edcrDetail[0].planDetail.planInformation.plotNo";
 	
+	public static final String BUILDING_PLAN_PC = "BUILDING_PC_PLAN_SCRUTINY";
+
+	public static final String BPA_PC_MODULE_CODE = "BPA_PC";
+	
 	public static final String SERVICETYPE = "serviceType";
 	
 	public static final String APPLICATIONTYPE = "applicationType";
