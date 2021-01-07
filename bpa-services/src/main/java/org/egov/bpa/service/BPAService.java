@@ -120,7 +120,7 @@ public class BPAService {
 			bpaRequest.getBPA().setApprovalNo(null);
 		}
 		String reqApplicationType = bpaRequest.getBPA().getApplicationType();
-		bpaRequest.getBPA().setBusinessService
+		
 		if (reqApplicationType!=null && !reqApplicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_PC)) {
 			Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
 			String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
