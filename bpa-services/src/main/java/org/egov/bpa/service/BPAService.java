@@ -119,23 +119,20 @@ public class BPAService {
 		if (!StringUtils.isEmpty(bpaRequest.getBPA().getApprovalNo())) {
 			bpaRequest.getBPA().setApprovalNo(null);
 		}
-		String reqApplicationType = bpaRequest.getBPA().getApplicationType();
-		
-		if (reqApplicationType!=null && !reqApplicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_PC)) {
-			Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
-			String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
-			String serviceType = values.get(BPAConstants.SERVICETYPE);
-			this.validateCreateOC(applicationType, values, requestInfo, bpaRequest);
-			bpaValidator.validateCreate(bpaRequest, mdmsData, values);
-			if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
-				landService.addLandInfoToBPA(bpaRequest);
-			}
-			enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
-			wfIntegrator.callWorkFlow(bpaRequest);
-			nocService.createNocRequest(bpaRequest, mdmsData);
-			// this.addCalculation(applicationType, bpaRequest);
-			calculationService.addCalculationV2(bpaRequest, BPAConstants.APPLICATION_FEE_KEY, applicationType, serviceType);
+
+		Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
+		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
+		String serviceType = values.get(BPAConstants.SERVICETYPE);
+		this.validateCreateOC(applicationType, values, requestInfo, bpaRequest);
+		bpaValidator.validateCreate(bpaRequest, mdmsData, values);
+		if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
+			landService.addLandInfoToBPA(bpaRequest);
 		}
+		enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
+		wfIntegrator.callWorkFlow(bpaRequest);
+		nocService.createNocRequest(bpaRequest, mdmsData);
+		// this.addCalculation(applicationType, bpaRequest);
+		calculationService.addCalculationV2(bpaRequest, BPAConstants.APPLICATION_FEE_KEY, applicationType, serviceType);
 		repository.save(bpaRequest);
 		return bpaRequest.getBPA();
 	}
