@@ -243,8 +243,7 @@ public class EnrichmentService {
 			bpa.setApprovalNo(idResponses.get(0).getId());
 			//if (state.equalsIgnoreCase(BPAConstants.DOCVERIFICATION_STATE)
 			//		&& bpa.getRiskType().toString().equalsIgnoreCase(BPAConstants.LOW_RISKTYPE)) {
-			if (state.equalsIgnoreCase(BPAConstants.DOCVERIFICATION_STATE)) {			
-
+			
 				Object mdmsData = bpaUtil.mDMSCall(bpaRequest.getRequestInfo(), bpaRequest.getBPA().getTenantId());
 				Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
 						bpaRequest.getBPA());
@@ -269,7 +268,7 @@ public class EnrichmentService {
 				} catch (Exception e) {
 					log.warn("No approval conditions found for the application " + bpa.getApplicationNo());
 				}
-			}
+			//}
 		}
 	}
 
