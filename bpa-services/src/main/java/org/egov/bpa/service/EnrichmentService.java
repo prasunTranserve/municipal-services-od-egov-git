@@ -241,8 +241,9 @@ public class EnrichmentService {
 			List<IdResponse> idResponses = idGenRepository.getId(bpaRequest.getRequestInfo(), bpa.getTenantId(),
 					config.getPermitNoIdgenName(), config.getPermitNoIdgenFormat(), 1).getIdResponses();
 			bpa.setApprovalNo(idResponses.get(0).getId());
-			if (state.equalsIgnoreCase(BPAConstants.DOCVERIFICATION_STATE)
-					&& bpa.getRiskType().toString().equalsIgnoreCase(BPAConstants.LOW_RISKTYPE)) {
+			//if (state.equalsIgnoreCase(BPAConstants.DOCVERIFICATION_STATE)
+			//		&& bpa.getRiskType().toString().equalsIgnoreCase(BPAConstants.LOW_RISKTYPE)) {
+			if (state.equalsIgnoreCase(BPAConstants.DOCVERIFICATION_STATE)) {			
 
 				Object mdmsData = bpaUtil.mDMSCall(bpaRequest.getRequestInfo(), bpaRequest.getBPA().getTenantId());
 				Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
