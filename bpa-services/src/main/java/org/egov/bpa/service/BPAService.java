@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -119,8 +120,10 @@ public class BPAService {
 		if (!StringUtils.isEmpty(bpaRequest.getBPA().getApprovalNo())) {
 			bpaRequest.getBPA().setApprovalNo(null);
 		}
-
-		Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
+		@SuppressWarnings("unchecked")
+		LinkedHashMap<String, Object> edcr = edcrService.getEDCRDetails(bpaRequest);
+		//Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
+		Map<String, String> values = edcrService.validateEdcrPlanV2(bpaRequest, mdmsData, edcr);
 		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = values.get(BPAConstants.SERVICETYPE);
 		this.validateCreateOC(applicationType, values, requestInfo, bpaRequest);
@@ -128,7 +131,8 @@ public class BPAService {
 		if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
 			landService.addLandInfoToBPA(bpaRequest);
 		}
-		enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
+		//enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
+		enrichmentService.enrichBPACreateRequestV2(bpaRequest, mdmsData, values, edcr);			
 		wfIntegrator.callWorkFlow(bpaRequest);
 		nocService.createNocRequest(bpaRequest, mdmsData);
 		// this.addCalculation(applicationType, bpaRequest);
