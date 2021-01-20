@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.springframework.util.CollectionUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.TypeRef;
 
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
@@ -335,15 +337,19 @@ public class EnrichmentService {
 
 		DocumentContext context = generateERCRContext(edcr);
 
-		Double buildingHeight = extractBuildingHeight(context);
-
 		Double plotArea = extractPlotArea(context);
+
+		Double buildingHeight = extractBuildingHeight(context);
 
 		boolean isSpecialBuilding = isSpecialBuilding(context);
 
 		setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
 	}
 
+	/**
+	 * @param context
+	 * @return
+	 */
 	private boolean isSpecialBuilding(DocumentContext context) {
 		Set<String> specialBuildings = getSpecialBuildings();
 		String subOccupancyType = extractSubOccupancyType(context);
@@ -369,9 +375,11 @@ public class EnrichmentService {
 	}
 
 	private Double extractPlotArea(DocumentContext context) {
+		TypeRef<List<Double>> typeRef = new TypeRef<List<Double>>() {
+		};
 		if (null != context) {
 			Double plotArea = null;
-			JSONArray plotAreas = context.read(BPAConstants.PLOT_AREA_PATH);
+			List<Double> plotAreas = context.read(BPAConstants.PLOT_AREA_PATH, typeRef);
 			if (!CollectionUtils.isEmpty(plotAreas)) {
 				if (null != plotAreas.get(0)) {
 					String plotAreaString = plotAreas.get(0).toString();
@@ -387,7 +395,7 @@ public class EnrichmentService {
 	private String extractSubOccupancyType(DocumentContext context) {
 		if (null != context) {
 			String subOccupancyType = null;
-			JSONArray subOccupancyTypeJSONArray = context.read(BPAConstants.SUB_OCCUPANCY_TYPE_PATH);
+			LinkedList<String> subOccupancyTypeJSONArray = context.read(BPAConstants.SUB_OCCUPANCY_TYPE_PATH);
 			if (!CollectionUtils.isEmpty(subOccupancyTypeJSONArray)) {
 				if (null != subOccupancyTypeJSONArray.get(0)) {
 					subOccupancyType = subOccupancyTypeJSONArray.get(0).toString();
@@ -401,9 +409,11 @@ public class EnrichmentService {
 	}
 
 	private Double extractBuildingHeight(DocumentContext context) {
+		TypeRef<List<Double>> typeRef = new TypeRef<List<Double>>() {
+		};
 		if (null != context) {
 			Double buildingHeight = null;
-			JSONArray buildingHeights = context.read(BPAConstants.BUILDING_HEIGHT_PATH);
+			List<Double> buildingHeights = context.read(BPAConstants.BUILDING_HEIGHT_PATH, typeRef);
 			if (!CollectionUtils.isEmpty(buildingHeights)) {
 				if (null != buildingHeights.get(0)) {
 					String buildingHeightString = buildingHeights.get(0).toString();
