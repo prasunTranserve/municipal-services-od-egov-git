@@ -40,7 +40,6 @@ import com.jayway.jsonpath.TypeRef;
 
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
-import net.minidev.json.JSONArray;
 
 @Service
 @Slf4j
@@ -333,6 +332,10 @@ public class EnrichmentService {
 		setIdgenIds(bpaRequest);
 	}
 
+	/**
+	 * @param bpaRequest
+	 * @param edcr
+	 */
 	private void populateBusinessService(BPARequest bpaRequest, LinkedHashMap<String, Object> edcr) {
 
 		DocumentContext context = generateERCRContext(edcr);
@@ -374,6 +377,10 @@ public class EnrichmentService {
 		return null;
 	}
 
+	/**
+	 * @param context
+	 * @return
+	 */
 	private Double extractPlotArea(DocumentContext context) {
 		TypeRef<List<Double>> typeRef = new TypeRef<List<Double>>() {
 		};
@@ -392,6 +399,10 @@ public class EnrichmentService {
 		return null;
 	}
 
+	/**
+	 * @param context
+	 * @return
+	 */
 	private String extractSubOccupancyType(DocumentContext context) {
 		if (null != context) {
 			String subOccupancyType = null;
@@ -408,6 +419,10 @@ public class EnrichmentService {
 		return null;
 	}
 
+	/**
+	 * @param context
+	 * @return
+	 */
 	private Double extractBuildingHeight(DocumentContext context) {
 		TypeRef<List<Double>> typeRef = new TypeRef<List<Double>>() {
 		};
@@ -426,6 +441,12 @@ public class EnrichmentService {
 		return null;
 	}
 
+	/**
+	 * @param bpaRequest
+	 * @param buildingHeight
+	 * @param plotArea
+	 * @param isSpecialBuilding
+	 */
 	private void setBusinessService(BPARequest bpaRequest, Double buildingHeight, Double plotArea,
 			boolean isSpecialBuilding) {
 		if (null != buildingHeight && null != plotArea) {
@@ -454,6 +475,9 @@ public class EnrichmentService {
 		}
 	}
 
+	/**
+	 * @return
+	 */
 	private Set<String> getSpecialBuildings() {
 		Set<String> specialBuildings = new HashSet<>();
 		specialBuildings.add(BPAConstants.E_IB);
