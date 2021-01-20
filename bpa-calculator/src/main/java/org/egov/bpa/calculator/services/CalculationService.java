@@ -595,7 +595,8 @@ public class CalculationService {
 			}
 
 		}
-		System.out.println("purchasableFARFee:::::::::::::::::" + purchasableFARFee);
+		//System.out.println("PurchasableFARFee:::::::::::::::::" + purchasableFARFee);
+		log.info("PurchasableFARFee:::::::::::::::::" + purchasableFARFee);
 		return purchasableFARFee;
 
 	}
@@ -633,7 +634,9 @@ public class CalculationService {
 				securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
 			}
 		}
-		System.out.println("securityDeposit::::::::::::::" + securityDeposit);
+		//System.out.println("SecurityDeposit::::::::::::::" + securityDeposit);
+		log.info("SecurityDeposit::::::::::::::" + securityDeposit);
+
 		return securityDeposit;
 
 	}
@@ -832,7 +835,8 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			retentionFee = TWO_THOUSAND;
 		}
-		System.out.println("retentionFee:::::::::::" + retentionFee);
+		//System.out.println("RetentionFee:::::::::::" + retentionFee);
+		log.info("RetentionFee:::::::::::" + retentionFee);
 		return retentionFee;
 
 	}
@@ -856,7 +860,8 @@ public class CalculationService {
 				shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
 			}
 		}
-		System.out.println("shelterFee::::::::::::::::" + shelterFee);
+		//System.out.println("ShelterFee::::::::::::::::" + shelterFee);
+		log.info("ShelterFee::::::::::::::::" + shelterFee);
 		return shelterFee;
 
 	}
@@ -955,7 +960,8 @@ public class CalculationService {
 			}
 
 		}
-		System.out.println("welfareCess::::::::::::::" + welfareCess);
+		//System.out.println("WelfareCess::::::::::::::" + welfareCess);
+		log.info("WelfareCess::::::::::::::" + welfareCess);
 		return welfareCess;
 
 	}
@@ -1001,7 +1007,8 @@ public class CalculationService {
 			}
 
 		}
-		System.out.println("sanctionFee::::::::" + sanctionFee);
+		//System.out.println("SanctionFee::::::::" + sanctionFee);
+		log.info("SanctionFee::::::::" + sanctionFee);
 		return sanctionFee;
 	}
 
@@ -1392,7 +1399,7 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-			if (((StringUtils.hasText(riskType)) && !(riskType.equalsIgnoreCase("LOW"))) && (null != plotArea)) {
+			if (null != plotArea) {
 				paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
 				// feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
 				feeForDevelopmentOfLand = calculateConstantFeeNew(plotArea, 5);
@@ -1400,7 +1407,8 @@ public class CalculationService {
 			}
 
 		}
-		System.out.println("feeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
+		//System.out.println("FeeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
+		log.info("FeeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
 		return feeForDevelopmentOfLand;
 
 	}
@@ -1447,7 +1455,8 @@ public class CalculationService {
 			}
 
 		}
-		System.out.println("feeForBuildingOperation:::::::::::" + feeForBuildingOperation);
+		//System.out.println("FeeForBuildingOperation:::::::::::" + feeForBuildingOperation);
+		log.info("FeeForBuildingOperation:::::::::::" + feeForBuildingOperation);
 		return feeForBuildingOperation;
 	}
 
