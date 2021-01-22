@@ -354,10 +354,25 @@ public class EnrichmentService {
 	 * @return
 	 */
 	private boolean isSpecialBuilding(DocumentContext context) {
-		Set<String> specialBuildings = getSpecialBuildings();
-		String subOccupancyType = extractSubOccupancyType(context);
-		if (null != subOccupancyType && specialBuildings.contains(subOccupancyType)) {
-			return true;
+
+		/*
+		 * Set<String> specialBuildings = getSpecialBuildings(); String subOccupancyType
+		 * = extractSubOccupancyType(context); if (null != subOccupancyType &&
+		 * specialBuildings.contains(subOccupancyType)) { return true; }
+		 */
+		if (null != context) {
+			String specialBuilding = null;
+			LinkedList<String> specialBuildingJSONArray = context.read(BPAConstants.SPECIAL_BUILDING_PATH);
+			if (!CollectionUtils.isEmpty(specialBuildingJSONArray)) {
+				if (null != specialBuildingJSONArray.get(0)) {
+					specialBuilding = specialBuildingJSONArray.get(0).toString();
+					if (null != specialBuilding && specialBuilding.equalsIgnoreCase(BPAConstants.YES)) {
+						return true;
+					}
+				}
+
+			}
+
 		}
 
 		return false;

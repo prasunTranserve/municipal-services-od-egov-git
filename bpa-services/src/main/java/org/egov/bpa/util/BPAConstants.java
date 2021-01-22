@@ -370,6 +370,7 @@ public class BPAConstants {
 	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
 	public static final String SUB_OCCUPANCY_TYPE_PATH = "edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code";
 	public static final String BUILDING_HEIGHT_PATH = "edcrDetail.*.planDetail.virtualBuilding.buildingHeight";
+	public static final String SPECIAL_BUILDING_PATH = "edcrDetail.*.planDetail.planInformation.specialBuilding";
 
 	// Occupancies code
 	public static final String A = "A"; // Residential
@@ -555,5 +556,7 @@ public class BPAConstants {
 	public static final String BPA_PO_MODULE_CODE = "BPA2";
 	public static final String BPA_PM_MODULE_CODE = "BPA3";
 	public static final String BPA_DP_BP_MODULE_CODE = "BPA4";
+	
+	public static final String YES = "YES";
 
 }
