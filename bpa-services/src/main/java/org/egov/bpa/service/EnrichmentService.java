@@ -466,20 +466,23 @@ public class EnrichmentService {
 			boolean isSpecialBuilding) {
 		if (null != buildingHeight && null != plotArea) {
 			if (!isSpecialBuilding) {
-				if ((buildingHeight < 10) && (plotArea < 500)) {
+				if ((buildingHeight <= 10) || (plotArea <= 500)) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_PA_MODULE_CODE);
-				} else if ((buildingHeight > 10 && buildingHeight < 15) && (plotArea > 500 && plotArea < 4047)) {
+				}
+				if ((buildingHeight > 10 && buildingHeight <= 15) || (plotArea > 500 && plotArea <= 4047)) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_PO_MODULE_CODE);
-				} else if ((buildingHeight > 15 && buildingHeight < 30) && (plotArea > 4047 && plotArea < 10000)) {
+				}
+				if ((buildingHeight > 15 && buildingHeight <= 30) || (plotArea > 4047 && plotArea <= 10000)) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_PM_MODULE_CODE);
-				} else if ((buildingHeight > 30) && (plotArea > 10000)) {
+				}
+				if ((buildingHeight > 30) || (plotArea > 10000)) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_DP_BP_MODULE_CODE);
 				}
 
 			} else {
-				if (buildingHeight < 15) {
+				if (buildingHeight <= 15) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_PO_MODULE_CODE);
-				} else if (buildingHeight > 15 && buildingHeight < 30) {
+				} else if (buildingHeight > 15 && buildingHeight <= 30) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_PM_MODULE_CODE);
 				} else if (buildingHeight > 30) {
 					bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_DP_BP_MODULE_CODE);
