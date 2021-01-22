@@ -371,6 +371,7 @@ public class BPAConstants {
 	public static final String SUB_OCCUPANCY_TYPE_PATH = "edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code";
 	public static final String BUILDING_HEIGHT_PATH = "edcrDetail.*.planDetail.virtualBuilding.buildingHeight";
 	public static final String SPECIAL_BUILDING_PATH = "edcrDetail.*.planDetail.planInformation.specialBuilding";
+	public static final String BUSINESS_SERVICE_PATH = "edcrDetail.*.planDetail.planInformation.businessService";
 
 	// Occupancies code
 	public static final String A = "A"; // Residential

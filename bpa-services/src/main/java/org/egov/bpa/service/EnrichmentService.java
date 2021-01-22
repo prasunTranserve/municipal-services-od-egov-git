@@ -340,13 +340,34 @@ public class EnrichmentService {
 
 		DocumentContext context = generateERCRContext(edcr);
 
-		Double plotArea = extractPlotArea(context);
+		// Double plotArea = extractPlotArea(context);
 
-		Double buildingHeight = extractBuildingHeight(context);
+		// Double buildingHeight = extractBuildingHeight(context);
 
-		boolean isSpecialBuilding = isSpecialBuilding(context);
+		// boolean isSpecialBuilding = isSpecialBuilding(context);
 
-		setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
+		String businessService = extractBusinessService(context);
+
+		bpaRequest.getBPA().setBusinessService(businessService);
+
+		// setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
+
+	}
+
+	private String extractBusinessService(DocumentContext context) {
+		if (null != context) {
+			String businessService = null;
+			LinkedList<String> businessServiceJSONArray = context.read(BPAConstants.BUSINESS_SERVICE_PATH);
+			if (!CollectionUtils.isEmpty(businessServiceJSONArray)) {
+				if (null != businessServiceJSONArray.get(0)) {
+					businessService = businessServiceJSONArray.get(0).toString();
+				}
+
+			}
+			return businessService;
+
+		}
+		return null;
 	}
 
 	/**
