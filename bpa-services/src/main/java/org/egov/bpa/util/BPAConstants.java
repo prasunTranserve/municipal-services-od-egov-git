@@ -227,7 +227,7 @@ public class BPAConstants {
 	public static final String DOCVERIFICATION_STATE = "DOC_VERIFICATION_PENDING";
 	public static final String NOCVERIFICATION_STATUS = "NOC_VERIFICATION_INPROGRESS";
 
-	public static final String PENDING_APPROVAL_STATE = "PENDINGAPPROVAL";
+	public static final String PENDING_APPROVAL_STATE = "APPROVAL_PENDING";
 
 	public static final String APPL_FEE = "BPA.NC_APP_FEE";
 
