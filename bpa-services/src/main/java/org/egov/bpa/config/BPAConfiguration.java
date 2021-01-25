@@ -314,4 +314,15 @@ public class BPAConfiguration {
 
 	@Value("#{${workflowStatusFeeBusinessSrvMap}}")
 	private Map<String,Map<String,String>> workflowStatusFeeBusinessSrvMap;
+	
+	// Email
+	@Value("${notification.email.enabled}")
+	private Boolean isEmailNotificationEnabled;
+	
+	@Value("${kafka.topics.notification.email}")
+	private String emailNotifTopic;
+	
+	@Value("${notification.email.subject}")
+	private String emailSubject;
+
 }
