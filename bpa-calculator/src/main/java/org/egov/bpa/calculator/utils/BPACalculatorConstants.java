@@ -21,6 +21,10 @@ public class BPACalculatorConstants {
 	public static final String MDMS_BPA_PATH = "$.MdmsRes.BPA";
 
 	public static final String MDMS_BPA = "BPA";
+		public static final String MDMS_BPA1 = "BPA1";
+	public static final String MDMS_BPA2 = "BPA2";
+	public static final String MDMS_BPA3 = "BPA3";
+	public static final String MDMS_BPA4 = "BPA4";
 	
 	public static final String MDMS_BPA_LOW = "BPA_LOW";
 
