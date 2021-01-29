@@ -207,7 +207,7 @@ public class EnrichmentService {
 			if (bpa.getBusinessService().equals(BPAConstants.BPA_LOW_MODULE_CODE)) {
 				bpa.setRiskType(BPAConstants.LOW_RISKTYPE);
 			} else {
-				bpa.setRiskType(BPAConstants.HIGH_RISKTYPE);
+				bpa.setRiskType(BPAConstants.OTHER_RISKTYPE);
 			}
 		}
 
