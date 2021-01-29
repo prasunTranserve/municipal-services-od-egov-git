@@ -359,16 +359,19 @@ public class CalculationService {
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, String feeType) {
 		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType);
-		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap);
+		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap, estimates);
 		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
 		}
-		TaxHeadEstimate estimate = new TaxHeadEstimate();
-		estimate.setEstimateAmount(calculatedTotalAmout.setScale(0, BigDecimal.ROUND_UP));
-		estimate.setCategory(Category.FEE);
-		String taxHeadCode = utils.getTaxHeadCode(criteria.getBpa().getBusinessService(), criteria.getFeeType());
-		estimate.setTaxHeadCode(taxHeadCode);
-		estimates.add(estimate);
+		// TaxHeadEstimate estimate = new TaxHeadEstimate();
+		// estimate.setEstimateAmount(calculatedTotalAmout.setScale(0,
+		// BigDecimal.ROUND_UP));
+		// estimate.setCategory(Category.FEE);
+		// String taxHeadCode =
+		// utils.getTaxHeadCode(criteria.getBpa().getBusinessService(),
+		// criteria.getFeeType());
+		// estimate.setTaxHeadCode(taxHeadCode);
+		// estimates.add(estimate);
 	}
 
 	/**
@@ -490,9 +493,10 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap) {
+	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal calculatedTotalAmout = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -513,10 +517,10 @@ public class CalculationService {
 		if (StringUtils.hasText(applicationType) && (StringUtils.hasText(serviceType))
 				&& StringUtils.hasText(occupancyType) && (StringUtils.hasText(feeType))) {
 			if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE)) {
-				calculatedTotalAmout = calculateTotalScrutinyFee(paramMap);
+				calculatedTotalAmout = calculateTotalScrutinyFee(paramMap, estimates);
 
 			} else if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)) {
-				calculatedTotalAmout = calculateTotalPermitFee(paramMap);
+				calculatedTotalAmout = calculateTotalPermitFee(paramMap, estimates);
 			}
 
 		}
@@ -526,16 +530,17 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap) {
+	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
-		BigDecimal sanctionFee = calculateSanctionFee(paramMap);
-		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap);
-		BigDecimal shelterFee = calculateShelterFee(paramMap);
-		BigDecimal temporaryRetentionFee = calculateTemporaryRetentionFee(paramMap);
-		BigDecimal securityDeposit = calculateSecurityDeposit(paramMap);
-		BigDecimal purchasableFAR = calculatePurchasableFAR(paramMap);
+		BigDecimal sanctionFee = calculateSanctionFee(paramMap, estimates);
+		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap, estimates);
+		BigDecimal shelterFee = calculateShelterFee(paramMap, estimates);
+		BigDecimal temporaryRetentionFee = calculateTemporaryRetentionFee(paramMap, estimates);
+		BigDecimal securityDeposit = calculateSecurityDeposit(paramMap, estimates);
+		BigDecimal purchasableFAR = calculatePurchasableFAR(paramMap, estimates);
 
 		calculatedTotalPermitFee = (calculatedTotalPermitFee.add(sanctionFee).add(constructionWorkerWelfareCess)
 				.add(shelterFee).add(temporaryRetentionFee).add(securityDeposit).add(purchasableFAR)).setScale(2,
@@ -545,9 +550,10 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculatePurchasableFAR(Map<String, Object> paramMap) {
+	private BigDecimal calculatePurchasableFAR(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -595,7 +601,10 @@ public class CalculationService {
 			}
 
 		}
-		//System.out.println("PurchasableFARFee:::::::::::::::::" + purchasableFARFee);
+
+		generateTaxHeadEstimate(estimates, purchasableFARFee, "BPA_SANC_FEES.PUR_FAR_FEE", Category.FEE);
+
+		// System.out.println("PurchasableFARFee:::::::::::::::::" + purchasableFARFee);
 		log.info("PurchasableFARFee:::::::::::::::::" + purchasableFARFee);
 		return purchasableFARFee;
 
@@ -603,9 +612,10 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap) {
+	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
@@ -634,7 +644,9 @@ public class CalculationService {
 				securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
 			}
 		}
-		//System.out.println("SecurityDeposit::::::::::::::" + securityDeposit);
+
+		generateTaxHeadEstimate(estimates, securityDeposit, "BPA_SANC_FEES.SECURITY_DEPOSIT", Category.FEE);
+		// System.out.println("SecurityDeposit::::::::::::::" + securityDeposit);
 		log.info("SecurityDeposit::::::::::::::" + securityDeposit);
 
 		return securityDeposit;
@@ -817,9 +829,11 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap) {
+	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap,
+			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal retentionFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -835,7 +849,10 @@ public class CalculationService {
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			retentionFee = TWO_THOUSAND;
 		}
-		//System.out.println("RetentionFee:::::::::::" + retentionFee);
+
+		generateTaxHeadEstimate(estimates, retentionFee, "BPA_SANC_FEES.RETENTION_FEE", Category.FEE);
+
+		// System.out.println("RetentionFee:::::::::::" + retentionFee);
 		log.info("RetentionFee:::::::::::" + retentionFee);
 		return retentionFee;
 
@@ -843,9 +860,10 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateShelterFee(Map<String, Object> paramMap) {
+	private BigDecimal calculateShelterFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal shelterFee = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
@@ -860,7 +878,10 @@ public class CalculationService {
 				shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
 			}
 		}
-		//System.out.println("ShelterFee::::::::::::::::" + shelterFee);
+
+		generateTaxHeadEstimate(estimates, shelterFee, "BPA_SANC_FEES.SHELTER_FEE", Category.FEE);
+
+		// System.out.println("ShelterFee::::::::::::::::" + shelterFee);
 		log.info("ShelterFee::::::::::::::::" + shelterFee);
 		return shelterFee;
 
@@ -931,9 +952,11 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateConstructionWorkerWelfareCess(Map<String, Object> paramMap) {
+	private BigDecimal calculateConstructionWorkerWelfareCess(Map<String, Object> paramMap,
+			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal welfareCess = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -960,7 +983,9 @@ public class CalculationService {
 			}
 
 		}
-		//System.out.println("WelfareCess::::::::::::::" + welfareCess);
+		generateTaxHeadEstimate(estimates, welfareCess, "BPA_SANC_FEES.WELFARE_CESS", Category.FEE);
+
+		// System.out.println("WelfareCess::::::::::::::" + welfareCess);
 		log.info("WelfareCess::::::::::::::" + welfareCess);
 		return welfareCess;
 
@@ -968,9 +993,10 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap) {
+	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
@@ -1007,7 +1033,10 @@ public class CalculationService {
 			}
 
 		}
-		//System.out.println("SanctionFee::::::::" + sanctionFee);
+
+		generateTaxHeadEstimate(estimates, sanctionFee, "BPA_SANC_FEES.SANC_FEE", Category.FEE);
+
+		// System.out.println("SanctionFee::::::::" + sanctionFee);
 		log.info("SanctionFee::::::::" + sanctionFee);
 		return sanctionFee;
 	}
@@ -1362,12 +1391,13 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap) {
+	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal calculatedTotalScrutinyFee = BigDecimal.ZERO;
-		BigDecimal feeForDevelopmentOfLand = calculateFeeForDevelopmentOfLand(paramMap);
-		BigDecimal feeForBuildingOperation = calculateFeeForBuildingOperation(paramMap);
+		BigDecimal feeForDevelopmentOfLand = calculateFeeForDevelopmentOfLand(paramMap, estimates);
+		BigDecimal feeForBuildingOperation = calculateFeeForBuildingOperation(paramMap, estimates);
 		calculatedTotalScrutinyFee = (calculatedTotalScrutinyFee.add(feeForDevelopmentOfLand)
 				.add(feeForBuildingOperation)).setScale(2, BigDecimal.ROUND_UP);
 		return calculatedTotalScrutinyFee;
@@ -1375,9 +1405,11 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateFeeForDevelopmentOfLand(Map<String, Object> paramMap) {
+	private BigDecimal calculateFeeForDevelopmentOfLand(Map<String, Object> paramMap,
+			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal feeForDevelopmentOfLand = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -1407,7 +1439,11 @@ public class CalculationService {
 			}
 
 		}
-		//System.out.println("FeeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
+
+		generateTaxHeadEstimate(estimates, feeForDevelopmentOfLand, "BPA_APPL_FEES.LAND_DEV_FEE", Category.FEE);
+
+		// System.out.println("FeeForDevelopmentOfLand:::::::::::" +
+		// feeForDevelopmentOfLand);
 		log.info("FeeForDevelopmentOfLand:::::::::::" + feeForDevelopmentOfLand);
 		return feeForDevelopmentOfLand;
 
@@ -1415,9 +1451,11 @@ public class CalculationService {
 
 	/**
 	 * @param paramMap
+	 * @param estimates
 	 * @return
 	 */
-	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap) {
+	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap,
+			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
@@ -1455,7 +1493,9 @@ public class CalculationService {
 			}
 
 		}
-		//System.out.println("FeeForBuildingOperation:::::::::::" + feeForBuildingOperation);
+		generateTaxHeadEstimate(estimates, feeForBuildingOperation, "BPA_APPL_FEES.BLDNG_OPRN_FEE", Category.FEE);
+		// System.out.println("FeeForBuildingOperation:::::::::::" +
+		// feeForBuildingOperation);
 		log.info("FeeForBuildingOperation:::::::::::" + feeForBuildingOperation);
 		return feeForBuildingOperation;
 	}
@@ -1914,6 +1954,15 @@ public class CalculationService {
 
 		}
 		return totalAmount;
+	}
+
+	private void generateTaxHeadEstimate(ArrayList<TaxHeadEstimate> estimates, BigDecimal feeAmount, String taxHeadCode,
+			Category category) {
+		TaxHeadEstimate estimate = new TaxHeadEstimate();
+		estimate.setEstimateAmount(feeAmount.setScale(0, BigDecimal.ROUND_UP));
+		estimate.setCategory(category);
+		estimate.setTaxHeadCode(taxHeadCode);
+		estimates.add(estimate);
 	}
 
 	/*
