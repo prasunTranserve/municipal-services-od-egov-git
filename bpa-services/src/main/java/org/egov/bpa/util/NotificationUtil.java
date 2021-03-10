@@ -3,12 +3,12 @@ package org.egov.bpa.util;
 import static org.egov.bpa.util.BPAConstants.BILL_AMOUNT;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.egov.bpa.config.BPAConfiguration;
@@ -16,6 +16,9 @@ import org.egov.bpa.producer.Producer;
 import org.egov.bpa.repository.ServiceRequestRepository;
 import org.egov.bpa.service.EDCRService;
 import org.egov.bpa.web.model.BPA;
+import org.egov.bpa.web.model.BPARequest;
+import org.egov.bpa.web.model.Email;
+import org.egov.bpa.web.model.EmailRequest;
 import org.egov.bpa.web.model.EventRequest;
 import org.egov.bpa.web.model.RequestInfoWrapper;
 import org.egov.bpa.web.model.SMSRequest;
@@ -40,9 +43,9 @@ public class NotificationUtil {
 	private ServiceRequestRepository serviceRequestRepository;
 
 	private Producer producer;
-	
+
 	private EDCRService edcrService;
-	
+
 	private BPAUtil bpaUtil;
 
 	@Autowired
@@ -62,17 +65,15 @@ public class NotificationUtil {
 	/**
 	 * Creates customized message based on bpa
 	 * 
-	 * @param bpa
-	 *            The bpa for which message is to be sent
-	 * @param localizationMessage
-	 *            The messages from localization
+	 * @param bpa                 The bpa for which message is to be sent
+	 * @param localizationMessage The messages from localization
 	 * @return customized message based on bpa
 	 */
 	@SuppressWarnings("unchecked")
 	public String getCustomizedMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
 		String message = null, messageTemplate;
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
-		
+
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
 
@@ -99,21 +100,56 @@ public class NotificationUtil {
 	}
 
 	@SuppressWarnings("unchecked")
+	public String getCustomizedEmailMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
+		String message = null, messageTemplate;
+		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+
+		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
+		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
+		// String applicationType = "BUILDING_PLAN_SCRUTINY";
+		// String serviceType ="NEW_CONSTRUCTION";
+		// bpa.setStatus("INITIATED");
+
+		if (bpa.getStatus().toString().toUpperCase().equals(BPAConstants.STATUS_REJECTED)) {
+			messageTemplate = getMessageTemplate(
+					applicationType + "_" + serviceType + "_" + BPAConstants.STATUS_REJECTED,
+					localizationMessage + "_EMAIL");
+			message = getInitiatedMsg(bpa, messageTemplate, serviceType);
+		} else {
+
+			String messageCode = applicationType + "_" + serviceType + "_" + bpa.getWorkflow().getAction() + "_"
+					+ bpa.getStatus() + "_EMAIL";
+
+			messageTemplate = getMessageTemplate(messageCode, localizationMessage);
+			System.out.println("localizationMessage::: " + localizationMessage);
+			if (!StringUtils.isEmpty(messageTemplate)) {
+				message = getInitiatedMsg(bpa, messageTemplate, serviceType);
+
+				if (message.contains("<AMOUNT_TO_BE_PAID>")) {
+					BigDecimal amount = getAmountToBePaid(requestInfo, bpa);
+					message = message.replace("<AMOUNT_TO_BE_PAID>", amount.toString());
+				}
+			}
+		}
+		return message;
+	}
+
+	@SuppressWarnings("unchecked")
 	// As per OAP-304, keeping the same messages for Events and SMS, so removed
 	// "M_" prefix for the localization codes.
 	// so it will be same as the getCustomizedMsg
 	public String getEventsCustomizedMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
 		String message = null, messageTemplate;
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);		
+		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
-		
+
 		if (bpa.getStatus().toString().toUpperCase().equals(BPAConstants.STATUS_REJECTED)) {
 			messageTemplate = getMessageTemplate(BPAConstants.M_APP_REJECTED, localizationMessage);
 			message = getInitiatedMsg(bpa, messageTemplate, serviceType);
 		} else {
-			String messageCode = applicationType + "_" + serviceType + "_" + bpa.getWorkflow().getAction()
-					+ "_" + bpa.getStatus();
+			String messageCode = applicationType + "_" + serviceType + "_" + bpa.getWorkflow().getAction() + "_"
+					+ bpa.getStatus();
 			messageTemplate = getMessageTemplate(messageCode, localizationMessage);
 			if (!StringUtils.isEmpty(messageTemplate)) {
 				message = getInitiatedMsg(bpa, messageTemplate, serviceType);
@@ -130,10 +166,8 @@ public class NotificationUtil {
 	/**
 	 * Extracts message for the specific code
 	 * 
-	 * @param notificationCode
-	 *            The code for which message is required
-	 * @param localizationMessage
-	 *            The localization messages
+	 * @param notificationCode    The code for which message is required
+	 * @param localizationMessage The localization messages
 	 * @return message for the specific code
 	 */
 	@SuppressWarnings("rawtypes")
@@ -156,10 +190,8 @@ public class NotificationUtil {
 	/**
 	 * Fetches the amount to be paid from getBill API
 	 * 
-	 * @param requestInfo
-	 *            The RequestInfo of the request
-	 * @param license
-	 *            The TradeLicense object for which
+	 * @param requestInfo The RequestInfo of the request
+	 * @param license     The TradeLicense object for which
 	 * @return
 	 */
 	private BigDecimal getAmountToBePaid(RequestInfo requestInfo, BPA bpa) {
@@ -186,20 +218,15 @@ public class NotificationUtil {
 			}
 			amountToBePaid = BigDecimal.valueOf(amount);
 		} catch (Exception e) {
-			throw new CustomException("PARSING ERROR",
-					"Failed to parse the response using jsonPath: "
-							+ BILL_AMOUNT);
+			throw new CustomException("PARSING ERROR", "Failed to parse the response using jsonPath: " + BILL_AMOUNT);
 		}
 		return amountToBePaid;
 	}
 
-	
-
 	/**
 	 * Returns the uri for the localization call
 	 * 
-	 * @param tenantId
-	 *            TenantId of the propertyRequest
+	 * @param tenantId TenantId of the propertyRequest
 	 * @return The uri for localization search call
 	 */
 	public StringBuilder getUri(String tenantId, RequestInfo requestInfo) {
@@ -221,10 +248,8 @@ public class NotificationUtil {
 	/**
 	 * Fetches messages from localization service
 	 * 
-	 * @param tenantId
-	 *            tenantId of the BPA
-	 * @param requestInfo
-	 *            The requestInfo of the request
+	 * @param tenantId    tenantId of the BPA
+	 * @param requestInfo The requestInfo of the request
 	 * @return Localization messages for the module
 	 */
 	@SuppressWarnings("rawtypes")
@@ -239,10 +264,8 @@ public class NotificationUtil {
 	/**
 	 * Creates customized message for initiate
 	 * 
-	 * @param bpa
-	 *            tenantId of the bpa
-	 * @param message
-	 *            Message from localization for initiate
+	 * @param bpa     tenantId of the bpa
+	 * @param message Message from localization for initiate
 	 * @return customized message for initiate
 	 */
 	@SuppressWarnings("unchecked")
@@ -252,12 +275,10 @@ public class NotificationUtil {
 		return message;
 	}
 
-
 	/**
 	 * Send the SMSRequest on the SMSNotification kafka topic
 	 * 
-	 * @param smsRequestList
-	 *            The list of SMSRequest to be sent
+	 * @param smsRequestList The list of SMSRequest to be sent
 	 */
 	public void sendSMS(List<org.egov.bpa.web.model.SMSRequest> smsRequestList, boolean isSMSEnabled) {
 		if (isSMSEnabled) {
@@ -270,13 +291,22 @@ public class NotificationUtil {
 		}
 	}
 
+	public void sendNewEmail(List<org.egov.bpa.web.model.EmailRequest> emailRequestList, boolean isEmailEnabled) {
+		if (isEmailEnabled) {
+			if (CollectionUtils.isEmpty(emailRequestList))
+				log.debug("Messages from localization couldn't be fetched!");
+			for (EmailRequest emailRequest : emailRequestList) {
+				producer.push(config.getEmailNotifTopic(), emailRequest);
+				log.debug("EMail Ids: " + emailRequest.getEmail() + " Messages: " + emailRequest.getEmail().getBody());
+			}
+		}
+	}
+
 	/**
 	 * Creates sms request for the each owners
 	 * 
-	 * @param message
-	 *            The message for the specific bpa
-	 * @param mobileNumberToOwnerName
-	 *            Map of mobileNumber to OwnerName
+	 * @param message                 The message for the specific bpa
+	 * @param mobileNumberToOwnerName Map of mobileNumber to OwnerName
 	 * @return List of SMSRequest
 	 */
 	public List<SMSRequest> createSMSRequest(String message, Map<String, String> mobileNumberToOwner) {
@@ -288,8 +318,22 @@ public class NotificationUtil {
 		}
 		return smsRequest;
 	}
-	
-	
+
+	public List<EmailRequest> createNewEmailRequest(BPARequest bpa, String message, Map<String, String> emailToOwner,
+			String subject) {
+		List<EmailRequest> emailRequest = new LinkedList<>();
+		Set<String> strings = new LinkedHashSet<>();
+		for (Map.Entry<String, String> entryset : emailToOwner.entrySet()) {
+			String customizedMsg = message.replace("<1>", entryset.getValue());
+
+			strings.add(entryset.getKey());
+
+			emailRequest.add(new EmailRequest(bpa.getRequestInfo(), new Email(strings, subject, customizedMsg, true)));
+		}
+
+		return emailRequest;
+	}
+
 	/**
 	 * Pushes the event request to Kafka Queue.
 	 * 
@@ -300,8 +344,5 @@ public class NotificationUtil {
 
 		log.debug("STAKEHOLDER:: " + request.getEvents().get(0).getDescription());
 	}
-	
-	
-
 
 }
