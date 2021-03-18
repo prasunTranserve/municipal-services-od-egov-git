@@ -1,5 +1,6 @@
 package org.egov.bpa.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,7 +51,7 @@ public class NocService {
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		log.debug("applicationType in NOC is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
 		log.debug("serviceType in NOC is " + edcrResponse.get(BPAConstants.SERVICETYPE));
-		
+
 		String riskType = "ALL";
 		if (StringUtils.isEmpty(bpa.getRiskType()) || bpa.getRiskType().equalsIgnoreCase("LOW")) {
 			riskType = bpa.getRiskType();
@@ -60,20 +61,36 @@ public class NocService {
 		String nocPath = BPAConstants.NOCTYPE_REQUIRED_MAP
 				.replace("{1}", edcrResponse.get(BPAConstants.APPLICATIONTYPE))
 				.replace("{2}", edcrResponse.get(BPAConstants.SERVICETYPE)).replace("{3}", riskType);
-		
-		Map<String,String> nocSourceCnofig = config.getNocSourceConfig();
+
+		Map<String, String> nocSourceCnofig = config.getNocSourceConfig();
+
+//		String reqNocData = edcrResponse.get(BPAConstants.REQUIRED_NOCS);
+//		List<String> requiredNOCs = getStringToList(reqNocData);
 
 		List<Object> nocMappingResponse = (List<Object>) JsonPath.read(mdmsData, nocPath);
 		List<String> nocTypes = JsonPath.read(nocMappingResponse, "$..type");
 		if (!CollectionUtils.isEmpty(nocTypes)) {
 			for (String nocType : nocTypes) {
+//				if (requiredNOCs.contains(nocType)) {
+//					NocRequest nocRequest = NocRequest.builder()
+//							.noc(Noc.builder().tenantId(bpa.getTenantId())
+//									.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
+//									.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
+//									.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+//									.build())
+//							.requestInfo(bpaRequest.getRequestInfo()).build();
+//					createNoc(nocRequest);
+//
+//				}
 				NocRequest nocRequest = NocRequest.builder()
 						.noc(Noc.builder().tenantId(bpa.getTenantId())
 								.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
-								.sourceRefId(bpa.getApplicationNo()).nocType(nocType).source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+								.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
+								.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
 								.build())
 						.requestInfo(bpaRequest.getRequestInfo()).build();
 				createNoc(nocRequest);
+
 			}
 		} else {
 			log.debug("NOC Mapping is not found!!");
@@ -133,6 +150,7 @@ public class NocService {
 
 	/**
 	 * fetch the noc records with sourceRefId
+	 * 
 	 * @param bpaRequest
 	 * @return
 	 */
@@ -149,19 +167,21 @@ public class NocService {
 	}
 
 	/**
-	 * Calls the iniate  workflow for the applicable noc records
+	 * Calls the iniate workflow for the applicable noc records
+	 * 
 	 * @param bpaRequest
 	 * @param mdmsData
 	 */
 	public void initiateNocWorkflow(BPARequest bpaRequest, Object mdmsData) {
 		log.debug("====> initiateNocWorkflow");
 		List<Noc> nocs = fetchNocRecords(bpaRequest);
-		log.debug("====> initiateNocWorkflow = no of noc "+ nocs.size());
+		log.debug("====> initiateNocWorkflow = no of noc " + nocs.size());
 		initiateNocWorkflow(bpaRequest, mdmsData, nocs);
 	}
-	
+
 	/**
-	 * Calls the  approve offline workflow for the applicable noc records
+	 * Calls the approve offline workflow for the applicable noc records
+	 * 
 	 * @param bpaRequest
 	 * @param mdmsData
 	 */
@@ -172,6 +192,7 @@ public class NocService {
 
 	/**
 	 * fetches the applicable offline noc's and mark them as approved
+	 * 
 	 * @param bpaRequest
 	 * @param mdmsData
 	 * @param nocs
@@ -179,24 +200,27 @@ public class NocService {
 	@SuppressWarnings("unchecked")
 	private void approveOfflineNoc(BPARequest bpaRequest, Object mdmsData, List<Noc> nocs) {
 		BPA bpa = bpaRequest.getBPA();
-		log.debug(" auto approval of offline noc with bpa status "+ bpa.getStatus() +" and "+bpa.getWorkflow().getAction());
+		log.debug(" auto approval of offline noc with bpa status " + bpa.getStatus() + " and "
+				+ bpa.getWorkflow().getAction());
 		if (bpa.getStatus().equalsIgnoreCase(BPAConstants.NOCVERIFICATION_STATUS)
 				&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_FORWORD)) {
 			List<String> statuses = Arrays.asList(config.getNocValidationCheckStatuses().split(","));
 			List<String> offlneNocs = (List<String>) JsonPath.read(mdmsData, BPAConstants.NOCTYPE_OFFLINE_MAP);
-			log.debug(" auto approval of offline noc with bpa status and no of nocs "+offlneNocs.size()+" noc statuses"+ statuses.toString());
+			log.debug(" auto approval of offline noc with bpa status and no of nocs " + offlneNocs.size()
+					+ " noc statuses" + statuses.toString());
 			if (!CollectionUtils.isEmpty(nocs)) {
 				nocs.forEach(noc -> {
-					log.debug(" auto approval of offline noc "+ noc.getApplicationNo() +" _"+noc.getApplicationStatus());
-						if (offlneNocs.contains(noc.getNocType()) && !statuses.contains(noc.getApplicationStatus())) {
-							Workflow workflow = Workflow.builder().action(config.getNocAutoApproveAction()).build();
-							noc.setWorkflow(workflow);
-							NocRequest nocRequest = NocRequest.builder().noc(noc)
-									.requestInfo(bpaRequest.getRequestInfo()).build();
-							updateNoc(nocRequest);
-							log.debug("Offline NOC is Auto-Approved " + noc.getApplicationNo());
-						}
-					
+					log.debug(" auto approval of offline noc " + noc.getApplicationNo() + " _"
+							+ noc.getApplicationStatus());
+					if (offlneNocs.contains(noc.getNocType()) && !statuses.contains(noc.getApplicationStatus())) {
+						Workflow workflow = Workflow.builder().action(config.getNocAutoApproveAction()).build();
+						noc.setWorkflow(workflow);
+						NocRequest nocRequest = NocRequest.builder().noc(noc).requestInfo(bpaRequest.getRequestInfo())
+								.build();
+						updateNoc(nocRequest);
+						log.debug("Offline NOC is Auto-Approved " + noc.getApplicationNo());
+					}
+
 				});
 			}
 		}
@@ -204,7 +228,8 @@ public class NocService {
 
 	/**
 	 *
-	 *initate the workflow of applicale NOc to the bpa
+	 * initate the workflow of applicale NOc to the bpa
+	 * 
 	 * @param bpaRequest
 	 * @param mdmsData
 	 * @param nocs
@@ -212,21 +237,22 @@ public class NocService {
 	@SuppressWarnings("unchecked")
 	private void initiateNocWorkflow(BPARequest bpaRequest, Object mdmsData, List<Noc> nocs) {
 		BPA bpa = bpaRequest.getBPA();
-		
+
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		String nocPath = BPAConstants.NOC_TRIGGER_STATE_MAP
 				.replace("{1}", edcrResponse.get(BPAConstants.APPLICATIONTYPE))
-				.replace("{2}", edcrResponse.get(BPAConstants.SERVICETYPE))
-				.replace("{3}", (StringUtils.isEmpty(bpa.getRiskType()) || !bpa.getRiskType().equalsIgnoreCase("LOW"))
-						? "ALL" : bpa.getRiskType().toString());
+				.replace("{2}", edcrResponse.get(BPAConstants.SERVICETYPE)).replace("{3}",
+						(StringUtils.isEmpty(bpa.getRiskType()) || !bpa.getRiskType().equalsIgnoreCase("LOW")) ? "ALL"
+								: bpa.getRiskType().toString());
 		List<Object> triggerActionStates = (List<Object>) JsonPath.read(mdmsData, nocPath);
 		log.debug("====> initiateNocWorkflow = triggerStates" + triggerActionStates.toString());
 		if (!CollectionUtils.isEmpty(triggerActionStates)
 				&& triggerActionStates.get(0).toString().equalsIgnoreCase(bpa.getStatus())) {
 			if (!CollectionUtils.isEmpty(nocs)) {
 				nocs.forEach(noc -> {
-					log.debug("====> noc application status " + noc.getApplicationStatus()  +" for noc appno "+ noc.getApplicationNo());
-					if(!noc.getApplicationStatus().equalsIgnoreCase(BPAConstants.INPROGRESS_STATUS)){
+					log.debug("====> noc application status " + noc.getApplicationStatus() + " for noc appno "
+							+ noc.getApplicationNo());
+					if (!noc.getApplicationStatus().equalsIgnoreCase(BPAConstants.INPROGRESS_STATUS)) {
 						noc.setWorkflow(Workflow.builder().action(config.getNocInitiateAction()).build());
 						NocRequest nocRequest = NocRequest.builder().noc(noc).requestInfo(bpaRequest.getRequestInfo())
 								.build();
@@ -239,7 +265,9 @@ public class NocService {
 	}
 
 	/**
-	 * handles the BPA reject and revocate state by voiding the NOC applicable to BPA
+	 * handles the BPA reject and revocate state by voiding the NOC applicable to
+	 * BPA
+	 * 
 	 * @param bpaRequest
 	 */
 	public void handleBPARejectedStateForNoc(BPARequest bpaRequest) {
@@ -247,13 +275,21 @@ public class NocService {
 		BPA bpa = bpaRequest.getBPA();
 
 		nocs.forEach(noc -> {
-					noc.setWorkflow(Workflow.builder().action(config.getNocVoidAction())
-							.comment(bpa.getWorkflow().getComments()).build());
-					NocRequest nocRequest = NocRequest.builder().noc(noc).requestInfo(bpaRequest.getRequestInfo())
-							.build();
-					updateNoc(nocRequest);
-					log.debug("Noc Voided having applicationNo : " + noc.getApplicationNo());
-			
+			noc.setWorkflow(Workflow.builder().action(config.getNocVoidAction())
+					.comment(bpa.getWorkflow().getComments()).build());
+			NocRequest nocRequest = NocRequest.builder().noc(noc).requestInfo(bpaRequest.getRequestInfo()).build();
+			updateNoc(nocRequest);
+			log.debug("Noc Voided having applicationNo : " + noc.getApplicationNo());
+
 		});
 	}
+
+//	private List<String> getStringToList(String data) {
+//		List<String> list = new ArrayList<String>();
+//		if (data != null) {
+//			data = data.replace("[", "").replace("]", "");
+//			list = Arrays.asList(data.split(",", -1));
+//		}
+//		return list;
+//	}
 }

@@ -90,9 +90,10 @@ public class LandService {
 			criteria.setMobileNumber(null);
 			criteria.setIds(landIds);
 		}
-
-		landInfos = fetchLandInfoData(criteria, requestInfo);
-
+                else
+		{	
+		        landInfos = fetchLandInfoData(criteria, requestInfo);
+		}
 		if (!CollectionUtils.isEmpty(landInfos)) {
 			log.debug("Received final landInfo response in service call..");
 		}
