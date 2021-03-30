@@ -69,6 +69,9 @@ public class EnrichmentService {
 	@Autowired
 	private BPAUtil util;
 
+	@Autowired
+	private UserService userService;
+
 	/**
 	 * encrich create BPA Reqeust by adding audidetails and uuids
 	 * 
