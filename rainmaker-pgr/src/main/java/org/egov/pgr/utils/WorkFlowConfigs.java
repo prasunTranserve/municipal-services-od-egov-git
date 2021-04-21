@@ -28,6 +28,8 @@ public class WorkFlowConfigs {
 	public static final String STATUS_REJECTED = "rejected";
 	public static final String STATUS_RESOLVED = "resolved";
 	public static final String STATUS_REASSIGN_REQUESTED = "reassignrequested";
+	public static final String STATUS_ESCALATED_LEVEL1_PENDING = "escalatedlevel1pending";
+	public static final String STATUS_ESCALATED_LEVEL2_PENDING = "escalatedlevel2pending";
 	
 	private WorkFlowConfigs() {}
 
@@ -51,9 +53,10 @@ public class WorkFlowConfigs {
 		map.put(ACTION_CLOSE, STATUS_CLOSED);
 		map.put(ACTION_REJECT, STATUS_REJECTED);
 		map.put(ACTION_RESOLVE, STATUS_RESOLVED);
-		map.put(ACTION_REOPEN, STATUS_OPENED);
+		//map.put(ACTION_REOPEN, STATUS_OPENED);
 		map.put(ACTION_REASSIGN, STATUS_ASSIGNED);
 		map.put(ACTION_REQUEST_FOR_REASSIGN, STATUS_REASSIGN_REQUESTED);
+		map.put(ACTION_REOPEN, STATUS_ESCALATED_LEVEL1_PENDING);
 		return map;
 	}
 

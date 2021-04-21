@@ -76,4 +76,6 @@ public class ServiceReqSearchCriteria {
 	@JsonProperty("offset")
 	private Long offset;
 	
+	@JsonProperty("slaEndTime")
+	private Long slaEndTime;
 }

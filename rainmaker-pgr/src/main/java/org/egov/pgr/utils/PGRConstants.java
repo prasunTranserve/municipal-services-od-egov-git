@@ -17,6 +17,7 @@ public class PGRConstants {
 	//Notification
 	public static final String TEMPLATE_COMPLAINT_EMAIL = "./src/main/resources/email-templates/velocityEmailNotifSample.vm";
 	
+	public static final String  TENANT_ID = "od.odisha";
 	
 	public static final String SEARCHER_PGR_MOD_NAME = "rainmaker-pgr-V2";
 	public static final String SEARCHER_SRSEARCH_DEF_NAME = "serviceSearchWithDetails";
@@ -79,7 +80,7 @@ public class PGRConstants {
 	
 	public static final String LOCATION__BOUNDARY_NAMES_JSONPATH = "$.TenantBoundary.*.boundary.*.name";
 	public static final String LOCATION__BOUNDARY_CODES_JSONPATH = "$.TenantBoundary.*.boundary.*.code";
-	public static final String LOCATION__BOUNDARY_HIERARCHYTYPE_ADMIN = "ADMIN";
+	public static final String LOCATION__BOUNDARY_HIERARCHYTYPE_ADMIN = "REVENUE";
 	public static final String LOCATION__BOUNDARY_BOUNDARYTYPE_LOCALITY = "Locality";
 
 	
@@ -124,14 +125,17 @@ public class PGRConstants {
 	public static final String ROLE_GRO = "GRO";
 	public static final String ROLE_DGRO = "DGRO";
 	public static final String ROLE_CSR = "CSR";
-	
+	public static final String ROLE_ESCALATION_OFFICER1 = "ESCALATION_OFFICER1";
+	public static final String ROLE_ESCALATION_OFFICER2 = "ESCALATION_OFFICER2";
+	public static final String ROLE_SYSTEM = "SYSTEM";
 	
 	public static final String ROLE_NAME_CITIZEN = "Citizen";
 	public static final String ROLE_NAME_EMPLOYEE = "Employee";
 	public static final String ROLE_NAME_GRO = "Grievance Routing Officer";
 	public static final String ROLE_NAME_DGRO = "Department Grievance Routing Officer";
 	public static final String ROLE_NAME_CSR = "Customer Support Representative";
-	
+	public static final String ROLE_NAME_ESCALATION_OFFICER1 = "1st level escalation officer";
+	public static final String ROLE_NAME_ESCALATION_OFFICER2 = "2nd level escalation officer";
 	
 	private static Map<String, String> statusNotifKeyMap = prepareStatusNotifKeyMap();
 

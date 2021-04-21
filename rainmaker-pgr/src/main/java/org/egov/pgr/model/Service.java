@@ -125,7 +125,11 @@ public class Service   {
     
     REASSIGNREQUESTED("reassignrequested"),
     
-    RESOLVED("resolved");    
+    RESOLVED("resolved"),
+    ESCALATEDLEVEL1PENDING("escalatedlevel1pending"),
+	
+	ESCALATEDLEVEL2PENDING("escalatedlevel2pending"),
+	;
 
     private String value;
 

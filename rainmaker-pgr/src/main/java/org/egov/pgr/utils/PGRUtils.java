@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
@@ -482,6 +483,9 @@ public class PGRUtils {
 		if(roles.contains(PGRConstants.ROLE_CITIZEN)) {
 			return PGRConstants.ROLE_CITIZEN;
 		}
+		if(roles.contains(PGRConstants.ROLE_SYSTEM)) {
+			return PGRConstants.ROLE_SYSTEM;
+		}
 		for (Entry<Integer, String> entry : PGRUtils.getEmployeeRolesPrecedenceMap().entrySet()) {
 			String currentValue = entry.getValue();
 			if (roles.contains(currentValue))
@@ -583,5 +587,62 @@ public class PGRUtils {
 		} else
 			errors.add(errorMsg);
 	}
+	/**
+	 * Check whether the complaint is auto escalated without resolved
+	 * 
+	 * @param actionInfo
+	 * @return boolean
+	 */
+	public boolean checkAutoEscalatedWithoutResolved(ActionHistory history) {
+		
+		List<String> status = history.getActions().stream().map(ActionInfo::getStatus).collect(Collectors.toList());
+		
+		if (status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) && !status.contains(WorkFlowConfigs.STATUS_RESOLVED)) {
+			return true;
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * Check whether the escalated complaint is resolving/rejecting by any employee
+	 * 
+	 * @param actionInfo
+	 * @return boolean
+	 */
+	public boolean checkComplaintAlreadyEscalated(ActionHistory history, String action) {
+		List<ActionInfo> infos = history.getActions();
+		
+		for (int i = 0; i <= infos.size() - 1; i++) {
+			String status = infos.get(i).getStatus();
+			if ((WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(status)
+					|| WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(status))
+					&& (WorkFlowConfigs.ACTION_RESOLVE.equalsIgnoreCase(action) 
+						|| WorkFlowConfigs.ACTION_REJECT.equalsIgnoreCase(action))){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check whether the complaint is reopened for 2nd time or not
+	 * 
+	 * @param actionInfo
+	 * @return boolean
+	 */
+	public boolean checkReopen2ndTime(ActionHistory history, String action) {
+		List<ActionInfo> infos = history.getActions();
+		
+		for (int i = 0; i <= infos.size() - 1; i++) {
+			String status = infos.get(i).getStatus();
+			if (WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(status)
+					&& WorkFlowConfigs.ACTION_REOPEN.equalsIgnoreCase(action)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 
 }
