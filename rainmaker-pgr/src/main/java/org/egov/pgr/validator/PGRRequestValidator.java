@@ -335,6 +335,16 @@ public class PGRRequestValidator {
 		List<String> roles = serviceRequest.getRequestInfo().getUserInfo().getRoles().stream()
 				.map(Role::getCode).collect(Collectors.toList());
 		List<String> actions = null;
+		List<String> roleCodes = serviceRequest.getRequestInfo().getUserInfo()
+				.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+		String precedentRole = pgrUtils.getPrecedentRole(roleCodes);
+		
+		if(PGRConstants.ROLE_EMPLOYEE.equalsIgnoreCase(precedentRole)) {
+			if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER1;
+			else if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER2;
+		}
 		actions = roleActionMap.get(pgrUtils.getPrecedentRole(serviceRequest.getRequestInfo().getUserInfo()
 				.getRoles().stream().map(Role::getCode).collect(Collectors.toList())));
 		final List<String> actionsAllowedForTheRole = actions;

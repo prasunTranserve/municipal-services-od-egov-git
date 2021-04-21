@@ -80,8 +80,9 @@ public class PGRConstants {
 	
 	public static final String LOCATION__BOUNDARY_NAMES_JSONPATH = "$.TenantBoundary.*.boundary.*.name";
 	public static final String LOCATION__BOUNDARY_CODES_JSONPATH = "$.TenantBoundary.*.boundary.*.code";
-	public static final String LOCATION__BOUNDARY_HIERARCHYTYPE_ADMIN = "REVENUE";
+	public static final String LOCATION__BOUNDARY_HIERARCHYTYPE_ADMIN = "ADMIN";
 	public static final String LOCATION__BOUNDARY_BOUNDARYTYPE_LOCALITY = "Locality";
+	public static final String COMPLAINT_JSONPATH = "$.services.*.services";
 
 	
 	public static final String SEARCHER_RESPONSE_TEXT = "Searcher response : ";

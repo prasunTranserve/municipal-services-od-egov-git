@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -452,9 +453,63 @@ public class GrievanceService {
 			else
 				throw e;
 		}
-		searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
-		Object response = serviceRequestRepository.fetchResult(uri, searcherRequest);
-		log.debug(PGRConstants.SEARCHER_RESPONSE_TEXT + response);
+		
+		Object response = null;
+		
+		List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+		
+		if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				&& CollectionUtils.isEmpty(serviceReqSearchCriteria.getServiceRequestId())) {
+		
+			
+			//if any complaint is assigned to an escalated officer via autorouting then fetch that complaints also.
+			try {
+				List<String> status = new ArrayList<String>();
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
+				}
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
+				}
+				serviceReqSearchCriteria.setStatus(status);
+				uri = new StringBuilder();
+				enrichRequest(requestInfo, serviceReqSearchCriteria);
+				searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+				Object assignedResponse = serviceRequestRepository.fetchResult(uri, searcherRequest);
+				
+				if(null != assignedResponse) {
+					List assignedServiceList = JsonPath.read(assignedResponse, PGRConstants.COMPLAINT_JSONPATH);
+					if(!CollectionUtils.isEmpty(assignedServiceList)) {
+						LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>)assignedResponse;
+						List obj = (List)map.get("services");
+						
+						List<Object> finalObj = new ArrayList<Object>();
+						finalObj.addAll(obj);
+						
+						LinkedHashMap<String, Object> map1 = (LinkedHashMap<String, Object>)response;
+						if(null != map1) {
+							List obj1 = (List)map1.get("services");
+							
+							finalObj.addAll(obj1);
+							map1.put("services", finalObj);
+						}else {
+							response = assignedResponse;
+						}
+					}
+				}
+			} catch (CustomException e) {
+				if (e.getMessage().equals(ErrorConstants.NO_DATA_MSG))
+					log.debug("No complaint is assigned to this escalated officer {}",requestInfo.getUserInfo().getUserName());
+			}
+		}else {
+			searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+			response = serviceRequestRepository.fetchResult(uri, searcherRequest);
+			log.debug(PGRConstants.SEARCHER_RESPONSE_TEXT + response);
+		}
+		
+		
 		if (null == response)
 			return pGRUtils.getDefaultServiceResponse(requestInfo);
 		ServiceResponse serviceResponse = prepareResult(response, requestInfo);
@@ -536,7 +591,23 @@ public class GrievanceService {
 			 */
 			else if (precedentRole.equalsIgnoreCase(PGRConstants.ROLE_EMPLOYEE)) {
 				if (StringUtils.isEmpty(serviceReqSearchCriteria.getAssignedTo()) && CollectionUtils.isEmpty(serviceReqSearchCriteria.getServiceRequestId())) {
-					serviceReqSearchCriteria.setAssignedTo(requestInfo.getUserInfo().getId().toString());
+					
+					List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+					
+					if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+							&& (!CollectionUtils.isEmpty(serviceReqSearchCriteria.getStatus()) 
+								&& (serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)))) {
+						//Do not need to set assign anyone for escalation flow if the status is pending
+					}
+					/**if(!CollectionUtils.isEmpty(serviceReqSearchCriteria.getStatus()) 
+							&& (serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+								|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING))){
+						//Do not need to set assign anyone for escalation flow if the status is pending
+					}**/
+					else {
+						serviceReqSearchCriteria.setAssignedTo(requestInfo.getUserInfo().getId().toString());
+					}
 				}
 			} 
 			/**
@@ -702,11 +773,43 @@ public class GrievanceService {
 			else
 				throw e;
 		}
-		searcherRequest = pGRUtils.prepareCountRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
-		Object response = serviceRequestRepository.fetchResult(uri, searcherRequest);
-		if (null == response)
-			return pGRUtils.getDefaultServiceResponse(requestInfo);
-		Double count = JsonPath.read(response, PGRConstants.PG_JSONPATH_COUNT);
+		Object response = null;
+		Double count = 0.0;
+		
+		List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+		
+		if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				&& CollectionUtils.isEmpty(serviceReqSearchCriteria.getServiceRequestId())) {
+
+			//if any complaint is assigned to an escalated officer via autorouting then fetch that complaints also.
+			try {
+				List<String> status = new ArrayList<String>();
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
+				}
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
+				}
+				serviceReqSearchCriteria.setStatus(status);
+				uri = new StringBuilder();
+				enrichRequest(requestInfo, serviceReqSearchCriteria);
+				searcherRequest = pGRUtils.prepareCountRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+				Object assignedResponse = serviceRequestRepository.fetchResult(uri, searcherRequest);
+				
+				if(null != assignedResponse) {
+					count = count+ (Double)JsonPath.read(assignedResponse, PGRConstants.PG_JSONPATH_COUNT);	
+				}
+			} catch (CustomException e) {
+				if (e.getMessage().equals(ErrorConstants.NO_DATA_MSG))
+					log.debug("No complaint is assigned to this escalated officer {}",requestInfo.getUserInfo().getUserName());
+			}
+		}else {
+			searcherRequest = pGRUtils.prepareCountRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+			response = serviceRequestRepository.fetchResult(uri, searcherRequest);
+			count = JsonPath.read(response, PGRConstants.PG_JSONPATH_COUNT);
+		}
 		return new CountResponse(factory.createResponseInfoFromRequestInfo(requestInfo, true), count);
 	}
 
