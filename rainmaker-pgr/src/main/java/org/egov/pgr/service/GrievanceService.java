@@ -190,6 +190,16 @@ public class GrievanceService {
 			servReq.getAddressDetail().setAuditDetails(auditDetails);
 			servReq.getAddressDetail().setTenantId(tenantId);
 			servReq.setAddressId(servReq.getAddressDetail().getUuid());
+			
+			List<Object> serivceDefs = getServiceType(servReq, requestInfo);
+			if(!CollectionUtils.isEmpty(serivceDefs))
+				if((Integer)serivceDefs.get(3) > 0) {
+					long slaEndTime = pGRUtils.getLastDayTime(Integer.parseInt(serivceDefs.get(3).toString()));
+					log.info("sla end time set to midnight:"+slaEndTime);
+					//servReq.setSlaEndTime(auditDetails.getCreatedTime() + Long.parseLong(serivceDefs.get(3).toString())*24*60*60*1000);
+					servReq.setSlaEndTime(slaEndTime);
+				}
+			
 		}
 		serviceRequest.setActionInfo(actionInfos);
 	}
@@ -1111,4 +1121,52 @@ public class GrievanceService {
 		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
 		serviceReqSearchCriteria.setStatus(status);
 	}
+	
+	/**
+	 * Fetches the category, department, Service type, sla hours for the respective service type
+	 * 
+	 * @param serviceReq
+	 * @param requestInfo
+	 * @param locale
+	 * @return
+	 */
+	public List<Object> getServiceType(Service serviceReq, RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder();
+		List<Object> listOfValues = new ArrayList<>();
+		String serviceType = null;
+		String categoryCode = null;
+		String departmentCode = null;
+		Integer sla = 0;
+		List<String> categories = null;
+		List<String> departments = null;
+		List<String> serviceTypes = null;
+		List<Integer> slaHours = null;
+		String tenantId = serviceReq.getTenantId().split("[.]")[0]; // localization values are for now state-level.
+		try {
+			MdmsCriteriaReq mdmsCriteriaReq = pGRUtils.prepareSearchRequestForServiceType(uri, serviceReq.getTenantId(),
+					serviceReq.getServiceCode(), requestInfo);
+			log.info("Criteria to fetch servicedefs from MDMS:"+mdmsCriteriaReq.toString());
+			
+			Object result = serviceRequestRepository.fetchResult(uri, mdmsCriteriaReq);
+
+			slaHours = JsonPath.read(result, PGRConstants.JSONPATH_SLA);
+			
+			
+	        
+	     
+			if(!CollectionUtils.isEmpty(slaHours))
+				sla = Integer.valueOf(slaHours.get(0)) / 24; //converting hours to days.
+		} catch (Exception e) {
+			log.error("Error in fetching servicedefs"+e);
+		}
+		
+		listOfValues.add(categoryCode); 
+		listOfValues.add(departmentCode); 
+		listOfValues.add(serviceType); 
+		listOfValues.add(sla);
+		return listOfValues;
+	}
+	
+
+	
 }

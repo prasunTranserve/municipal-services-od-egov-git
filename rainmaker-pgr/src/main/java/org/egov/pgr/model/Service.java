@@ -220,5 +220,8 @@ public class Service   {
   @Pattern(regexp = "^[a-zA-Z0-9!@#.,/: ()&']*$")
   private String landmark;
   
+  @JsonProperty("slaEndTime")
+  private Long slaEndTime = null;
+  
   }
 

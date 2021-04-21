@@ -1,5 +1,9 @@
 package org.egov.pgr.utils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -644,5 +648,14 @@ public class PGRUtils {
 		return false;
 	}
 	
+	
+	public long getLastDayTime(int slaDays) {
+		
+		LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+		LocalDateTime todayMidnight = today.atTime(LocalTime.MAX);
+		LocalDateTime slaendMidnight = todayMidnight.plusDays(slaDays);
+		log.info("SLA end Date Midnight in IST="+slaendMidnight);
+		return slaendMidnight.atZone(ZoneId.of("Asia/Kolkata")).toInstant().toEpochMilli();
+	}
 
 }
