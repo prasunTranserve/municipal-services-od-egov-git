@@ -80,11 +80,13 @@ public class NotificationUtil {
 		if (bpa.getStatus().toString().toUpperCase().equals(BPAConstants.STATUS_REJECTED)) {
 			messageTemplate = getMessageTemplate(
 					applicationType + "_" + serviceType + "_" + BPAConstants.STATUS_REJECTED, localizationMessage);
+			log.info("SMS Message code, if rejected : " + applicationType + "_" + serviceType + "_" + BPAConstants.STATUS_REJECTED);
 			message = getInitiatedMsg(bpa, messageTemplate, serviceType);
 		} else {
 
 			String messageCode = applicationType + "_" + serviceType + "_" + bpa.getWorkflow().getAction() + "_"
 					+ bpa.getStatus();
+			log.info("SMS notification message code : " + messageCode);
 
 			messageTemplate = getMessageTemplate(messageCode, localizationMessage);
 			if (!StringUtils.isEmpty(messageTemplate)) {
@@ -121,7 +123,7 @@ public class NotificationUtil {
 					+ bpa.getStatus() + "_EMAIL";
 
 			messageTemplate = getMessageTemplate(messageCode, localizationMessage);
-			System.out.println("localizationMessage::: " + localizationMessage);
+			//System.out.println("localizationMessage::: " + localizationMessage);
 			if (!StringUtils.isEmpty(messageTemplate)) {
 				message = getInitiatedMsg(bpa, messageTemplate, serviceType);
 
