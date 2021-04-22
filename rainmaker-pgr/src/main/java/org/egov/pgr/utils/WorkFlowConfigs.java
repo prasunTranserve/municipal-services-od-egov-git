@@ -87,6 +87,8 @@ public class WorkFlowConfigs {
 		map.put(PGRConstants.ROLE_GRO, Arrays.asList(ACTION_ASSIGN, ACTION_REJECT, ACTION_REASSIGN));
 		map.put(PGRConstants.ROLE_DGRO, Arrays.asList(ACTION_ASSIGN, ACTION_REJECT, ACTION_REASSIGN));
 		map.put(PGRConstants.ROLE_CSR, Arrays.asList(ACTION_OPEN, ACTION_CLOSE, ACTION_REOPEN));
+		map.put(PGRConstants.ROLE_ESCALATION_OFFICER1, Arrays.asList(ACTION_RESOLVE, ACTION_REQUEST_FOR_REASSIGN, ACTION_REJECT));
+		map.put(PGRConstants.ROLE_ESCALATION_OFFICER2, Arrays.asList(ACTION_RESOLVE, ACTION_REQUEST_FOR_REASSIGN, ACTION_REJECT));
 		return map;
 	}
 	
@@ -102,6 +104,8 @@ public class WorkFlowConfigs {
 		map.put(WorkFlowConfigs.STATUS_REJECTED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_RESOLVED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_CLOSED, Arrays.asList(PGRConstants.ROLE_EMPLOYEE));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		
 		return map;
 	}
