@@ -28,6 +28,8 @@ public class WorkFlowConfigs {
 	public static final String STATUS_REJECTED = "rejected";
 	public static final String STATUS_RESOLVED = "resolved";
 	public static final String STATUS_REASSIGN_REQUESTED = "reassignrequested";
+	public static final String STATUS_ESCALATED_LEVEL1_PENDING = "escalatedlevel1pending";
+	public static final String STATUS_ESCALATED_LEVEL2_PENDING = "escalatedlevel2pending";
 	
 	private WorkFlowConfigs() {}
 
@@ -51,9 +53,10 @@ public class WorkFlowConfigs {
 		map.put(ACTION_CLOSE, STATUS_CLOSED);
 		map.put(ACTION_REJECT, STATUS_REJECTED);
 		map.put(ACTION_RESOLVE, STATUS_RESOLVED);
-		map.put(ACTION_REOPEN, STATUS_OPENED);
+		//map.put(ACTION_REOPEN, STATUS_OPENED);
 		map.put(ACTION_REASSIGN, STATUS_ASSIGNED);
 		map.put(ACTION_REQUEST_FOR_REASSIGN, STATUS_REASSIGN_REQUESTED);
+		map.put(ACTION_REOPEN, STATUS_ESCALATED_LEVEL1_PENDING);
 		return map;
 	}
 
@@ -62,11 +65,13 @@ public class WorkFlowConfigs {
 		Map<String, List<String>> map = new HashMap<>();
 		map.put(ACTION_ASSIGN, Arrays.asList(STATUS_OPENED));
 		map.put(ACTION_CLOSE, Arrays.asList(STATUS_REJECTED, STATUS_RESOLVED));
-		map.put(ACTION_REJECT, Arrays.asList(STATUS_ASSIGNED, STATUS_OPENED , STATUS_REASSIGN_REQUESTED));
-		map.put(ACTION_RESOLVE, Arrays.asList(STATUS_ASSIGNED));
-		map.put(ACTION_REOPEN, Arrays.asList(STATUS_REJECTED, STATUS_RESOLVED));
+		map.put(ACTION_REJECT, Arrays.asList(STATUS_ASSIGNED, STATUS_OPENED , STATUS_REASSIGN_REQUESTED,STATUS_ESCALATED_LEVEL1_PENDING,STATUS_ESCALATED_LEVEL2_PENDING));
+		//map.put(ACTION_RESOLVE, Arrays.asList(STATUS_ASSIGNED));
+		map.put(ACTION_RESOLVE, Arrays.asList(STATUS_ASSIGNED,STATUS_ESCALATED_LEVEL1_PENDING,STATUS_ESCALATED_LEVEL2_PENDING));
+		//map.put(ACTION_REOPEN, Arrays.asList(STATUS_REJECTED, STATUS_RESOLVED));
 		map.put(ACTION_REASSIGN, Arrays.asList(STATUS_ASSIGNED , STATUS_REASSIGN_REQUESTED));
 		map.put(ACTION_REQUEST_FOR_REASSIGN, Arrays.asList(STATUS_ASSIGNED));
+		map.put(ACTION_REOPEN, Arrays.asList(STATUS_REJECTED, STATUS_RESOLVED));
 		return map;
 	}
 
@@ -82,6 +87,8 @@ public class WorkFlowConfigs {
 		map.put(PGRConstants.ROLE_GRO, Arrays.asList(ACTION_ASSIGN, ACTION_REJECT, ACTION_REASSIGN));
 		map.put(PGRConstants.ROLE_DGRO, Arrays.asList(ACTION_ASSIGN, ACTION_REJECT, ACTION_REASSIGN));
 		map.put(PGRConstants.ROLE_CSR, Arrays.asList(ACTION_OPEN, ACTION_CLOSE, ACTION_REOPEN));
+		map.put(PGRConstants.ROLE_ESCALATION_OFFICER1, Arrays.asList(ACTION_RESOLVE, ACTION_REQUEST_FOR_REASSIGN, ACTION_REJECT));
+		map.put(PGRConstants.ROLE_ESCALATION_OFFICER2, Arrays.asList(ACTION_RESOLVE, ACTION_REQUEST_FOR_REASSIGN, ACTION_REJECT));
 		return map;
 	}
 	
@@ -97,6 +104,8 @@ public class WorkFlowConfigs {
 		map.put(WorkFlowConfigs.STATUS_REJECTED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_RESOLVED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_CLOSED, Arrays.asList(PGRConstants.ROLE_EMPLOYEE));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		
 		return map;
 	}

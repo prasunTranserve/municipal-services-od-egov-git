@@ -335,6 +335,16 @@ public class PGRRequestValidator {
 		List<String> roles = serviceRequest.getRequestInfo().getUserInfo().getRoles().stream()
 				.map(Role::getCode).collect(Collectors.toList());
 		List<String> actions = null;
+		List<String> roleCodes = serviceRequest.getRequestInfo().getUserInfo()
+				.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+		String precedentRole = pgrUtils.getPrecedentRole(roleCodes);
+		
+		if(PGRConstants.ROLE_EMPLOYEE.equalsIgnoreCase(precedentRole)) {
+			if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER1;
+			else if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER2;
+		}
 		actions = roleActionMap.get(pgrUtils.getPrecedentRole(serviceRequest.getRequestInfo().getUserInfo()
 				.getRoles().stream().map(Role::getCode).collect(Collectors.toList())));
 		final List<String> actionsAllowedForTheRole = actions;
@@ -454,7 +464,7 @@ public class PGRRequestValidator {
 	 * @param serviceRequest
 	 * @param errorMap
 	 */
-	private ServiceResponse getServiceRequests(ServiceRequest serviceRequest, Map<String, String> errorMap) {
+	public ServiceResponse getServiceRequests(ServiceRequest serviceRequest, Map<String, String> errorMap) {
 		log.info("Validating if servicerequests exist");
 		ObjectMapper mapper = pgrUtils.getObjectMapper();
 		ServiceReqSearchCriteria serviceReqSearchCriteria = ServiceReqSearchCriteria.builder()
@@ -485,5 +495,19 @@ public class PGRRequestValidator {
 		
 		return lasModifiedTime;
 		
+	}
+	
+	/**
+	 * validates the legality of the escalation search criteria given
+	 * 
+	 * @param criteria
+	 * @param requestInfo
+	 */
+	public void validateEscalationSearch(ServiceReqSearchCriteria criteria, RequestInfo requestInfo) {
+		Map<String, String> errorMap = new HashMap<>();
+		validateUserRBACProxy(errorMap, requestInfo);
+		
+		if (!errorMap.isEmpty())
+			throw new CustomException(errorMap);
 	}
 }

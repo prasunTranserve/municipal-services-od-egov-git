@@ -109,5 +109,24 @@ public class ServiceController {
 		Object countResponse = service.getCount(requestInfoWrapper.getRequestInfo(), serviceReqSearchCriteria);
 		return new ResponseEntity<>(countResponse, HttpStatus.OK);
 	}
+	
+	
+	/**
+	 * Controller endpoint to fetch service requests
+	 * 
+	 * @param requestInfoWrapper
+	 * @param serviceReqSearchCriteria
+	 * @return ResponseEntity<?>
+	 * 
+	 */
+	@PostMapping("escalate/_batch")
+	@ResponseBody
+	private ResponseEntity<?> batchEscalation(@RequestBody @Valid RequestInfoWrapper requestInfoWrapper,
+			@ModelAttribute @Valid ServiceReqSearchCriteria serviceReqSearchCriteria) {
+		pgrRequestValidator.validateEscalationSearch(serviceReqSearchCriteria, requestInfoWrapper.getRequestInfo());
+		Object serviceReqResponse = service.getEscalationServiceRequestDetails(requestInfoWrapper.getRequestInfo(),
+				serviceReqSearchCriteria);
+		return new ResponseEntity<>(serviceReqResponse, HttpStatus.OK);
+	}
 
 }

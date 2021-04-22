@@ -125,7 +125,11 @@ public class Service   {
     
     REASSIGNREQUESTED("reassignrequested"),
     
-    RESOLVED("resolved");    
+    RESOLVED("resolved"),
+    ESCALATEDLEVEL1PENDING("escalatedlevel1pending"),
+	
+	ESCALATEDLEVEL2PENDING("escalatedlevel2pending"),
+	;
 
     private String value;
 
@@ -215,6 +219,9 @@ public class Service   {
   @JsonProperty("landmark")
   @Pattern(regexp = "^[a-zA-Z0-9!@#.,/: ()&']*$")
   private String landmark;
+  
+  @JsonProperty("slaEndTime")
+  private Long slaEndTime = null;
   
   }
 
