@@ -46,7 +46,7 @@ public class Service   {
 
   @NotNull
   @JsonProperty("serviceCode")
-  @Size(min=2,max=50)
+  @Size(min=2,max=128)
   @Pattern(regexp="^[a-zA-Z0-9._]*$")
   private String serviceCode;
 
