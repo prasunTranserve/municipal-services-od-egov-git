@@ -17,7 +17,7 @@ public class PGRConstants {
 	//Notification
 	public static final String TEMPLATE_COMPLAINT_EMAIL = "./src/main/resources/email-templates/velocityEmailNotifSample.vm";
 	
-	public static final String  TENANT_ID = "od.odisha";
+	public static final String  TENANT_ID = "od";
 	
 	public static final String SEARCHER_PGR_MOD_NAME = "rainmaker-pgr-V2";
 	public static final String SEARCHER_SRSEARCH_DEF_NAME = "serviceSearchWithDetails";
