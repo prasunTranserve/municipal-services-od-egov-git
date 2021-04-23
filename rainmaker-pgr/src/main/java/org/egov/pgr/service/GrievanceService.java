@@ -462,62 +462,15 @@ public class GrievanceService {
 				return pGRUtils.getDefaultServiceResponse(requestInfo);
 			else
 				throw e;
-		}
+		}	
 		
-		Object response = null;
+
 		
-		List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
-		
-		if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
-				&& CollectionUtils.isEmpty(serviceReqSearchCriteria.getServiceRequestId())) {
-		
+		searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+		Object response = serviceRequestRepository.fetchResult(uri, searcherRequest);
+		log.debug(PGRConstants.SEARCHER_RESPONSE_TEXT + response);
 			
-			//if any complaint is assigned to an escalated officer via autorouting then fetch that complaints also.
-			try {
-				List<String> status = new ArrayList<String>();
-				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1))
-				{
-				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
-				}
-				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
-				{
-				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
-				}
-				serviceReqSearchCriteria.setStatus(status);
-				uri = new StringBuilder();
-				enrichRequest(requestInfo, serviceReqSearchCriteria);
-				searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
-				Object assignedResponse = serviceRequestRepository.fetchResult(uri, searcherRequest);
-				
-				if(null != assignedResponse) {
-					List assignedServiceList = JsonPath.read(assignedResponse, PGRConstants.COMPLAINT_JSONPATH);
-					if(!CollectionUtils.isEmpty(assignedServiceList)) {
-						LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>)assignedResponse;
-						List obj = (List)map.get("services");
-						
-						List<Object> finalObj = new ArrayList<Object>();
-						finalObj.addAll(obj);
-						
-						LinkedHashMap<String, Object> map1 = (LinkedHashMap<String, Object>)response;
-						if(null != map1) {
-							List obj1 = (List)map1.get("services");
-							
-							finalObj.addAll(obj1);
-							map1.put("services", finalObj);
-						}else {
-							response = assignedResponse;
-						}
-					}
-				}
-			} catch (CustomException e) {
-				if (e.getMessage().equals(ErrorConstants.NO_DATA_MSG))
-					log.debug("No complaint is assigned to this escalated officer {}",requestInfo.getUserInfo().getUserName());
-			}
-		}else {
-			searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
-			response = serviceRequestRepository.fetchResult(uri, searcherRequest);
-			log.debug(PGRConstants.SEARCHER_RESPONSE_TEXT + response);
-		}
+
 		
 		
 		if (null == response)
