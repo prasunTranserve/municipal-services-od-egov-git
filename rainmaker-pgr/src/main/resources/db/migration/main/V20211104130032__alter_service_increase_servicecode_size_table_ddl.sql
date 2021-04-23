@@ -1,1 +1,1 @@
-ALTER TABLE eg_pgr_service ALTER COLUMN servicerequestid TYPE character varying(128) ;
+ALTER TABLE eg_pgr_service ALTER COLUMN servicecode TYPE character varying(128) ;
