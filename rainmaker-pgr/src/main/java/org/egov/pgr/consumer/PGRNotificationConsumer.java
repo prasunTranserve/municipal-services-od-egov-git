@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pgr.contract.Action;
@@ -293,7 +294,8 @@ public class PGRNotificationConsumer {
                     .replaceAll(PGRConstants.SMS_NOTIFICATION_USER_NAME_KEY, requestInfo.getUserInfo().getName());
         } else {
             text = messageMap.get(PGRConstants.getStatusRoleLocalizationKeyMap().get(actionInfo.getStatus() + "|" + role));
-            if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_OPENED)) {
+            if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)) {
                 if (null != actionInfo.getAction() && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_REOPEN)) {
                     text = messageMap.get(PGRConstants.getActionRoleLocalizationKeyMap().get(WorkFlowConfigs.ACTION_REOPEN + "|" + role));
                     employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
@@ -328,6 +330,13 @@ public class PGRNotificationConsumer {
                 employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), assignee, requestInfo);
 
                 text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+                //if complaint is resolved by escalation level2 officer, then citizen cannot re-open it.
+                //For this purpose we are trimming the last part of the message
+                if(notificationService.isEscalatedToLevel2(serviceReq, requestInfo)) {
+                	if(!ArrayUtils.isEmpty(text.split("\\.")))
+                		text = text.split("\\.")[0]+".";
+                }
+                
             }
             if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_CLOSED)) {
                 ServiceReqSearchCriteria serviceReqSearchCriteria = ServiceReqSearchCriteria.builder().tenantId(serviceReq.getTenantId())
@@ -344,7 +353,7 @@ public class PGRNotificationConsumer {
         if (null != text) {
             String ulb = null;
             if (StringUtils.isEmpty(serviceReq.getTenantId().split("[.]")[1]))
-                ulb = "Punjab";
+                ulb = "Odisha";
             else {
                 ulb = StringUtils.capitalize(serviceReq.getTenantId().split("[.]")[1]);
             }
@@ -384,7 +393,8 @@ public class PGRNotificationConsumer {
         boolean isNotifEnabled = false;
         List<String> notificationEnabledStatusList = Arrays.asList(notificationEnabledStatuses.split(","));
         if (notificationEnabledStatusList.contains(status)) {
-            if (status.equalsIgnoreCase(WorkFlowConfigs.STATUS_OPENED) && action.equals(WorkFlowConfigs.ACTION_REOPEN) && isReopenNotifEnaled) {
+            if ((status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) || status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING))
+            		&& action.equals(WorkFlowConfigs.ACTION_REOPEN) && isReopenNotifEnaled) {
                 isNotifEnabled = true;
             }
             if (status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ASSIGNED) && action.equals(WorkFlowConfigs.ACTION_REASSIGN) && isReassignNotifEnaled) {

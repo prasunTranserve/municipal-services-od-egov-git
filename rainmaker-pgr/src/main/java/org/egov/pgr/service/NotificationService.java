@@ -20,6 +20,7 @@ import org.egov.pgr.model.user.UserResponse;
 import org.egov.pgr.repository.ServiceRequestRepository;
 import org.egov.pgr.utils.PGRConstants;
 import org.egov.pgr.utils.PGRUtils;
+import org.egov.pgr.utils.WorkFlowConfigs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -279,16 +280,58 @@ public class NotificationService {
 				.serviceRequestId(Arrays.asList(serviceReq.getServiceRequestId())).build();
 		ServiceResponse response = (ServiceResponse) requestService.getServiceRequestDetails(requestInfo, serviceReqSearchCriteria);
 		try {
-			List<ActionInfo> actions = response.getActionHistory().get(0).getActions().stream()
-					.filter(obj -> !StringUtils.isEmpty(obj.getAssignee())).collect(Collectors.toList());
-			if(CollectionUtils.isEmpty(actions))
-				return null;
-			return actions.get(0).getAssignee();
+			if((WorkFlowConfigs.STATUS_RESOLVED.equalsIgnoreCase(serviceReq.getStatus().toString()) 
+					|| WorkFlowConfigs.STATUS_CLOSED.equalsIgnoreCase(serviceReq.getStatus().toString()))
+					&& isEscalated(response.getActionHistory().get(0).getActions())) {
+				for(ActionInfo actionInfo : response.getActionHistory().get(0).getActions()){
+					if(WorkFlowConfigs.STATUS_RESOLVED.equalsIgnoreCase(actionInfo.getStatus())) {
+						return actionInfo.getBy().split(":")[0];
+					}
+				}
+			}else {
+				List<ActionInfo> actions = response.getActionHistory().get(0).getActions().stream()
+						.filter(obj -> !StringUtils.isEmpty(obj.getAssignee())).collect(Collectors.toList());
+				if(CollectionUtils.isEmpty(actions))
+					return null;
+				return actions.get(0).getAssignee();
+			}
 		}catch(Exception e) {
-			log.error("ASSIGNMENT_EXCEPTION", e);
 			return null;
 		}
-
+		return null;
+	}
+	
+	private boolean isEscalated(List<ActionInfo> actions) {
+		ActionInfo actionInfo = actions.stream().filter(obj -> 
+			obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
+			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)).findAny().orElse(null);
+		
+		if(null != actionInfo) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isEscalatedToLevel2(Service serviceReq, RequestInfo requestInfo) {
+		
+		try {
+			ServiceReqSearchCriteria serviceReqSearchCriteria = ServiceReqSearchCriteria.builder().tenantId(serviceReq.getTenantId())
+					.serviceRequestId(Arrays.asList(serviceReq.getServiceRequestId())).build();
+			ServiceResponse response = (ServiceResponse) requestService.getServiceRequestDetails(requestInfo, serviceReqSearchCriteria);
+			if(null != response) {	
+				ActionInfo actionInfo = response.getActionHistory().get(0).getActions().stream().filter(obj -> 
+					obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)).findAny().orElse(null);
+				
+				if(null != actionInfo) {
+					return true;
+				}
+			}
+		}catch(Exception e) {
+			log.error("Error in isEscalatedToLevel2 "+e);
+		}
+		
+		return false;
 	}
 	
 	public Long getSlaHours() {
