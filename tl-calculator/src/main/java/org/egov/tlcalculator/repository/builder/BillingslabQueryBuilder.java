@@ -58,10 +58,6 @@ public class BillingslabQueryBuilder {
 			preparedStmtList.add(billingSlabSearcCriteria.getApplicationType());
 		}
 
-		if (!StringUtils.isEmpty(billingSlabSearcCriteria.getStructureType())) {
-			queryBuilder.append(" AND (structuretype = ? OR structuretype = 'ALL')");
-			preparedStmtList.add(billingSlabSearcCriteria.getStructureType());
-		}
 
 		if (!StringUtils.isEmpty(billingSlabSearcCriteria.getTradeType())) {
 			queryBuilder.append(" AND tradetype = ?");

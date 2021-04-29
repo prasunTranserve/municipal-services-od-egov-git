@@ -105,8 +105,7 @@ public class TLValidator {
             Map<String, String> errorMap = new HashMap<>();
             if (license.getFinancialYear() == null)
                 errorMap.put("NULL_FINANCIALYEAR", " Financial Year cannot be null");
-            if (license.getTradeLicenseDetail().getStructureType() == null)
-                errorMap.put("NULL_STRUCTURETYPE", " Structure Type cannot be null");
+
             if (license.getTradeLicenseDetail().getSubOwnerShipCategory() == null)
                 errorMap.put("NULL_SUBOWNERSHIPCATEGORY", " SubOwnership Category cannot be null");
             if ((license.getTradeLicenseDetail().getAddress().getLocality() == null)||(license.getTradeLicenseDetail().getAddress().getLocality().getCode() == null))
