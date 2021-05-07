@@ -295,7 +295,9 @@ public class PGRNotificationConsumer {
         } else {
             text = messageMap.get(PGRConstants.getStatusRoleLocalizationKeyMap().get(actionInfo.getStatus() + "|" + role));
             if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
-            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)) {
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)) {
                 if (null != actionInfo.getAction() && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_REOPEN)) {
                     text = messageMap.get(PGRConstants.getActionRoleLocalizationKeyMap().get(WorkFlowConfigs.ACTION_REOPEN + "|" + role));
                     employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
@@ -332,7 +334,7 @@ public class PGRNotificationConsumer {
                 text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
                 //if complaint is resolved by escalation level2 officer, then citizen cannot re-open it.
                 //For this purpose we are trimming the last part of the message
-                if(notificationService.isEscalatedToLevel2(serviceReq, requestInfo)) {
+                if(notificationService.isEscalatedToLevel4(serviceReq, requestInfo)) {
                 	if(!ArrayUtils.isEmpty(text.split("\\.")))
                 		text = text.split("\\.")[0]+".";
                 }
@@ -393,7 +395,8 @@ public class PGRNotificationConsumer {
         boolean isNotifEnabled = false;
         List<String> notificationEnabledStatusList = Arrays.asList(notificationEnabledStatuses.split(","));
         if (notificationEnabledStatusList.contains(status)) {
-            if ((status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) || status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING))
+            if ((status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) || status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
+            		 || status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING) || status.equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING))
             		&& action.equals(WorkFlowConfigs.ACTION_REOPEN) && isReopenNotifEnaled) {
                 isNotifEnabled = true;
             }
