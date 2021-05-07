@@ -128,6 +128,8 @@ public class PGRConstants {
 	public static final String ROLE_CSR = "CSR";
 	public static final String ROLE_ESCALATION_OFFICER1 = "ESCALATION_OFFICER1";
 	public static final String ROLE_ESCALATION_OFFICER2 = "ESCALATION_OFFICER2";
+	public static final String ROLE_ESCALATION_OFFICER3 = "ESCALATION_OFFICER3";
+	public static final String ROLE_ESCALATION_OFFICER4 = "ESCALATION_OFFICER4";
 	public static final String ROLE_SYSTEM = "SYSTEM";
 	
 	public static final String ROLE_NAME_CITIZEN = "Citizen";
@@ -137,6 +139,8 @@ public class PGRConstants {
 	public static final String ROLE_NAME_CSR = "Customer Support Representative";
 	public static final String ROLE_NAME_ESCALATION_OFFICER1 = "1st level escalation officer";
 	public static final String ROLE_NAME_ESCALATION_OFFICER2 = "2nd level escalation officer";
+	public static final String ROLE_NAME_ESCALATION_OFFICER3 = "3rd level escalation officer";
+	public static final String ROLE_NAME_ESCALATION_OFFICER4 = "4th level escalation officer";
 	
 	private static Map<String, String> statusNotifKeyMap = prepareStatusNotifKeyMap();
 

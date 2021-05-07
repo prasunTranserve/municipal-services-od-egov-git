@@ -303,8 +303,10 @@ public class NotificationService {
 	
 	private boolean isEscalated(List<ActionInfo> actions) {
 		ActionInfo actionInfo = actions.stream().filter(obj -> 
-			obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
-			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)).findAny().orElse(null);
+			obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
+			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
+			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)).findAny().orElse(null);
 		
 		if(null != actionInfo) {
 			return true;
@@ -313,7 +315,7 @@ public class NotificationService {
 		return false;
 	}
 	
-	public boolean isEscalatedToLevel2(Service serviceReq, RequestInfo requestInfo) {
+	public boolean isEscalatedToLevel4(Service serviceReq, RequestInfo requestInfo) {
 		
 		try {
 			ServiceReqSearchCriteria serviceReqSearchCriteria = ServiceReqSearchCriteria.builder().tenantId(serviceReq.getTenantId())
@@ -321,14 +323,14 @@ public class NotificationService {
 			ServiceResponse response = (ServiceResponse) requestService.getServiceRequestDetails(requestInfo, serviceReqSearchCriteria);
 			if(null != response) {	
 				ActionInfo actionInfo = response.getActionHistory().get(0).getActions().stream().filter(obj -> 
-					obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)).findAny().orElse(null);
+					obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)).findAny().orElse(null);
 				
 				if(null != actionInfo) {
 					return true;
 				}
 			}
 		}catch(Exception e) {
-			log.error("Error in isEscalatedToLevel2 "+e);
+			log.error("Error in isEscalatedToLevel4 "+e);
 		}
 		
 		return false;

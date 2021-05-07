@@ -600,10 +600,23 @@ public class PGRUtils {
 	public boolean checkAutoEscalatedWithoutResolved(ActionHistory history) {
 		
 		List<String> status = history.getActions().stream().map(ActionInfo::getStatus).collect(Collectors.toList());
+		int resolvedCount = 0 ;
 		
-		if (status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) && !status.contains(WorkFlowConfigs.STATUS_RESOLVED)) {
-			return true;
+		for (String actionStatus : status) {
+			if(actionStatus.equalsIgnoreCase(WorkFlowConfigs.STATUS_RESOLVED))
+				resolvedCount++;
 		}
+		
+		
+		if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING) && resolvedCount==3)
+			return true;
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING) && resolvedCount==2)
+			return true;
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING) && resolvedCount==1)
+			return true;
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) && resolvedCount==0)
+			return true;
+
 		return false;
 	}
 	
@@ -620,7 +633,8 @@ public class PGRUtils {
 		for (int i = 0; i <= infos.size() - 1; i++) {
 			String status = infos.get(i).getStatus();
 			if ((WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(status)
-					|| WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(status))
+					|| WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(status) || WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.equalsIgnoreCase(status)
+					|| WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING.equalsIgnoreCase(status))
 					&& (WorkFlowConfigs.ACTION_RESOLVE.equalsIgnoreCase(action) 
 						|| WorkFlowConfigs.ACTION_REJECT.equalsIgnoreCase(action))){
 				return true;
@@ -630,22 +644,42 @@ public class PGRUtils {
 	}
 
 	/**
-	 * Check whether the complaint is reopened for 2nd time or not
+	 * Check whether the complaint is reopened for 2nd,3rd and 4th time or not
 	 * 
 	 * @param actionInfo
-	 * @return boolean
+	 * @return String
 	 */
-	public boolean checkReopen2ndTime(ActionHistory history, String action) {
+	public String checkReopenForEscalation(ActionHistory history, String action) {
 		List<ActionInfo> infos = history.getActions();
+		List<String>  statusList = new ArrayList() ;
 		
+				
 		for (int i = 0; i <= infos.size() - 1; i++) {
 			String status = infos.get(i).getStatus();
-			if (WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(status)
-					&& WorkFlowConfigs.ACTION_REOPEN.equalsIgnoreCase(action)) {
-				return true;
-			}
+			
+			statusList.add(status);
 		}
-		return false;
+		
+		statusList.forEach(status -> status.toLowerCase());
+		
+		if( WorkFlowConfigs.ACTION_REOPEN.equalsIgnoreCase(action))
+		{
+		
+		if(statusList.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.toLowerCase()))
+		{
+			return WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING;
+		}else if(statusList.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.toLowerCase()))
+		{
+			return WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING;
+		}else if(statusList.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.toLowerCase()))
+		{
+			return WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING;
+		}else 
+			return null;
+		}
+		
+		
+		return null;
 	}
 	
 	

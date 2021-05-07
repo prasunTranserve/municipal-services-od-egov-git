@@ -363,9 +363,9 @@ public class GrievanceService {
 			ActionHistory history = historyMap.get(service.getServiceRequestId());
 						
 			if(!StringUtils.isEmpty(actionInfo.getAction())) {
-				if(pGRUtils.checkReopen2ndTime(history, actionInfo.getAction())) {
-					service.setStatus(StatusEnum.fromValue(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING));
-					actionInfo.setStatus(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);	
+				if(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction()) != null) {
+					service.setStatus(StatusEnum.fromValue(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction())));
+					actionInfo.setStatus(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction()));	
 				}else {
 					service.setStatus(StatusEnum.fromValue(actionStatusMap.get(actionInfo.getAction())));
 				}
@@ -557,10 +557,11 @@ public class GrievanceService {
 					
 					List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
 					
-					if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+					if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER3) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER4))
 							&& (!CollectionUtils.isEmpty(serviceReqSearchCriteria.getStatus()) 
 								&& (serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
-									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)))) {
+									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING) || serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
+									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)))) {
 						//Do not need to set assign anyone for escalation flow if the status is pending
 					}
 					/**if(!CollectionUtils.isEmpty(serviceReqSearchCriteria.getStatus()) 
@@ -741,7 +742,8 @@ public class GrievanceService {
 		
 		List<String> codes = requestInfo.getUserInfo().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
 		
-		if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
+		if ((codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER1) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2) || 
+				codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER3) || codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER4))
 				&& CollectionUtils.isEmpty(serviceReqSearchCriteria.getServiceRequestId())) {
 
 			//if any complaint is assigned to an escalated officer via autorouting then fetch that complaints also.
@@ -754,6 +756,14 @@ public class GrievanceService {
 				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
 				{
 				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
+				}
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER3))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING);
+				}
+				if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER4))
+				{
+				status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING);
 				}
 				serviceReqSearchCriteria.setStatus(status);
 				uri = new StringBuilder();
@@ -1072,6 +1082,9 @@ public class GrievanceService {
 		status.add(WorkFlowConfigs.STATUS_ASSIGNED);
 		status.add(WorkFlowConfigs.STATUS_REASSIGN_REQUESTED);
 		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
+		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
+		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING);
+		
 		serviceReqSearchCriteria.setStatus(status);
 	}
 	

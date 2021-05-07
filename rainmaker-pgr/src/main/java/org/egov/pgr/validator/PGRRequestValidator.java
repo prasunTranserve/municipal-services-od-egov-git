@@ -344,6 +344,10 @@ public class PGRRequestValidator {
 				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER1;
 			else if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER2))
 				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER2;
+			else if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER3))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER3;
+			else if(roleCodes.contains(PGRConstants.ROLE_ESCALATION_OFFICER4))
+				precedentRole = PGRConstants.ROLE_ESCALATION_OFFICER4;
 		}
 		actions = roleActionMap.get(pgrUtils.getPrecedentRole(serviceRequest.getRequestInfo().getUserInfo()
 				.getRoles().stream().map(Role::getCode).collect(Collectors.toList())));
