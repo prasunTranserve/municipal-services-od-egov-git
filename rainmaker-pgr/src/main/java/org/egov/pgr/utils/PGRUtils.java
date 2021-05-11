@@ -657,10 +657,11 @@ public class PGRUtils {
 		for (int i = 0; i <= infos.size() - 1; i++) {
 			String status = infos.get(i).getStatus();
 			
-			statusList.add(status);
+			if(status!= null && !status.trim().isEmpty())
+			statusList.add(status.toLowerCase());
 		}
 		
-		statusList.forEach(status -> status.toLowerCase());
+		
 		
 		if( WorkFlowConfigs.ACTION_REOPEN.equalsIgnoreCase(action))
 		{
