@@ -103,8 +103,8 @@ public class TLValidator {
     private void validateTLSpecificNotNullFields(TradeLicenseRequest request) {
         request.getLicenses().forEach(license -> {
             Map<String, String> errorMap = new HashMap<>();
-            if (license.getFinancialYear() == null)
-                errorMap.put("NULL_FINANCIALYEAR", " Financial Year cannot be null");
+            //if (license.getFinancialYear() == null)
+            //    errorMap.put("NULL_FINANCIALYEAR", " Financial Year cannot be null");
 
             if (license.getTradeLicenseDetail().getSubOwnerShipCategory() == null)
                 errorMap.put("NULL_SUBOWNERSHIPCATEGORY", " SubOwnership Category cannot be null");
