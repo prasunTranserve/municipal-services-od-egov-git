@@ -113,35 +113,37 @@ public class MDMSService {
      */
     public Map getCalculationType(RequestInfo requestInfo,TradeLicense license,Object mdmsData){
         HashMap<String,Object> calculationType = new HashMap<>();
-        try {
-            LinkedHashMap tradeLicenseData = JsonPath.read(mdmsData,TLCalculatorConstants.MDMS_TRADELICENSE_PATH);
-            if(tradeLicenseData.size()==0)
-                return defaultMap();
+        
+        return defaultMap();
+       // try {
+           // LinkedHashMap tradeLicenseData = JsonPath.read(mdmsData,TLCalculatorConstants.MDMS_TRADELICENSE_PATH);
+           // if(tradeLicenseData.size()==0)
+               
 
-            List jsonOutput = JsonPath.read(mdmsData, TLCalculatorConstants.MDMS_CALCULATIONTYPE_PATH);
-            String financialYear = license.getFinancialYear().split("-")[0];
-            String maxClosestYear = "0";
-            for(Object entry : jsonOutput) {
-                HashMap<String,Object> map = (HashMap<String,Object>)entry;
-                String mdmsFinancialYear = ((String)map.get(TLCalculatorConstants.MDMS_CALCULATIONTYPE_FINANCIALYEAR));
-                String year = mdmsFinancialYear.split("-")[0];
-                if(year.compareTo(financialYear)<0 && year.compareTo(maxClosestYear.split("-")[0])>0){
-                    maxClosestYear = mdmsFinancialYear;
-                }
-                if(year.compareTo(financialYear)==0){
-                    maxClosestYear = mdmsFinancialYear;
-                    break;
-                }
-            }
-            String jsonPath = TLCalculatorConstants.MDMS_CALCULATIONTYPE_FINANCIALYEAR_PATH.replace("{}",maxClosestYear);
-            List<HashMap> output = JsonPath.read(mdmsData,jsonPath);
-            calculationType = output.get(0);
-        }
-        catch (Exception e){
-            throw new CustomException("MDMS ERROR","Failed to get calculationType");
-        }
-
-        return calculationType;
+//            List jsonOutput = JsonPath.read(mdmsData, TLCalculatorConstants.MDMS_CALCULATIONTYPE_PATH);
+//            String financialYear = license.getFinancialYear().split("-")[0];
+//            String maxClosestYear = "0";
+//            for(Object entry : jsonOutput) {
+//                HashMap<String,Object> map = (HashMap<String,Object>)entry;
+//                String mdmsFinancialYear = ((String)map.get(TLCalculatorConstants.MDMS_CALCULATIONTYPE_FINANCIALYEAR));
+//                String year = mdmsFinancialYear.split("-")[0];
+//                if(year.compareTo(financialYear)<0 && year.compareTo(maxClosestYear.split("-")[0])>0){
+//                    maxClosestYear = mdmsFinancialYear;
+//                }
+//                if(year.compareTo(financialYear)==0){
+//                    maxClosestYear = mdmsFinancialYear;
+//                    break;
+//                }
+//            }
+//            String jsonPath = TLCalculatorConstants.MDMS_CALCULATIONTYPE_FINANCIALYEAR_PATH.replace("{}",maxClosestYear);
+//            List<HashMap> output = JsonPath.read(mdmsData,jsonPath);
+//            calculationType = output.get(0);
+//        }
+//        catch (Exception e){
+//            throw new CustomException("MDMS ERROR","Failed to get calculationType");
+//        }
+//
+//        return calculationType;
     }
 
     /**
