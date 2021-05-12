@@ -450,18 +450,18 @@ public class TLValidator {
             license.getAuditDetails().setCreatedTime(idToTradeLicenseFromSearch.get(license.getId()).getAuditDetails().getCreatedTime());
             license.setStatus(idToTradeLicenseFromSearch.get(license.getId()).getStatus());
             license.setLicenseNumber(idToTradeLicenseFromSearch.get(license.getId()).getLicenseNumber());
-            String businessService = license.getBusinessService();
-            if (businessService == null)
-                businessService = businessService_TL;
-            switch (businessService) {
-                case businessService_TL:
-                    if (!idToTradeLicenseFromSearch.get(license.getId()).getFinancialYear().equalsIgnoreCase(license.getFinancialYear())
-                            && license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT)) {
-                       // Map<String, Long> taxPeriods = tradeUtil.getTaxPeriods(license, mdmsData);
-                      //  license.setValidTo(taxPeriods.get(TLConstants.MDMS_ENDDATE));
-                    }
-                    break;
-            }
+//            String businessService = license.getBusinessService();
+//            if (businessService == null)
+//                businessService = businessService_TL;
+//            switch (businessService) {
+//                case businessService_TL:
+//                    if (!idToTradeLicenseFromSearch.get(license.getId()).getFinancialYear().equalsIgnoreCase(license.getFinancialYear())
+//                            && license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT)) {
+//                        Map<String, Long> taxPeriods = tradeUtil.getTaxPeriods(license, mdmsData);
+//                        license.setValidTo(taxPeriods.get(TLConstants.MDMS_ENDDATE));
+//                    }
+//                    break;
+//            }
         });
     }
 
@@ -666,5 +666,4 @@ public class TLValidator {
 
 
 }
-
 
