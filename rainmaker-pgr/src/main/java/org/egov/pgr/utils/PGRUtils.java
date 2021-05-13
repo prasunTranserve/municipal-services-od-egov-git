@@ -601,20 +601,27 @@ public class PGRUtils {
 		
 		List<String> status = history.getActions().stream().map(ActionInfo::getStatus).collect(Collectors.toList());
 		int resolvedCount = 0 ;
+		int rejectedCount = 0 ;
 		
 		for (String actionStatus : status) {
-			if(actionStatus.equalsIgnoreCase(WorkFlowConfigs.STATUS_RESOLVED))
+			if(actionStatus!=null &&  actionStatus.equalsIgnoreCase(WorkFlowConfigs.STATUS_RESOLVED))
 				resolvedCount++;
 		}
 		
+		for (String actionStatus : status) {
+			if(actionStatus!=null && actionStatus.equalsIgnoreCase(WorkFlowConfigs.STATUS_REJECTED))
+				rejectedCount++;
+		}
 		
-		if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING) && resolvedCount==3)
+		int totalCount = rejectedCount+resolvedCount ;
+		
+		if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING) && totalCount ==3)
 			return true;
-		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING) && resolvedCount==2)
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING) && totalCount ==2)
 			return true;
-		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING) && resolvedCount==1)
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING) && totalCount ==1)
 			return true;
-		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) && resolvedCount==0)
+		else if(status.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING) && totalCount ==0)
 			return true;
 
 		return false;
@@ -692,5 +699,7 @@ public class PGRUtils {
 		log.info("SLA end Date Midnight in IST="+slaendMidnight);
 		return slaendMidnight.atZone(ZoneId.of("Asia/Kolkata")).toInstant().toEpochMilli();
 	}
+	
+	
 
 }

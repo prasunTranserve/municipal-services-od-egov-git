@@ -90,7 +90,8 @@ public class NotificationService {
 				return null;
 			if (null == localizedMessageMap.get(locale + "|" + tenantId)) // static map that saves code-message pair against locale | tenantId.
 				getLocalisedMessages(requestInfo, tenantId, locale, PGRConstants.LOCALIZATION_MODULE_NAME);
-			serviceType = localizedMessageMap.get(locale + "|" + tenantId).get(PGRConstants.LOCALIZATION_COMP_CATEGORY_PREFIX + serviceTypes.get(0)); //result set is always of size one.
+			//serviceType = localizedMessageMap.get(locale + "|" + tenantId).get(PGRConstants.LOCALIZATION_COMP_CATEGORY_PREFIX + serviceTypes.get(0).toUpperCase()); //result set is always of size one.
+			serviceType = localizedMessageMap.get(locale + "|" + tenantId).get(PGRConstants.LOCALIZATION_CODE_COMPLAINT_PREFIX + serviceTypes.get(0).toUpperCase()); //result set is always of size one.
 			if(StringUtils.isEmpty(serviceType))
 				serviceType = PGRUtils.splitCamelCase(serviceTypes.get(0));
 		} catch (Exception e) {
@@ -303,10 +304,11 @@ public class NotificationService {
 	
 	private boolean isEscalated(List<ActionInfo> actions) {
 		ActionInfo actionInfo = actions.stream().filter(obj -> 
-			obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+			obj.getStatus()!= null &
+			(obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
 			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
 			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
-			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)).findAny().orElse(null);
+			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING))).findAny().orElse(null);
 		
 		if(null != actionInfo) {
 			return true;
@@ -323,7 +325,7 @@ public class NotificationService {
 			ServiceResponse response = (ServiceResponse) requestService.getServiceRequestDetails(requestInfo, serviceReqSearchCriteria);
 			if(null != response) {	
 				ActionInfo actionInfo = response.getActionHistory().get(0).getActions().stream().filter(obj -> 
-					obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)).findAny().orElse(null);
+				obj.getStatus() !=null &&  obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)).findAny().orElse(null);
 				
 				if(null != actionInfo) {
 					return true;
