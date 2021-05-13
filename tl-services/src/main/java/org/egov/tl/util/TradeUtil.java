@@ -170,28 +170,28 @@ public class TradeUtil {
     }
 
 
-    /**
-     * Creates map containing the startTime and endTime of the given tradeLicense
-     * @param license The create or update TradeLicense request
-     * @return Map containing startTime and endTime
-     */
-    public Map<String,Long> getTaxPeriods(TradeLicense license,Object mdmsData){
-        Map<String,Long> taxPeriods = new HashMap<>();
-        try {
-            String jsonPath = TLConstants.MDMS_FINACIALYEAR_PATH.replace("{}",license.getFinancialYear());
-            List<Map<String,Object>> jsonOutput =  JsonPath.read(mdmsData, jsonPath);
-            Map<String,Object> financialYearProperties = jsonOutput.get(0);
-            Object startDate = financialYearProperties.get(TLConstants.MDMS_STARTDATE);
-            Object endDate = financialYearProperties.get(TLConstants.MDMS_ENDDATE);
-            taxPeriods.put(TLConstants.MDMS_STARTDATE,(Long) startDate);
-            taxPeriods.put(TLConstants.MDMS_ENDDATE,(Long) endDate);
-
-        } catch (Exception e) {
-            log.error("Error while fetching MDMS data", e);
-            throw new CustomException("INVALID FINANCIALYEAR", "No data found for the financialYear: "+license.getFinancialYear());
-        }
-        return taxPeriods;
-    }
+//    /**
+//     * Creates map containing the startTime and endTime of the given tradeLicense
+//     * @param license The create or update TradeLicense request
+//     * @return Map containing startTime and endTime
+//     */
+//    public Map<String,Long> getTaxPeriods(TradeLicense license,Object mdmsData){
+//        Map<String,Long> taxPeriods = new HashMap<>();
+//        try {
+//            String jsonPath = TLConstants.MDMS_FINACIALYEAR_PATH.replace("{}",license.getFinancialYear());
+//            List<Map<String,Object>> jsonOutput =  JsonPath.read(mdmsData, jsonPath);
+//            Map<String,Object> financialYearProperties = jsonOutput.get(0);
+//            Object startDate = financialYearProperties.get(TLConstants.MDMS_STARTDATE);
+//            Object endDate = financialYearProperties.get(TLConstants.MDMS_ENDDATE);
+//            taxPeriods.put(TLConstants.MDMS_STARTDATE,(Long) startDate);
+//            taxPeriods.put(TLConstants.MDMS_ENDDATE,(Long) endDate);
+//
+//        } catch (Exception e) {
+//            log.error("Error while fetching MDMS data", e);
+//            throw new CustomException("INVALID FINANCIALYEAR", "No data found for the financialYear: "+license.getFinancialYear());
+//        }
+//        return taxPeriods;
+//    }
 
 
     /**
@@ -334,4 +334,9 @@ public class TradeUtil {
         });
         return idToIsStateUpdatableMap;
     }
+    
+    
+    
+    
+    
 }

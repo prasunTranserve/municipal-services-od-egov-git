@@ -103,8 +103,8 @@ public class TLValidator {
     private void validateTLSpecificNotNullFields(TradeLicenseRequest request) {
         request.getLicenses().forEach(license -> {
             Map<String, String> errorMap = new HashMap<>();
-            if (license.getFinancialYear() == null)
-                errorMap.put("NULL_FINANCIALYEAR", " Financial Year cannot be null");
+            //if (license.getFinancialYear() == null)
+            //    errorMap.put("NULL_FINANCIALYEAR", " Financial Year cannot be null");
 
             if (license.getTradeLicenseDetail().getSubOwnerShipCategory() == null)
                 errorMap.put("NULL_SUBOWNERSHIPCATEGORY", " SubOwnership Category cannot be null");
@@ -158,31 +158,31 @@ public class TLValidator {
      *  Validates the fromDate and toDate of the request
      * @param request The input TradeLicenseRequest Object
      */
-    private void valideDates(TradeLicenseRequest request ,Object mdmsData){
-        request.getLicenses().forEach(license -> {
-            Map<String,Long> taxPeriods = null;
-            if(license.getValidTo()==null)
-                throw new CustomException("INVALID VALIDTO DATE"," Validto cannot be null");
-//            if(license.getApplicationType() != null && license.getApplicationType().toString().equals(TLConstants.APPLICATION_TYPE_RENEWAL)){
-//                taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
-//            }else{
-//                taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
-//            }
-            taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
-            if(license.getValidTo()!=null && license.getValidTo()>taxPeriods.get(TLConstants.MDMS_ENDDATE)){
-                Date expiry = new Date(license.getValidTo());
-                throw new CustomException("INVALID TO DATE"," Validto cannot be greater than: "+expiry);
-            }
-            if(license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.TEMPORARY.toString())) {
-                Long startOfDay = getStartOfDay();
-                if (!config.getIsPreviousTLAllowed() && license.getValidFrom() != null
-                        && license.getValidFrom() < startOfDay)
-                    throw new CustomException("INVALID FROM DATE", "The validFrom date cannot be less than CurrentDate");
-                if ((license.getValidFrom() != null && license.getValidTo() != null) && (license.getValidTo() - license.getValidFrom()) < config.getMinPeriod())
-                    throw new CustomException("INVALID PERIOD", "The license should be applied for minimum of 30 days");
-            }
-        });
-    }
+	private void valideDates(TradeLicenseRequest request, Object mdmsData) {
+		/*
+		 * request.getLicenses().forEach(license -> { Map<String,Long> taxPeriods =
+		 * null; if(license.getValidTo()==null) throw new
+		 * CustomException("INVALID VALIDTO DATE"," Validto cannot be null"); //
+		 * if(license.getApplicationType() != null &&
+		 * license.getApplicationType().toString().equals(TLConstants.
+		 * APPLICATION_TYPE_RENEWAL)){ // taxPeriods =
+		 * tradeUtil.getTaxPeriods(license,mdmsData); // }else{ // taxPeriods =
+		 * tradeUtil.getTaxPeriods(license,mdmsData); // } taxPeriods =
+		 * tradeUtil.getTaxPeriods(license,mdmsData); if(license.getValidTo()!=null &&
+		 * license.getValidTo()>taxPeriods.get(TLConstants.MDMS_ENDDATE)){ Date expiry =
+		 * new Date(license.getValidTo()); throw new
+		 * CustomException("INVALID TO DATE"," Validto cannot be greater than: "+expiry)
+		 * ; } if(license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.
+		 * LicenseTypeEnum.TEMPORARY.toString())) { Long startOfDay = getStartOfDay();
+		 * if (!config.getIsPreviousTLAllowed() && license.getValidFrom() != null &&
+		 * license.getValidFrom() < startOfDay) throw new
+		 * CustomException("INVALID FROM DATE",
+		 * "The validFrom date cannot be less than CurrentDate"); if
+		 * ((license.getValidFrom() != null && license.getValidTo() != null) &&
+		 * (license.getValidTo() - license.getValidFrom()) < config.getMinPeriod())
+		 * throw new CustomException("INVALID PERIOD",
+		 * "The license should be applied for minimum of 30 days"); } });
+		 */}
 
     /**
      * Returns the start of the current day in millis
@@ -450,18 +450,18 @@ public class TLValidator {
             license.getAuditDetails().setCreatedTime(idToTradeLicenseFromSearch.get(license.getId()).getAuditDetails().getCreatedTime());
             license.setStatus(idToTradeLicenseFromSearch.get(license.getId()).getStatus());
             license.setLicenseNumber(idToTradeLicenseFromSearch.get(license.getId()).getLicenseNumber());
-            String businessService = license.getBusinessService();
-            if (businessService == null)
-                businessService = businessService_TL;
-            switch (businessService) {
-                case businessService_TL:
-                    if (!idToTradeLicenseFromSearch.get(license.getId()).getFinancialYear().equalsIgnoreCase(license.getFinancialYear())
-                            && license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT)) {
-                        Map<String, Long> taxPeriods = tradeUtil.getTaxPeriods(license, mdmsData);
-                        license.setValidTo(taxPeriods.get(TLConstants.MDMS_ENDDATE));
-                    }
-                    break;
-            }
+//            String businessService = license.getBusinessService();
+//            if (businessService == null)
+//                businessService = businessService_TL;
+//            switch (businessService) {
+//                case businessService_TL:
+//                    if (!idToTradeLicenseFromSearch.get(license.getId()).getFinancialYear().equalsIgnoreCase(license.getFinancialYear())
+//                            && license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT)) {
+//                        Map<String, Long> taxPeriods = tradeUtil.getTaxPeriods(license, mdmsData);
+//                        license.setValidTo(taxPeriods.get(TLConstants.MDMS_ENDDATE));
+//                    }
+//                    break;
+//            }
         });
     }
 
@@ -666,5 +666,4 @@ public class TLValidator {
 
 
 }
-
 

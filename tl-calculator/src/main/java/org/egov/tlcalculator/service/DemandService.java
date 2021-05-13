@@ -184,9 +184,11 @@ public class DemandService {
                         taxPeriodTo = license.getValidTo();
                         break;
                     }else{
-                        Map<String, Long> taxPeriods = mdmsService.getTaxPeriods(requestInfo, license, mdmsData);
-                        taxPeriodFrom = taxPeriods.get(TLCalculatorConstants.MDMS_STARTDATE);
-                        taxPeriodTo = taxPeriods.get(TLCalculatorConstants.MDMS_ENDDATE);
+//                        Map<String, Long> taxPeriods = mdmsService.getTaxPeriods(requestInfo, license, mdmsData);
+//                        taxPeriodFrom = taxPeriods.get(TLCalculatorConstants.MDMS_STARTDATE);
+//                        taxPeriodTo = taxPeriods.get(TLCalculatorConstants.MDMS_ENDDATE);
+                    	taxPeriodFrom = license.getValidFrom();
+                        taxPeriodTo = license.getValidTo();
                         break;
                     }
             }
