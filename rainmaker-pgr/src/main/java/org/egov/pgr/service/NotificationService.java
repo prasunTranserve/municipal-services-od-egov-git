@@ -304,7 +304,7 @@ public class NotificationService {
 	
 	private boolean isEscalated(List<ActionInfo> actions) {
 		ActionInfo actionInfo = actions.stream().filter(obj -> 
-			obj.getStatus()!= null &
+			obj.getStatus()!= null &&
 			(obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
 			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
 			|| obj.getStatus().equalsIgnoreCase(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
