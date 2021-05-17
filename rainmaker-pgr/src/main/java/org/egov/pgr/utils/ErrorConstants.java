@@ -94,4 +94,8 @@ public class ErrorConstants {
 	
 	public static final String INVALID_EG_PGR_SERVICE_REQ_ID_CODE = "EG_PGR_INVALID_SERVICE_REQ_ID";
 	public static final String INVALID_EG_PGR_SERVICE_REQ_ID_MSG = "Invalid Service request id: ";
+	
+	public static final String INVALID_STATUS_COMMENT_CODE = "EG_PGR_INVALID_STATUS" ; 
+	public static final String INVALID_STATUS_COMMENT_MESSAGE = "The status of the complaint has been changed , please refresh the complaint" ;
+	
 }
