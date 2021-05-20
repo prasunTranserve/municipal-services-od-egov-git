@@ -116,8 +116,9 @@ public class PGRRequestValidator {
 			vaidateServiceCodes(serviceRequest, errorMap);
 		}
 		validateAssignments(serviceRequest, errorMap);
-		validateAction(serviceRequest, errorMap);
 		validateStatus(serviceRequest, errorMap) ;
+		validateAction(serviceRequest, errorMap);
+		
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
 	}
@@ -531,8 +532,8 @@ public class PGRRequestValidator {
 		if (!CollectionUtils.isEmpty(infos)) {
 			 if(infos.size()==1)
 			 {
-				 if(!StringUtils.isEmpty(infos.get(0).getAction())) 
-					 return ;
+				 //if(!StringUtils.isEmpty(infos.get(0).getAction())) 
+				//	 return ;
 			 }else
 				 return;
 		}else
