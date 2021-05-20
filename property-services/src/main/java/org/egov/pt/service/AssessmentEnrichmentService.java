@@ -234,39 +234,62 @@ public class AssessmentEnrichmentService {
 
 	public void enrichDemand(AssessmentRequest request, Property property) {
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
+		JsonNode propertyAdditionalDetail = property.getAdditionalDetails();
 		
-		JsonNode holdingTaxNode = property.getAdditionalDetails().get("holdingTax");
-		node.set("holdingTax", holdingTaxNode);
+		if(propertyAdditionalDetail.has("holdingTax")) {
+			JsonNode holdingTaxNode = propertyAdditionalDetail.get("holdingTax");
+			node.set("holdingTax", holdingTaxNode);
+		}
 		
-		JsonNode lightTaxNode = property.getAdditionalDetails().get("lightTax");
-		node.set("lightTax", lightTaxNode);
+		if(propertyAdditionalDetail.has("lightTax")) {
+			JsonNode lightTaxNode = propertyAdditionalDetail.get("lightTax");
+			node.set("lightTax", lightTaxNode);
+		}
 		
-		JsonNode waterTaxNode = property.getAdditionalDetails().get("waterTax");
-		node.set("waterTax", waterTaxNode);
+		if(propertyAdditionalDetail.has("waterTax")) {
+			JsonNode waterTaxNode = propertyAdditionalDetail.get("waterTax");
+			node.set("waterTax", waterTaxNode);
+		}
 		
-		JsonNode drainageTaxNode = property.getAdditionalDetails().get("drainageTax");
-		node.set("drainageTax", drainageTaxNode);
+		if(propertyAdditionalDetail.has("drainageTax")) {
+			JsonNode drainageTaxNode = propertyAdditionalDetail.get("drainageTax");
+			node.set("drainageTax", drainageTaxNode);
+		}
 		
-		JsonNode latrineTaxNode = property.getAdditionalDetails().get("latrineTax");
-		node.set("latrineTax", latrineTaxNode);
+		if(propertyAdditionalDetail.has("latrineTax")) {
+			JsonNode latrineTaxNode = propertyAdditionalDetail.get("latrineTax");
+			node.set("latrineTax", latrineTaxNode);
+		}
 		
-		JsonNode parkingTaxNode = property.getAdditionalDetails().get("parkingTax");
-		node.set("parkingTax", parkingTaxNode);
+		if(propertyAdditionalDetail.has("parkingTax")) {
+			JsonNode parkingTaxNode = propertyAdditionalDetail.get("parkingTax");
+			node.set("parkingTax", parkingTaxNode);
+		}
 		
-		JsonNode solidWasteUserChargesNode = property.getAdditionalDetails().get("solidWasteUserCharges");
-		node.set("solidWasteUserCharges", solidWasteUserChargesNode);
+		if(propertyAdditionalDetail.has("solidWasteUserCharges")) {
+			JsonNode solidWasteUserChargesNode = propertyAdditionalDetail.get("solidWasteUserCharges");
+			node.set("solidWasteUserCharges", solidWasteUserChargesNode);
+		}
 		
-		JsonNode ownershipExemptionNode = property.getAdditionalDetails().get("ownershipExemption");
-		node.set("ownershipExemption", ownershipExemptionNode);
+		if(propertyAdditionalDetail.has("ownershipExemption")) {
+			JsonNode ownershipExemptionNode = propertyAdditionalDetail.get("ownershipExemption");
+			node.set("ownershipExemption", ownershipExemptionNode);
+		}
 		
-		JsonNode usageExemptionNode = property.getAdditionalDetails().get("usageExemption");
-		node.set("usageExemption", usageExemptionNode);
+		if(propertyAdditionalDetail.has("usageExemption")) {
+			JsonNode usageExemptionNode = propertyAdditionalDetail.get("usageExemption");
+			node.set("usageExemption", usageExemptionNode);
+		}
 		
-		JsonNode interestNode = property.getAdditionalDetails().get("interest");
-		node.set("interest", interestNode);
+		if(propertyAdditionalDetail.has("interest")) {
+			JsonNode interestNode = propertyAdditionalDetail.get("interest");
+			node.set("interest", interestNode);
+		}
 		
-		JsonNode penaltyNode = property.getAdditionalDetails().get("penalty");
-		node.set("penalty", penaltyNode);
+		if(propertyAdditionalDetail.has("penalty")) {
+			JsonNode penaltyNode = propertyAdditionalDetail.get("penalty");
+			node.set("penalty", penaltyNode);
+		}
 		
 		request.getAssessment().setAdditionalDetails(node);
 		

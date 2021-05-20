@@ -150,7 +150,7 @@ public class PropertyRepository {
 		}
 		
 		// Adding assessment application on the list
-		properties.addAll(getAssessment(criteria));
+		//properties.addAll(getAssessment(criteria));
 				
 		if (CollectionUtils.isEmpty(properties))
 			return Collections.emptyList();

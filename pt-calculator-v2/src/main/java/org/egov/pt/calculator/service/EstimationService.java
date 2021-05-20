@@ -55,6 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -205,7 +206,7 @@ public class EstimationService {
 		 * by default land should get only one slab from database per tenantId
 		 */
 		List<TaxHeadEstimate> taxHeadEstimates;
-
+		verifyPropertyAdditionalDetails(criteria);
 		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0
 				|| BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0
 				|| BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0
@@ -276,6 +277,21 @@ public class EstimationService {
 
 	}
 
+	private void verifyPropertyAdditionalDetails(CalculationCriteria criteria) {
+		criteria.setHoldingTax(criteria.getHoldingTax()==null? BigDecimal.ZERO : criteria.getHoldingTax());
+		criteria.setLightTax(criteria.getLightTax()==null? BigDecimal.ZERO : criteria.getLightTax());
+		criteria.setWaterTax(criteria.getWaterTax()==null? BigDecimal.ZERO : criteria.getWaterTax());
+		criteria.setDrainageTax(criteria.getDrainageTax()==null? BigDecimal.ZERO : criteria.getDrainageTax());
+		criteria.setLatrineTax(criteria.getLatrineTax()==null? BigDecimal.ZERO : criteria.getLatrineTax());
+		criteria.setParkingTax(criteria.getParkingTax()==null? BigDecimal.ZERO : criteria.getParkingTax());
+		criteria.setSolidWasteUserCharges(criteria.getSolidWasteUserCharges()==null? BigDecimal.ZERO : criteria.getSolidWasteUserCharges());
+		criteria.setOwnershipExemption(criteria.getOwnershipExemption()==null? BigDecimal.ZERO : criteria.getOwnershipExemption());
+		criteria.setUsageExemption(criteria.getUsageExemption()==null? BigDecimal.ZERO : criteria.getUsageExemption());
+		criteria.setInterest(criteria.getInterest()==null? BigDecimal.ZERO : criteria.getInterest());
+		criteria.setPenalty(criteria.getPenalty()==null? BigDecimal.ZERO : criteria.getPenalty());
+		
+	}
+
 	private List<TaxHeadEstimate> getEstimatesForTax(CalculationCriteria criteria) {
 
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
@@ -287,8 +303,8 @@ public class EstimationService {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LIGHT_TAX).estimateAmount(criteria.getLightTax()).build());
 		}
 		
-		if(BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getLightTax()).build());
+		if(BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getWaterTax()).build());
 		}
 		
 		if(BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0) {
@@ -830,7 +846,14 @@ public class EstimationService {
 		Calculation calculation = new Calculation();
 		calculation.setTenantId(property.getTenantId());
 		setTaxperiodForCalculation(requestInfo,property.getTenantId(),calculation);
-		BigDecimal fee = getFeeFromSlabs(property, calculation, requestInfo,additionalDetails);
+		//auto calculation
+		//BigDecimal fee = getFeeFromSlabs(property, calculation, requestInfo,additionalDetails);
+		//Manual calculation
+		BigDecimal fee = BigDecimal.ZERO;
+		JsonNode propertyAdditionalDetails = (JsonNode)property.getAdditionalDetails();
+		if(propertyAdditionalDetails.has("mutationCharge")) {
+			fee = BigDecimal.valueOf(propertyAdditionalDetails.get("mutationCharge").asDouble());
+		}
 		calculation.setTaxAmount(fee);
 		postProcessTheFee(requestInfo,property,calculation,additionalDetails);
 		feeStructure.put(property.getAcknowldgementNumber(), calculation);
