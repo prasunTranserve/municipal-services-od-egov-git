@@ -51,25 +51,37 @@ public class CalculationCriteria   {
         @JsonProperty("toDate")
         private Long toDate;
         
-        @JsonProperty("assessmentAmount")
-        private BigDecimal assessmentAmount = BigDecimal.ZERO;
-
-        @JsonProperty("usageExemptionAmount")
-    	private BigDecimal usageExemptionAmount = BigDecimal.ZERO;
-
-    	@JsonProperty("ownerExemptionAmount")
-    	private BigDecimal ownerExemptionAmount = BigDecimal.ZERO;
-
-    	@JsonProperty("fireCessAmount")
-    	private BigDecimal fireCessAmount = BigDecimal.ZERO;
-
-    	@JsonProperty("cancerCessAmount")
-    	private BigDecimal cancerCessAmount = BigDecimal.ZERO;
-
-    	@JsonProperty("adhocPenaltyAmount")
-    	private BigDecimal adhocPenaltyAmount = BigDecimal.ZERO;
-
-    	@JsonProperty("adhocRebateAmount")
-    	private BigDecimal adhocRebateAmount = BigDecimal.ZERO;
+        @JsonProperty("holdingTax")
+        private BigDecimal holdingTax;
+        
+        @JsonProperty("lightTax")
+        private BigDecimal lightTax;
+        
+        @JsonProperty("waterTax")
+        private BigDecimal waterTax;
+        
+        @JsonProperty("drainageTax")
+        private BigDecimal drainageTax;
+        
+        @JsonProperty("latrineTax")
+        private BigDecimal latrineTax;
+        
+        @JsonProperty("parkingTax")
+        private BigDecimal parkingTax;
+        
+        @JsonProperty("solidWasteUserCharges")
+        private BigDecimal solidWasteUserCharges;
+        
+        @JsonProperty("ownershipExemption")
+        private BigDecimal ownershipExemption;
+        
+        @JsonProperty("usageExemption")
+        private BigDecimal usageExemption;
+        
+        @JsonProperty("interest")
+        private BigDecimal interest;
+        
+        @JsonProperty("penalty")
+        private BigDecimal penalty;
 }
 

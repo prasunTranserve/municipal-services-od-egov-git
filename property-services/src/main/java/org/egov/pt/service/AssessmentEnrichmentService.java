@@ -31,6 +31,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 @Service
 public class AssessmentEnrichmentService {
 
@@ -55,13 +59,13 @@ public class AssessmentEnrichmentService {
      *
      * @param request
      */
-    public void enrichAssessmentCreate(AssessmentRequest request) {
+    public void enrichAssessmentCreate(AssessmentRequest request, boolean autoTriggered) {
     	
         Assessment assessment = request.getAssessment();
         assessment.setId(String.valueOf(UUID.randomUUID()));
         assessment.setAssessmentNumber(getAssessmentNo(request));
 
-        if(config.getIsAssessmentWorkflowEnabled())
+        if(config.getIsAssessmentWorkflowEnabled() && !autoTriggered)
             assessment.setStatus(Status.INWORKFLOW);
         else
             assessment.setStatus(Status.ACTIVE);
@@ -227,5 +231,45 @@ public class AssessmentEnrichmentService {
         assessment.setWorkflow(processInstance);
 
     }
+
+	public void enrichDemand(AssessmentRequest request, Property property) {
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+		
+		JsonNode holdingTaxNode = property.getAdditionalDetails().get("holdingTax");
+		node.set("holdingTax", holdingTaxNode);
+		
+		JsonNode lightTaxNode = property.getAdditionalDetails().get("lightTax");
+		node.set("lightTax", lightTaxNode);
+		
+		JsonNode waterTaxNode = property.getAdditionalDetails().get("waterTax");
+		node.set("waterTax", waterTaxNode);
+		
+		JsonNode drainageTaxNode = property.getAdditionalDetails().get("drainageTax");
+		node.set("drainageTax", drainageTaxNode);
+		
+		JsonNode latrineTaxNode = property.getAdditionalDetails().get("latrineTax");
+		node.set("latrineTax", latrineTaxNode);
+		
+		JsonNode parkingTaxNode = property.getAdditionalDetails().get("parkingTax");
+		node.set("parkingTax", parkingTaxNode);
+		
+		JsonNode solidWasteUserChargesNode = property.getAdditionalDetails().get("solidWasteUserCharges");
+		node.set("solidWasteUserCharges", solidWasteUserChargesNode);
+		
+		JsonNode ownershipExemptionNode = property.getAdditionalDetails().get("ownershipExemption");
+		node.set("ownershipExemption", ownershipExemptionNode);
+		
+		JsonNode usageExemptionNode = property.getAdditionalDetails().get("usageExemption");
+		node.set("usageExemption", usageExemptionNode);
+		
+		JsonNode interestNode = property.getAdditionalDetails().get("interest");
+		node.set("interest", interestNode);
+		
+		JsonNode penaltyNode = property.getAdditionalDetails().get("penalty");
+		node.set("penalty", penaltyNode);
+		
+		request.getAssessment().setAdditionalDetails(node);
+		
+	}
 
 }

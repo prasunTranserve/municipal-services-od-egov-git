@@ -1,6 +1,7 @@
 package org.egov.pt.service;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +10,11 @@ import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
+import org.egov.pt.models.Assessment;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
+import org.egov.pt.models.Assessment.Source;
 import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.user.UserDetailResponse;
@@ -19,9 +22,11 @@ import org.egov.pt.models.user.UserSearchRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
 import org.egov.pt.repository.PropertyRepository;
+import org.egov.pt.util.CommonUtils;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
 import org.egov.pt.validator.PropertyValidator;
+import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,9 +69,10 @@ public class PropertyService {
 
 	@Autowired
 	private CalculationService calculatorService;
-
-
-
+	
+	@Autowired
+	private AssessmentService assessmentService;
+	
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -109,14 +115,21 @@ public class PropertyService {
 		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
 
 		boolean isRequestForOwnerMutation = CreationReason.MUTATION.equals(request.getProperty().getCreationReason());
+		boolean isLeacyApplicationMobileLink = CreationReason.LINK.equals(request.getProperty().getCreationReason());
 
-		if (isRequestForOwnerMutation)
+		if(isLeacyApplicationMobileLink) {
+			linkMobileWithProperty(request, propertyFromSearch);
+		} else if (isRequestForOwnerMutation)
 			processOwnerMutation(request, propertyFromSearch);
 		else
 			processPropertyUpdate(request, propertyFromSearch);
 
 		request.getProperty().setWorkflow(null);
 		return request.getProperty();
+	}
+	
+	private void linkMobileWithProperty(PropertyRequest request, Property propertyFromSearch) {
+		userService.updateUserForPropertyLink(request);
 	}
 
 	/**
@@ -167,6 +180,15 @@ public class PropertyService {
 				 * If property is In Workflow then continue
 				 */
 				producer.push(config.getUpdatePropertyTopic(), request);
+				
+				// If last state and property approve then trigger assessment
+				if(state.getState().equalsIgnoreCase("APPROVED") && state.getApplicationStatus().equalsIgnoreCase(Status.ACTIVE.toString())) {
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) { }
+					AssessmentRequest assessmentRequest = prepareAssessmentRequest(request);
+					assessmentService.createAssessment(assessmentRequest, true);
+				}
 			}
 
 		} else {
@@ -176,6 +198,18 @@ public class PropertyService {
 			 */
 			producer.push(config.getUpdatePropertyTopic(), request);
 		}
+	}
+
+	private AssessmentRequest prepareAssessmentRequest(PropertyRequest request) {
+		return AssessmentRequest.builder()
+						.assessment(Assessment.builder()
+								.tenantId(request.getProperty().getTenantId())
+								.propertyId(request.getProperty().getPropertyId())
+								.source(Source.MUNICIPAL_RECORDS)
+								.channel(request.getProperty().getChannel())
+								.assessmentDate((new Date()).getTime())
+								.financialYear(CommonUtils.getFinancialYear()).build())
+						.requestInfo(request.getRequestInfo()).build();
 	}
 
 	/**

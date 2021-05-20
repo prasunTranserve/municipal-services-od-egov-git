@@ -3,6 +3,7 @@ package org.egov.pt.util;
 import static java.util.Objects.isNull;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MasterDetail;
 import org.egov.mdms.model.MdmsCriteria;
@@ -192,4 +194,19 @@ public class CommonUtils {
 		}
 		return mainNode;
 	}
+	
+	public static String getFinancialYear() {
+		int year = Calendar.getInstance().get(Calendar.YEAR);
+		int finFirstYear =  year;
+		int finLastYear =  year;
+	    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+	    System.out.println("Financial month : " + month);
+	    if (month <= 3) {
+	    	finFirstYear = (year - 1);
+	    } else {
+	    	finLastYear = (year + 1);
+	    }
+	    return String.format("%s-%s", finFirstYear, finLastYear%100);
+	}
+	
 }

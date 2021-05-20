@@ -78,27 +78,6 @@ public class Assessment {
 	@JsonProperty("workflow")
 	private ProcessInstance workflow;
 
-	@JsonProperty("assessmentAmount")
-	private BigDecimal assessmentAmount;
-
-	@JsonProperty("usageExemptionAmount")
-	private BigDecimal usageExemptionAmount;
-
-	@JsonProperty("ownerExemptionAmount")
-	private BigDecimal ownerExemptionAmount;
-
-	@JsonProperty("fireCessAmount")
-	private BigDecimal fireCessAmount;
-
-	@JsonProperty("cancerCessAmount")
-	private BigDecimal cancerCessAmount;
-
-	@JsonProperty("adhocPenaltyAmount")
-	private BigDecimal adhocPenaltyAmount;
-
-	@JsonProperty("adhocRebateAmount")
-	private BigDecimal adhocRebateAmount;
-
 	public enum Source {
 
 		MUNICIPAL_RECORDS("MUNICIPAL_RECORDS"),

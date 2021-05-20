@@ -1,62 +1,6 @@
 package org.egov.pt.calculator.service;
 
-import static org.egov.pt.calculator.util.CalculatorConstants.ADHOC_PENALTY;
-import static org.egov.pt.calculator.util.CalculatorConstants.ADHOC_REBATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_MATCH_AREA;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_MATCH_ERROR_CODE;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_MATCH_ERROR_MESSAGE;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_MATCH_FLOOR;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_MATCH_USAGE_DETAIL;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_SEARCH_FAILED;
-import static org.egov.pt.calculator.util.CalculatorConstants.BILLING_SLAB_SEARCH_FAILED_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.BUSINESSSERVICE_FIELD_FOR_SEARCH_URL;
-import static org.egov.pt.calculator.util.CalculatorConstants.CONSUMER_CODE_SEARCH_FIELD_NAME;
-import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_CREATE_FAILED;
-import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_CREATE_FAILED_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_UPDATE_FAILED;
-import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_UPDATE_FAILED_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.DOCUMENT_DATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.EG_PT_DEPRECIATING_ASSESSMENT_ERROR;
-import static org.egov.pt.calculator.util.CalculatorConstants.EG_PT_DEPRECIATING_ASSESSMENT_ERROR_MSG_ESTIMATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.EG_PT_ESTIMATE_ARV_NULL;
-import static org.egov.pt.calculator.util.CalculatorConstants.EG_PT_ESTIMATE_ARV_NULL_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.EXEMPTION_FIELD_NAME;
-import static org.egov.pt.calculator.util.CalculatorConstants.FINANCIALYEAR_MASTER_KEY;
-import static org.egov.pt.calculator.util.CalculatorConstants.FINANCIAL_YEAR_ENDING_DATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.FINANCIAL_YEAR_STARTING_DATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.MARKET_VALUE;
-import static org.egov.pt.calculator.util.CalculatorConstants.MUTATION_PAYMENT_PERIOD_IN_MONTH;
-import static org.egov.pt.calculator.util.CalculatorConstants.OWNER_STATUS_ACTIVE;
-import static org.egov.pt.calculator.util.CalculatorConstants.OWNER_TYPE_MASTER;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADHOC_PENALTY;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADHOC_REBATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADHOC_REBATE_INVALID_AMOUNT;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADHOC_REBATE_INVALID_AMOUNT_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADVANCE_CARRYFORWARD;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_CANCER_CESS;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ESTIMATE_BILLINGSLABS_UNMATCH;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ESTIMATE_BILLINGSLABS_UNMATCH_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANCT;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANT_MSG;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_ESTIMATE_BILLINGSLABS_UNMATCH_replace_id;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_FIRE_CESS;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_OWNER_EXEMPTION;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_TAX;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_TIME_INTEREST;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_TIME_PENALTY;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_TIME_REBATE;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_TYPE_VACANT_LAND;
-import static org.egov.pt.calculator.util.CalculatorConstants.PT_UNIT_USAGE_EXEMPTION;
-import static org.egov.pt.calculator.util.CalculatorConstants.SEPARATER;
-import static org.egov.pt.calculator.util.CalculatorConstants.SERVICE_FIELD_FOR_SEARCH_URL;
-import static org.egov.pt.calculator.util.CalculatorConstants.SERVICE_FIELD_VALUE_PT_MUTATION;
-import static org.egov.pt.calculator.util.CalculatorConstants.TAXHEADMASTER_MASTER_KEY;
-import static org.egov.pt.calculator.util.CalculatorConstants.TENANT_ID_FIELD_FOR_SEARCH_URL;
-import static org.egov.pt.calculator.util.CalculatorConstants.URL_PARAMS_SEPARATER;
-import static org.egov.pt.calculator.util.CalculatorConstants.USAGE_DETAIL_MASTER;
-import static org.egov.pt.calculator.util.CalculatorConstants.USAGE_MAJOR_MASTER;
-import static org.egov.pt.calculator.util.CalculatorConstants.USAGE_MINOR_MASTER;
-import static org.egov.pt.calculator.util.CalculatorConstants.USAGE_SUB_MINOR_MASTER;
+import static org.egov.pt.calculator.util.CalculatorConstants.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -262,11 +206,15 @@ public class EstimationService {
 		 */
 		List<TaxHeadEstimate> taxHeadEstimates;
 
-		validateManualAmounts(criteria);
-		if(BigDecimal.ZERO.compareTo(criteria.getAssessmentAmount()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getFireCessAmount()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getCancerCessAmount()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getAdhocPenaltyAmount()) < 0) {
+		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getLatrineTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getParkingTax()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getSolidWasteUserCharges()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0
+				|| BigDecimal.ZERO.compareTo(criteria.getInterest()) < 0) {
 			taxHeadEstimates =  getEstimatesForTax(criteria);
 		} else {
 			if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType()) && filteredBillingSlabs.size() != 1)
@@ -327,27 +275,54 @@ public class EstimationService {
 		return estimatesAndBillingSlabs;
 
 	}
-	
-	private void validateManualAmounts(CalculationCriteria criteria) {
-		criteria.setAssessmentAmount(criteria.getAssessmentAmount()==null? BigDecimal.ZERO : criteria.getAssessmentAmount());
-		criteria.setCancerCessAmount(criteria.getCancerCessAmount()==null? BigDecimal.ZERO : criteria.getCancerCessAmount());
-		criteria.setAdhocPenaltyAmount(criteria.getAdhocPenaltyAmount()==null? BigDecimal.ZERO : criteria.getAdhocPenaltyAmount());
-		criteria.setAdhocRebateAmount(criteria.getAdhocRebateAmount()==null? BigDecimal.ZERO : criteria.getAdhocRebateAmount());
-		criteria.setFireCessAmount(criteria.getFireCessAmount()==null? BigDecimal.ZERO : criteria.getFireCessAmount());
-		criteria.setOwnerExemptionAmount(criteria.getOwnerExemptionAmount()==null? BigDecimal.ZERO : criteria.getOwnerExemptionAmount());
-		criteria.setUsageExemptionAmount(criteria.getUsageExemptionAmount()==null? BigDecimal.ZERO : criteria.getUsageExemptionAmount());
-	}
 
 	private List<TaxHeadEstimate> getEstimatesForTax(CalculationCriteria criteria) {
 
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_TAX).estimateAmount(criteria.getAssessmentAmount()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_UNIT_USAGE_EXEMPTION).estimateAmount(criteria.getUsageExemptionAmount().negate()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OWNER_EXEMPTION).estimateAmount(criteria.getOwnerExemptionAmount().negate()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_FIRE_CESS).estimateAmount(criteria.getFireCessAmount()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_CANCER_CESS).estimateAmount(criteria.getCancerCessAmount()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_ADHOC_PENALTY).estimateAmount(criteria.getAdhocPenaltyAmount()).build());
-		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_ADHOC_REBATE).estimateAmount(criteria.getAdhocRebateAmount().negate()).build());
+		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(criteria.getHoldingTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LIGHT_TAX).estimateAmount(criteria.getLightTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getLightTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_DRAINAGE_TAX).estimateAmount(criteria.getDrainageTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getLatrineTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LATRINE_TAX).estimateAmount(criteria.getLatrineTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getParkingTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PARKING_TAX).estimateAmount(criteria.getParkingTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getSolidWasteUserCharges()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SOLID_WASTE_USER_CHARGES).estimateAmount(criteria.getSolidWasteUserCharges()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getOwnershipExemption()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OWNERSHIP_EXCEMPTION).estimateAmount(criteria.getOwnershipExemption().negate()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getUsageExemption()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_USAGE_EXCEMPTION).estimateAmount(criteria.getUsageExemption().negate()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getInterest()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_INTEREST).estimateAmount(criteria.getInterest()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
+		}
+		
 		return estimates;
 	}
 

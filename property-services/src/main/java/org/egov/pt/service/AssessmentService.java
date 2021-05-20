@@ -72,12 +72,12 @@ public class AssessmentService {
 	 * @param request
 	 * @return
 	 */
-	public Assessment createAssessment(AssessmentRequest request) {
+	public Assessment createAssessment(AssessmentRequest request, boolean autoTriggered) {
 		Property property = utils.getPropertyForAssessment(request);
 		validator.validateAssessmentCreate(request, property);
-		assessmentEnrichmentService.enrichAssessmentCreate(request);
+		assessmentEnrichmentService.enrichAssessmentCreate(request, autoTriggered);
 
-		if(config.getIsAssessmentWorkflowEnabled()){
+		if(config.getIsAssessmentWorkflowEnabled() && !autoTriggered){
 			assessmentEnrichmentService.enrichWorkflowForInitiation(request);
 			ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(request.getRequestInfo(),
 					Collections.singletonList(request.getAssessment().getWorkflow()));
@@ -85,6 +85,7 @@ public class AssessmentService {
 			request.getAssessment().getWorkflow().setState(state);
 		}
 		else {
+			assessmentEnrichmentService.enrichDemand(request, property);
 			calculationService.calculateTax(request, property);
 		}
 		producer.push(props.getCreateAssessmentTopic(), request);
