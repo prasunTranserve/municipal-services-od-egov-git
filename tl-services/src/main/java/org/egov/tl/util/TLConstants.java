@@ -121,7 +121,7 @@ public class TLConstants {
 
     public static final String TRADETYPE_JSONPATH_UOM = "$.MdmsRes.TradeLicense.TradeType.*.uom";
     
-    public static final String TRADETYPE_JSONPATH_TEMP_UOM = "$.MdmsRes.TradeLicense.TradeType.*.tempuom";
+    public static final String TRADETYPE_JSONPATH_TEMP_UOM = "$.MdmsRes.TradeLicense.TradeType.*.tempUom";
 
     public static final String ACCESSORY_JSONPATH_CODE = "$.MdmsRes.TradeLicense.AccessoriesCategory.*.code";
 
