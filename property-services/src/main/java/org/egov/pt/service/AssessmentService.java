@@ -155,8 +155,16 @@ public class AssessmentService {
 				* */
 
 
-		}
-		else if(!config.getIsAssessmentWorkflowEnabled()){
+		} else if(config.getIsAssessmentWorkflowEnabled() && request.getAssessment().getStatus().equals(Status.ACTIVE)){
+			assessmentEnrichmentService.enrichWorkflowForInitiation(request);
+			ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(request.getRequestInfo(),
+					Collections.singletonList(request.getAssessment().getWorkflow()));
+			State state = workflowService.callWorkFlow(workflowRequest);
+			request.getAssessment().getWorkflow().setState(state);
+			// To initiate the workflow change the status
+			request.getAssessment().setStatus(Status.INWORKFLOW);
+			producer.push(props.getUpdateAssessmentTopic(), request);
+		} else if(!config.getIsAssessmentWorkflowEnabled()) {
 			calculationService.calculateTax(request, property);
 			producer.push(props.getUpdateAssessmentTopic(), request);
 		}
