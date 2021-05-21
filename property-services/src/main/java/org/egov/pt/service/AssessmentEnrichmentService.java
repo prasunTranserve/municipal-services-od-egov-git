@@ -1,10 +1,7 @@
 package org.egov.pt.service;
 
 
-import static org.egov.pt.util.PTConstants.ASMT_MODULENAME;
-import static org.egov.pt.util.PTConstants.ASMT_WORKFLOW_CODE;
-import static org.egov.pt.util.PTConstants.WORKFLOW_SENDBACK_CITIZEN;
-import static org.egov.pt.util.PTConstants.WORKFLOW_START_ACTION;
+import static org.egov.pt.util.PTConstants.*;
 
 import java.util.List;
 import java.util.Map;
@@ -236,59 +233,59 @@ public class AssessmentEnrichmentService {
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 		JsonNode propertyAdditionalDetail = property.getAdditionalDetails();
 		
-		if(propertyAdditionalDetail.has("holdingTax")) {
-			JsonNode holdingTaxNode = propertyAdditionalDetail.get("holdingTax");
-			node.set("holdingTax", holdingTaxNode);
+		if(propertyAdditionalDetail.has(HOLDING_TAX)) {
+			JsonNode holdingTaxNode = propertyAdditionalDetail.get(HOLDING_TAX);
+			node.set(HOLDING_TAX, holdingTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("lightTax")) {
-			JsonNode lightTaxNode = propertyAdditionalDetail.get("lightTax");
-			node.set("lightTax", lightTaxNode);
+		if(propertyAdditionalDetail.has(LIGHT_TAX)) {
+			JsonNode lightTaxNode = propertyAdditionalDetail.get(LIGHT_TAX);
+			node.set(LIGHT_TAX, lightTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("waterTax")) {
-			JsonNode waterTaxNode = propertyAdditionalDetail.get("waterTax");
-			node.set("waterTax", waterTaxNode);
+		if(propertyAdditionalDetail.has(WATER_TAX)) {
+			JsonNode waterTaxNode = propertyAdditionalDetail.get(WATER_TAX);
+			node.set(WATER_TAX, waterTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("drainageTax")) {
-			JsonNode drainageTaxNode = propertyAdditionalDetail.get("drainageTax");
-			node.set("drainageTax", drainageTaxNode);
+		if(propertyAdditionalDetail.has(DRAINAGE_TAX)) {
+			JsonNode drainageTaxNode = propertyAdditionalDetail.get(DRAINAGE_TAX);
+			node.set(DRAINAGE_TAX, drainageTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("latrineTax")) {
-			JsonNode latrineTaxNode = propertyAdditionalDetail.get("latrineTax");
-			node.set("latrineTax", latrineTaxNode);
+		if(propertyAdditionalDetail.has(LATRINE_TAX)) {
+			JsonNode latrineTaxNode = propertyAdditionalDetail.get(LATRINE_TAX);
+			node.set(LATRINE_TAX, latrineTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("parkingTax")) {
-			JsonNode parkingTaxNode = propertyAdditionalDetail.get("parkingTax");
-			node.set("parkingTax", parkingTaxNode);
+		if(propertyAdditionalDetail.has(PARKING_TAX)) {
+			JsonNode parkingTaxNode = propertyAdditionalDetail.get(PARKING_TAX);
+			node.set(PARKING_TAX, parkingTaxNode);
 		}
 		
-		if(propertyAdditionalDetail.has("solidWasteUserCharges")) {
-			JsonNode solidWasteUserChargesNode = propertyAdditionalDetail.get("solidWasteUserCharges");
-			node.set("solidWasteUserCharges", solidWasteUserChargesNode);
+		if(propertyAdditionalDetail.has(SOLID_WASTE_USER_CHANGES)) {
+			JsonNode solidWasteUserChargesNode = propertyAdditionalDetail.get(SOLID_WASTE_USER_CHANGES);
+			node.set(SOLID_WASTE_USER_CHANGES, solidWasteUserChargesNode);
 		}
 		
-		if(propertyAdditionalDetail.has("ownershipExemption")) {
-			JsonNode ownershipExemptionNode = propertyAdditionalDetail.get("ownershipExemption");
-			node.set("ownershipExemption", ownershipExemptionNode);
+		if(propertyAdditionalDetail.has(OWNERSHIP_EXEMPTION)) {
+			JsonNode ownershipExemptionNode = propertyAdditionalDetail.get(OWNERSHIP_EXEMPTION);
+			node.set(OWNERSHIP_EXEMPTION, ownershipExemptionNode);
 		}
 		
-		if(propertyAdditionalDetail.has("usageExemption")) {
-			JsonNode usageExemptionNode = propertyAdditionalDetail.get("usageExemption");
-			node.set("usageExemption", usageExemptionNode);
+		if(propertyAdditionalDetail.has(USAGE_EXEMPTION)) {
+			JsonNode usageExemptionNode = propertyAdditionalDetail.get(USAGE_EXEMPTION);
+			node.set(USAGE_EXEMPTION, usageExemptionNode);
 		}
 		
-		if(propertyAdditionalDetail.has("interest")) {
-			JsonNode interestNode = propertyAdditionalDetail.get("interest");
-			node.set("interest", interestNode);
+		if(propertyAdditionalDetail.has(INTEREST)) {
+			JsonNode interestNode = propertyAdditionalDetail.get(INTEREST);
+			node.set(INTEREST, interestNode);
 		}
 		
-		if(propertyAdditionalDetail.has("penalty")) {
-			JsonNode penaltyNode = propertyAdditionalDetail.get("penalty");
-			node.set("penalty", penaltyNode);
+		if(propertyAdditionalDetail.has(PENALTY)) {
+			JsonNode penaltyNode = propertyAdditionalDetail.get(PENALTY);
+			node.set(PENALTY, penaltyNode);
 		}
 		
 		request.getAssessment().setAdditionalDetails(node);

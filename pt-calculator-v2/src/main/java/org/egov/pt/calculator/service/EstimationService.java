@@ -849,17 +849,23 @@ public class EstimationService {
 		//auto calculation
 		//BigDecimal fee = getFeeFromSlabs(property, calculation, requestInfo,additionalDetails);
 		//Manual calculation
-		BigDecimal fee = BigDecimal.ZERO;
-		JsonNode propertyAdditionalDetails = (JsonNode)property.getAdditionalDetails();
-		if(propertyAdditionalDetails.has("mutationCharge")) {
-			fee = BigDecimal.valueOf(propertyAdditionalDetails.get("mutationCharge").asDouble());
-		}
+		BigDecimal fee = getFee(property);
 		calculation.setTaxAmount(fee);
 		postProcessTheFee(requestInfo,property,calculation,additionalDetails);
 		feeStructure.put(property.getAcknowldgementNumber(), calculation);
 		searchDemand(requestInfo,property,calculation,feeStructure);
 
 		return feeStructure;
+	}
+
+	private BigDecimal getFee(PropertyV2 property) {
+		ObjectMapper mapper = new ObjectMapper(); 
+		BigDecimal fee = BigDecimal.ZERO;
+		JsonNode propertyAdditionalDetails = mapper.convertValue(property.getAdditionalDetails(), JsonNode.class);
+		if(propertyAdditionalDetails.has(MUTATION_CHARGE)) {
+			fee = BigDecimal.valueOf(propertyAdditionalDetails.get(MUTATION_CHARGE).asDouble());
+		}
+		return fee;
 	}
 
 	private void setTaxperiodForCalculation(RequestInfo requestInfo, String tenantId,Calculation calculation){

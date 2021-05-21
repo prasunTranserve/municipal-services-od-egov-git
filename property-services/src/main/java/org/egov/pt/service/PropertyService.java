@@ -224,7 +224,7 @@ public class PropertyService {
 		userService.createUserForMutation(request, !propertyFromSearch.getStatus().equals(Status.INWORKFLOW));
 		enrichmentService.enrichAssignes(request.getProperty());
 		enrichmentService.enrichMutationRequest(request, propertyFromSearch);
-		calculatorService.calculateMutationFee(request.getRequestInfo(), request.getProperty());
+		
 
 		// TODO FIX ME block property changes FIXME
 		util.mergeAdditionalDetails(request, propertyFromSearch);
@@ -261,6 +261,9 @@ public class PropertyService {
 				/*
 				 * If property is In Workflow then continue
 				 */
+				if(state.getState().contains("APPROVE")) {
+					calculatorService.calculateMutationFee(request.getRequestInfo(), request.getProperty());
+				}
 				producer.push(config.getUpdatePropertyTopic(), request);
 			}
 
@@ -269,6 +272,7 @@ public class PropertyService {
 			/*
 			 * If no workflow then update property directly with mutation information
 			 */
+			calculatorService.calculateMutationFee(request.getRequestInfo(), request.getProperty());
 			producer.push(config.getUpdatePropertyTopic(), request);
 		}
 	}

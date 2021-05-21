@@ -355,4 +355,9 @@ public class CalculatorConstants {
 	public static final String ADHOC_PENALTY = "adhocPenalty";
 
 	public static final String MUTATION_PAYMENT_PERIOD_IN_MONTH = "mutationPaymentPeriodInMonth";
+	
+	/* Tax heads fields in additional details */
+	
+    public static final String MUTATION_CHARGE = "mutationCharge";
+	
 }
