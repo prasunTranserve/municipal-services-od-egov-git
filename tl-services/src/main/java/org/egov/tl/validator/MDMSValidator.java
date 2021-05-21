@@ -101,8 +101,15 @@ public class MDMSValidator {
                         }
 
                         else if(unit.getUom()==null){
+                        	if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
+                        	{
                             if(tradeTypeUomMap.get(unit.getTradeType())!=null)
                                 errorMap.put("INVALID UOM","The UOM cannot be null for tradeType: "+unit.getTradeType());
+                        	}else if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.TEMPORARY))
+                        	{
+                        		if(tradeTypeTempUomMap.get(unit.getTradeType())!=null)
+                                    errorMap.put("INVALID UOM","The UOM cannot be null for tradeType: "+unit.getTradeType());
+                        	}
                         }
                     });
 
