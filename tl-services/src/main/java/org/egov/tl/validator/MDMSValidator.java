@@ -85,16 +85,16 @@ public class MDMSValidator {
                         if(unit.getUom()!=null){
                         	if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
                         	{
-                            if(!unit.getUom().equalsIgnoreCase(tradeTypeUomMap.get(unit.getTradeType())))
+                            if(!tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom()))
                                 errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
-                            else if(unit.getUom().equalsIgnoreCase(tradeTypeUomMap.get(unit.getTradeType()))
+                            else if(tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom())
                                     && unit.getUomValue()==null)
                                 throw new CustomException("INVALID UOMVALUE","The uomValue cannot be null");
                         	}else if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.TEMPORARY))
                         	{
-                                if(!unit.getUom().equalsIgnoreCase(tradeTypeTempUomMap.get(unit.getTradeType())))
+                                if(!tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom()))
                                     errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
-                                else if(unit.getUom().equalsIgnoreCase(tradeTypeTempUomMap.get(unit.getTradeType()))
+                                else if(tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom())
                                         && unit.getUomValue()==null)
                                     throw new CustomException("INVALID UOMVALUE","The uomValue cannot be null");
                         	}
