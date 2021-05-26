@@ -54,6 +54,28 @@ public class PGRConstants {
 	public static final String LOCALIZATION_CODE_COMMENT = "pgr.sms.notification.comment";
 	public static final String LOCALIZATION_CODE_DEFAULT = "pgr.sms.notification.default";
 	public static final String LOCALIZATION_CODE_COMMENT_DEFAULT = "pgr.sms.notification.comment.default";
+	
+	public static final String LOCALIZATION_CODE_SUBMIT_CITIZEN_EMAIL = "pgr.email.notification.submit.citizen";
+	
+	public static final String LOCALIZATION_CODE_REOPEN_CITIZEN_EMAIL = "pgr.email.notification.reopen.citizen";
+	public static final String LOCALIZATION_CODE_REOPEN_EMPLOYEE_EMAIL = "pgr.email.notification.reopen.employee";
+
+	public static final String LOCALIZATION_CODE_ASSIGN_CITIZEN_EMAIL = "pgr.email.notification.assign.citizen";
+	public static final String LOCALIZATION_CODE_ASSIGN_EMPLOYEE_EMAIL = "pgr.email.notification.assign.employee";
+
+	public static final String LOCALIZATION_CODE_REASSIGN_CITIZEN_EMAIL = "pgr.email.notification.reassign.citizen";
+	public static final String LOCALIZATION_CODE_REASSIGN_EMPLOYEE_EMAIL = "pgr.email.notification.reassign.employee";
+	
+	public static final String LOCALIZATION_CODE_REJECT_CITIZEN_EMAIL = "pgr.email.notification.reject.citizen";
+	
+	public static final String LOCALIZATION_CODE_RESOLVE_CITIZEN_EMAIL = "pgr.email.notification.resolve.citizen";
+	
+	public static final String LOCALIZATION_CODE_CLOSE_EMPLOYEE_EMAIL = "pgr.email.notification.close.employee";
+	
+	public static final String LOCALIZATION_CODE_COMMENT_EMAIL = "pgr.email.notification.comment";
+	public static final String LOCALIZATION_CODE_DEFAULT_EMAIL = "pgr.email.notification.default";
+	public static final String LOCALIZATION_CODE_COMMENT_DEFAULT_EMAIL = "pgr.email.notification.comment.default";
+	
 	public static final String LOCALIZATION_COMP_CATEGORY_PREFIX = "pgr.complaint.category.";
 	public static final String LOCALIZATION_CODE_COMPLAINT_PREFIX = "SERVICEDEFS.";
 
@@ -71,6 +93,7 @@ public class PGRConstants {
 	public static final String EMPLOYEE_DEPTCODE_JSONPATH = "$.Employees.[0].assignments.[?(@.isCurrentAssignment == true)].department";
 	public static final String EMPLOYEE_DESGCODE_JSONPATH = "$.Employees.[0].assignments.[?(@.isCurrentAssignment == true)].designation";
 	public static final String EMPLOYEE_NAME_JSONPATH = "$.Employees[0].user.name";
+	public static final String EMPLOYEE_EMAILID_JSONPATH = "$.Employees[0].user.emailId";
 	public static final String EMPLOYEE_PHNO_JSONPATH = "$.Employees[0].user.mobileNumber";
 	public static final String EMPLOYEE_TENANTID_JSONPATH = "$.Employees[0].tenantId";
 	public static final String EMPLOYEE_BASE_JSONPATH = "$.Employees";
@@ -105,6 +128,7 @@ public class PGRConstants {
 	public static final String SMS_NOTIFICATION_ULB_NAME = "<ulb>";
 	public static final String SMS_NOTIFICATION_SLA_NAME = "<sla>";
 	public static final String SMS_NOTIFICATION_RATING_KEY = "<rating>";
+	public static final String EMAIL_SUBJECT_ID_KEY = "<%complaint id%>";
 	
 	public static final String  USREVENTS_EVENT_TYPE = "SYSTEMGENERATED";
 	public static final String  USREVENTS_EVENT_NAME = "Public Grievance Redressal";
@@ -150,6 +174,11 @@ public class PGRConstants {
 	private static Map<String, String> statusRoleLocalizationKeyMap = prepareStatusRoleLocalizationKeyMap();
 
 	private static Map<String, String> actionRoleLocalizationKeyMap = prepareActionRoleLocalizationKeyMap();
+	
+	
+	private static Map<String, String> statusRoleLocalizationKeyMap_Email = prepareStatusRoleLocalizationKeyMapForEmail();
+
+	private static Map<String, String> actionRoleLocalizationKeyMap_Email = prepareActionRoleLocalizationKeyMapForEmail();
 
 	
 	private static Map<String, String> prepareStatusNotifKeyMap() {
@@ -173,7 +202,41 @@ public class PGRConstants {
 	}
 	
 	/**
-	 * Mapping between which messages are to be sent to which actor and on what status.
+	 * Mapping between which messages are to be sent to which actor and on what status for email.
+	 * @return
+	 */
+	private static Map<String, String> prepareStatusRoleLocalizationKeyMapForEmail(){
+
+		Map<String, String> map = new HashMap<>();
+		map.put(WorkFlowConfigs.STATUS_OPENED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_SUBMIT_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_ASSIGN_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_ASSIGN_EMPLOYEE_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_REJECTED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_REJECT_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_RESOLVED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_RESOLVE_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_CLOSED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_CLOSE_EMPLOYEE_EMAIL);
+	
+		return map;
+	}
+	
+	/**
+     * Mapping between which messages are to be sent to which actor and on what action  for email. 
+	 * @return
+	 */
+	private static Map<String, String> prepareActionRoleLocalizationKeyMapForEmail() {
+
+		Map<String, String> map = new HashMap<>();
+		map.put(WorkFlowConfigs.ACTION_REOPEN + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_REOPEN_EMPLOYEE_EMAIL);
+		map.put(WorkFlowConfigs.ACTION_REOPEN + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_REOPEN_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.ACTION_REASSIGN + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_REASSIGN_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.ACTION_REASSIGN + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_REASSIGN_EMPLOYEE_EMAIL);
+
+	
+		return map;
+	}
+	
+	
+	/**
+	 * Mapping between which messages are to be sent to which actor and on what status 
 	 * @return
 	 */
 	private static Map<String, String> prepareStatusRoleLocalizationKeyMap() {
@@ -190,7 +253,7 @@ public class PGRConstants {
 	}
 	
 	/**
-     * Mapping between which messages are to be sent to which actor and on what action. 
+     * Mapping between which messages are to be sent to which actor and on what action . 
 	 * @return
 	 */
 	private static Map<String, String> prepareActionRoleLocalizationKeyMap() {
@@ -204,6 +267,7 @@ public class PGRConstants {
 	
 		return map;
 	}
+	
 	
 	public static Map<String, String> getStatusNotifKeyMap(){
 		return statusNotifKeyMap;
@@ -221,4 +285,12 @@ public class PGRConstants {
 		return actionRoleLocalizationKeyMap;
 	}
 		
+	
+	public static Map<String, String> getStatusRoleLocalizationKeyMapForEmail(){
+		return statusRoleLocalizationKeyMap_Email;
+	}
+	
+	public static Map<String, String> getActionRoleLocalizationKeyMapForEmail(){
+		return actionRoleLocalizationKeyMap_Email;
+	}
 }

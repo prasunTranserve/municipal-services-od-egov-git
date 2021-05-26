@@ -126,6 +126,11 @@ public class NotificationService {
 			}
 			employeeDetails.put("name", JsonPath.read(response, PGRConstants.EMPLOYEE_NAME_JSONPATH));
 			employeeDetails.put("phone", JsonPath.read(response, PGRConstants.EMPLOYEE_PHNO_JSONPATH));
+			try {
+				employeeDetails.put("emailId", JsonPath.read(response, PGRConstants.EMPLOYEE_EMAILID_JSONPATH));
+			} catch (Exception e) {
+				log.info(" email id not found for the user  "+JsonPath.read(response, PGRConstants.EMPLOYEE_NAME_JSONPATH));
+			}
 			employeeDetails.put("department", ((List<String>) JsonPath.read(response, PGRConstants.EMPLOYEE_DEPTCODE_JSONPATH)).get(0));
 			employeeDetails.put("designation", ((List<String>)JsonPath.read(response, PGRConstants.EMPLOYEE_DESGCODE_JSONPATH)).get(0));
 		} catch (Exception e) {
@@ -198,6 +203,38 @@ public class NotificationService {
 
 		return designations.get(0);
 	}
+	
+	
+	/**
+	 * 	Fetches department for notification text
+	 * 
+	 * @param serviceReq
+	 * @param code
+	 * @param requestInfo
+	 * @return
+	 */
+	public String getDepartment(Service serviceReq, String code, RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder();
+		List<String>  codesList = new ArrayList<>();
+		codesList.add(code);
+		MdmsCriteriaReq mdmsCriteriaReq = pGRUtils.prepareMdMsRequestForDept(uri, serviceReq.getTenantId(), codesList,
+				requestInfo);
+		List<String> departments = null;
+		try {
+			Object result = serviceRequestRepository.fetchResult(uri, mdmsCriteriaReq);
+			log.info("Department search: " + result);
+			departments = JsonPath.read(result, PGRConstants.JSONPATH_DEPARTMENTS);
+			if (null == departments || departments.isEmpty())
+				return null;
+		} catch (Exception e) {
+			log.error("DESIGNATION_EXCEPTION", e);
+			return null;
+		}
+
+		return departments.get(0);
+	}
+	
+	
 
 	/**
 	 * Populates the localized msg cache
@@ -268,6 +305,49 @@ public class NotificationService {
 		}
 		return phoneNumber + "|" + uuid;
 	}
+	
+	
+	/**
+	 * Fetches email id for notification based on the recepient of the notif.
+	 * 
+	 * @param requestInfo
+	 * @param userId
+	 * @param tenantId
+	 * @param assignee
+	 * @param role
+	 * @return
+	 */
+	public String getEmailIdForNotificationService(RequestInfo requestInfo, String userId, String tenantId, String assignee, String role) {
+		String emailId = null;
+		String uuid = "uuid";
+		Object response = null;
+		ObjectMapper mapper = pGRUtils.getObjectMapper();
+		StringBuilder uri = new StringBuilder();
+		Object request = new HashMap<>();
+		if(role.equals(PGRConstants.ROLE_CITIZEN)) {
+			request = pGRUtils.prepareRequestForUserSearch(uri, requestInfo, userId, tenantId);
+			try {
+				response = serviceRequestRepository.fetchResult(uri, request);
+				if(null != response) {
+					UserResponse res = mapper.convertValue(response, UserResponse.class);
+					emailId = res.getUser().get(0).getEmailId();
+					uuid = res.getUser().get(0).getUuid();
+				}
+			}catch(Exception e) {
+				log.error("Couldn't fetch user for id: " + userId + " error: " + e);
+			}
+			return emailId + "|" + uuid;
+		}else if(role.equals(PGRConstants.ROLE_EMPLOYEE)) {
+			Map<String, String> employeeDetails = getEmployeeDetails(tenantId, assignee, requestInfo);
+			if(!StringUtils.isEmpty(employeeDetails.get("emailId"))) {
+				emailId = employeeDetails.get("emailId");
+			}
+		}
+		return emailId + "|" + uuid;
+	}
+	
+	
+	
 	
 	/**
 	 * Returns current assignee for a complaint

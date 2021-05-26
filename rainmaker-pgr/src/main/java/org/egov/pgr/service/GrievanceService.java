@@ -354,6 +354,11 @@ public class GrievanceService {
 			ActionInfo actionInfo = actionInfos.get(index);
 			actionInfo.setStatus(actionStatusMap.get(actionInfo.getAction()));	
 			//actionInfo.status(actionInfo.getAction()); 
+			
+			if(auditDetails.getCreatedTime()==null)
+			{
+				auditDetails.setCreatedTime(service.getAuditDetails().getCreatedTime());
+			}
 			service.setAuditDetails(auditDetails); 
 			if(service.getActive() == null) service.setActive(true);
 			

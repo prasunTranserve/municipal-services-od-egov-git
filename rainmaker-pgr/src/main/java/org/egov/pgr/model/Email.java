@@ -1,5 +1,9 @@
 package org.egov.pgr.model;
 
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -10,8 +14,10 @@ import lombok.Getter;
 @EqualsAndHashCode
 @Builder
 public class Email {
-    private String toAddress;
-    private String subject;
-    private String body;
-    private boolean html;
+	private Set<String> emailTo;
+	private String subject;
+	private String body;
+
+	@JsonProperty("isHTML")
+	private boolean isHTML;
 }
