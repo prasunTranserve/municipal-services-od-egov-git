@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Service
 public class AssessmentService {
 
@@ -101,7 +103,7 @@ public class AssessmentService {
 	 * @return
 	 */
 	public Assessment updateAssessment(AssessmentRequest request) {
-		validator.validateAssessmentAndMutationAmount(request.getAssessment().getAdditionalDetails());
+		validateAssessment(request.getAssessment().getAdditionalDetails());
 		Assessment assessment = request.getAssessment();
 		RequestInfo requestInfo = request.getRequestInfo();
 		Property property = utils.getPropertyForAssessment(request);
@@ -169,6 +171,10 @@ public class AssessmentService {
 			producer.push(props.getUpdateAssessmentTopic(), request);
 		}
 		return request.getAssessment();
+	}
+
+	public void validateAssessment(JsonNode additionalDetails) {
+		validator.validateAssessmentAndMutationAmount(additionalDetails);
 	}
 
 	public List<Assessment> searchAssessments(AssessmentSearchCriteria criteria){

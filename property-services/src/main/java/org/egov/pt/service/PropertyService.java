@@ -74,9 +74,6 @@ public class PropertyService {
 	@Autowired
 	private AssessmentService assessmentService;
 	
-	@Autowired
-	private AssessmentValidator assessmentValidator;
-	
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -115,8 +112,7 @@ public class PropertyService {
 	 * @return List of updated properties
 	 */
 	public Property updateProperty(PropertyRequest request) {
-
-		assessmentValidator.validateAssessmentAndMutationAmount(request.getProperty().getAdditionalDetails());
+		assessmentService.validateAssessment(request.getProperty().getAdditionalDetails());
 		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
 
 		boolean isRequestForOwnerMutation = CreationReason.MUTATION.equals(request.getProperty().getCreationReason());
