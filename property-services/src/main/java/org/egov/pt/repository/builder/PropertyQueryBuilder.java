@@ -24,7 +24,7 @@ public class PropertyQueryBuilder {
 	
 	private static String PROEPRTY_AUDIT_QUERY = "select property from eg_pt_property_audit where propertyid=?";
 
-	private static String PROEPRTY_ID_QUERY = "select propertyid from eg_pt_property where id in (select propertyid from eg_pt_owner where userid IN {replace})";
+	private static String PROEPRTY_ID_QUERY = "select propertyid from eg_pt_property where status ='ACTIVE' and id in (select propertyid from eg_pt_owner where userid IN {replace})";
 	
 	private static String REPLACE_STRING = "{replace}";
 	
@@ -262,13 +262,6 @@ public class PropertyQueryBuilder {
 			addToPreparedStatement(preparedStmtList, oldpropertyids);
 			appendAndQuery= true;
 		}
-		
-		// Only get Active owner property
-		if(appendAndQuery)
-			builder.append(AND_QUERY);
-		builder.append("owner.status = ?");
-		preparedStmtList.add("ACTIVE");
-		appendAndQuery= true;
 
 		String withClauseQuery = WITH_CLAUSE_QUERY.replace(REPLACE_STRING, builder);
 		return addPaginationWrapper(withClauseQuery, preparedStmtList, criteria);
