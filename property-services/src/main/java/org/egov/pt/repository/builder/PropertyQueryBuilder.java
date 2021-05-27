@@ -262,6 +262,13 @@ public class PropertyQueryBuilder {
 			addToPreparedStatement(preparedStmtList, oldpropertyids);
 			appendAndQuery= true;
 		}
+		
+		// Only get Active owner property
+		if(appendAndQuery)
+			builder.append(AND_QUERY);
+		builder.append("owner.status = ?");
+		preparedStmtList.add("ACTIVE");
+		appendAndQuery= true;
 
 		String withClauseQuery = WITH_CLAUSE_QUERY.replace(REPLACE_STRING, builder);
 		return addPaginationWrapper(withClauseQuery, preparedStmtList, criteria);

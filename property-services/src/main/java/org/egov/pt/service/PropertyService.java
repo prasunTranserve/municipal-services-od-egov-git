@@ -25,6 +25,7 @@ import org.egov.pt.repository.PropertyRepository;
 import org.egov.pt.util.CommonUtils;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
+import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.validator.PropertyValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
@@ -73,6 +74,9 @@ public class PropertyService {
 	@Autowired
 	private AssessmentService assessmentService;
 	
+	@Autowired
+	private AssessmentValidator assessmentValidator;
+	
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -112,6 +116,7 @@ public class PropertyService {
 	 */
 	public Property updateProperty(PropertyRequest request) {
 
+		assessmentValidator.validateAssessmentAndMutationAmount(request.getProperty().getAdditionalDetails());
 		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
 
 		boolean isRequestForOwnerMutation = CreationReason.MUTATION.equals(request.getProperty().getCreationReason());

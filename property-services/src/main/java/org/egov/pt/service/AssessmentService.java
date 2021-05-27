@@ -101,7 +101,7 @@ public class AssessmentService {
 	 * @return
 	 */
 	public Assessment updateAssessment(AssessmentRequest request) {
-
+		validator.validateAssessmentAndMutationAmount(request.getAssessment().getAdditionalDetails());
 		Assessment assessment = request.getAssessment();
 		RequestInfo requestInfo = request.getRequestInfo();
 		Property property = utils.getPropertyForAssessment(request);
