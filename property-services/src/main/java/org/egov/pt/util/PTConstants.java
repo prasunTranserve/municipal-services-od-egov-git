@@ -311,5 +311,33 @@ public class PTConstants {
     public static final String ASMT_USER_EVENT_PAY = "pay";
 
     public static final String VIEW_APPLICATION_CODE = "View Application";
+    
+    /* Tax heads fields in additional details */
+    
+    public static final String HOLDING_TAX = "holdingTax";
+    
+    public static final String LIGHT_TAX = "lightTax";
+    
+    public static final String WATER_TAX = "waterTax";
+    
+    public static final String DRAINAGE_TAX = "drainageTax";
+    
+    public static final String PARKING_TAX = "parkingTax";
+    
+    public static final String SOLID_WASTE_USER_CHANGES = "solidWasteUserCharges";
+    
+    public static final String OWNERSHIP_EXEMPTION = "ownershipExemption";
+    
+    public static final String USAGE_EXEMPTION = "usageExemption";
+    
+    public static final String INTEREST = "interest";
+    
+    public static final String PENALTY = "penalty";
+    
+    public static final String LATRINE_TAX = "latrineTax";
+    
+    public static final String MUTATION_CHARGE = "mutationCharge";
+    
+    public static final String DECIMAL_REGEX = "^\\d*\\.?\\d+$";
 }
 

@@ -13,7 +13,11 @@ public enum CreationReason {
   
   UPDATE ("UPDATE"),
   
+  LINK ("LINK"),
+  
   MUTATION ("MUTATION"),
+  
+  ASSESSMENT("ASSESSMENT"),
   
   LEGACY_ENTRY ("LEGACY_ENTRY"),
   

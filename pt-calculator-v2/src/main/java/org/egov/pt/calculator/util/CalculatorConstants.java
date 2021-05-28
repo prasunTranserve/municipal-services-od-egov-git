@@ -52,7 +52,29 @@ public class CalculatorConstants {
 //	public static final String PT_DECIMAL_CEILING_DEBIT = "PT_DECIMAL_CEILING_DEBIT";
 
 	public static final String PT_ROUNDOFF = "PT_ROUNDOFF";
-
+	
+	public static final String PT_HOLDING_TAX = "PT_HOLDING_TAX";
+	
+	public static final String PT_LIGHT_TAX = "PT_LIGHT_TAX";
+	
+	public static final String PT_WATER_TAX = "PT_WATER_TAX";
+	
+	public static final String PT_DRAINAGE_TAX = "PT_DRAINAGE_TAX";
+	
+	public static final String PT_LATRINE_TAX = "PT_LATRINE_TAX";
+	
+	public static final String PT_PARKING_TAX = "PT_PARKING_TAX";
+	
+	public static final String PT_SOLID_WASTE_USER_CHARGES = "PT_SOLID_WASTE_USER_CHARGES";
+	
+	public static final String PT_OWNERSHIP_EXCEMPTION = "PT_OWNERSHIP_EXCEMPTION";
+	
+	public static final String PT_USAGE_EXCEMPTION = "PT_USAGE_EXCEMPTION";
+	
+	public static final String PT_INTEREST = "PT_INTEREST";
+	
+	public static final String PT_PENALTY = "PT_PENALTY";
+	
 	public static final String ADHOC_PENALTY_KEY = "adhocPenalty";
 
 	public static final String ADHOC_PENALTY_REASON_KEY = "adhocPenaltyReason";
@@ -333,4 +355,9 @@ public class CalculatorConstants {
 	public static final String ADHOC_PENALTY = "adhocPenalty";
 
 	public static final String MUTATION_PAYMENT_PERIOD_IN_MONTH = "mutationPaymentPeriodInMonth";
+	
+	/* Tax heads fields in additional details */
+	
+    public static final String MUTATION_CHARGE = "mutationCharge";
+	
 }

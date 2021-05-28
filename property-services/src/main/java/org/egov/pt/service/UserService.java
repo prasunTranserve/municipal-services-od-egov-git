@@ -96,7 +96,51 @@ public class UserService {
 		}
 	}
 
+    public void updateUserForPropertyLink(PropertyRequest request) {
+    	Property property = request.getProperty();
+		RequestInfo requestInfo = request.getRequestInfo();
+		Role role = getCitizenRole();
+		List<OwnerInfo> owners = property.getOwners();
 
+		for (OwnerInfo ownerFromRequest : owners) {
+
+			addUserDefaultFields(property.getTenantId(), role, ownerFromRequest);
+			UserDetailResponse userDetailResponse = searchUserByUuid(ownerFromRequest, requestInfo);
+			List<OwnerInfo> existingUsersFromService = userDetailResponse.getUser();
+			Map<String, OwnerInfo> ownerMapFromSearch = existingUsersFromService.stream().collect(Collectors.toMap(OwnerInfo::getUuid, Function.identity()));
+
+			if (CollectionUtils.isEmpty(existingUsersFromService)) {
+
+				ownerFromRequest.setUserName(UUID.randomUUID().toString());
+				userDetailResponse = createUser(requestInfo, ownerFromRequest);
+				
+			} else {
+
+				String uuid = ownerFromRequest.getUuid();
+				if (uuid != null && ownerMapFromSearch.containsKey(uuid)) {
+					userDetailResponse = updateExistingUser(property, requestInfo, role, ownerFromRequest, ownerMapFromSearch.get(uuid));
+				} else {
+
+					ownerFromRequest.setUserName(UUID.randomUUID().toString());
+					userDetailResponse = createUser(requestInfo, ownerFromRequest);
+				}
+			}
+			// Assigns value of fields from user got from userDetailResponse to owner object
+			setOwnerFields(ownerFromRequest, userDetailResponse, requestInfo);
+		}
+
+	}
+    
+    private UserDetailResponse searchUserByUuid(OwnerInfo owner, RequestInfo requestInfo) {
+    	UserSearchRequest userSearchRequest = getBaseUserSearchRequest(owner.getTenantId(), requestInfo);
+		userSearchRequest.setUserType(owner.getType());
+		userSearchRequest.setName(owner.getName());
+		
+        StringBuilder uri = new StringBuilder(userHost).append(userSearchEndpoint);
+        return userCall(userSearchRequest,uri);
+
+	}
+    
     /**
      * update existing user
      * 
