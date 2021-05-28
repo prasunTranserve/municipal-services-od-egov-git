@@ -136,7 +136,7 @@ public class WCConstants {
 
 	public static final List<String> FIELDS_TO_CHECK = Collections.unmodifiableList(Arrays.asList("rainWaterHarvesting",
 			"waterSource", "meterId", "meterInstallationDate", "proposedPipeSize", "proposedTaps", "pipeSize",
-			"noOfTaps", "oldConnectionNo", "roadType", "roadCuttingArea", "connectionExecutionDate",
+			"noOfTaps", "noOfFlats", "oldConnectionNo", "roadType", "roadCuttingArea", "connectionExecutionDate",
 			"connectionCategory", "connectionType", "documentType", "fileStoreId", "licenseNo"));
 
 	public static final String WS_EDIT_SMS = "WS_EDIT_SMS_MESSAGE";
