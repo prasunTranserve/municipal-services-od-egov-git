@@ -47,9 +47,9 @@ public class WaterConnectionValidator {
 			errorMap.put("INVALID_ACTION", "Workflow obj can not be null or action can not be empty!!");
 			throw new CustomException(errorMap);
 		}
-		ValidatorResult isPropertyValidated = propertyValidator.validate(waterConnectionRequest, reqType);
-		if (!isPropertyValidated.isStatus())
-			errorMap.putAll(isPropertyValidated.getErrorMessage());
+		// ValidatorResult isPropertyValidated = propertyValidator.validate(waterConnectionRequest, reqType);
+		// if (!isPropertyValidated.isStatus())
+		// 	errorMap.putAll(isPropertyValidated.getErrorMessage());
 		ValidatorResult isWaterFieldValidated = waterFieldValidator.validate(waterConnectionRequest, reqType);
 		if (!isWaterFieldValidated.isStatus())
 			errorMap.putAll(isWaterFieldValidated.getErrorMessage());
