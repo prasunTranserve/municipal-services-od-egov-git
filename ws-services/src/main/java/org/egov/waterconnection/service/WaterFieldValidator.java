@@ -1,14 +1,14 @@
 package org.egov.waterconnection.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.web.models.RoadCuttingInfo;
 import org.egov.waterconnection.web.models.ValidatorResult;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class WaterFieldValidator implements WaterActionValidator {
@@ -38,9 +38,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 				errorMap.put("INVALID_WATER_SOURCE", "WaterConnection cannot be created  without water source");
 			}
 			
-			if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() == null){
-				errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
-			}
+			// if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() == null){
+			// 	errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
+			// }
 			if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() != null){
 				for(RoadCuttingInfo roadCuttingInfo : waterConnectionRequest.getWaterConnection().getRoadCuttingInfo()){
 					if(StringUtils.isEmpty(roadCuttingInfo.getRoadType())){
@@ -56,9 +56,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 		if (WCConstants.APPROVE_CONNECTION_CONST
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 
-			if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() == null){
-				errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
-			}
+			// if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() == null){
+			// 	errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
+			// }
 
 			if(waterConnectionRequest.getWaterConnection().getRoadCuttingInfo() != null){
 				for(RoadCuttingInfo roadCuttingInfo : waterConnectionRequest.getWaterConnection().getRoadCuttingInfo()){

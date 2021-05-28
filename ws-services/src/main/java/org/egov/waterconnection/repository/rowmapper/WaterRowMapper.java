@@ -8,11 +8,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.constants.WCConstants;
-import org.egov.waterconnection.web.models.*;
+import org.egov.waterconnection.web.models.AuditDetails;
 import org.egov.waterconnection.web.models.Connection.StatusEnum;
+import org.egov.waterconnection.web.models.Document;
+import org.egov.waterconnection.web.models.OwnerInfo;
+import org.egov.waterconnection.web.models.PlumberInfo;
+import org.egov.waterconnection.web.models.Relationship;
+import org.egov.waterconnection.web.models.RoadCuttingInfo;
+import org.egov.waterconnection.web.models.Status;
+import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.workflow.ProcessInstance;
 import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +30,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
 public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>> {
@@ -53,8 +57,10 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 				currentWaterConnection.setStatus(StatusEnum.fromValue(rs.getString("status")));
 				currentWaterConnection.setConnectionNo(rs.getString("connectionNo"));
 				currentWaterConnection.setOldConnectionNo(rs.getString("oldConnectionNo"));
+				currentWaterConnection.setUsageCategory(rs.getString("usageCategory"));
 				currentWaterConnection.setPipeSize(rs.getDouble("pipeSize"));
 				currentWaterConnection.setNoOfTaps(rs.getInt("noOfTaps"));
+				currentWaterConnection.setNoOfFlats(rs.getInt("noOfFlats"));
 				currentWaterConnection.setProposedPipeSize(rs.getDouble("proposedPipeSize"));
 				currentWaterConnection.setProposedTaps(rs.getInt("proposedTaps"));
 				currentWaterConnection.setRoadCuttingArea(rs.getFloat("roadcuttingarea"));

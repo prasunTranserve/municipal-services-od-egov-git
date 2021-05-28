@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import javax.validation.constraints.Size;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.springframework.validation.annotation.Validated;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -40,6 +40,12 @@ public class WaterConnection extends Connection {
 	@JsonProperty("noOfTaps")
 	private Integer noOfTaps = null;
 
+	@JsonProperty("noOfFlats")
+	private Integer noOfFlats = null;
+
+	@JsonProperty("usageCategory")
+	private String usageCategory = null;
+
 
 	public WaterConnection waterSource(String waterSource) {
 		this.waterSource = waterSource;
@@ -66,6 +72,11 @@ public class WaterConnection extends Connection {
 		return this;
 	}
 
+	public WaterConnection usageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
+		return this;
+	}
+
 	/**
 	 * Unique id of the meter.
 	 * 
@@ -88,6 +99,21 @@ public class WaterConnection extends Connection {
 	}
 
 	/**
+	 * The Usage Category.
+	 * 
+	 * @return usageCategory
+	 **/
+	@ApiModelProperty(value = "The Usage Category.")
+
+	public String getUsageCategory() {
+		return usageCategory;
+	}
+
+	public void setUsageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
+	}
+
+	/**
 	 * The date of meter installation date.
 	 * 
 	 * @return meterInstallationDate
@@ -107,6 +133,11 @@ public class WaterConnection extends Connection {
 		return this;
 	}
 
+	public WaterConnection noOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
+		return this;
+	}
+
 	/**
 	 * No of taps for non-metered calculation attribute.
 	 * 
@@ -120,6 +151,21 @@ public class WaterConnection extends Connection {
 
 	public void setNoOfTaps(Integer noOfTaps) {
 		this.noOfTaps = noOfTaps;
+	}
+
+	/**
+	 * No of taps for calculation attribute.
+	 * 
+	 * @return noOfFlats
+	 **/
+	@ApiModelProperty(value = "No of flats for calculation attribute.")
+
+	public Integer getNoOfFlats() {
+		return noOfFlats;
+	}
+
+	public void setNoOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
 	}
 
 	/**

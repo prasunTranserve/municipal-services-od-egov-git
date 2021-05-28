@@ -1,6 +1,8 @@
 package org.egov.waterconnection.service;
 
 
+import static org.egov.waterconnection.constants.WCConstants.APPROVE_CONNECTION;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -28,8 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import static org.egov.waterconnection.constants.WCConstants.APPROVE_CONNECTION;
 
 @Component
 public class WaterServiceImpl implements WaterService {
@@ -96,8 +96,9 @@ public class WaterServiceImpl implements WaterService {
 			reqType = WCConstants.MODIFY_CONNECTION;
 		}
 		waterConnectionValidator.validateWaterConnection(waterConnectionRequest, reqType);
-		Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
-		validateProperty.validatePropertyFields(property,waterConnectionRequest.getRequestInfo());
+		// Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
+		// validateProperty.validatePropertyFields(property,waterConnectionRequest.getRequestInfo());
+		Property property = Property.builder().tenantId(waterConnectionRequest.getWaterConnection().getTenantId()).build();
 		mDMSValidator.validateMasterForCreateRequest(waterConnectionRequest);
 		enrichmentService.enrichWaterConnection(waterConnectionRequest, reqType);
 		userService.createUser(waterConnectionRequest);
@@ -158,8 +159,9 @@ public class WaterServiceImpl implements WaterService {
 		}
 		waterConnectionValidator.validateWaterConnection(waterConnectionRequest, WCConstants.UPDATE_APPLICATION);
 		mDMSValidator.validateMasterData(waterConnectionRequest,WCConstants.UPDATE_APPLICATION );
-		Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
-		validateProperty.validatePropertyFields(property,waterConnectionRequest.getRequestInfo());
+		// Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
+		// validateProperty.validatePropertyFields(property,waterConnectionRequest.getRequestInfo());
+		Property property = Property.builder().tenantId(waterConnectionRequest.getWaterConnection().getTenantId()).build();
 		BusinessService businessService = workflowService.getBusinessService(waterConnectionRequest.getWaterConnection().getTenantId(), 
 				waterConnectionRequest.getRequestInfo(), config.getBusinessServiceValue());
 		WaterConnection searchResult = getConnectionForUpdateRequest(waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
