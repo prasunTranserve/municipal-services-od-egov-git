@@ -51,12 +51,15 @@ public class TLRenewalCalculation {
         setTradeLicenseMasterValues(requestInfo, tenantId,timeBasedExemptionMasterMap);
         String financialyear = calulationCriteria.getTradelicense().getFinancialYear();
 
-        BigDecimal rebate = getRebate(taxAmt, financialyear,timeBasedExemptionMasterMap.get(TLCalculatorConstants.REBATE_MASTER));
+        BigDecimal rebate = BigDecimal.ZERO;
         BigDecimal penalty = BigDecimal.ZERO;
+        
+ //       BigDecimal rebate = getRebate(taxAmt, financialyear,timeBasedExemptionMasterMap.get(TLCalculatorConstants.REBATE_MASTER));
+       
 
-        if (rebate.equals(BigDecimal.ZERO)) {
-            penalty = getPenalty(taxAmt, financialyear, timeBasedExemptionMasterMap.get(TLCalculatorConstants.PENANLTY_MASTER));
-        }
+//        if (rebate.equals(BigDecimal.ZERO)) {
+//            penalty = getPenalty(taxAmt, financialyear, timeBasedExemptionMasterMap.get(TLCalculatorConstants.PENANLTY_MASTER));
+//        }
 
         estimateRebate.setCategory(Category.REBATE);
         estimateRebate.setEstimateAmount(rebate.setScale(2, 2).negate());

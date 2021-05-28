@@ -332,7 +332,7 @@ public class PGRNotificationConsumer {
                 employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), assignee, requestInfo);
 
                 text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
-                //if complaint is resolved by escalation level2 officer, then citizen cannot re-open it.
+                //if complaint is resolved by escalation level4 officer, then citizen cannot re-open it.
                 //For this purpose we are trimming the last part of the message
                 if(notificationService.isEscalatedToLevel4(serviceReq, requestInfo)) {
                 	if(!ArrayUtils.isEmpty(text.split("\\.")))

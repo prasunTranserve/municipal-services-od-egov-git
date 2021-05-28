@@ -266,7 +266,43 @@ public class CalculationService {
              billingSlabIds.add(billingSlabs.get(0).getId()+"|"+i+"|"+tradeUnit.getId());
 
              if(billingSlabs.get(0).getType().equals(BillingSlab.TypeEnum.FLAT))
-                 tradeUnitFees.add(billingSlabs.get(0).getRate());
+             {
+            	 if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
+            	 {
+            		 int numberOfYears = 1 ;
+            		 
+            		 if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+            		 {
+            			 HashMap<String,Object> additionalDetailsMap = new HashMap<String,Object>();
+            		 
+            		 additionalDetailsMap = (HashMap<String, Object>) license.getTradeLicenseDetail().getAdditionalDetail();
+            		 
+            		 if(!additionalDetailsMap.isEmpty())
+            		 {
+            			 String tradeYears = additionalDetailsMap.get("licensePeriod")+"";
+            			 
+            			 if(tradeYears!=null)
+            			 {
+            				 try {
+								numberOfYears = Integer.parseInt(tradeYears);
+							} catch (NumberFormatException e) {
+								
+								log.error("Error in the request json in additionalDetail the tradeNoOfYears is not a valid number");
+								throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+							}
+            			 }else
+            				 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+            			 
+            		 }else
+            			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+            		 
+            		 tradeUnitFees.add(billingSlabs.get(0).getRate().multiply(new BigDecimal(numberOfYears)));
+            		 }else
+            			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+            	 }else
+            		 tradeUnitFees.add(billingSlabs.get(0).getRate());
+            	 
+             }
         //         tradeUnitTotalFee = tradeUnitTotalFee.add(billingSlabs.get(0).getRate());
 
              if(billingSlabs.get(0).getType().equals(BillingSlab.TypeEnum.RATE)){

@@ -7,6 +7,7 @@ import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.tl.repository.ServiceRequestRepository;
 import org.egov.tl.util.TLConstants;
 import org.egov.tl.util.TradeUtil;
+import org.egov.tl.web.models.TradeLicense;
 import org.egov.tl.web.models.TradeLicenseRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ public class MDMSValidator {
         validateIfMasterPresent(masterArray, masterData);
 
         Map<String,String> tradeTypeUomMap = getTradeTypeUomMap(mdmsData);
+        Map<String,String> tradeTypeTempUomMap = getTradeTypeTempUomMap(mdmsData);
         Map<String,String> accessoryeUomMap = getAccessoryUomMap(mdmsData);
 
         licenseRequest.getLicenses().forEach(license -> {
@@ -81,16 +83,33 @@ public class MDMSValidator {
                             errorMap.put("INVALID TRADETYPE", "The Trade type '" + unit.getTradeType() + "' does not exists");
 
                         if(unit.getUom()!=null){
-                            if(!unit.getUom().equalsIgnoreCase(tradeTypeUomMap.get(unit.getTradeType())))
+                        	if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
+                        	{
+                            if(!tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom()))
                                 errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
-                            else if(unit.getUom().equalsIgnoreCase(tradeTypeUomMap.get(unit.getTradeType()))
+                            else if(tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom())
                                     && unit.getUomValue()==null)
                                 throw new CustomException("INVALID UOMVALUE","The uomValue cannot be null");
+                        	}else if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.TEMPORARY))
+                        	{
+                                if(!tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom()))
+                                    errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
+                                else if(tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom())
+                                        && unit.getUomValue()==null)
+                                    throw new CustomException("INVALID UOMVALUE","The uomValue cannot be null");
+                        	}
                         }
 
                         else if(unit.getUom()==null){
+                        	if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
+                        	{
                             if(tradeTypeUomMap.get(unit.getTradeType())!=null)
                                 errorMap.put("INVALID UOM","The UOM cannot be null for tradeType: "+unit.getTradeType());
+                        	}else if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.TEMPORARY))
+                        	{
+                        		if(tradeTypeTempUomMap.get(unit.getTradeType())!=null)
+                                    errorMap.put("INVALID UOM","The UOM cannot be null for tradeType: "+unit.getTradeType());
+                        	}
                         }
                     });
 
@@ -221,7 +240,23 @@ public class MDMSValidator {
 
         return tradeTypeToUOM;
     }
+    
+    
+    
+    
+    private Map getTradeTypeTempUomMap(Object mdmsData){
 
+        List<String> tradeTypes = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_CODE);
+        List<String> tradeTypeUOM = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_TEMP_UOM);
+
+        Map<String,String> tradeTypeToUOM = new HashMap<>();
+
+        for (int i = 0;i < tradeTypes.size();i++){
+            tradeTypeToUOM.put(tradeTypes.get(i),tradeTypeUOM.get(i));
+        }
+
+        return tradeTypeToUOM;
+    }
 
     private Map getAccessoryUomMap(Object mdmsData){
 

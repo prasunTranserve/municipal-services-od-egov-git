@@ -116,7 +116,9 @@ public class PGRRequestValidator {
 			vaidateServiceCodes(serviceRequest, errorMap);
 		}
 		validateAssignments(serviceRequest, errorMap);
+		validateStatus(serviceRequest, errorMap) ;
 		validateAction(serviceRequest, errorMap);
+		
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
 	}
@@ -514,4 +516,59 @@ public class PGRRequestValidator {
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
 	}
+
+
+	/**
+	 * 
+	 * validates the complaint status from DB with the received status in ServiceRequest 
+	 * when the complaint is updated by comments.
+	 * 
+	 * @param serviceRequest
+	 * @param errorMap
+	 */
+	private void validateStatus(ServiceRequest serviceRequest, Map<String, String> errorMap) {
+
+		List<ActionInfo> infos = serviceRequest.getActionInfo();
+		if (!CollectionUtils.isEmpty(infos)) {
+			 if(infos.size()==1)
+			 {
+				 //if(!StringUtils.isEmpty(infos.get(0).getAction())) 
+				//	 return ;
+			 }else
+				 return;
+		}else
+			return;
+
+
+		ServiceReqSearchCriteria serviceReqSearchCriteria = new ServiceReqSearchCriteria();	
+
+		if(serviceRequest.getServices() != null && serviceRequest.getServices().get(0) != null)
+		{
+			serviceReqSearchCriteria.setTenantId(serviceRequest.getServices().get(0).getTenantId());
+			ArrayList<String> serviceIDList = new ArrayList<String>();
+			serviceIDList.add(serviceRequest.getServices().get(0).getServiceRequestId());
+			serviceReqSearchCriteria.setServiceRequestId(serviceIDList);
+		}
+
+		ServiceResponse serviceReqResponse = (ServiceResponse) requestService.getServiceRequestDetails(serviceRequest.getRequestInfo(),
+				serviceReqSearchCriteria);
+
+		if(serviceReqResponse!=null && serviceReqResponse.getServices()!= null && serviceReqResponse.getServices().get(0)!=null)
+		{
+			String status = "" ;
+			if(serviceReqResponse.getServices().get(0).getStatus()!=null)
+			{
+			status =  serviceReqResponse.getServices().get(0).getStatus().toString();
+			}
+
+			if(status != null && !serviceRequest.getServices().get(0).getStatus().toString().equalsIgnoreCase(status))
+			{
+				errorMap.put(ErrorConstants.INVALID_STATUS_COMMENT_CODE, ErrorConstants.INVALID_STATUS_COMMENT_MESSAGE);
+				return;
+			}
+		}
+
+
+	}
+
 }
