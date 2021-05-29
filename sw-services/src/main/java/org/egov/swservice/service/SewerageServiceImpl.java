@@ -1,5 +1,7 @@
 package org.egov.swservice.service;
 
+import static org.egov.swservice.util.SWConstants.APPROVE_CONNECTION;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -29,8 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import static org.egov.swservice.util.SWConstants.APPROVE_CONNECTION;
 
 @Component
 public class SewerageServiceImpl implements SewerageService {
@@ -66,21 +66,19 @@ public class SewerageServiceImpl implements SewerageService {
 
 	@Autowired
 	private WorkflowService workflowService;
-    
+
 	@Autowired
 	private SewerageDaoImpl sewerageDaoImpl;
-    
 
 	@Autowired
 	private CalculationService calculationService;
-	
+
 	@Autowired
 	private UserService userService;
-	
+
 	/**
-	 * @param sewerageConnectionRequest
-	 *            SewerageConnectionRequest contains sewerage connection to be
-	 *            created
+	 * @param sewerageConnectionRequest SewerageConnectionRequest contains sewerage
+	 *                                  connection to be created
 	 * @return List of WaterConnection after create
 	 */
 
@@ -96,8 +94,11 @@ public class SewerageServiceImpl implements SewerageService {
 			reqType = SWConstants.MODIFY_CONNECTION;
 		}
 		sewerageConnectionValidator.validateSewerageConnection(sewerageConnectionRequest, reqType);
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
-		validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		// Property property =
+		// validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+		// validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		Property property = Property.builder().tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
+				.build();
 		mDMSValidator.validateMasterForCreateRequest(sewerageConnectionRequest);
 		enrichmentService.enrichSewerageConnection(sewerageConnectionRequest, reqType);
 		userService.createUser(sewerageConnectionRequest);
@@ -110,19 +111,19 @@ public class SewerageServiceImpl implements SewerageService {
 
 	/**
 	 * 
-	 * @param criteria
-	 *            SewerageConnectionSearchCriteria contains search criteria on
-	 *            sewerage connection
+	 * @param criteria    SewerageConnectionSearchCriteria contains search criteria
+	 *                    on sewerage connection
 	 * @param requestInfo - Request Info
 	 * @return List of matching sewerage connection
 	 */
 	public List<SewerageConnection> search(SearchCriteria criteria, RequestInfo requestInfo) {
 		List<SewerageConnection> sewerageConnectionList = getSewerageConnectionsList(criteria, requestInfo);
-		if(!StringUtils.isEmpty(criteria.getSearchType()) &&
-				criteria.getSearchType().equals(SWConstants.SEARCH_TYPE_CONNECTION)){
+		if (!StringUtils.isEmpty(criteria.getSearchType())
+				&& criteria.getSearchType().equals(SWConstants.SEARCH_TYPE_CONNECTION)) {
 			sewerageConnectionList = enrichmentService.filterConnections(sewerageConnectionList);
-			if(criteria.getIsPropertyDetailsRequired()){
-				sewerageConnectionList = enrichmentService.enrichPropertyDetails(sewerageConnectionList, criteria, requestInfo);
+			if (criteria.getIsPropertyDetailsRequired()) {
+				sewerageConnectionList = enrichmentService.enrichPropertyDetails(sewerageConnectionList, criteria,
+						requestInfo);
 
 			}
 		}
@@ -133,9 +134,8 @@ public class SewerageServiceImpl implements SewerageService {
 
 	/**
 	 * 
-	 * @param criteria
-	 *            SewerageConnectionSearchCriteria contains search criteria on
-	 *            sewerage connection
+	 * @param criteria    SewerageConnectionSearchCriteria contains search criteria
+	 *                    on sewerage connection
 	 * @param requestInfo - Request Info Object
 	 * @return List of matching water connection
 	 */
@@ -146,20 +146,23 @@ public class SewerageServiceImpl implements SewerageService {
 
 	/**
 	 * 
-	 * @param sewerageConnectionRequest
-	 *            SewerageConnectionRequest contains sewerage connection to be
-	 *            updated
+	 * @param sewerageConnectionRequest SewerageConnectionRequest contains sewerage
+	 *                                  connection to be updated
 	 * @return List of SewerageConnection after update
 	 */
 	@Override
 	public List<SewerageConnection> updateSewerageConnection(SewerageConnectionRequest sewerageConnectionRequest) {
-		if(sewerageServicesUtil.isModifyConnectionRequest(sewerageConnectionRequest)){
+		if (sewerageServicesUtil.isModifyConnectionRequest(sewerageConnectionRequest)) {
 			return modifySewerageConnection(sewerageConnectionRequest);
 		}
-		sewerageConnectionValidator.validateSewerageConnection(sewerageConnectionRequest, SWConstants.UPDATE_APPLICATION);
+		sewerageConnectionValidator.validateSewerageConnection(sewerageConnectionRequest,
+				SWConstants.UPDATE_APPLICATION);
 		mDMSValidator.validateMasterData(sewerageConnectionRequest, SWConstants.UPDATE_APPLICATION);
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
-		validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		// Property property =
+		// validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+		// validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		Property property = Property.builder().tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
+				.build();
 		String previousApplicationStatus = workflowService.getApplicationStatus(
 				sewerageConnectionRequest.getRequestInfo(),
 				sewerageConnectionRequest.getSewerageConnection().getApplicationNo(),
@@ -188,7 +191,7 @@ public class SewerageServiceImpl implements SewerageService {
 	/**
 	 * Search Sewerage connection to be update
 	 * 
-	 * @param id - Sewerage Connection Id
+	 * @param id          - Sewerage Connection Id
 	 * @param requestInfo - Request Info Object
 	 * @return sewerage connection
 	 */
@@ -222,14 +225,19 @@ public class SewerageServiceImpl implements SewerageService {
 	 * @return list of sewerage connection
 	 */
 	private List<SewerageConnection> modifySewerageConnection(SewerageConnectionRequest sewerageConnectionRequest) {
-		sewerageConnectionValidator.validateSewerageConnection(sewerageConnectionRequest, SWConstants.MODIFY_CONNECTION);
+		sewerageConnectionValidator.validateSewerageConnection(sewerageConnectionRequest,
+				SWConstants.MODIFY_CONNECTION);
 		mDMSValidator.validateMasterData(sewerageConnectionRequest, SWConstants.MODIFY_CONNECTION);
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
-		validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		// Property property =
+		// validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+		// validateProperty.validatePropertyFields(property,sewerageConnectionRequest.getRequestInfo());
+		Property property = Property.builder().tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
+				.build();
 		String previousApplicationStatus = workflowService.getApplicationStatus(
 				sewerageConnectionRequest.getRequestInfo(),
 				sewerageConnectionRequest.getSewerageConnection().getApplicationNo(),
-				sewerageConnectionRequest.getSewerageConnection().getTenantId(), config.getModifySWBusinessServiceName());
+				sewerageConnectionRequest.getSewerageConnection().getTenantId(),
+				config.getModifySWBusinessServiceName());
 		BusinessService businessService = workflowService.getBusinessService(config.getModifySWBusinessServiceName(),
 				sewerageConnectionRequest.getSewerageConnection().getTenantId(),
 				sewerageConnectionRequest.getRequestInfo());
@@ -242,23 +250,27 @@ public class SewerageServiceImpl implements SewerageService {
 		sewerageDaoImpl.pushForEditNotification(sewerageConnectionRequest);
 		// Call workflow
 		wfIntegrator.callWorkFlow(sewerageConnectionRequest, property);
-		sewerageDaoImpl.updateSewerageConnection(sewerageConnectionRequest, sewerageServicesUtil.getStatusForUpdate(businessService, previousApplicationStatus));
+		sewerageDaoImpl.updateSewerageConnection(sewerageConnectionRequest,
+				sewerageServicesUtil.getStatusForUpdate(businessService, previousApplicationStatus));
 		// setting oldApplication Flag
 		markOldApplication(sewerageConnectionRequest);
 		return Arrays.asList(sewerageConnectionRequest.getSewerageConnection());
 	}
 
 	public void markOldApplication(SewerageConnectionRequest sewerageConnectionRequest) {
-		if (sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction().equalsIgnoreCase(APPROVE_CONNECTION)) {
+		if (sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction()
+				.equalsIgnoreCase(APPROVE_CONNECTION)) {
 			String currentModifiedApplicationNo = sewerageConnectionRequest.getSewerageConnection().getApplicationNo();
 			List<SewerageConnection> sewerageConnectionList = getAllSewerageApplications(sewerageConnectionRequest);
 
-			for(SewerageConnection sewerageConnection:sewerageConnectionList){
-				if(!sewerageConnection.getOldApplication() && !(sewerageConnection.getApplicationNo().equalsIgnoreCase(currentModifiedApplicationNo))){
+			for (SewerageConnection sewerageConnection : sewerageConnectionList) {
+				if (!sewerageConnection.getOldApplication()
+						&& !(sewerageConnection.getApplicationNo().equalsIgnoreCase(currentModifiedApplicationNo))) {
 					sewerageConnection.setOldApplication(Boolean.TRUE);
-					SewerageConnectionRequest previousSewerageConnectionRequest = SewerageConnectionRequest.builder().requestInfo(sewerageConnectionRequest.getRequestInfo())
+					SewerageConnectionRequest previousSewerageConnectionRequest = SewerageConnectionRequest.builder()
+							.requestInfo(sewerageConnectionRequest.getRequestInfo())
 							.sewerageConnection(sewerageConnection).build();
-					sewerageDaoImpl.updateSewerageConnection(previousSewerageConnectionRequest,Boolean.TRUE);
+					sewerageDaoImpl.updateSewerageConnection(previousSewerageConnectionRequest, Boolean.TRUE);
 				}
 			}
 		}

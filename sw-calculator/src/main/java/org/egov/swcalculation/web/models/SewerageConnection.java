@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.springframework.validation.annotation.Validated;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -28,8 +28,32 @@ public class SewerageConnection extends Connection {
 	@JsonProperty("noOfToilets")
 	private Integer noOfToilets = null;
 
+	@JsonProperty("noOfFlats")
+	private Integer noOfFlats = null;
+
+	@JsonProperty("usageCategory")
+	private String usageCategory = null;
+
+	@JsonProperty("connectionCategory")
+	private String connectionCategory = null;
+
 	public SewerageConnection noOfWaterClosets(Integer noOfWaterClosets) {
 		this.noOfWaterClosets = noOfWaterClosets;
+		return this;
+	}
+
+	public SewerageConnection usageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
+		return this;
+	}
+
+	public SewerageConnection connectionCategory(String connectionCategory) {
+		this.connectionCategory = connectionCategory;
+		return this;
+	}
+
+	public SewerageConnection noOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
 		return this;
 	}
 
@@ -52,6 +76,51 @@ public class SewerageConnection extends Connection {
 	public SewerageConnection proposedWaterClosets(Integer proposedWaterClosets) {
 		this.proposedWaterClosets = proposedWaterClosets;
 		return this;
+	}
+
+	/**
+	 * The Usage Category.
+	 * 
+	 * @return usageCategory
+	 **/
+	@ApiModelProperty(value = "The Usage Category.")
+
+	public String getUsageCategory() {
+		return usageCategory;
+	}
+
+	public void setUsageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
+	}
+
+	/**
+	 * The Connection Category.
+	 * 
+	 * @return connectionCategory
+	 **/
+	@ApiModelProperty(value = "The Connection Category.")
+
+	public String getConnectionCategory() {
+		return connectionCategory;
+	}
+
+	public void setConnectionCategory(String connectionCategory) {
+		this.connectionCategory = connectionCategory;
+	}
+
+	/**
+	 * No of taps for calculation attribute.
+	 * 
+	 * @return noOfFlats
+	 **/
+	@ApiModelProperty(value = "No of flats for calculation attribute.")
+
+	public Integer getNoOfFlats() {
+		return noOfFlats;
+	}
+
+	public void setNoOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
 	}
 
 	/**
