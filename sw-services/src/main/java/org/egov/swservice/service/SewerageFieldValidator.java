@@ -3,10 +3,10 @@ package org.egov.swservice.service;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.egov.swservice.util.SWConstants;
 import org.egov.swservice.web.models.RoadCuttingInfo;
 import org.egov.swservice.web.models.SewerageConnectionRequest;
 import org.egov.swservice.web.models.ValidatorResult;
-import org.egov.swservice.util.SWConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -43,9 +43,9 @@ public class SewerageFieldValidator implements SewerageActionValidator {
 		}
 		if (SWConstants.APPROVE_CONNECTION_CONST.equalsIgnoreCase(
 				sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())) {
-			if(sewerageConnectionRequest.getSewerageConnection().getRoadCuttingInfo() == null){
-				errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
-			}
+			// if(sewerageConnectionRequest.getSewerageConnection().getRoadCuttingInfo() == null){
+			// 	errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
+			// }
 
 			if(sewerageConnectionRequest.getSewerageConnection().getRoadCuttingInfo() != null){
 				for(RoadCuttingInfo roadCuttingInfo : sewerageConnectionRequest.getSewerageConnection().getRoadCuttingInfo()){

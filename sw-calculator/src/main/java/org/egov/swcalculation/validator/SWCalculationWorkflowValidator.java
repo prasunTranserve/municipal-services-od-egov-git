@@ -1,8 +1,13 @@
 package org.egov.swcalculation.validator;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import static org.egov.swcalculation.constants.SWCalculationConstant.PROPERTY_JSONPATH_ROOT;
+import static org.egov.swcalculation.constants.SWCalculationConstant.PROPERTY_MASTER_MODULE;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.swcalculation.service.MasterDataService;
@@ -17,12 +22,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
-
-import static org.egov.swcalculation.constants.SWCalculationConstant.PROPERTY_JSONPATH_ROOT;
-import static org.egov.swcalculation.constants.SWCalculationConstant.PROPERTY_MASTER_MODULE;
 
 @Component
 @Slf4j
@@ -50,10 +51,10 @@ public class SWCalculationWorkflowValidator {
             sewerageConnection = sewerageConnectionList.get(size-1);
             String sewerageApplicationNumber = sewerageConnection.getApplicationNo();
             sewerageConnectionValidation(requestInfo,tenantId,sewerageApplicationNumber,errorMap);
-            String propertyId = sewerageConnection.getPropertyId();
-            Property property = util.getProperty(requestInfo,tenantId,propertyId);
+            // String propertyId = sewerageConnection.getPropertyId();
+            // Property property = util.getProperty(requestInfo,tenantId,propertyId);
             //String propertyApplicationNumber = property.getAcknowldgementNumber();
-            propertyValidation(requestInfo,tenantId,property,errorMap);
+            // propertyValidation(requestInfo,tenantId,property,errorMap);
         }
         else{
             errorMap.put("SEWERAGE_CONNECTION_ERROR",

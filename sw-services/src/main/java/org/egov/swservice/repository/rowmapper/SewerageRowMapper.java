@@ -1,8 +1,26 @@
 package org.egov.swservice.repository.rowmapper;
 
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.egov.swservice.util.SWConstants;
-import org.egov.swservice.web.models.*;
+import org.egov.swservice.web.models.AuditDetails;
 import org.egov.swservice.web.models.Connection.StatusEnum;
+import org.egov.swservice.web.models.Document;
+import org.egov.swservice.web.models.OwnerInfo;
+import org.egov.swservice.web.models.PlumberInfo;
+import org.egov.swservice.web.models.Relationship;
+import org.egov.swservice.web.models.RoadCuttingInfo;
+import org.egov.swservice.web.models.SewerageConnection;
+import org.egov.swservice.web.models.Status;
 import org.egov.swservice.web.models.workflow.ProcessInstance;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
@@ -12,17 +30,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Component
 public class SewerageRowMapper implements ResultSetExtractor<List<SewerageConnection>> {
@@ -47,8 +54,11 @@ public class SewerageRowMapper implements ResultSetExtractor<List<SewerageConnec
                 sewarageConnection.setStatus(StatusEnum.fromValue(rs.getString("status")));
                 sewarageConnection.setConnectionNo(rs.getString("connectionNo"));
                 sewarageConnection.setOldConnectionNo(rs.getString("oldConnectionNo"));
+                sewarageConnection.setUsageCategory(rs.getString("usageCategory"));
+                sewarageConnection.setConnectionCategory(rs.getString("connectionCategory"));
                 sewarageConnection.setConnectionExecutionDate(rs.getLong("connectionExecutionDate"));
                 sewarageConnection.setNoOfToilets(rs.getInt("noOfToilets"));
+                sewarageConnection.setNoOfFlats(rs.getInt("noOfFlats"));
                 sewarageConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
                 sewarageConnection.setProposedToilets(rs.getInt("proposedToilets"));
                 sewarageConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));

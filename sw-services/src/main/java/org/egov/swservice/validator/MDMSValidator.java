@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.swservice.repository.ServiceRequestRepository;
@@ -23,8 +25,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -92,9 +92,9 @@ public class MDMSValidator {
 			errorMap.put("INVALID SEWERAGE CONNECTION TYPE", messageBuilder.toString());
 		}
 		
-		if(sewerageConnection.getRoadCuttingInfo() == null){
-			errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
-		}
+		// if(sewerageConnection.getRoadCuttingInfo() == null){
+		// 	errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
+		// }
 
 		if(sewerageConnection.getRoadCuttingInfo() != null){
 			for(RoadCuttingInfo roadCuttingInfo : sewerageConnection.getRoadCuttingInfo()){

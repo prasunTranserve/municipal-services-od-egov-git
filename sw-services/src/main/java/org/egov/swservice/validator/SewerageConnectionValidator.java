@@ -5,11 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.egov.swservice.service.PropertyValidator;
+import org.egov.swservice.service.SewerageFieldValidator;
 import org.egov.swservice.web.models.SewerageConnection;
 import org.egov.swservice.web.models.SewerageConnectionRequest;
 import org.egov.swservice.web.models.ValidatorResult;
-import org.egov.swservice.service.PropertyValidator;
-import org.egov.swservice.service.SewerageFieldValidator;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,10 +37,10 @@ public class SewerageConnectionValidator {
 			errorMap.put("INVALID_ACTION", "Workflow obj can not be null or action can not be empty!!");
 			throw new CustomException(errorMap);
 		}
-		ValidatorResult isPropertyValidated = propertyValidator.validate(sewerageConnectionRequest, reqType);
-		if (!isPropertyValidated.isStatus()) {
-			errorMap.putAll(isPropertyValidated.getErrorMessage());
-		}
+		// ValidatorResult isPropertyValidated = propertyValidator.validate(sewerageConnectionRequest, reqType);
+		// if (!isPropertyValidated.isStatus()) {
+		// 	errorMap.putAll(isPropertyValidated.getErrorMessage());
+		// }
 		ValidatorResult isSewerageFieldValidated = sewerageFieldValidator.validate(sewerageConnectionRequest, reqType);
 		if (!isSewerageFieldValidated.isStatus()) {
 			errorMap.putAll(isSewerageFieldValidated.getErrorMessage());

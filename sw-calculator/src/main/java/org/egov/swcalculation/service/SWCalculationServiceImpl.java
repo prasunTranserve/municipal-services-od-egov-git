@@ -11,18 +11,16 @@ import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.swcalculation.constants.SWCalculationConstant;
+import org.egov.swcalculation.repository.SewerageCalculatorDao;
+import org.egov.swcalculation.util.SWCalculationUtil;
 import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationCriteria;
 import org.egov.swcalculation.web.models.CalculationReq;
-import org.egov.swcalculation.web.models.TaxHeadCategory;
-import org.egov.swcalculation.web.models.Property;
 import org.egov.swcalculation.web.models.SewerageConnection;
-import org.egov.swcalculation.web.models.SewerageConnectionRequest;
+import org.egov.swcalculation.web.models.TaxHeadCategory;
 import org.egov.swcalculation.web.models.TaxHeadEstimate;
 import org.egov.swcalculation.web.models.TaxHeadMaster;
-import org.egov.swcalculation.repository.SewerageCalculatorDao;
-import org.egov.swcalculation.util.SWCalculationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -97,10 +95,10 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 		List<String> billingSlabIds = estimatesAndBillingSlabs.get("billingSlabIds");
 		SewerageConnection sewerageConnection = criteria.getSewerageConnection();
 		
-		Property property = sWCalculationUtil.getProperty(SewerageConnectionRequest.builder()
-				.sewerageConnection(sewerageConnection).requestInfo(requestInfo).build());
+		// Property property = sWCalculationUtil.getProperty(SewerageConnectionRequest.builder()
+		// 		.sewerageConnection(sewerageConnection).requestInfo(requestInfo).build());
 
-		String tenantId = null != property.getTenantId() ? property.getTenantId() : criteria.getTenantId();
+		String tenantId = null != sewerageConnection.getTenantId() ? sewerageConnection.getTenantId() : criteria.getTenantId();
 
 		@SuppressWarnings("unchecked")
 		Map<String, TaxHeadCategory> taxHeadCategoryMap = ((List<TaxHeadMaster>) masterMap
