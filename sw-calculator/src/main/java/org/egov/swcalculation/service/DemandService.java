@@ -586,6 +586,7 @@ public class DemandService {
 			}
 		}
 		
+		boolean isRebateUpdated = false;
 		boolean isPenaltyUpdated = false;
 		boolean isInterestUpdated = false;
 		
@@ -594,15 +595,27 @@ public class DemandService {
 		if (null == interestPenaltyEstimates)
 			return isCurrentDemand;
 
+		BigDecimal rebate = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_REBATE);
 		BigDecimal penalty = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_PENALTY);
 		BigDecimal interest = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_INTEREST);
+		if(rebate == null)
+			rebate = BigDecimal.ZERO;
 		if(penalty == null)
 			penalty = BigDecimal.ZERO;
 		if(interest == null)
 			interest = BigDecimal.ZERO;
 
-		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
+		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
+		if (rebate.compareTo(BigDecimal.ZERO) != 0) {
+			latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_REBATE,
+					demand.getDemandDetails());
+			if (latestRebateDemandDetail != null) {
+				updateTaxAmount(rebate, latestRebateDemandDetail);
+				isRebateUpdated = true;
+			}
+		}
+		
 		if (interest.compareTo(BigDecimal.ZERO) != 0) {
 			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_INTEREST,
 					demand.getDemandDetails());
@@ -621,6 +634,10 @@ public class DemandService {
 			}
 		}
 
+		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)
+			demand.getDemandDetails().add(
+					DemandDetail.builder().taxAmount(rebate.setScale(2, 2)).taxHeadMasterCode(SWCalculationConstant.SW_TIME_REBATE)
+							.demandId(demand.getId()).tenantId(demand.getTenantId()).build());
 		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0)
 			demand.getDemandDetails().add(
 					DemandDetail.builder().taxAmount(penalty.setScale(2, 2)).taxHeadMasterCode(SWCalculationConstant.SW_TIME_PENALTY)

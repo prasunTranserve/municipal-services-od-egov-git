@@ -1,6 +1,8 @@
 package org.egov.wscalculation.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,11 +73,81 @@ public class PayService {
 		long numberOfDaysInMillis = billingExpiryDate - currentUTC;
 		BigDecimal noOfDays = BigDecimal.valueOf((TimeUnit.MILLISECONDS.toDays(Math.abs(numberOfDaysInMillis))));
 		if(BigDecimal.ONE.compareTo(noOfDays) <= 0) noOfDays = noOfDays.add(BigDecimal.ONE);
+		BigDecimal rebate = getApplicableRebate(waterCharge, assessmentYear, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
 		BigDecimal penalty = getApplicablePenalty(waterCharge, noOfDays, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_PENANLTY_MASTER));
-		BigDecimal interest = getApplicableInterest(waterCharge, noOfDays, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_INTEREST_MASTER));
+		//BigDecimal interest = getApplicableInterest(waterCharge, noOfDays, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_INTEREST_MASTER));
+		estimates.put(WSCalculationConstant.WS_TIME_REBATE, rebate.setScale(2, 2).negate());
 		estimates.put(WSCalculationConstant.WS_TIME_PENALTY, penalty.setScale(2, 2));
-		estimates.put(WSCalculationConstant.WS_TIME_INTEREST, interest.setScale(2, 2));
+		//estimates.put(WSCalculationConstant.WS_TIME_INTEREST, interest.setScale(2, 2));
 		return estimates;
+	}
+	
+	private BigDecimal getApplicableRebate(BigDecimal waterCharge, String assessmentYear, JSONArray rebateMasterList) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+
+		if (null == rebate) return rebateAmt;
+
+		String time = ((String) rebate.get(WSCalculationConstant.ENDING_DATE_APPLICABLES));
+		Calendar cal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, time, cal);
+
+		if (cal.getTimeInMillis() > System.currentTimeMillis())
+			rebateAmt = calculateApplicables(waterCharge, rebate);
+
+		return rebateAmt;
+	}
+
+
+	private BigDecimal calculateApplicables(BigDecimal waterCharge, Map<String, Object> rebateConfig) {
+
+		BigDecimal currentApplicable = BigDecimal.ZERO;
+
+		if (null == rebateConfig)
+			return currentApplicable;
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> configMap = (Map<String, Object>) rebateConfig;
+
+		BigDecimal rate = null != configMap.get(WSCalculationConstant.RATE_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.RATE_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal maxAmt = null != configMap.get(WSCalculationConstant.MAX_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.MAX_AMOUNT_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal minAmt = null != configMap.get(WSCalculationConstant.MIN_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.MIN_AMOUNT_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal flatAmt = null != configMap.get(WSCalculationConstant.FLAT_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.FLAT_AMOUNT_FIELD_NAME)).doubleValue())
+				: BigDecimal.ZERO;
+
+		if (null == rate)
+			currentApplicable = flatAmt.compareTo(waterCharge) > 0 ? waterCharge : flatAmt;
+		else {
+			currentApplicable = waterCharge.multiply(rate.divide(WSCalculationConstant.HUNDRED));
+
+			if (null != maxAmt && BigDecimal.ZERO.compareTo(maxAmt) < 0 && currentApplicable.compareTo(maxAmt) > 0)
+				currentApplicable = maxAmt;
+			else if (null != minAmt && currentApplicable.compareTo(minAmt) < 0)
+				currentApplicable = minAmt;
+		}
+		return currentApplicable;
+	}
+
+
+	private void setDateToCalendar(String assessmentYear, String time, Calendar cal) {
+		cal.clear();
+		Integer day = Integer.valueOf(time);
+		// One is subtracted because calender reads january as 0
+		Integer month = LocalDate.now().getMonthValue() - 1;
+		Integer year = Integer.valueOf(assessmentYear.split("-")[0]);
+		if (month < 3) year += 1;
+		cal.set(year, month, day);
+		
 	}
 
 	/**

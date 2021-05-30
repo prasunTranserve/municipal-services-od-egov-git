@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -306,13 +307,20 @@ public class MasterDataService {
 	 */
 	private Long getStartDayInMillis(String startDay) {
 		Date date;
-		try {
-			SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-			 date = df.parse(startDay);
-		} catch (ParseException e) {
-			throw new CustomException("INVALID_START_DAY", "The startDate of the penalty cannot be parsed");
+		if(startDay.contains("/")) {
+			try {
+				SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+				 date = df.parse(startDay);
+			} catch (ParseException e) {
+				throw new CustomException("INVALID_START_DAY", "The startDate of the penalty cannot be parsed");
+			}
+		} else {
+			LocalDate today = LocalDate.now();
+			int month = today.getMonthValue();
+			int year = today.getYear();
+			date = new Date(year, month, Integer.parseInt(startDay));
+			return date.getTime();
 		}
-
 		return date.getTime();
 	}
 

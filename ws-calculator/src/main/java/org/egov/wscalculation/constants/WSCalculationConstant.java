@@ -74,6 +74,8 @@ public class WSCalculationConstant {
 	 * Time Taxes Config
 	 */
 
+	public static final String WS_TIME_REBATE = "WS_TIME_REBATE";
+	
 	public static final String WS_TIME_INTEREST = "WS_TIME_INTEREST";
 
 	public static final String WS_TIME_PENALTY = "WS_TIME_PENALTY";

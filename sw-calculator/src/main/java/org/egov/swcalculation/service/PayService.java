@@ -1,6 +1,8 @@
 package org.egov.swcalculation.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,18 +68,89 @@ public class PayService {
 		if (BigDecimal.ZERO.compareTo(sewerageCharge) >= 0)
 			return Collections.emptyMap();
 		Map<String, BigDecimal> estimates = new HashMap<>();
+		BigDecimal rebate = getApplicableRebate(sewerageCharge, assessmentYear, timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_REBATE_MASTER));
 		long currentUTC = System.currentTimeMillis();
 		long numberOfDaysInMillis = billingExpiryDate - currentUTC;
 		BigDecimal noOfDays = BigDecimal.valueOf((TimeUnit.MILLISECONDS.toDays(Math.abs(numberOfDaysInMillis))));
 		if(BigDecimal.ONE.compareTo(noOfDays) <= 0) noOfDays = noOfDays.add(BigDecimal.ONE);
 		BigDecimal penalty = getApplicablePenalty(sewerageCharge, noOfDays, timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_PENANLTY_MASTER));
-		BigDecimal interest = getApplicableInterest(sewerageCharge, noOfDays, timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_INTEREST_MASTER));
+		//BigDecimal interest = getApplicableInterest(sewerageCharge, noOfDays, timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_INTEREST_MASTER));
+		estimates.put(SWCalculationConstant.SW_TIME_REBATE, rebate.setScale(2, 2).negate());
 		estimates.put(SWCalculationConstant.SW_TIME_PENALTY, penalty.setScale(2, 2));
-		estimates.put(SWCalculationConstant.SW_TIME_INTEREST, interest.setScale(2, 2));
+		//estimates.put(SWCalculationConstant.SW_TIME_INTEREST, interest.setScale(2, 2));
 		return estimates;
 	}
 	
 	
+	private BigDecimal getApplicableRebate(BigDecimal sewerageCharge, String assessmentYear, JSONArray rebateMasterList) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+
+		if (null == rebate) return rebateAmt;
+
+		String time = ((String) rebate.get(SWCalculationConstant.ENDING_DATE_APPLICABLES));
+		Calendar cal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, time, cal);
+
+		if (cal.getTimeInMillis() > System.currentTimeMillis())
+			rebateAmt = calculateApplicables(sewerageCharge, rebate);
+
+		return rebateAmt;
+	}
+
+
+	private BigDecimal calculateApplicables(BigDecimal sewerageCharge, Map<String, Object> rebateConfig) {
+
+		BigDecimal currentApplicable = BigDecimal.ZERO;
+
+		if (null == rebateConfig)
+			return currentApplicable;
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> configMap = (Map<String, Object>) rebateConfig;
+
+		BigDecimal rate = null != configMap.get(SWCalculationConstant.RATE_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(SWCalculationConstant.RATE_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal maxAmt = null != configMap.get(SWCalculationConstant.MAX_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(SWCalculationConstant.MAX_AMOUNT_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal minAmt = null != configMap.get(SWCalculationConstant.MIN_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(SWCalculationConstant.MIN_AMOUNT_FIELD_NAME)).doubleValue())
+				: null;
+
+		BigDecimal flatAmt = null != configMap.get(SWCalculationConstant.FLAT_AMOUNT_FIELD_NAME)
+				? BigDecimal.valueOf(((Number) configMap.get(SWCalculationConstant.FLAT_AMOUNT_FIELD_NAME)).doubleValue())
+				: BigDecimal.ZERO;
+
+		if (null == rate)
+			currentApplicable = flatAmt.compareTo(sewerageCharge) > 0 ? sewerageCharge : flatAmt;
+		else {
+			currentApplicable = sewerageCharge.multiply(rate.divide(SWCalculationConstant.HUNDRED));
+
+			if (null != maxAmt && BigDecimal.ZERO.compareTo(maxAmt) < 0 && currentApplicable.compareTo(maxAmt) > 0)
+				currentApplicable = maxAmt;
+			else if (null != minAmt && currentApplicable.compareTo(minAmt) < 0)
+				currentApplicable = minAmt;
+		}
+		return currentApplicable;
+	}
+
+
+	private void setDateToCalendar(String assessmentYear, String time, Calendar cal) {
+		cal.clear();
+		Integer day = Integer.valueOf(time);
+		// One is subtracted because calender reads january as 0
+		Integer month = LocalDate.now().getMonthValue() - 1;
+		Integer year = Integer.valueOf(assessmentYear.split("-")[0]);
+		if (month < 3) year += 1;
+		cal.set(year, month, day);
+		
+	}
+
+
 	/**
 	 * 
 	 * @param sewerageCharge - Sewerage Charge
