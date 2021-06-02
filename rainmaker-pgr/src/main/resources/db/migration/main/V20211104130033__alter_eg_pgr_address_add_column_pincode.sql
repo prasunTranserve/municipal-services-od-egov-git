@@ -1,0 +1,1 @@
+ALTER TABLE eg_pgr_address ADD COLUMN pincode character varying(64);

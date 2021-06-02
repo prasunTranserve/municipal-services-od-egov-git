@@ -64,5 +64,10 @@ public class Address {
 	
 	@JsonProperty("auditDetails")
 	public AuditDetails auditDetails;
+	
+	
+	  @JsonProperty("pinCode")
+	  @Pattern(regexp="(^$|[0-9]{6})", message = "Pincode should be 6 digit number")
+	  private String pinCode;
 
 }
