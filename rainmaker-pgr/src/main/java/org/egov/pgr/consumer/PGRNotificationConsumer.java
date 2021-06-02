@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -15,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pgr.contract.Action;
 import org.egov.pgr.contract.ActionItem;
+import org.egov.pgr.contract.EmailRequest;
 import org.egov.pgr.contract.Event;
 import org.egov.pgr.contract.EventRequest;
 import org.egov.pgr.contract.Recepient;
@@ -23,6 +26,7 @@ import org.egov.pgr.contract.ServiceReqSearchCriteria;
 import org.egov.pgr.contract.ServiceRequest;
 import org.egov.pgr.contract.ServiceResponse;
 import org.egov.pgr.model.ActionInfo;
+import org.egov.pgr.model.Email;
 import org.egov.pgr.model.Service;
 import org.egov.pgr.model.Source;
 import org.egov.pgr.producer.PGRProducer;
@@ -65,6 +69,9 @@ public class PGRNotificationConsumer {
 
     @Value("${notification.email.enabled}")
     private Boolean isEmailNotificationEnabled;
+    
+    @Value("${text.for.subject.email.notif}")
+    private String emailSubject ;
 
     @Value("${reassign.complaint.enabled}")
     private Boolean isReassignNotifEnaled;
@@ -157,10 +164,18 @@ public class PGRNotificationConsumer {
                                 pGRProducer.push(smsNotifTopic, smsRequest);
                             }
                         }
-                        // Not enabled for now - email notifications to be part of next version of PGR.
-                        if (isEmailNotificationEnabled
-                                && (null != service.getEmail() && !service.getEmail().isEmpty())) {
-                            //get code from git using any check-in before 24/04/2018.
+                        if (isEmailNotificationEnabled)
+                        {
+                        	List<EmailRequest> emailRequests = prepareEmailRequest(service, actionInfo, serviceReqRequest.getRequestInfo());
+                        	 if (CollectionUtils.isEmpty(emailRequests)) {
+                                 log.info("Messages from localization couldn't be fetched!");
+                                 continue;
+                             }
+                             for (EmailRequest emailRequest : emailRequests) {
+                                 pGRProducer.push(emailNotifTopic, emailRequest);
+                             }
+                        
+                        
                         }
 
                         if (isUsrEventNotificationEnabled) {
@@ -236,29 +251,85 @@ public class PGRNotificationConsumer {
     }
 
     public List<SMSRequest> prepareSMSRequest(Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo) {
-        List<SMSRequest> smsRequestsTobeSent = new ArrayList<>();
-        if (StringUtils.isEmpty(actionInfo.getAssignee()) && !actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN)) {
-            try {
-                actionInfo.setAssignee(notificationService.getCurrentAssigneeForTheServiceRequest(serviceReq, requestInfo));
-            } catch (Exception e) {
-                log.error("Exception while explicitly setting assignee!");
-            }
-        }
-        for (String role : pGRUtils.getReceptorsOfNotification(actionInfo.getStatus(), actionInfo.getAction())) {
-            String phoneNumberRetrived = notificationService.getMobileAndIdForNotificationService(requestInfo, serviceReq.getAccountId(), serviceReq.getTenantId(), actionInfo.getAssignee(), role);
-            phoneNumberRetrived = phoneNumberRetrived.split("[|]")[0];
-            String phone = StringUtils.isEmpty(phoneNumberRetrived) ? serviceReq.getPhone() : phoneNumberRetrived;
-            String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, role);
-            if (StringUtils.isEmpty(message))
-                continue;
-            smsRequestsTobeSent.add(SMSRequest.builder().mobileNumber(phone).message(message).build());
-        }
-        return smsRequestsTobeSent;
+    	List<SMSRequest> smsRequestsTobeSent = new ArrayList<>();
+    	try {
+			
+			if (StringUtils.isEmpty(actionInfo.getAssignee()) && actionInfo.getAction()!=null && !actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN)) {
+			    try {
+			        actionInfo.setAssignee(notificationService.getCurrentAssigneeForTheServiceRequest(serviceReq, requestInfo));
+			    } catch (Exception e) {
+			        log.error("Exception while explicitly setting assignee!");
+			    }
+			}
+			for (String role : pGRUtils.getReceptorsOfNotification(actionInfo.getStatus(), actionInfo.getAction())) {
+			    String phoneNumberRetrived = notificationService.getMobileAndIdForNotificationService(requestInfo, serviceReq.getAccountId(), serviceReq.getTenantId(), actionInfo.getAssignee(), role);
+			    phoneNumberRetrived = phoneNumberRetrived.split("[|]")[0];
+			    String phone = StringUtils.isEmpty(phoneNumberRetrived) ? serviceReq.getPhone() : phoneNumberRetrived;
+			    String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, role);
+			    if (StringUtils.isEmpty(message))
+			        continue;
+			    smsRequestsTobeSent.add(SMSRequest.builder().mobileNumber(phone).message(message).build());
+			}
+			return smsRequestsTobeSent;
+		} catch (Exception e) {
+			if(actionInfo.getStatus()==null)
+			{
+				log.error(" Status is empty , so unable get the Receptors of Notification.");
+			}
+			e.printStackTrace();
+			return smsRequestsTobeSent;
+		}
     }
+    
+    
+    public List<EmailRequest> prepareEmailRequest(Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo) {
+        
+    	List<EmailRequest> emailRequestsTobeSent = new ArrayList<>();
+    	String emailSubjectForEmail = emailSubject ;
+    	try {
+			
+			if (StringUtils.isEmpty(actionInfo.getAssignee()) && actionInfo.getAction()!=null && !actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN)) {
+			    try {
+			        actionInfo.setAssignee(notificationService.getCurrentAssigneeForTheServiceRequest(serviceReq, requestInfo));
+			    } catch (Exception e) {
+			        log.error("Exception while explicitly setting assignee!");
+			    }
+			}
+			for (String role : pGRUtils.getReceptorsOfNotification(actionInfo.getStatus(), actionInfo.getAction())) {
+			    String emailRetrived = notificationService.getEmailIdForNotificationService(requestInfo, serviceReq.getAccountId(), serviceReq.getTenantId(), actionInfo.getAssignee(), role);
+			    emailRetrived = emailRetrived.split("[|]")[0];
+			    String emailId = StringUtils.isEmpty(emailRetrived) ? serviceReq.getEmail() : emailRetrived;
+			    if(StringUtils.isEmpty(emailId) || "null".equalsIgnoreCase(emailId.trim()))
+			    {
+			    	log.info(" No emailId found for the role "+role);
+			    	continue;
+			    }
+			    String message = getMessageForEmail(serviceReq, actionInfo, requestInfo, role);
+			    if (StringUtils.isEmpty(message))
+			        continue;
+			    
+			    Set<String> emailTo = new LinkedHashSet<String>();
+			    emailTo.add(emailId);
+			    
+			    emailSubjectForEmail = emailSubjectForEmail.replaceAll(PGRConstants.EMAIL_SUBJECT_ID_KEY, serviceReq.getServiceRequestId());
+			    
+			    emailRequestsTobeSent.add(EmailRequest.builder().requestInfo(requestInfo).email(new  Email(emailTo, emailSubjectForEmail, message, true)).build());
+			}
+			return emailRequestsTobeSent;
+		} catch (Exception e) {
+			if(actionInfo.getStatus()==null)
+			{
+				log.error(" Status is empty , so unable get the Receptors of Notification.");
+			}
+			e.printStackTrace();
+			return emailRequestsTobeSent;
+		}
+    }
+    
 
     public String getMessageForSMS(Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo, String role) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(notificationDateFormat);
-        String date = dateFormat.format(new Date());
+        String date = dateFormat.format(new Date(serviceReq.getAuditDetails().getCreatedTime()));
         String tenantId = serviceReq.getTenantId().split("[.]")[0]; // localization values are for now state-level.
         String locale = null;
         try {
@@ -278,6 +349,34 @@ public class PGRNotificationConsumer {
         return getMessage(listOfValues, date, serviceReq, actionInfo, requestInfo, messageMap, role);
 
     }
+    
+    
+    public String getMessageForEmail(Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo, String role) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(notificationDateFormat);
+        String date = dateFormat.format(new Date(serviceReq.getAuditDetails().getCreatedTime()));
+        String tenantId = serviceReq.getTenantId().split("[.]")[0]; // localization values are for now state-level.
+        String locale = null;
+        try {
+            locale = requestInfo.getMsgId().split("[|]")[1]; // Conventionally locale is sent in the first index of msgid split by |
+            if (StringUtils.isEmpty(locale))
+                locale = fallbackLocale;
+        } catch (Exception e) {
+            locale = fallbackLocale;
+        }
+        if (null == NotificationService.localizedMessageMap.get(locale + "|" + tenantId)) // static map that saves code-message pair against locale | tenantId.
+            notificationService.getLocalisedMessages(requestInfo, tenantId, locale, PGRConstants.LOCALIZATION_MODULE_NAME);
+        Map<String, String> messageMap = NotificationService.localizedMessageMap.get(locale + "|" + tenantId);
+        if (null == messageMap)
+            return null;
+        List<Object> listOfValues = notificationService.getServiceType(serviceReq, requestInfo, locale);
+
+        return getMessageForEmail(listOfValues, date, serviceReq, actionInfo, requestInfo, messageMap, role);
+
+    }
+    
+    
+    
+    
 
     public String getMessage(List<Object> listOfValues, String date, Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo, Map<String, String> messageMap, String role) {
         if (null == listOfValues.get(0)) {
@@ -309,6 +408,8 @@ public class PGRNotificationConsumer {
                     List<String> deptCodes = new ArrayList<>();
                     deptCodes.add(employeeDetails.get("department"));
                     department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
+                    if(!StringUtils.isEmpty(department))
+                        department = notificationService.getDepartment(serviceReq, department, requestInfo);
                     designation = notificationService.getDesignation(serviceReq, employeeDetails.get("designation"), requestInfo);
                 } else {
                     return getDefaultMessage(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
@@ -371,6 +472,102 @@ public class PGRNotificationConsumer {
         }
         return text;
     }
+    
+    
+    public String getMessageForEmail(List<Object> listOfValues, String date, Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo, Map<String, String> messageMap, String role) {
+        if (null == listOfValues.get(0)) {
+            return getDefaultMessage(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
+        }
+        String text = null;
+        String[] reasonForRejection = new String[2];
+        Map<String, String> employeeDetails = null;
+        String department = null;
+        String designation = null;
+        if (StringUtils.isEmpty(actionInfo.getStatus()) && !StringUtils.isEmpty(actionInfo.getComment())) {
+            text = messageMap.get(PGRConstants.LOCALIZATION_CODE_COMMENT_EMAIL);
+            text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_COMMENT_KEY, actionInfo.getComment())
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_USER_NAME_KEY, requestInfo.getUserInfo().getName());
+        } else {
+            text = messageMap.get(PGRConstants.getStatusRoleLocalizationKeyMapForEmail().get(actionInfo.getStatus() + "|" + role));
+            if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
+            		|| actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)) {
+                if (null != actionInfo.getAction() && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_REOPEN)) {
+                    text = messageMap.get(PGRConstants.getActionRoleLocalizationKeyMapForEmail().get(WorkFlowConfigs.ACTION_REOPEN + "|" + role));
+                    employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
+                    text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+                }
+            } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ASSIGNED)) {
+                employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
+                if (null != employeeDetails) {
+                    List<String> deptCodes = new ArrayList<>();
+                    deptCodes.add(employeeDetails.get("department"));
+                    department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
+                    if(!StringUtils.isEmpty(department))
+                    department = notificationService.getDepartment(serviceReq, department, requestInfo);
+                    designation = notificationService.getDesignation(serviceReq, employeeDetails.get("designation"), requestInfo);
+                } else {
+                    return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
+                }
+                if (StringUtils.isEmpty(department) || StringUtils.isEmpty(designation) || StringUtils.isEmpty(employeeDetails.get("name")))
+                    return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
+
+                text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"))
+                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DESIGNATION_KEY, designation)
+                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DEPT_KEY, department);
+            } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_REJECTED)) {
+                if (StringUtils.isEmpty(actionInfo.getComment()))
+                    return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
+                reasonForRejection = actionInfo.getComment().split(";");
+                if (reasonForRejection.length < 2)
+                    return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
+                text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_REASON_FOR_REOPEN_KEY, reasonForRejection[0])
+                        .replaceAll(PGRConstants.SMS_NOTIFICATION_ADDITIONAL_COMMENT_KEY, reasonForRejection[1]);
+            } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_RESOLVED)) {
+                String assignee = notificationService.getCurrentAssigneeForTheServiceRequest(serviceReq, requestInfo);
+                employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), assignee, requestInfo);
+
+                text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+                //if complaint is resolved by escalation level4 officer, then citizen cannot re-open it.
+                //For this purpose we are trimming the last part of the message
+                if(notificationService.isEscalatedToLevel4(serviceReq, requestInfo)) {
+                	if(!ArrayUtils.isEmpty(text.split("\\.")))
+                		text = text.split("\\.")[0]+".";
+                }
+                
+            }
+            if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_CLOSED)) {
+                ServiceReqSearchCriteria serviceReqSearchCriteria = ServiceReqSearchCriteria.builder().tenantId(serviceReq.getTenantId())
+                        .serviceRequestId(Arrays.asList(serviceReq.getServiceRequestId())).build();
+                ServiceResponse response = (ServiceResponse) requestService.getServiceRequestDetails(requestInfo, serviceReqSearchCriteria);
+                List<ActionInfo> actions = response.getActionHistory().get(0).getActions().stream()
+                        .filter(obj -> !StringUtils.isEmpty(obj.getAssignee())).collect(Collectors.toList());
+                employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actions.get(0).getAssignee(), requestInfo);
+                text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_RATING_KEY,
+                        StringUtils.isEmpty(response.getServices().get(0).getRating()) ? "5" : response.getServices().get(0).getRating())
+                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+            }
+        }
+        if (null != text) {
+            String ulb = null;
+            if (StringUtils.isEmpty(serviceReq.getTenantId().split("[.]")[1]))
+                ulb = "Odisha";
+            else {
+                ulb = StringUtils.capitalize(serviceReq.getTenantId().split("[.]")[1]);
+            }
+            return text.replaceAll(PGRConstants.SMS_NOTIFICATION_COMPLAINT_TYPE_KEY, listOfValues.get(0).toString())
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_ID_KEY, serviceReq.getServiceRequestId())
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_DATE_KEY, date)
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_APP_LINK_KEY, uiAppHost + uiFeedbackUrl + serviceReq.getServiceRequestId())
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_APP_DOWNLOAD_LINK_KEY, appDownloadLink)
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_AO_DESIGNATION, PGRConstants.ROLE_NAME_GRO)
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_ULB_NAME, ulb)
+                    .replaceAll(PGRConstants.SMS_NOTIFICATION_SLA_NAME, listOfValues.get(1).toString());
+
+        }
+        return text;
+    }
 
     public String getDefaultMessage(Map<String, String> messageMap, String status, String action, String comment) {
         String text = null;
@@ -378,6 +575,26 @@ public class PGRNotificationConsumer {
             text = messageMap.get(PGRConstants.LOCALIZATION_CODE_COMMENT_DEFAULT);
         } else {
             text = messageMap.get(PGRConstants.LOCALIZATION_CODE_DEFAULT);
+            text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_STATUS_KEY, PGRConstants.getStatusNotifKeyMap().get(status));
+            if (status.equals(WorkFlowConfigs.STATUS_OPENED)) {
+                if (null != action && action.equals(WorkFlowConfigs.ACTION_REOPEN))
+                    text = text.replaceAll(PGRConstants.getStatusNotifKeyMap().get(status), PGRConstants.getActionNotifKeyMap().get(WorkFlowConfigs.ACTION_REOPEN));
+            } else if (status.equals(WorkFlowConfigs.STATUS_ASSIGNED)) {
+                if (null != action && action.equals(WorkFlowConfigs.ACTION_REASSIGN))
+                    text = text.replaceAll(PGRConstants.getStatusNotifKeyMap().get(status), PGRConstants.getActionNotifKeyMap().get(WorkFlowConfigs.ACTION_REASSIGN));
+            }
+        }
+
+        return text;
+    }
+    
+    
+    public String getDefaultMessageForEmail(Map<String, String> messageMap, String status, String action, String comment) {
+        String text = null;
+        if (StringUtils.isEmpty(status) && !StringUtils.isEmpty(comment)) {
+            text = messageMap.get(PGRConstants.LOCALIZATION_CODE_COMMENT_DEFAULT_EMAIL);
+        } else {
+            text = messageMap.get(PGRConstants.LOCALIZATION_CODE_DEFAULT_EMAIL);
             text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_STATUS_KEY, PGRConstants.getStatusNotifKeyMap().get(status));
             if (status.equals(WorkFlowConfigs.STATUS_OPENED)) {
                 if (null != action && action.equals(WorkFlowConfigs.ACTION_REOPEN))
