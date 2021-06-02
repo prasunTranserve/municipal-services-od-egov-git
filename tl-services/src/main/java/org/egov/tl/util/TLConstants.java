@@ -104,6 +104,8 @@ public class TLConstants {
     public static final String OWNERSHIP_CATEGORY = "OwnerShipCategory";
 
     public static final String TRADE_TYPE = "TradeType";
+    
+    public static final String TEMPORARY_TRADE_TYPE = "TemporaryTradeType";
 
     public static final String ACCESSORIES_CATEGORY = "AccessoriesCategory";
 
@@ -121,7 +123,9 @@ public class TLConstants {
 
     public static final String TRADETYPE_JSONPATH_UOM = "$.MdmsRes.TradeLicense.TradeType.*.uom";
     
-    public static final String TRADETYPE_JSONPATH_TEMP_UOM = "$.MdmsRes.TradeLicense.TradeType.*.tempUom";
+    public static final String TRADETYPE_JSONPATH_TEMP_CODE = "$.MdmsRes.TradeLicense.TemporaryTradeType.*.code";
+    
+    public static final String TRADETYPE_JSONPATH_TEMP_UOM = "$.MdmsRes.TradeLicense.TemporaryTradeType.*.uom";
 
     public static final String ACCESSORY_JSONPATH_CODE = "$.MdmsRes.TradeLicense.AccessoriesCategory.*.code";
 
