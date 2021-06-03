@@ -161,9 +161,17 @@ public class BillingslabValidator {
 	 */
 	public void validateMDMSCodes(BillingSlab billingSlab, Map<String, List<String>> mdmsDataMap, Map<String, String> errorMap) {
 		if(!StringUtils.isEmpty(billingSlab.getTradeType())) {
+			
+			if(billingSlab.getLicenseType().equals(billingSlab.getLicenseType().PERMANENT))
+			{
 			if(!mdmsDataMap.get(BillingslabConstants.TL_MDMS_TRADETYPE).contains(billingSlab.getTradeType()))
 				errorMap.put(ErrorConstants.INVALID_TRADETYPE_CODE, ErrorConstants.INVALID_TRADETYPE_MSG + ": "+billingSlab.getTradeType());
-		}
+			}else if(billingSlab.getLicenseType().equals(billingSlab.getLicenseType().TEMPORARY))
+			{
+				if(!mdmsDataMap.get(BillingslabConstants.TL_MDMS_TEMP_TRADETYPE).contains(billingSlab.getTradeType()))
+					errorMap.put(ErrorConstants.INVALID_TRADETYPE_CODE, ErrorConstants.INVALID_TRADETYPE_MSG + ": "+billingSlab.getTradeType());
+			}
+			}
 		if(!StringUtils.isEmpty(billingSlab.getAccessoryCategory())) {
 			if(!mdmsDataMap.get(BillingslabConstants.TL_MDMS_ACCESSORIESCATEGORY).contains(billingSlab.getAccessoryCategory()))
 				errorMap.put(ErrorConstants.INVALID_ACCESSORIESCATEGORY_CODE, ErrorConstants.INVALID_ACCESSORIESCATEGORY_MSG + ": "+billingSlab.getAccessoryCategory());

@@ -131,7 +131,7 @@ public class BillingslabService {
 	 */
 	public Map<String, List<String>> getMDMSDataForValidation(BillingSlabReq billingSlabReq){
 		Map<String, List<String>> mdmsMap = new HashMap<>();
-		String[] masters = {BillingslabConstants.TL_MDMS_TRADETYPE, BillingslabConstants.TL_MDMS_ACCESSORIESCATEGORY, 
+		String[] masters = {BillingslabConstants.TL_MDMS_TRADETYPE,BillingslabConstants.TL_MDMS_TEMP_TRADETYPE, BillingslabConstants.TL_MDMS_ACCESSORIESCATEGORY, 
 				BillingslabConstants.TL_MDMS_STRUCTURETYPE, BillingslabConstants.TL_MDMS_UOM};
 		for(String master: Arrays.asList(masters)) {
 			StringBuilder uri = new StringBuilder();
