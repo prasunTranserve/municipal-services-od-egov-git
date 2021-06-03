@@ -6,14 +6,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
-import org.egov.wscalculation.web.models.MeterConnectionRequest;
-import org.egov.wscalculation.web.models.MeterReading;
-import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
+import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.producer.WSCalculationProducer;
+import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
+import org.egov.wscalculation.web.models.MeterConnectionRequest;
+import org.egov.wscalculation.web.models.MeterReading;
+import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -127,7 +128,8 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	@Override
 	public List<String> getConnectionsNoList(String tenantId, String connectionType) {
 		List<Object> preparedStatement = new ArrayList<>();
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement);
+		String applicationStatus = WSCalculationConstant.WATER_CONNECTION_APP_STATUS_ACTIVATED_STRING;
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, preparedStatement);
 		log.info("water " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), demandSchedulerRowMapper);
 	}

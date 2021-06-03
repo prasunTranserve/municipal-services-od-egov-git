@@ -156,7 +156,7 @@ public class WSCalculatorQueryBuilder {
 	}
 	
 	
-	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement) {
+	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, List<Object> preparedStatement) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 		// Add connection type
 		addClauseIfRequired(preparedStatement, query);
@@ -166,6 +166,9 @@ public class WSCalculatorQueryBuilder {
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.tenantid = ? ");
 		preparedStatement.add(tenantId);
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.applicationstatus = ? ");
+		preparedStatement.add(applicationStatus);
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno is not null");
 		return query.toString();
