@@ -79,20 +79,20 @@ public class MDMSValidator {
 
 
                     license.getTradeLicenseDetail().getTradeUnits().forEach(unit -> {
-                        if (!tradeTypeUomMap.containsKey(unit.getTradeType()))
+                        if (!tradeTypeUomMap.containsKey(unit.getTradeType()) && !tradeTypeTempUomMap.containsKey(unit.getTradeType()))
                             errorMap.put("INVALID TRADETYPE", "The Trade type '" + unit.getTradeType() + "' does not exists");
 
                         if(unit.getUom()!=null){
                         	if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
                         	{
-                            if(!tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom()))
+                            if(tradeTypeUomMap.get(unit.getTradeType())==null ||!tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom()))
                                 errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
                             else if(tradeTypeUomMap.get(unit.getTradeType()).contains(unit.getUom())
                                     && unit.getUomValue()==null)
                                 throw new CustomException("INVALID UOMVALUE","The uomValue cannot be null");
                         	}else if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.TEMPORARY))
                         	{
-                                if(!tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom()))
+                                if(tradeTypeTempUomMap.get(unit.getTradeType())==null ||  !tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom()))
                                     errorMap.put("INVALID UOM","The UOM: "+unit.getUom()+" is not valid for tradeType: "+unit.getTradeType());
                                 else if(tradeTypeTempUomMap.get(unit.getTradeType()).contains(unit.getUom())
                                         && unit.getUomValue()==null)
@@ -245,15 +245,21 @@ public class MDMSValidator {
     
     
     private Map getTradeTypeTempUomMap(Object mdmsData){
+    	
+    	Map<String,String> tradeTypeToUOM = new HashMap<>();
+    	
+        try {
+			List<String> tradeTypes = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_TEMP_CODE);
+			List<String> tradeTypeUOM = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_TEMP_UOM);
 
-        List<String> tradeTypes = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_CODE);
-        List<String> tradeTypeUOM = JsonPath.read(mdmsData,TLConstants.TRADETYPE_JSONPATH_TEMP_UOM);
+			
 
-        Map<String,String> tradeTypeToUOM = new HashMap<>();
-
-        for (int i = 0;i < tradeTypes.size();i++){
-            tradeTypeToUOM.put(tradeTypes.get(i),tradeTypeUOM.get(i));
-        }
+			for (int i = 0;i < tradeTypes.size();i++){
+			    tradeTypeToUOM.put(tradeTypes.get(i),tradeTypeUOM.get(i));
+			}
+		} catch (com.jayway.jsonpath.PathNotFoundException e) {
+			log.info(" Temporary trade license data not available  ");
+		}
 
         return tradeTypeToUOM;
     }

@@ -113,6 +113,7 @@ public class TradeUtil {
         final String filterCode = "$.[?(@.active==true)].code";
 
         tlMasterDetails.add(MasterDetail.builder().name(TRADE_TYPE).build());
+        tlMasterDetails.add(MasterDetail.builder().name(TEMPORARY_TRADE_TYPE).build());
         tlMasterDetails.add(MasterDetail.builder().name(ACCESSORIES_CATEGORY).build());
 
         ModuleDetail tlModuleDtls = ModuleDetail.builder().masterDetails(tlMasterDetails)
