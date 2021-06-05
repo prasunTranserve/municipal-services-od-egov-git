@@ -1,0 +1,5 @@
+ALTER TABLE eg_sw_service
+ADD COLUMN IF NOT EXISTS pipeSize INTEGER;
+
+ALTER TABLE eg_sw_service_audit
+ADD COLUMN IF NOT EXISTS pipeSize INTEGER; 
