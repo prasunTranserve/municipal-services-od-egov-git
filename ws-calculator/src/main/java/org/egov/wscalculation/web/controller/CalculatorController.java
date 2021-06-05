@@ -5,6 +5,10 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.egov.wscalculation.service.DemandService;
+import org.egov.wscalculation.service.WSCalculationService;
+import org.egov.wscalculation.service.WSCalculationServiceImpl;
+import org.egov.wscalculation.util.ResponseInfoFactory;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationReq;
@@ -13,22 +17,19 @@ import org.egov.wscalculation.web.models.Demand;
 import org.egov.wscalculation.web.models.DemandResponse;
 import org.egov.wscalculation.web.models.GetBillCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
-import org.egov.wscalculation.service.DemandService;
-import org.egov.wscalculation.service.WSCalculationService;
-import org.egov.wscalculation.service.WSCalculationServiceImpl;
-import org.egov.wscalculation.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jdk.nashorn.internal.objects.annotations.Getter;
+import jdk.nashorn.internal.objects.annotations.Setter;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 
 
 @Getter
@@ -81,7 +82,16 @@ public class CalculatorController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
+	// 6 Hours = 36000000L
+	// 5 Minutes - 300000L
+	@Scheduled(fixedDelay = 300000L)
+	public void cronJobScheduler(){
+		System.out.println("Cron Job Scheduler is Running..!!");
+		System.out.println("This is working..!!");
+		wSCalculationService.callJobscheduler();
+	}
+
 	@PostMapping("/_jobscheduler")
 	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
 		wSCalculationService.generateDemandBasedOnTimePeriod(requestInfoWrapper.getRequestInfo());

@@ -6,6 +6,10 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.egov.swcalculation.service.DemandService;
+import org.egov.swcalculation.service.SWCalculationService;
+import org.egov.swcalculation.service.SWCalculationServiceImpl;
+import org.egov.swcalculation.util.ResponseInfoFactory;
 import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationReq;
@@ -13,13 +17,10 @@ import org.egov.swcalculation.web.models.CalculationRes;
 import org.egov.swcalculation.web.models.DemandResponse;
 import org.egov.swcalculation.web.models.GetBillCriteria;
 import org.egov.swcalculation.web.models.RequestInfoWrapper;
-import org.egov.swcalculation.service.DemandService;
-import org.egov.swcalculation.service.SWCalculationService;
-import org.egov.swcalculation.service.SWCalculationServiceImpl;
-import org.egov.swcalculation.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -73,6 +74,14 @@ public class SWCalculationController {
 	public ResponseEntity<DemandResponse> updateDemands(@RequestBody @Valid RequestInfoWrapper requestInfoWrapper,
 			@ModelAttribute @Valid GetBillCriteria getBillCriteria) {
 		return new ResponseEntity<>(demandService.updateDemands(getBillCriteria, requestInfoWrapper), HttpStatus.OK);
+	}
+
+	// 6 Hours = 36000000L
+	// 5 Minutes - 300000L
+	@Scheduled(fixedDelay = 300000L)
+	public void cronJobScheduler(){
+		System.out.println("Cron Job Scheduler is Running..!!");
+		sWCalculationService.callJobscheduler();
 	}
 	
 	@PostMapping("/_jobscheduler")

@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import com.jayway.jsonpath.JsonPath;
 
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.tracer.model.CustomException;
@@ -20,14 +19,17 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
+import org.egov.wscalculation.web.controller.CalculatorController;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
+import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadCategory;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.WaterConnection;
+import org.omg.PortableInterceptor.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +62,9 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	
 	@Autowired
 	private WSCalculationUtil wSCalculationUtil;
+
+	@Autowired
+	private CalculatorController calculatorController;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Water Charge And Estimation Charge
@@ -233,6 +238,16 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			ArrayList<?> mdmsResponse = JsonPath.read(res, jsonPath);
 			getBillingPeriod(mdmsResponse, requestInfo, tenantId);
 		}
+	}
+
+	@Override
+	public void callJobscheduler() {
+
+		RequestInfo requestInfo = RequestInfo.builder().apiId("Rainmaker").ver(".01").action("_estimate")
+		.did("1").key("").msgId("20170310130900|en_IN").authToken("ec73db82-c194-4daa-9105-8248fab6d050").build();
+		
+		String uri = "http://40.80.83.210/ws-calculator/waterCalculator/_jobscheduler";
+		repository.fetchResult(new StringBuilder(uri), RequestInfoWrapper.builder().requestInfo(requestInfo).build());
 	}
 	
 
