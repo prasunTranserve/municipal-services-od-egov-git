@@ -11,12 +11,14 @@ import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.swcalculation.constants.SWCalculationConstant;
+import org.egov.swcalculation.repository.ServiceRequestRepository;
 import org.egov.swcalculation.repository.SewerageCalculatorDao;
 import org.egov.swcalculation.util.SWCalculationUtil;
 import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationCriteria;
 import org.egov.swcalculation.web.models.CalculationReq;
+import org.egov.swcalculation.web.models.RequestInfoWrapper;
 import org.egov.swcalculation.web.models.SewerageConnection;
 import org.egov.swcalculation.web.models.TaxHeadCategory;
 import org.egov.swcalculation.web.models.TaxHeadEstimate;
@@ -47,6 +49,9 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 	
 	@Autowired
 	private SWCalculationUtil sWCalculationUtil;
+
+	@Autowired
+	private ServiceRequestRepository repository;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Sewerage Charge
@@ -176,6 +181,16 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 			return;
 		log.info("Tenant Ids : " + tenantIds.toString());
 		tenantIds.forEach(tenantId -> demandService.generateDemandForTenantId(tenantId, requestInfo));
+	}
+
+	@Override
+	public void callJobscheduler() {
+
+		RequestInfo requestInfo = RequestInfo.builder().apiId("Rainmaker").ver(".01").action("_estimate")
+		.did("1").key("").msgId("20170310130900|en_IN").authToken("ec73db82-c194-4daa-9105-8248fab6d050").build();
+		
+		String uri = "http://40.80.83.210/sw-calculator/sewerageCalculator/_jobscheduler";
+		repository.fetchResult(new StringBuilder(uri), RequestInfoWrapper.builder().requestInfo(requestInfo).build());
 	}
 
 	/**
