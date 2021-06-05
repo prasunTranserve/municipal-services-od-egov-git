@@ -59,6 +59,7 @@ public class SewerageRowMapper implements ResultSetExtractor<List<SewerageConnec
                 sewarageConnection.setConnectionExecutionDate(rs.getLong("connectionExecutionDate"));
                 sewarageConnection.setNoOfToilets(rs.getInt("noOfToilets"));
                 sewarageConnection.setNoOfFlats(rs.getInt("noOfFlats"));
+                sewarageConnection.setPipeSize(rs.getInt("pipeSize"));
                 sewarageConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
                 sewarageConnection.setProposedToilets(rs.getInt("proposedToilets"));
                 sewarageConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));

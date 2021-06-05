@@ -31,6 +31,9 @@ public class SewerageConnection extends Connection {
 	@JsonProperty("noOfFlats")
 	private Integer noOfFlats = null;
 
+	@JsonProperty("pipeSize")
+	private Integer pipeSize = null;
+
 	@JsonProperty("usageCategory")
 	private String usageCategory = null;
 
@@ -54,6 +57,11 @@ public class SewerageConnection extends Connection {
 
 	public SewerageConnection noOfFlats(Integer noOfFlats) {
 		this.noOfFlats = noOfFlats;
+		return this;
+	}
+
+	public SewerageConnection pipeSize(Integer pipeSize) {
+		this.pipeSize = pipeSize;
 		return this;
 	}
 
@@ -163,6 +171,21 @@ public class SewerageConnection extends Connection {
 
 	public void setNoOfFlats(Integer noOfFlats) {
 		this.noOfFlats = noOfFlats;
+	}
+	
+	/**
+	 * Pipe Size for calculation attribute.
+	 * 
+	 * @return pipeSize
+	 **/
+	@ApiModelProperty(value = "Pipe Size for calculation attribute.")
+
+	public Integer getPipeSize() {
+		return pipeSize;
+	}
+
+	public void setPipeSize(Integer pipeSize) {
+		this.pipeSize = pipeSize;
 	}
 
 	/**
