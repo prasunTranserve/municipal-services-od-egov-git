@@ -85,6 +85,8 @@ public class BoundaryService {
 
 			ArrayList boundaryResponse = context.read(propertyIdToJsonPath.get(property.getPropertyId()));
 			Locality boundary = mapper.convertValue(boundaryResponse.get(0), Locality.class);
+			// MDMS do not have the "area" field, so we replaced with name
+			boundary.setArea(boundary.getName());
 			if (boundary.getName() == null)
 				throw new CustomException("INVALID BOUNDARY DATA", "The boundary data for the code "
 						+ property.getAddress().getLocality().getCode() + " is not available");
