@@ -16,26 +16,26 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.mdms.model.MdmsResponse;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
+import org.egov.wscalculation.repository.ServiceRequestRepository;
+import org.egov.wscalculation.util.CalculatorUtil;
+import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.TaxHeadMasterResponse;
 import org.egov.wscalculation.web.models.TaxPeriod;
 import org.egov.wscalculation.web.models.TaxPeriodResponse;
-import org.egov.wscalculation.repository.ServiceRequestRepository;
-import org.egov.wscalculation.util.CalculatorUtil;
-import org.egov.wscalculation.util.WSCalculationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -276,7 +276,7 @@ public class MasterDataService {
 				if (objFinYear.compareTo(assessmentYear.split("-")[0]) == 0)
 					return objMap;
 
-				else if (assessmentYear.split("-")[0].compareTo(objFinYear) > 0
+				else if (objFinYear.compareTo(assessmentYear.split("-")[0]) > 0
 						&& maxYearFromTheList.compareTo(objFinYear) <= 0) {
 					maxYearFromTheList = objFinYear;
 					objToBeReturned = objMap;

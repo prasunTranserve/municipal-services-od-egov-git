@@ -129,10 +129,57 @@ public class SWCalculationConfiguration {
     @Value("${egov.user.context.path}")
     private String userContextPath;
 
-
     @Value("${egov.user.search.path}")
     private String userSearchEndpoint;
-   
+
+    @Value("${egov.user.auth.token}")
+    private String userAuthTokenEndPoint;
+
+	// SW Calculator
+	@Value("${egov.sw.calculator.host}")
+    private String swCalculatorHost;
+
+	@Value("${egov.sw.calculator.jobscheduler}")
+    private String swJobSchedulerEndpoint;
+	
+	// Job Scheduler 
+	@Value("${egov.user.auth.username}")
+    private String authUsername;
+
+	@Value("${egov.user.auth.scope}")
+    private String authScope;
+
+	@Value("${egov.user.auth.password}")
+    private String authPassword;
+
+	@Value("${egov.user.auth.granttype}")
+    private String authGrantType;
+
+	@Value("${egov.user.auth.tenantid}")
+    private String authTenantId;
+
+	@Value("${egov.user.auth.usertype}")
+    private String authUserType;
+
+	@Value("${egov.user.auth.authorization}")
+    private String authAuthorization;
+
+	// Request info
+	@Value("${egov.requestinfo.apiid}")
+    private String requestApiId;
+
+	@Value("${egov.requestinfo.ver}")
+    private String requestVer;
+
+	@Value("${egov.requestinfo.action}")
+    private String requestAction;
+
+	@Value("${egov.requestinfo.did}")
+    private String requestDid;
+
+	@Value("${egov.requestinfo.msgid}")
+    private String requestMsgId;
+
 	
 	@Value("${egov.ui.app.host}")
 	private String uiAppHost;
@@ -148,7 +195,7 @@ public class SWCalculationConfiguration {
 	
 
 	@Value("${kafka.topics.billgen.topic}")
-   	private String payTriggers;
+	private String payTriggers;
 	
     @Value("${sw.demand.based.batch.size}")
     private Integer batchSize;
@@ -167,7 +214,7 @@ public class SWCalculationConfiguration {
     private String notificationUrl;
     
 	@Value("${egov.demand.minimum.payable.amount}")
-	 private BigDecimal minimumPayableAmount;
+	private BigDecimal minimumPayableAmount;
     
 	@Value("${egov.property.service.host}")
 	private String propertyHost;
