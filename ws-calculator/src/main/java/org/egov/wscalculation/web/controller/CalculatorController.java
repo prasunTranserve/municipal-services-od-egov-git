@@ -20,7 +20,6 @@ import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,14 +82,6 @@ public class CalculatorController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	// 6 Hours = 36000000L
-	// 5 Minutes - 300000L
-	@Scheduled(fixedDelay = 300000L)
-	public void cronJobScheduler(){
-		System.out.println("Cron Job Scheduler is Running..!!");
-		System.out.println("This is working..!!");
-		wSCalculationService.callJobscheduler();
-	}
 
 	@PostMapping("/_jobscheduler")
 	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {

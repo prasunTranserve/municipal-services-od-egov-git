@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.swcalculation.config.SWCalculationConfiguration;
 import org.egov.swcalculation.constants.SWCalculationConstant;
 import org.egov.swcalculation.repository.ServiceRequestRepository;
 import org.egov.swcalculation.repository.SewerageCalculatorDao;
@@ -24,7 +26,14 @@ import org.egov.swcalculation.web.models.TaxHeadCategory;
 import org.egov.swcalculation.web.models.TaxHeadEstimate;
 import org.egov.swcalculation.web.models.TaxHeadMaster;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,6 +61,12 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 
 	@Autowired
 	private ServiceRequestRepository repository;
+
+	@Autowired
+    private RestTemplate restTemplate;
+
+	@Autowired
+	private SWCalculationConfiguration config;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Sewerage Charge
@@ -183,13 +198,34 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 		tenantIds.forEach(tenantId -> demandService.generateDemandForTenantId(tenantId, requestInfo));
 	}
 
-	@Override
+	// @Scheduled(fixedDelay = 300000L)
+	@Scheduled(cron = "${cron.schedule.expression}")
 	public void callJobscheduler() {
 
-		RequestInfo requestInfo = RequestInfo.builder().apiId("Rainmaker").ver(".01").action("_estimate")
-		.did("1").key("").msgId("20170310130900|en_IN").authToken("ec73db82-c194-4daa-9105-8248fab6d050").build();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		headers.set("Authorization", config.getAuthAuthorization());
+
+		MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+		body.add("username", config.getAuthUsername());
+		body.add("scope", config.getAuthScope());
+		body.add("password", config.getAuthPassword());
+		body.add("grant_type", config.getAuthGrantType());
+		body.add("tenantId", config.getAuthTenantId());
+		body.add("userType", config.getAuthUserType());
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(body, headers);
 		
-		String uri = "http://40.80.83.210/sw-calculator/sewerageCalculator/_jobscheduler";
+		Map authResponse = new LinkedHashMap<String, String>();
+		authResponse =restTemplate.postForEntity(config.getUserHost() + config.getUserAuthTokenEndPoint(), request, Map.class).getBody();
+		
+		String accessToken = authResponse.get("access_token").toString();
+		log.info("EMPLOYEE Access Token : " + accessToken);
+
+		RequestInfo requestInfo = RequestInfo.builder().apiId(config.getRequestApiId()).ver(config.getRequestVer()).action(config.getRequestAction())
+		.did(config.getRequestDid()).key("").msgId(config.getRequestMsgId()).authToken(accessToken).build();
+		
+		String uri = config.getSwCalculatorHost() + config.getSwJobSchedulerEndpoint();
 		repository.fetchResult(new StringBuilder(uri), RequestInfoWrapper.builder().requestInfo(requestInfo).build());
 	}
 

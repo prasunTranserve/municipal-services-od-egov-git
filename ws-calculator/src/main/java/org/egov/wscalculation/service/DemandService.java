@@ -644,7 +644,7 @@ public class DemandService {
 		
 		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)
 			demand.getDemandDetails().add(
-					DemandDetail.builder().taxAmount(rebate.setScale(2, 2)).taxHeadMasterCode(WSCalculationConstant.WS_TIME_REBATE)
+					DemandDetail.builder().taxAmount(rebate.setScale(2, 2).negate()).taxHeadMasterCode(WSCalculationConstant.WS_TIME_REBATE)
 							.demandId(demand.getId()).tenantId(demand.getTenantId()).build());
 		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0)
 			details.add(

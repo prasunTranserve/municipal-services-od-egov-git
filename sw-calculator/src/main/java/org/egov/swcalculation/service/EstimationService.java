@@ -153,8 +153,10 @@ public class EstimationService {
 					.get(SWCalculationConstant.SW_SEWERAGE_CESS_MASTER);
 			BigDecimal sewerageCess = sewerageCessUtil.getSewerageCess(sewerageCharge,
 					SWCalculationConstant.Assesment_Year, sewerageCessMasterList);
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_WATER_CESS)
-					.estimateAmount(sewerageCess.setScale(2, 2)).build());
+			if(sewerageCess.compareTo(BigDecimal.ZERO) > 0) {
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_WATER_CESS)
+						.estimateAmount(sewerageCess.setScale(2, 2)).build());
+			}
 		}
 		return estimates;
 	}

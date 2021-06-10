@@ -20,7 +20,6 @@ import org.egov.swcalculation.web.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,13 +75,6 @@ public class SWCalculationController {
 		return new ResponseEntity<>(demandService.updateDemands(getBillCriteria, requestInfoWrapper), HttpStatus.OK);
 	}
 
-	// 6 Hours = 36000000L
-	// 5 Minutes - 300000L
-	@Scheduled(fixedDelay = 300000L)
-	public void cronJobScheduler(){
-		System.out.println("Cron Job Scheduler is Running..!!");
-		sWCalculationService.callJobscheduler();
-	}
 	
 	@PostMapping("/_jobscheduler")
 	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {

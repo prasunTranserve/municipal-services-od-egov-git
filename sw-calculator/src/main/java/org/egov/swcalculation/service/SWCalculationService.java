@@ -14,5 +14,4 @@ public interface SWCalculationService {
 	
 	List<Calculation> getEstimation(CalculationReq request);
 
-    void callJobscheduler();
 }
