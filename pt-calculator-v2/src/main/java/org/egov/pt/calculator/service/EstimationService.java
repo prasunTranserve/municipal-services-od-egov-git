@@ -206,16 +206,10 @@ public class EstimationService {
 		 * by default land should get only one slab from database per tenantId
 		 */
 		List<TaxHeadEstimate> taxHeadEstimates;
-		verifyPropertyAdditionalDetails(criteria);
-		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getLatrineTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getParkingTax()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getSolidWasteUserCharges()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0
-				|| BigDecimal.ZERO.compareTo(criteria.getInterest()) < 0) {
+		
+		boolean isManualInput = true;
+		if(isManualInput) {
+			verifyPropertyAdditionalDetails(criteria);
 			taxHeadEstimates =  getEstimatesForTax(criteria);
 		} else {
 			if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType()) && filteredBillingSlabs.size() != 1)
