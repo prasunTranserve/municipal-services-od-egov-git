@@ -9,9 +9,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.pgr.contract.RequestInfoWrapper;
+import org.egov.pgr.contract.SMSRequest;
 import org.egov.pgr.contract.ServiceReqSearchCriteria;
 import org.egov.pgr.contract.ServiceResponse;
 import org.egov.pgr.model.ActionInfo;
@@ -102,6 +104,27 @@ public class NotificationService {
 		listOfValues.add(serviceType); listOfValues.add(sla);
 		return listOfValues;
 	}
+	
+	public String getDepartmentFromServiceCode(Service serviceReq, RequestInfo requestInfo)
+	{
+		String department =  null ;
+		StringBuilder uri = new StringBuilder();
+		MdmsCriteriaReq mdmsCriteriaReq = pGRUtils.prepareSearchRequestForServiceType(uri, serviceReq.getTenantId(),serviceReq.getServiceCode(), requestInfo);
+		List<String> departmentList = null;
+		try {
+			Object result = serviceRequestRepository.fetchResult(uri, mdmsCriteriaReq);
+			departmentList = JsonPath.read(result, PGRConstants.JSONPATH_DEPARTMENT);
+			if (CollectionUtils.isEmpty(departmentList) )
+				return department;
+			department = departmentList.get(0);
+			
+		}catch (Exception e) {
+			log.error("SERVICE_TYPE_EXCEPTION", e);
+			return department;
+		}
+		return department;
+	}
+	
 
 	/**
 	 * Fetches Employee Details
@@ -138,6 +161,72 @@ public class NotificationService {
 		}
 		return employeeDetails;
 	}
+
+
+	/**
+	 * Fetches Employee Details based roles and department
+	 * @param tenantId
+	 * @param departments
+	 * @param roles
+	 * @param requestInfo
+	 * @return
+	 */
+	public List<Map<String, String>> getEmployeeDetailsOnDepartmentRoleBased(String tenantId, String department ,String role , RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder();
+		RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+		requestInfoWrapper.setRequestInfo(requestInfo);
+		uri.append(egovHRMShost).append(egovHRMSSearchEndpoint).append("?tenantId=" + tenantId).append("&roles=" + role);
+
+		if (department != null && !department.isEmpty()) {
+			uri.append("&departments=" + department);
+		}
+
+		Object response = null;
+
+
+
+		List<Map<String, String>>  allEmployeeDeatils = new ArrayList<Map<String,String>>();
+
+		try {
+			ObjectMapper mapper = pGRUtils.getObjectMapper();
+			response = serviceRequestRepository.fetchResult(uri, requestInfoWrapper);
+			if (null == response) {
+				return allEmployeeDeatils;
+			}
+
+			List<Map<String, Object>> resultCast = mapper.convertValue(JsonPath.read(response, PGRConstants.EMPLOYEE_BASE_JSONPATH), List.class);
+
+			for (Map<String, Object> employee : resultCast) {
+				Map<String, Object> user = (Map) employee.get("user");
+
+				Map<String, String> employeeDetails = new HashMap<>();
+
+				employeeDetails.put("name", user.get("name")!=null?user.get("name").toString():"");
+				employeeDetails.put("phone", user.get("mobileNumber")!=null?user.get("mobileNumber").toString():"");
+				try {
+					employeeDetails.put("emailId", user.get("emailId")!=null?user.get("emailId").toString():"");
+				} catch (Exception e) {
+					log.info(" email id not found for the user  ",user.get("name")!=null?user.get("name").toString():"");
+				}
+
+
+				allEmployeeDeatils.add(employeeDetails);
+
+			}
+
+
+		} catch (Exception e) {
+			log.error("Exception: ", e);
+		}
+		return allEmployeeDeatils;
+	}
+
+
+
+
+
+
+
 
 	/**
 	 * An employee might belong to different departments, 

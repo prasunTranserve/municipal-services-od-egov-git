@@ -392,6 +392,17 @@ public class GrievanceService {
 			else if(pGRUtils.checkComplaintAlreadyEscalated(history, actionInfo.getAction())) {
 				actionInfo.setAssignee(auditDetails.getLastModifiedBy());
 			}
+
+			//Setting the escalated complaints assigne to last assigned/resolved employee .
+			if(WorkFlowConfigs.ACTION_REOPEN.equalsIgnoreCase(actionInfo.getAction()) )
+			{
+				List<ActionInfo> actions = history.getActions().stream()
+						.filter(obj -> !StringUtils.isEmpty(obj.getAssignee())).collect(Collectors.toList());
+				if(!CollectionUtils.isEmpty(actions))
+					actionInfo.setAssignee(actions.get(0).getAssignee());
+			}
+
+			
 		}
 		if (!errorMap.isEmpty()) {
 			Map<String, String> newMap = new HashMap<>();

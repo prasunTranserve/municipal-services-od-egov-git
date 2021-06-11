@@ -54,7 +54,6 @@ public class ServiceReqSearchCriteria {
 	private Long lastUpdatedSince;	
 	
 	@JsonProperty("group")
-	@Pattern(regexp="^[a-zA-Z.]$")
 	private String group;
 	
 	@JsonProperty("serviceCodes")

@@ -110,10 +110,10 @@ public class WorkFlowConfigs {
 		map.put(WorkFlowConfigs.STATUS_REJECTED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_RESOLVED, Arrays.asList(PGRConstants.ROLE_CITIZEN));
 		map.put(WorkFlowConfigs.STATUS_CLOSED, Arrays.asList(PGRConstants.ROLE_EMPLOYEE));
-		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
-		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
-		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
-		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
+		map.put(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
 		
 		return map;
 	}
@@ -126,7 +126,7 @@ public class WorkFlowConfigs {
 		Map<String, List<String>> map = new HashMap<>();
 		
 		map.put(WorkFlowConfigs.ACTION_REASSIGN, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
-		map.put(WorkFlowConfigs.ACTION_REOPEN, Arrays.asList(PGRConstants.ROLE_CITIZEN));
+		map.put(WorkFlowConfigs.ACTION_REOPEN, Arrays.asList(PGRConstants.ROLE_CITIZEN, PGRConstants.ROLE_EMPLOYEE));
 		
 		return map;
 	}

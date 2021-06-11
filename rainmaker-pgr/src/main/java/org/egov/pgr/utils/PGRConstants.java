@@ -35,6 +35,7 @@ public class PGRConstants {
 	
 
 	public static final String LOCALIZATION_CODE_SUBMIT_CITIZEN = "pgr.sms.notification.submit.citizen";
+	public static final String LOCALIZATION_CODE_SUBMIT_EMPLOYEE = "pgr.sms.notification.submit.employee";
 	
 	public static final String LOCALIZATION_CODE_REOPEN_CITIZEN = "pgr.sms.notification.reopen.citizen";
 	public static final String LOCALIZATION_CODE_REOPEN_EMPLOYEE = "pgr.sms.notification.reopen.employee";
@@ -56,6 +57,8 @@ public class PGRConstants {
 	public static final String LOCALIZATION_CODE_COMMENT_DEFAULT = "pgr.sms.notification.comment.default";
 	
 	public static final String LOCALIZATION_CODE_SUBMIT_CITIZEN_EMAIL = "pgr.email.notification.submit.citizen";
+	
+	public static final String LOCALIZATION_CODE_SUBMIT_EMPLOYEE_EMAIL = "pgr.email.notification.submit.employee";
 	
 	public static final String LOCALIZATION_CODE_REOPEN_CITIZEN_EMAIL = "pgr.email.notification.reopen.citizen";
 	public static final String LOCALIZATION_CODE_REOPEN_EMPLOYEE_EMAIL = "pgr.email.notification.reopen.employee";
@@ -84,6 +87,7 @@ public class PGRConstants {
 	public static final String JSONPATH_SERVICEDEFS = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs";
 	public static final String JSONPATH_SERVICE_CODES = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs.*.serviceCode";
 	public static final String JSONPATH_SLA = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs.*.slaHours";
+	public static final String JSONPATH_DEPARTMENT = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs.*.department";
 	public static final String JSONPATH_DEPARTMENTS = "$.MdmsRes.common-masters.Department";
 	public static final String JSONPATH_DESIGNATIONS = "$.MdmsRes.common-masters.Designation";
 
@@ -209,6 +213,7 @@ public class PGRConstants {
 
 		Map<String, String> map = new HashMap<>();
 		map.put(WorkFlowConfigs.STATUS_OPENED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_SUBMIT_CITIZEN_EMAIL);
+		map.put(WorkFlowConfigs.STATUS_OPENED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_SUBMIT_EMPLOYEE_EMAIL);
 		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_ASSIGN_CITIZEN_EMAIL);
 		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_ASSIGN_EMPLOYEE_EMAIL);
 		map.put(WorkFlowConfigs.STATUS_REJECTED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_REJECT_CITIZEN_EMAIL);
@@ -243,6 +248,7 @@ public class PGRConstants {
 
 		Map<String, String> map = new HashMap<>();
 		map.put(WorkFlowConfigs.STATUS_OPENED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_SUBMIT_CITIZEN);
+		map.put(WorkFlowConfigs.STATUS_OPENED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_SUBMIT_EMPLOYEE);
 		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_ASSIGN_CITIZEN);
 		map.put(WorkFlowConfigs.STATUS_ASSIGNED + "|" + PGRConstants.ROLE_EMPLOYEE, LOCALIZATION_CODE_ASSIGN_EMPLOYEE);
 		map.put(WorkFlowConfigs.STATUS_REJECTED + "|" + PGRConstants.ROLE_CITIZEN, LOCALIZATION_CODE_REJECT_CITIZEN);
