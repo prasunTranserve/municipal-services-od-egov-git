@@ -14,7 +14,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.pgr.contract.Action;
 import org.egov.pgr.contract.ActionItem;
 import org.egov.pgr.contract.EmailRequest;
@@ -42,6 +44,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -158,7 +161,6 @@ public class PGRNotificationConsumer {
                             List<SMSRequest> smsRequests = prepareSMSRequest(service, actionInfo, serviceReqRequest.getRequestInfo());
                             if (CollectionUtils.isEmpty(smsRequests)) {
                                 log.info("Messages from localization couldn't be fetched!");
-                                continue;
                             }
                             for (SMSRequest smsRequest : smsRequests) {
                                 pGRProducer.push(smsNotifTopic, smsRequest);
@@ -169,7 +171,6 @@ public class PGRNotificationConsumer {
                         	List<EmailRequest> emailRequests = prepareEmailRequest(service, actionInfo, serviceReqRequest.getRequestInfo());
                         	 if (CollectionUtils.isEmpty(emailRequests)) {
                                  log.info("Messages from localization couldn't be fetched!");
-                                 continue;
                              }
                              for (EmailRequest emailRequest : emailRequests) {
                                  pGRProducer.push(emailNotifTopic, emailRequest);
@@ -265,11 +266,46 @@ public class PGRNotificationConsumer {
 			    String phoneNumberRetrived = notificationService.getMobileAndIdForNotificationService(requestInfo, serviceReq.getAccountId(), serviceReq.getTenantId(), actionInfo.getAssignee(), role);
 			    phoneNumberRetrived = phoneNumberRetrived.split("[|]")[0];
 			    String phone = StringUtils.isEmpty(phoneNumberRetrived) ? serviceReq.getPhone() : phoneNumberRetrived;
+			    if(StringUtils.isEmpty(phone) || "null".equalsIgnoreCase(phone.trim()))
+			    {
+			    	log.info(" No phone number found for the role "+role);
+			    	continue;
+			    }
 			    String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, role);
 			    if (StringUtils.isEmpty(message))
 			        continue;
 			    smsRequestsTobeSent.add(SMSRequest.builder().mobileNumber(phone).message(message).build());
 			}
+			
+			//code added to send the  messages for multiple employees for status open,escaltedlevel1pending,escaltedlevel2pending,escaltedlevel3pending,escaltedlevel4pending
+			
+			if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN))
+			{
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				
+				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
+				
+				if(!StringUtils.isEmpty(department))
+				{
+					setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER4,department,serviceReq,actionInfo,requestInfo);
+				}else
+					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
+				
+			}
+			
+			
+			
 			return smsRequestsTobeSent;
 		} catch (Exception e) {
 			if(actionInfo.getStatus()==null)
@@ -315,6 +351,40 @@ public class PGRNotificationConsumer {
 			    
 			    emailRequestsTobeSent.add(EmailRequest.builder().requestInfo(requestInfo).email(new  Email(emailTo, emailSubjectForEmail, message, true)).build());
 			}
+			
+			//code added to send the  messages for multiple employees for status open,escaltedlevel1pending,escaltedlevel2pending,escaltedlevel3pending,escaltedlevel4pending
+			
+			if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN))
+			{
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
+			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
+			{
+				
+				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
+				
+				if(!StringUtils.isEmpty(department))
+				{
+					setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER4,department,serviceReq,actionInfo,requestInfo);
+				}else
+					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
+				
+			}
+			
+			
+			
+			
+			
+			
+			
 			return emailRequestsTobeSent;
 		} catch (Exception e) {
 			if(actionInfo.getStatus()==null)
@@ -400,17 +470,17 @@ public class PGRNotificationConsumer {
                 if (null != actionInfo.getAction() && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_REOPEN)) {
                     text = messageMap.get(PGRConstants.getActionRoleLocalizationKeyMap().get(WorkFlowConfigs.ACTION_REOPEN + "|" + role));
                     employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
-                    text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+               //     text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
                 }
             } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ASSIGNED)) {
                 employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
                 if (null != employeeDetails) {
-                    List<String> deptCodes = new ArrayList<>();
-                    deptCodes.add(employeeDetails.get("department"));
-                    department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
-                    if(!StringUtils.isEmpty(department))
-                        department = notificationService.getDepartment(serviceReq, department, requestInfo);
-                    designation = notificationService.getDesignation(serviceReq, employeeDetails.get("designation"), requestInfo);
+                   //  List<String> deptCodes = new ArrayList<>();
+                    //deptCodes.add(employeeDetails.get("department"));
+                   // department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
+                   //  if(!StringUtils.isEmpty(department))
+                        department = notificationService.getDepartment(serviceReq, employeeDetails.get("department") , requestInfo);
+                    	designation = notificationService.getDesignation(serviceReq, employeeDetails.get("designation"), requestInfo);
                 } else {
                     return getDefaultMessage(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
                 }
@@ -418,8 +488,8 @@ public class PGRNotificationConsumer {
                     return getDefaultMessage(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
 
                 text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"))
-                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DESIGNATION_KEY, designation)
-                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DEPT_KEY, department);
+                		.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DESIGNATION_KEY, designation)
+                		.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DEPT_KEY, department);
             } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_REJECTED)) {
                 if (StringUtils.isEmpty(actionInfo.getComment()))
                     return getDefaultMessage(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
@@ -496,16 +566,16 @@ public class PGRNotificationConsumer {
                 if (null != actionInfo.getAction() && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_REOPEN)) {
                     text = messageMap.get(PGRConstants.getActionRoleLocalizationKeyMapForEmail().get(WorkFlowConfigs.ACTION_REOPEN + "|" + role));
                     employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
-                    text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
+                  //  text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"));
                 }
             } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_ASSIGNED)) {
                 employeeDetails = notificationService.getEmployeeDetails(serviceReq.getTenantId(), actionInfo.getAssignee(), requestInfo);
                 if (null != employeeDetails) {
-                    List<String> deptCodes = new ArrayList<>();
-                    deptCodes.add(employeeDetails.get("department"));
-                    department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
-                    if(!StringUtils.isEmpty(department))
-                    department = notificationService.getDepartment(serviceReq, department, requestInfo);
+                   // List<String> deptCodes = new ArrayList<>();
+                   //deptCodes.add(employeeDetails.get("department"));
+                   //department = notificationService.getDepartmentForNotification(serviceReq, deptCodes, requestInfo);
+                   // if(!StringUtils.isEmpty(department))
+                    department = notificationService.getDepartment(serviceReq, employeeDetails.get("department") , requestInfo);
                     designation = notificationService.getDesignation(serviceReq, employeeDetails.get("designation"), requestInfo);
                 } else {
                     return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
@@ -514,8 +584,8 @@ public class PGRNotificationConsumer {
                     return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
 
                 text = text.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_NAME_KEY, employeeDetails.get("name"))
-                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DESIGNATION_KEY, designation)
-                        .replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DEPT_KEY, department);
+                		.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DESIGNATION_KEY, designation)
+                		.replaceAll(PGRConstants.SMS_NOTIFICATION_EMP_DEPT_KEY, department);
             } else if (actionInfo.getStatus().equals(WorkFlowConfigs.STATUS_REJECTED)) {
                 if (StringUtils.isEmpty(actionInfo.getComment()))
                     return getDefaultMessageForEmail(messageMap, actionInfo.getStatus(), actionInfo.getAction(), actionInfo.getComment());
@@ -627,4 +697,102 @@ public class PGRNotificationConsumer {
         }
         return isNotifEnabled;
     }
+    
+	/**
+	 * 
+	 * @param smsRequets
+	 * @param role
+	 * @param department
+	 * @param serviceReq
+	 * @param actionInfo
+	 * @param requestInfo
+	 * @return
+	 */
+	public List<SMSRequest> setSMSRequestUsingRoleAndDepartment(List<SMSRequest> smsRequets , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
+	{
+
+
+		List<Map<String, String>> employeesList = null;
+		try {
+			employeesList = notificationService.getEmployeeDetailsOnDepartmentRoleBased(serviceReq.getTenantId(),department,role,requestInfo);
+		} catch (Exception e1) {
+			log.error("  Error in fetching the employee details with name   ");
+			e1.printStackTrace();
+		}
+
+		for (Map<String, String> employee : employeesList) {
+			try {
+				String phone = employee.get("phone");
+				if (StringUtils.isEmpty(phone))
+				{
+					log.info("  No mobile number found for the employee with name   {}",employee.get("name"));
+					continue;
+				}
+				String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, PGRConstants.ROLE_EMPLOYEE);
+				if (StringUtils.isEmpty(message))
+					continue;
+				smsRequets.add(SMSRequest.builder().mobileNumber(phone).message(message).build());
+			} catch (Exception e) {
+				log.error("  Error in fetching the employee details with name   {}",employee.get("name"));
+				e.printStackTrace();
+			}
+		}
+
+		return smsRequets;
+
+
+	}
+	
+	
+	/**
+	 * 
+	 * @param emailRequestsTobeSent
+	 * @param role
+	 * @param department
+	 * @param serviceReq
+	 * @param actionInfo
+	 * @param requestInfo
+	 * @return
+	 */
+	public List<EmailRequest> setEmailRequestUsingRoleAndDepartment(List<EmailRequest> emailRequestsTobeSent , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
+	{
+
+
+		
+		String emailSubjectForEmail = emailSubject ;
+
+
+		
+		List<Map<String, String>>  employeesList =  notificationService.getEmployeeDetailsOnDepartmentRoleBased(serviceReq.getTenantId(),department,role,requestInfo);
+
+		for (Map<String, String> employee : employeesList) {
+			try {
+				String emailId = employee.get("emailId");
+				if (StringUtils.isEmpty(emailId))
+				{
+					log.info("  No email Id found for the employee with name  {} ",employee.get("name"));
+					continue;
+				}
+				String message = getMessageForEmail(serviceReq, actionInfo, requestInfo, PGRConstants.ROLE_EMPLOYEE);
+			    if (StringUtils.isEmpty(message))
+			        continue;
+			    
+			    Set<String> emailTo = new LinkedHashSet<String>();
+			    emailTo.add(emailId);
+			    
+			    emailSubjectForEmail = emailSubjectForEmail.replaceAll(PGRConstants.EMAIL_SUBJECT_ID_KEY, serviceReq.getServiceRequestId());
+			    
+			    emailRequestsTobeSent.add(EmailRequest.builder().requestInfo(requestInfo).email(new  Email(emailTo, emailSubjectForEmail, message, true)).build());
+			} catch (Exception e) {
+				log.error("  Error in fetching the employee details with name   ",employee.get("name"));
+				e.printStackTrace();
+			}
+		}
+
+		return emailRequestsTobeSent;
+
+
+	}
+    
+    
 }
