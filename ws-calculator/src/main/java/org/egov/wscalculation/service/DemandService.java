@@ -38,7 +38,6 @@ import org.egov.wscalculation.web.models.DemandDetailAndCollection;
 import org.egov.wscalculation.web.models.DemandRequest;
 import org.egov.wscalculation.web.models.DemandResponse;
 import org.egov.wscalculation.web.models.GetBillCriteria;
-import org.egov.wscalculation.web.models.Property;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxPeriod;
@@ -524,8 +523,8 @@ public class DemandService {
 				if(connection.getApplicationType().equalsIgnoreCase("MODIFY_WATER_CONNECTION")){
 					WaterConnectionRequest waterConnectionRequest = WaterConnectionRequest.builder().waterConnection(connection)
 							.requestInfo(requestInfo).build();
-					Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
-					User owner = property.getOwners().get(0).toCommonUser();
+					// Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
+					User owner = new User();
 					if (!CollectionUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionHolders())) {
 						owner = waterConnectionRequest.getWaterConnection().getConnectionHolders().get(0).toCommonUser();
 					}

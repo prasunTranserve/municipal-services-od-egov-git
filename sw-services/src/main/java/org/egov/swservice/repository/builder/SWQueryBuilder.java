@@ -2,6 +2,7 @@ package org.egov.swservice.repository.builder;
 
 import static org.egov.swservice.util.SWConstants.SEARCH_TYPE_CONNECTION;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,7 +79,8 @@ public class SWQueryBuilder {
 		boolean propertyIdsPresent = false;
 		
 		if (!StringUtils.isEmpty(criteria.getMobileNumber()) || !StringUtils.isEmpty(criteria.getPropertyId())) {
-			List<Property> propertyList = sewerageServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			// List<Property> propertyList = sewerageServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			List<Property> propertyList = new ArrayList<>();
 			propertyList.forEach(property -> propertyIds.add(property.getId()));
 			criteria.setPropertyIds(propertyIds);
 			if (!propertyIds.isEmpty()) {
