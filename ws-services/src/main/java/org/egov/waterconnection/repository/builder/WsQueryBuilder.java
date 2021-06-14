@@ -2,6 +2,7 @@ package org.egov.waterconnection.repository.builder;
 
 import static org.egov.waterconnection.constants.WCConstants.SEARCH_TYPE_CONNECTION;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +88,8 @@ public class WsQueryBuilder {
 		String propertyIdQuery = " (conn.property_id in (";
 
 		if (!StringUtils.isEmpty(criteria.getMobileNumber()) || !StringUtils.isEmpty(criteria.getPropertyId())) {
-			List<Property> propertyList = waterServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			// List<Property> propertyList = waterServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			List<Property> propertyList = new ArrayList<>();
 			propertyList.forEach(property -> propertyIds.add(property.getId()));
 			criteria.setPropertyIds(propertyIds);
 			if (!propertyIds.isEmpty()) {

@@ -93,7 +93,7 @@ public class PaymentNotificationService {
 			
 			SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder()
 					.sewerageConnection(sewerageConnection).requestInfo(requestInfo).build();
-			Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
+			// Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
 			
 			if (null != config.getIsUserEventsNotificationEnabled()) {
 				if (config.getIsUserEventsNotificationEnabled()) {
@@ -103,8 +103,7 @@ public class PaymentNotificationService {
 									"Sewerage Connection are not present for " + mappedRecord.get(consumerCode)
 											+ " connection no");
 						}
-						EventRequest eventRequest = getEventRequest(mappedRecord, sewerageConnectionRequest, topic,
-								property);
+						EventRequest eventRequest = getEventRequest(mappedRecord, sewerageConnectionRequest, topic);
 						if (null != eventRequest)
 							util.sendEventNotification(eventRequest);
 
@@ -118,7 +117,7 @@ public class PaymentNotificationService {
 								"Sewerage Connection are not present for " + mappedRecord.get(consumerCode)
 										+ " connection no");
 					}
-					List<SMSRequest> smsRequests = getSmsRequest(mappedRecord, sewerageConnectionRequest, topic, property);
+					List<SMSRequest> smsRequests = getSmsRequest(mappedRecord, sewerageConnectionRequest, topic);
 					if (smsRequests != null && !CollectionUtils.isEmpty(smsRequests)) {
 						log.info("SMS Notification :: -> " + mapper.writeValueAsString(smsRequests));
 						util.sendSMS(smsRequests);
@@ -133,7 +132,7 @@ public class PaymentNotificationService {
 	}
 
 	private List<SMSRequest> getSmsRequest(HashMap<String, String> mappedRecord, SewerageConnectionRequest sewerageConnectionRequest,
-			String topic, Property property) {
+			String topic) {
 		String localizationMessage = util.getLocalizationMessages(mappedRecord.get(tenantId), sewerageConnectionRequest.getRequestInfo());
 		String message = util.getCustomizedMsgForSMS(topic, localizationMessage);
 		if (message == null) {
@@ -141,10 +140,10 @@ public class PaymentNotificationService {
 			return Collections.emptyList();
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		//send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -160,7 +159,7 @@ public class PaymentNotificationService {
 			if (msg.contains("<Link to Bill>")) {
 				String actionLink = config.getSmsNotificationLink()
 						.replace("$consumerCode", sewerageConnectionRequest.getSewerageConnection().getConnectionNo())
-						.replace("$tenantId", property.getTenantId());
+						.replace("$tenantId", sewerageConnectionRequest.getSewerageConnection().getTenantId());
 				actionLink = config.getNotificationUrl() + actionLink;
 				msg = msg.replace("<Link to Bill>", actionLink);
 			}
@@ -184,7 +183,7 @@ public class PaymentNotificationService {
 	}
 
 	private EventRequest getEventRequest(HashMap<String, String> mappedRecord, SewerageConnectionRequest sewerageConnectionRequest,
-			String topic, Property property) {
+			String topic) {
 
 		String localizationMessages = util.getLocalizationMessages(mappedRecord.get(tenantId), sewerageConnectionRequest.getRequestInfo());
 		String message = util.getCustomizedMsgForInApp(topic, localizationMessages);
@@ -194,10 +193,10 @@ public class PaymentNotificationService {
 			return null;
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		//send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -211,7 +210,7 @@ public class PaymentNotificationService {
 		Set<String> mobileNumbers = new HashSet<>(mobileNumberAndMessage.keySet());
 
 		Map<String, String> mapOfPhoneNoAndUUIDs = fetchUserUUIDs(mobileNumbers, sewerageConnectionRequest.getRequestInfo(),
-				property.getTenantId());
+			sewerageConnectionRequest.getSewerageConnection().getTenantId());
 		if (CollectionUtils.isEmpty(mapOfPhoneNoAndUUIDs.keySet())) {
 			log.info("UUID search failed!");
 		}
@@ -230,12 +229,12 @@ public class PaymentNotificationService {
 			List<ActionItem> items = new ArrayList<>();
 			String actionLink = config.getPayLink().replace("$mobile", mobile)
 					.replace("$consumerCode", sewerageConnectionRequest.getSewerageConnection().getConnectionNo())
-					.replace("$tenantId", property.getTenantId());
+					.replace("$tenantId", sewerageConnectionRequest.getSewerageConnection().getTenantId());
 			actionLink = config.getNotificationUrl() + actionLink;
 			ActionItem item = ActionItem.builder().actionUrl(actionLink).code(config.getPayCode()).build();
 			items.add(item);
 			action = Action.builder().actionUrls(items).build();
-			events.add(Event.builder().tenantId(property.getTenantId())
+			events.add(Event.builder().tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
 					.description(mobileNumberAndMessage.get(mobile))
 					.eventType(SWCalculationConstant.USREVENTS_EVENT_TYPE)
 					.name(SWCalculationConstant.USREVENTS_EVENT_NAME)

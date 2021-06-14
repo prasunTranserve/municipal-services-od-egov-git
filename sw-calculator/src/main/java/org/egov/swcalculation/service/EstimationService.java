@@ -275,11 +275,11 @@ public class EstimationService {
 
 		SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder()
 				.sewerageConnection(sewerageConnection).requestInfo(requestInfo).build();
-		Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
+		// Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
 
 		// get billing Slab
 		log.debug(" the slabs count : " + billingSlabs.size());
-		final String buildingType = (property.getUsageCategory() != null) ? property.getUsageCategory().split("\\.")[0]
+		final String buildingType = (sewerageConnection.getUsageCategory() != null) ? sewerageConnection.getUsageCategory().split("\\.")[0]
 				: "";
 		final String connectionType = sewerageConnection.getConnectionType();
 
@@ -417,8 +417,8 @@ public class EstimationService {
 		if (feeSlab == null)
 			throw new CustomException("FEE_SLAB_NOT_FOUND", "fee slab master data not found!!");
 
-		Property property = sWCalculationUtil.getProperty(SewerageConnectionRequest.builder()
-				.sewerageConnection(criteria.getSewerageConnection()).requestInfo(requestInfo).build());
+		// Property property = sWCalculationUtil.getProperty(SewerageConnectionRequest.builder()
+		// 		.sewerageConnection(criteria.getSewerageConnection()).requestInfo(requestInfo).build());
 
 		JSONObject feeObj = mapper.convertValue(feeSlab.get(0), JSONObject.class);
 		BigDecimal formFee = BigDecimal.ZERO;
@@ -456,7 +456,7 @@ public class EstimationService {
 
 				BigDecimal singleUsageTypeCharge = BigDecimal.ZERO;
 				if (roadCuttingInfo.getRoadCuttingArea() != null)
-					singleUsageTypeCharge = getUsageTypeFee(masterData, property.getUsageCategory(),
+					singleUsageTypeCharge = getUsageTypeFee(masterData, criteria.getSewerageConnection().getUsageCategory(),
 							roadCuttingInfo.getRoadCuttingArea());
 
 				roadCuttingCharge = roadCuttingCharge.add(singleRoadCuttingCharge);
@@ -465,9 +465,9 @@ public class EstimationService {
 		}
 
 		BigDecimal roadPlotCharge = BigDecimal.ZERO;
-		if (property.getLandArea() != null) {
-			roadPlotCharge = getPlotSizeFee(masterData, property.getLandArea());
-		}
+		// if (property.getLandArea() != null) {
+		// 	roadPlotCharge = getPlotSizeFee(masterData, property.getLandArea());
+		// }
 
 		BigDecimal totalCharge = formFee.add(scrutinyFee).add(otherCharges).add(meterCost).add(roadCuttingCharge)
 				.add(roadPlotCharge).add(usageTypeCharge);
