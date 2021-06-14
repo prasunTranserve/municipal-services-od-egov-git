@@ -31,6 +31,7 @@ import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -72,6 +73,7 @@ public class PropertyService {
 	private CalculationService calculatorService;
 	
 	@Autowired
+	@Lazy
 	private AssessmentService assessmentService;
 	
 	/**
@@ -161,6 +163,10 @@ public class PropertyService {
 
 		if(config.getIsWorkflowEnabled()) {
 
+			// Checking for financialYear in MasterData
+			String assessmentYear = CommonUtils.getFinancialYear();
+			//assessmentService.validateAssessment(request, assessmentYear);
+			
 			State state = wfService.updateWorkflow(request, CreationReason.UPDATE);
 
 			if (state.getIsStartState() == true
@@ -187,7 +193,7 @@ public class PropertyService {
 					try {
 						Thread.sleep(5000);
 					} catch (InterruptedException e) { }
-					AssessmentRequest assessmentRequest = prepareAssessmentRequest(request);
+					AssessmentRequest assessmentRequest = prepareAssessmentRequest(request, assessmentYear);
 					assessmentService.createAssessment(assessmentRequest, true);
 				}
 			}
@@ -201,7 +207,7 @@ public class PropertyService {
 		}
 	}
 
-	private AssessmentRequest prepareAssessmentRequest(PropertyRequest request) {
+	private AssessmentRequest prepareAssessmentRequest(PropertyRequest request, String financialYear) {
 		return AssessmentRequest.builder()
 						.assessment(Assessment.builder()
 								.tenantId(request.getProperty().getTenantId())
@@ -209,7 +215,7 @@ public class PropertyService {
 								.source(Source.MUNICIPAL_RECORDS)
 								.channel(request.getProperty().getChannel())
 								.assessmentDate((new Date()).getTime())
-								.financialYear(CommonUtils.getFinancialYear()).build())
+								.financialYear(financialYear).build())
 						.requestInfo(request.getRequestInfo()).build();
 	}
 

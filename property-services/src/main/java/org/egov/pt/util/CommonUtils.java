@@ -3,7 +3,9 @@ package org.egov.pt.util;
 import static java.util.Objects.isNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MasterDetail;
 import org.egov.mdms.model.MdmsCriteria;
@@ -194,6 +195,42 @@ public class CommonUtils {
 		}
 		return mainNode;
 	}
+	
+	public Map<String, Object> getFinancialYear(RequestInfo requestInfo, String assessmentYear, String tenantId) {
+
+		MdmsCriteriaReq mdmsCriteriaReq = getFinancialYearRequest(requestInfo, assessmentYear, tenantId);
+		StringBuilder url = getMdmsSearchUrl();
+		Object res = restRepo.fetchResult(url, mdmsCriteriaReq);
+		Map<String, Object> financialYearMap = new HashMap<>();
+		String jsonPath = PTConstants.MDMS_FINACIALYEAR_PATH.replace("{}",assessmentYear);
+		try {
+			List<Map<String,Object>> jsonOutput =  JsonPath.read(res, jsonPath);
+			Map<String,Object> financialYearProperties = jsonOutput.get(0);
+			financialYearMap.put(assessmentYear,financialYearProperties);
+		}
+		catch (IndexOutOfBoundsException e){
+			throw new CustomException(PTConstants.EG_PT_FINANCIAL_MASTER_NOT_FOUND, PTConstants.EG_PT_FINANCIAL_MASTER_NOT_FOUND_MSG + assessmentYear);
+		}
+		return financialYearMap;
+	}
+	
+	public MdmsCriteriaReq getFinancialYearRequest(RequestInfo requestInfo, String assesmentYear, String tenantId) {
+
+        //String assessmentYearStr = StringUtils.join(assesmentYears, ",");
+        MasterDetail mstrDetail = MasterDetail.builder().name(PTConstants.MDMS_PT_FINANCIALYEAR)
+                .filter("[?(@." + PTConstants.MDMS_PT_FINANCIAL_YEAR_RANGE_FEILD_NAME + " IN [" + assesmentYear + "]" +
+                        " && @.module== '" + PTConstants.ASMT_MODULENAME + "')]")
+                .build();
+        ModuleDetail moduleDetail = ModuleDetail.builder().moduleName(PTConstants.MDMS_PT_EGF_MASTER)
+                .masterDetails(Arrays.asList(mstrDetail)).build();
+        MdmsCriteria mdmsCriteria = MdmsCriteria.builder().moduleDetails(Arrays.asList(moduleDetail)).tenantId(tenantId)
+                .build();
+        return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+    }
+	
+	 public StringBuilder getMdmsSearchUrl() {
+	        return new StringBuilder().append(configs.getMdmsHost()).append(configs.getMdmsEndpoint());
+	   }
 	
 	public static String getFinancialYear() {
 		int year = Calendar.getInstance().get(Calendar.YEAR);
