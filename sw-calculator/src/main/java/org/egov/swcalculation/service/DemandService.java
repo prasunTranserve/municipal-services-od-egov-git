@@ -408,8 +408,8 @@ public class DemandService {
 				if(connection.getApplicationType().equalsIgnoreCase("MODIFY_SEWERAGE_CONNECTION")){
 					SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder().sewerageConnection(connection)
 							.requestInfo(requestInfo).build();
-					Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
-					User owner = property.getOwners().get(0).toCommonUser();
+					// Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
+					User owner = new User();
 					if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 						owner = sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().get(0).toCommonUser();
 					}
