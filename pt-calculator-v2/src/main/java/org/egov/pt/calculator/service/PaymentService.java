@@ -85,7 +85,7 @@ public class PaymentService {
      * @return
      */
     public List<Payment> getPayments(PaymentSearchCriteria criteria, RequestInfoWrapper requestInfoWrapper) {
-        StringBuilder url = getPaymentSearchUrl(criteria, requestInfoWrapper);
+        StringBuilder url = getPaymentSearchUrl(criteria);
         return mapper.convertValue(repository.fetchResult(url, requestInfoWrapper), PaymentResponse.class).getPayments();
     }
     
@@ -96,18 +96,7 @@ public class PaymentService {
      * @param criteria
      * @return
      */
-    public StringBuilder getPaymentSearchUrl(PaymentSearchCriteria criteria, RequestInfoWrapper requestInfoWrapper) {
-
-
-    	if(requestInfoWrapper.getRequestInfo().getUserInfo().getType().equals("EMPLOYEE")) {
-    		return new StringBuilder().append(configurations.getCollectionServiceHost())
-                    .append(configurations.getPaymentSearchEmployeeEndpoint()).append(URL_PARAMS_SEPARATER)
-                    .append(TENANT_ID_FIELD_FOR_SEARCH_URL).append(criteria.getTenantId())
-                    .append(SEPARATER).append(CONSUMER_CODE_SEARCH_FIELD_NAME_PAYMENT)
-                    .append(StringUtils.join(criteria.getConsumerCodes(),","))
-                    .append(CalculatorConstants.SEPARATER).append(STATUS_FIELD_FOR_SEARCH_URL)
-                    .append(ALLOWED_RECEIPT_STATUS);
-    	} else {
+    public StringBuilder getPaymentSearchUrl(PaymentSearchCriteria criteria) {
             return new StringBuilder().append(configurations.getCollectionServiceHost())
                     .append(configurations.getPaymentSearchEndpoint()).append(URL_PARAMS_SEPARATER)
                     .append(TENANT_ID_FIELD_FOR_SEARCH_URL).append(criteria.getTenantId())
@@ -115,7 +104,7 @@ public class PaymentService {
                     .append(StringUtils.join(criteria.getConsumerCodes(),","))
                     .append(CalculatorConstants.SEPARATER).append(STATUS_FIELD_FOR_SEARCH_URL)
                     .append(ALLOWED_RECEIPT_STATUS);
-        }
-    }
+   }
+    
 
 }
