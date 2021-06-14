@@ -237,7 +237,6 @@ public class CommonUtils {
 		int finFirstYear =  year;
 		int finLastYear =  year;
 	    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
-	    System.out.println("Financial month : " + month);
 	    if (month <= 3) {
 	    	finFirstYear = (year - 1);
 	    } else {
