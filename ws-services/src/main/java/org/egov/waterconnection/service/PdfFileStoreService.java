@@ -6,28 +6,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.config.WSConfiguration;
 import org.egov.waterconnection.constants.WCConstants;
-import org.egov.waterconnection.web.models.Calculation;
-import org.egov.waterconnection.web.models.CalculationCriteria;
-import org.egov.waterconnection.web.models.CalculationReq;
-import org.egov.waterconnection.web.models.CalculationRes;
-import org.egov.waterconnection.web.models.Property;
-import org.egov.waterconnection.web.models.WaterConnectionRequest;
 import org.egov.waterconnection.repository.ServiceRequestRepository;
 import org.egov.waterconnection.repository.WaterDaoImpl;
 import org.egov.waterconnection.util.WaterServicesUtil;
 import org.egov.waterconnection.validator.ValidateProperty;
+import org.egov.waterconnection.web.models.Calculation;
+import org.egov.waterconnection.web.models.CalculationCriteria;
+import org.egov.waterconnection.web.models.CalculationReq;
+import org.egov.waterconnection.web.models.CalculationRes;
+import org.egov.waterconnection.web.models.WaterConnectionRequest;
 import org.egov.waterconnection.workflow.WorkflowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -86,9 +85,9 @@ public class PdfFileStoreService {
 	 * @param applicationKey ApplicationKey
 	 * @return file store id
 	 */
-	public String getFileStoreId(WaterConnectionRequest waterConnectionRequest, Property property, String applicationKey) {
+	public String getFileStoreId(WaterConnectionRequest waterConnectionRequest, String applicationKey) {
 		CalculationCriteria criteria = CalculationCriteria.builder().applicationNo(waterConnectionRequest.getWaterConnection().getApplicationNo())
-				.waterConnection(waterConnectionRequest.getWaterConnection()).tenantId(property.getTenantId()).build();
+				.waterConnection(waterConnectionRequest.getWaterConnection()).tenantId(waterConnectionRequest.getWaterConnection().getTenantId()).build();
 		CalculationReq calRequest = CalculationReq.builder().calculationCriteria(Arrays.asList(criteria))
 				.requestInfo(waterConnectionRequest.getRequestInfo()).isconnectionCalculation(false).build();
 		String applicationStatus = workflowService.getApplicationStatus(waterConnectionRequest.getRequestInfo(),
@@ -121,13 +120,13 @@ public class PdfFileStoreService {
 					waterConnectionRequest.getRequestInfo(),applicationStatus, config.getBusinessServiceValue());
 			waterObject.put(sla, slaDays.divide(BigDecimal.valueOf(WCConstants.DAYS_CONST)));
 			waterObject.put(slaDate, slaDays.add(new BigDecimal(System.currentTimeMillis())));
-			String[] tenantDetails = property.getTenantId().split("\\."); 
+			String[] tenantDetails = waterConnectionRequest.getWaterConnection().getTenantId().split("\\."); 
 			String tenantId = tenantDetails[0];
 			if(tenantDetails.length > 1)
 			{
 				waterObject.put(tenantName, tenantDetails[1].toUpperCase());
 			}
-			waterObject.put(propertyKey, property);
+			// waterObject.put(propertyKey, property);
 			waterObject.put(service, "WATER");
 			return getFileStoreIdFromPDFService(waterObject, waterConnectionRequest.getRequestInfo(), tenantId, applicationKey);
 		} catch (Exception ex) {
@@ -174,7 +173,7 @@ public class PdfFileStoreService {
 	@SuppressWarnings("unchecked")
 	public void process(WaterConnectionRequest waterConnectionRequest, String topic) {
 
-		Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
+		// Property property = validateProperty.getOrValidateProperty(waterConnectionRequest);
 
 		HashMap<String, Object> addDetail = mapper
 				.convertValue(waterConnectionRequest.getWaterConnection().getAdditionalDetails(), HashMap.class);
@@ -183,13 +182,13 @@ public class PdfFileStoreService {
 				&& addDetail.getOrDefault(WCConstants.ESTIMATION_FILESTORE_ID, null) == null) {
 			addDetail.put(WCConstants.ESTIMATION_DATE_CONST, System.currentTimeMillis());
 			addDetail.put(WCConstants.ESTIMATION_FILESTORE_ID,
-					getFileStoreId(waterConnectionRequest, property, WCConstants.PDF_ESTIMATION_KEY));
+					getFileStoreId(waterConnectionRequest, WCConstants.PDF_ESTIMATION_KEY));
 		}
 		if (waterConnectionRequest.getWaterConnection().getProcessInstance().getAction()
 				.equalsIgnoreCase(WCConstants.ACTION_PAY)
 				&& addDetail.getOrDefault(WCConstants.SANCTION_LETTER_FILESTORE_ID, null) == null) {
 			addDetail.put(WCConstants.SANCTION_LETTER_FILESTORE_ID,
-					getFileStoreId(waterConnectionRequest, property, WCConstants.PDF_SANCTION_KEY));
+					getFileStoreId(waterConnectionRequest, WCConstants.PDF_SANCTION_KEY));
 		}
 		waterConnectionRequest.getWaterConnection().setAdditionalDetails(addDetail);
 		waterDao.saveFileStoreIds(waterConnectionRequest);

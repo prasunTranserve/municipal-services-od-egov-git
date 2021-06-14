@@ -227,15 +227,15 @@ public class PaymentUpdateService {
 	 */
 	public void sendPaymentNotification(SewerageConnectionRequest sewerageConnectionRequest,
 			PaymentDetail paymentDetail) {
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+		// Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
 		if (config.getIsUserEventsNotificationEnabled() != null && config.getIsUserEventsNotificationEnabled()) {
-			EventRequest eventRequest = getEventRequest(sewerageConnectionRequest, property, paymentDetail);
+			EventRequest eventRequest = getEventRequest(sewerageConnectionRequest, paymentDetail);
 			if (eventRequest != null) {
 				notificationUtil.sendEventNotification(eventRequest);
 			}
 		}
 		if (config.getIsSMSEnabled() != null && config.getIsSMSEnabled()) {
-			List<SMSRequest> smsRequests = getSmsRequest(sewerageConnectionRequest, property, paymentDetail);
+			List<SMSRequest> smsRequests = getSmsRequest(sewerageConnectionRequest, paymentDetail);
 			if (!CollectionUtils.isEmpty(smsRequests)) {
 				notificationUtil.sendSMS(smsRequests);
 			}
@@ -248,9 +248,8 @@ public class PaymentUpdateService {
 	 * @param property
 	 * @return
 	 */
-	private EventRequest getEventRequest(SewerageConnectionRequest request, Property property,
-			PaymentDetail paymentDetail) {
-		String localizationMessage = notificationUtil.getLocalizationMessages(property.getTenantId(),
+	private EventRequest getEventRequest(SewerageConnectionRequest request, PaymentDetail paymentDetail) {
+		String localizationMessage = notificationUtil.getLocalizationMessages(request.getSewerageConnection().getTenantId(),
 				request.getRequestInfo());
 		String message = notificationUtil.getMessageTemplate(SWConstants.PAYMENT_NOTIFICATION_APP, localizationMessage);
 		if (message == null) {
@@ -258,10 +257,10 @@ public class PaymentUpdateService {
 			return null;
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		// send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(request.getSewerageConnection().getConnectionHolders())) {
 			request.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -271,11 +270,11 @@ public class PaymentUpdateService {
 			});
 		}
 		Map<String, String> getReplacedMessage = workflowNotificationService
-				.getMessageForMobileNumber(mobileNumbersAndNames, request, message, property);
+				.getMessageForMobileNumber(mobileNumbersAndNames, request, message);
 		Map<String, String> mobileNumberAndMesssage = replacePaymentInfo(getReplacedMessage, paymentDetail);
 		Set<String> mobileNumbers = mobileNumberAndMesssage.keySet().stream().collect(Collectors.toSet());
 		Map<String, String> mapOfPhnoAndUUIDs = workflowNotificationService.fetchUserUUIDs(mobileNumbers,
-				request.getRequestInfo(), property.getTenantId());
+				request.getRequestInfo(), request.getSewerageConnection().getTenantId());
 		if (CollectionUtils.isEmpty(mapOfPhnoAndUUIDs.keySet())) {
 			log.info("UUID search failed!");
 		}
@@ -289,8 +288,8 @@ public class PaymentUpdateService {
 			toUsers.add(mapOfPhnoAndUUIDs.get(mobile));
 			Recepient recepient = Recepient.builder().toUsers(toUsers).toRoles(null).build();
 			Action action = workflowNotificationService.getActionForEventNotification(mobileNumberAndMesssage, mobile,
-					request, property);
-			events.add(Event.builder().tenantId(property.getTenantId()).description(mobileNumberAndMesssage.get(mobile))
+					request);
+			events.add(Event.builder().tenantId(request.getSewerageConnection().getTenantId()).description(mobileNumberAndMesssage.get(mobile))
 					.eventType(SWConstants.USREVENTS_EVENT_TYPE).name(SWConstants.USREVENTS_EVENT_NAME)
 					.postedBy(SWConstants.USREVENTS_EVENT_POSTEDBY).source(Source.WEBAPP).recepient(recepient)
 					.eventDetails(null).actions(action).build());
@@ -309,9 +308,8 @@ public class PaymentUpdateService {
 	 * @param paymentDetail
 	 * @return
 	 */
-	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest, Property property,
-			PaymentDetail paymentDetail) {
-		String localizationMessage = notificationUtil.getLocalizationMessages(property.getTenantId(),
+	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest, PaymentDetail paymentDetail) {
+		String localizationMessage = notificationUtil.getLocalizationMessages(sewerageConnectionRequest.getSewerageConnection().getTenantId(),
 				sewerageConnectionRequest.getRequestInfo());
 		String message = notificationUtil.getMessageTemplate(SWConstants.PAYMENT_NOTIFICATION_SMS, localizationMessage);
 		if (message == null) {
@@ -319,10 +317,10 @@ public class PaymentUpdateService {
 			return Collections.emptyList();
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		// send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -332,7 +330,7 @@ public class PaymentUpdateService {
 			});
 		}
 		Map<String, String> getReplacedMessage = workflowNotificationService
-				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message, property);
+				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message);
 		Map<String, String> mobileNumberAndMessage = replacePaymentInfo(getReplacedMessage, paymentDetail);
 		List<SMSRequest> smsRequest = new ArrayList<>();
 		mobileNumberAndMessage.forEach((mobileNumber, msg) -> {

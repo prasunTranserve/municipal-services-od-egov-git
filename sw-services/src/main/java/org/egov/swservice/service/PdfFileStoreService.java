@@ -6,28 +6,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.swservice.config.SWConfiguration;
-import org.egov.swservice.web.models.Calculation;
-import org.egov.swservice.web.models.CalculationCriteria;
-import org.egov.swservice.web.models.CalculationReq;
-import org.egov.swservice.web.models.CalculationRes;
-import org.egov.swservice.web.models.Property;
-import org.egov.swservice.web.models.SewerageConnectionRequest;
 import org.egov.swservice.repository.ServiceRequestRepository;
 import org.egov.swservice.repository.SewerageDaoImpl;
 import org.egov.swservice.util.SWConstants;
 import org.egov.swservice.util.SewerageServicesUtil;
 import org.egov.swservice.validator.ValidateProperty;
+import org.egov.swservice.web.models.Calculation;
+import org.egov.swservice.web.models.CalculationCriteria;
+import org.egov.swservice.web.models.CalculationReq;
+import org.egov.swservice.web.models.CalculationRes;
+import org.egov.swservice.web.models.SewerageConnectionRequest;
 import org.egov.swservice.workflow.WorkflowService;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -85,11 +84,10 @@ public class PdfFileStoreService {
 	 * @param applicationKey - ApplicationKey
 	 * @return file store id
 	 */
-	public String getFileStoreId(SewerageConnectionRequest sewerageConnectionRequest, Property property,
-								 String applicationKey) {
+	public String getFileStoreId(SewerageConnectionRequest sewerageConnectionRequest, String applicationKey) {
 		CalculationCriteria criteria = CalculationCriteria.builder()
 				.applicationNo(sewerageConnectionRequest.getSewerageConnection().getApplicationNo())
-				.sewerageConnection(sewerageConnectionRequest.getSewerageConnection()).tenantId(property.getTenantId())
+				.sewerageConnection(sewerageConnectionRequest.getSewerageConnection()).tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
 				.build();
 		CalculationReq calRequest = CalculationReq.builder().calculationCriteria(Arrays.asList(criteria))
 				.requestInfo(sewerageConnectionRequest.getRequestInfo()).isconnectionCalculation(false).build();
@@ -126,13 +124,13 @@ public class PdfFileStoreService {
 			sewerageObject.put(sla, slaDays.divide(BigDecimal.valueOf(SWConstants.DAYS_CONST)));
 			sewerageObject.put(slaDate, slaDays.add(
 					new BigDecimal(System.currentTimeMillis())));
-			String[] tenantDetails = property.getTenantId().split("\\."); 
+			String[] tenantDetails = sewerageConnectionRequest.getSewerageConnection().getTenantId().split("\\."); 
 			String tenantId = tenantDetails[0];
 			if(tenantDetails.length > 1)
 			{
 				sewerageObject.put(tenantName, tenantDetails[1].toUpperCase());
 			}
-			sewerageObject.put(propertyKey, property);
+			// sewerageObject.put(propertyKey, property);
 			sewerageObject.put(service, "SEWERAGE");
 			return getFileStoreIdFromPDFService(sewerageObject, sewerageConnectionRequest.getRequestInfo(), tenantId,
 					applicationKey);
@@ -181,7 +179,7 @@ public class PdfFileStoreService {
 	@SuppressWarnings("unchecked")
 	public void process(SewerageConnectionRequest sewerageConnectionRequest, String topic) {
 
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+		// Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
 
 		HashMap<String, Object> addDetail = mapper
 				.convertValue(sewerageConnectionRequest.getSewerageConnection().getAdditionalDetails(), HashMap.class);
@@ -190,13 +188,13 @@ public class PdfFileStoreService {
 				&& addDetail.getOrDefault(SWConstants.ESTIMATION_FILESTORE_ID, null) == null) {
 			addDetail.put(SWConstants.ESTIMATION_DATE_CONST, System.currentTimeMillis());
 			addDetail.put(SWConstants.ESTIMATION_FILESTORE_ID,
-					getFileStoreId(sewerageConnectionRequest, property, SWConstants.PDF_ESTIMATION_KEY));
+					getFileStoreId(sewerageConnectionRequest, SWConstants.PDF_ESTIMATION_KEY));
 		}
 		if (sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction()
 				.equalsIgnoreCase(SWConstants.ACTION_PAY)
 				&& addDetail.getOrDefault(SWConstants.SANCTION_LETTER_FILESTORE_ID, null) == null) {
 			addDetail.put(SWConstants.SANCTION_LETTER_FILESTORE_ID,
-					getFileStoreId(sewerageConnectionRequest, property, SWConstants.PDF_SANCTION_KEY));
+					getFileStoreId(sewerageConnectionRequest, SWConstants.PDF_SANCTION_KEY));
 		}
 		sewerageConnectionRequest.getSewerageConnection().setAdditionalDetails(addDetail);
 		sewerageDao.saveFileStoreIds(sewerageConnectionRequest);

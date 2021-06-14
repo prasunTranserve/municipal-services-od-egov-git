@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.egov.swservice.config.SWConfiguration;
 import org.egov.swservice.util.NotificationUtil;
 import org.egov.swservice.util.SWConstants;
@@ -16,7 +18,6 @@ import org.egov.swservice.web.models.Action;
 import org.egov.swservice.web.models.Category;
 import org.egov.swservice.web.models.Event;
 import org.egov.swservice.web.models.EventRequest;
-import org.egov.swservice.web.models.Property;
 import org.egov.swservice.web.models.Recepient;
 import org.egov.swservice.web.models.SMSRequest;
 import org.egov.swservice.web.models.SewerageConnectionRequest;
@@ -25,8 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,16 +54,16 @@ public class EditNotificationService {
 
 	public void sendEditNotification(SewerageConnectionRequest request) {
 		try {
-			Property property = validateProperty.getOrValidateProperty(request);
+			// Property property = validateProperty.getOrValidateProperty(request);
 			
 			if (config.getIsUserEventsNotificationEnabled() != null && config.getIsUserEventsNotificationEnabled()) {
-				EventRequest eventRequest = getEventRequest(request, property);
+				EventRequest eventRequest = getEventRequest(request);
 				if (eventRequest != null) {
 					notificationUtil.sendEventNotification(eventRequest);
 				}
 			}
 			if (config.getIsSMSEnabled() != null && config.getIsSMSEnabled()) {
-				List<SMSRequest> smsRequests = getSmsRequest(request, property);
+				List<SMSRequest> smsRequests = getSmsRequest(request);
 				if (!CollectionUtils.isEmpty(smsRequests)) {
 					notificationUtil.sendSMS(smsRequests);
 				}
@@ -74,10 +73,10 @@ public class EditNotificationService {
 		}
 	}
 
-	private EventRequest getEventRequest(SewerageConnectionRequest sewerageConnectionRequest, Property property) {
+	private EventRequest getEventRequest(SewerageConnectionRequest sewerageConnectionRequest) {
 		
 		String localizationMessage = notificationUtil
-				.getLocalizationMessages(property.getTenantId(), sewerageConnectionRequest.getRequestInfo());
+				.getLocalizationMessages(sewerageConnectionRequest.getSewerageConnection().getTenantId(), sewerageConnectionRequest.getRequestInfo());
 		String code = SWConstants.SW_EDIT_IN_APP;
 		if ((!sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction().equalsIgnoreCase(SWConstants.ACTIVATE_CONNECTION))
 				&& servicesUtil.isModifyConnectionRequest(sewerageConnectionRequest)) {
@@ -91,10 +90,10 @@ public class EditNotificationService {
 				message = SWConstants.DEFAULT_OBJECT_MODIFY_APP_MSG;
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		//send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -104,10 +103,10 @@ public class EditNotificationService {
 			});
 		}
 		Map<String, String> mobileNumberAndMesssage = workflowNotificationService
-				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message, property);
+				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message);
 		Set<String> mobileNumbers = new HashSet<>(mobileNumberAndMesssage.keySet());
 		Map<String, String> mapOfPhoneNoAndUUIDs = workflowNotificationService.fetchUserUUIDs(mobileNumbers,
-				sewerageConnectionRequest.getRequestInfo(), property.getTenantId());
+				sewerageConnectionRequest.getRequestInfo(), sewerageConnectionRequest.getSewerageConnection().getTenantId());
 		if (CollectionUtils.isEmpty(mapOfPhoneNoAndUUIDs.keySet())) {
 			log.info("UUID search failed!");
 		}
@@ -121,8 +120,8 @@ public class EditNotificationService {
 			toUsers.add(mapOfPhoneNoAndUUIDs.get(mobile));
 			Recepient recepient = Recepient.builder().toUsers(toUsers).toRoles(null).build();
 			Action action = workflowNotificationService.getActionForEventNotification(mobileNumberAndMesssage, mobile,
-					sewerageConnectionRequest, property);
-			events.add(Event.builder().tenantId(property.getTenantId())
+					sewerageConnectionRequest);
+			events.add(Event.builder().tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId())
 					.description(mobileNumberAndMesssage.get(mobile)).eventType(SWConstants.USREVENTS_EVENT_TYPE)
 					.name(SWConstants.USREVENTS_EVENT_NAME).postedBy(SWConstants.USREVENTS_EVENT_POSTEDBY)
 					.source(Source.WEBAPP).recepient(recepient).eventDetails(null).actions(action).build());
@@ -135,10 +134,10 @@ public class EditNotificationService {
 
 	}
 
-	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest, Property property) {
+	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest) {
 		
 		String localizationMessage = notificationUtil
-				.getLocalizationMessages(property.getTenantId(), sewerageConnectionRequest.getRequestInfo());
+				.getLocalizationMessages(sewerageConnectionRequest.getSewerageConnection().getTenantId(), sewerageConnectionRequest.getRequestInfo());
 		String code = SWConstants.SW_EDIT_SMS;
 		if ((!sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction().equalsIgnoreCase(SWConstants.ACTIVATE_CONNECTION))
 				&& servicesUtil.isModifyConnectionRequest(sewerageConnectionRequest)) {
@@ -153,10 +152,10 @@ public class EditNotificationService {
 			}
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
 		//send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
@@ -166,7 +165,7 @@ public class EditNotificationService {
 			});
 		}
 		Map<String, String> mobileNumberAndMessage = workflowNotificationService
-				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message, property);
+				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message);
 		List<SMSRequest> smsRequest = new ArrayList<>();
 		mobileNumberAndMessage.forEach((mobileNumber, msg) -> {
 			SMSRequest req = SMSRequest.builder().mobileNumber(mobileNumber).message(msg).category(Category.TRANSACTION).build();
