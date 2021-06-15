@@ -16,6 +16,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.pgr.contract.Action;
 import org.egov.pgr.contract.ActionItem;
@@ -271,6 +272,15 @@ public class PGRNotificationConsumer {
 			    	log.info(" No phone number found for the role "+role);
 			    	continue;
 			    }
+			    List<String> roleCodes = requestInfo.getUserInfo()
+						.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+				String precedentRole = pGRUtils.getPrecedentRole(roleCodes);
+				if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_CLOSE) && PGRConstants.ROLE_SYSTEM.equalsIgnoreCase(precedentRole))
+				{
+					log.info(" Message is not sent in case of  running batch for closure of complaints for role "+precedentRole);
+					continue;
+				}
+			    
 			    String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, role);
 			    if (StringUtils.isEmpty(message))
 			        continue;
@@ -340,6 +350,14 @@ public class PGRNotificationConsumer {
 			    	log.info(" No emailId found for the role "+role);
 			    	continue;
 			    }
+			    List<String> roleCodes = requestInfo.getUserInfo()
+						.getRoles().stream().map(Role::getCode).collect(Collectors.toList());
+				String precedentRole = pGRUtils.getPrecedentRole(roleCodes);
+				if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_CLOSE) && PGRConstants.ROLE_SYSTEM.equalsIgnoreCase(precedentRole))
+				{
+					log.info(" Message is not sent in case of  running batch for closure of complaints for role "+precedentRole);
+					continue;
+				}
 			    String message = getMessageForEmail(serviceReq, actionInfo, requestInfo, role);
 			    if (StringUtils.isEmpty(message))
 			        continue;

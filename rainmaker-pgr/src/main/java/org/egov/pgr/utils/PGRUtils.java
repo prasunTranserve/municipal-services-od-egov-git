@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,6 +105,9 @@ public class PGRUtils {
 	
 	@Value("${are.inactive.complaintcategories.enabled}")
 	private Boolean areInactiveComplaintCategoriesEnabled;	
+	
+	@Value("${egov.default.expiry.time.before.reopen.in.hours}")
+	private Long defaultExpiryTimeBeforeReopen;
 
 	@Autowired
 	private ResponseInfoFactory factory;
@@ -629,6 +633,34 @@ public class PGRUtils {
 	
 	
 	/**
+	 * Check whether the complaint resolved time has passed the closure time . 
+	 * 
+	 * @param actionInfo
+	 * @return boolean
+	 */
+	public boolean checkClosureTimeCompleted(ActionHistory history) {
+		
+		String currentStatus = getCurrentStatus(history);
+		
+		/**
+		 * Code to check if the reopen happens within defaultExpiryTimeBeforeReopen no of days after resolve. 
+		 */
+		if(currentStatus.equals(WorkFlowConfigs.STATUS_RESOLVED)) {
+			if(null != getLastModifiedTime(null, history)) {
+				Long timeDifference = new Date().getTime() - getLastModifiedTime(null, history);
+				if(TimeUnit.MILLISECONDS.toHours(timeDifference) > defaultExpiryTimeBeforeReopen) {
+					return true ;
+				}
+				
+			}
+		}
+		
+
+		return false;
+	}
+	
+	
+	/**
 	 * Check whether the escalated complaint is resolving/rejecting by any employee
 	 * 
 	 * @param actionInfo
@@ -698,6 +730,24 @@ public class PGRUtils {
 		LocalDateTime slaendMidnight = todayMidnight.plusDays(slaDays);
 		log.info("SLA end Date Midnight in IST="+slaendMidnight);
 		return slaendMidnight.atZone(ZoneId.of("Asia/Kolkata")).toInstant().toEpochMilli();
+	}
+	
+	public Long getLastModifiedTime(Service service, ActionHistory history) {
+		Long lasModifiedTime = null;
+//		//Search will always return actions in the order of latest action - oldest action.
+//		if(null == service.getAuditDetails().getLastModifiedTime())
+//			lasModifiedTime = history.getActions().get(0).getWhen(); //time when the latest action was taken
+//		else
+//			lasModifiedTime = service.getAuditDetails().getLastModifiedTime();
+		
+		// Getting the last resolved time 
+		List<ActionInfo> actions = history.getActions().stream()
+				.filter(obj -> !StringUtils.isEmpty(obj.getStatus()) && WorkFlowConfigs.STATUS_RESOLVED.equalsIgnoreCase(obj.getStatus()) ).sorted(Comparator.comparing(ActionInfo::getWhen).reversed()).collect(Collectors.toList());
+		
+		lasModifiedTime = actions.get(0).getWhen();
+		
+		return lasModifiedTime;
+		
 	}
 	
 	

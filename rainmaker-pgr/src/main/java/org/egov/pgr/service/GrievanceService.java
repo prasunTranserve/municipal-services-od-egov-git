@@ -1080,6 +1080,79 @@ public class GrievanceService {
 		return serviceResponse;
 	}
 	
+	
+	
+	/**
+	 * Method to return service requests along with details acc to V5 design
+	 * received from the repo to the controller in the reqd format
+	 * 
+	 * @param requestInfo
+	 * @param serviceReqSearchCriteria
+	 * @return ServiceReqResponse
+	 * 
+	 */
+	public Object getClosedComplaintsRequestDetails(RequestInfo requestInfo, ServiceReqSearchCriteria serviceReqSearchCriteria) {
+		StringBuilder uri = new StringBuilder();
+		SearcherRequest searcherRequest = null;
+		try {
+			enrichCloseComplaintSearchRequest(requestInfo, serviceReqSearchCriteria);
+		} catch (CustomException e) {
+			if (e.getMessage().equals(ErrorConstants.NO_DATA_MSG))
+				return pGRUtils.getDefaultServiceResponse(requestInfo);
+			else
+				throw e;
+		}
+		
+		searcherRequest = pGRUtils.prepareSearchRequestWithDetails(uri, serviceReqSearchCriteria, requestInfo);
+		Object response = serviceRequestRepository.fetchResult(uri, searcherRequest);
+		log.debug(PGRConstants.SEARCHER_RESPONSE_TEXT + response);
+		
+		if (null == response)
+			return pGRUtils.getDefaultServiceResponse(requestInfo);
+		ServiceResponse serviceResponse = prepareResult(response, requestInfo);
+		
+		
+		if(CollectionUtils.isEmpty(serviceResponse.getServices())) {
+			log.info("No record found for auto closure.");
+			return serviceResponse;
+		}else {
+			serviceResponse = enrichResult(requestInfo, serviceResponse);
+			if(!CollectionUtils.isEmpty(serviceResponse.getServices())) {
+				int totalRecord = serviceResponse.getServices().size();
+				log.info("Total compliants record found for complaint closure is {} ",totalRecord);
+				int success =0;
+				for(int i=0; i<serviceResponse.getServices().size(); i++) {
+					Service service = serviceResponse.getServices().get(i);
+					ActionHistory actionHistory = serviceResponse.getActionHistory().get(i);
+					
+					if(!pGRUtils.checkClosureTimeCompleted(actionHistory)) {
+						log.info("complaint {} closure time is not completed .",service.getServiceRequestId());
+						continue;
+					}
+					
+					log.info("Complaint closure started for complaint {}",service.getServiceRequestId());
+					
+					List<ActionInfo> actionInfo = new ArrayList<ActionInfo>();
+					actionInfo.add(ActionInfo.builder().action(WorkFlowConfigs.ACTION_CLOSE).build());
+					List<Service> services = new ArrayList<Service>();
+					services.add(service);
+					ServiceRequest request = ServiceRequest.builder().requestInfo(requestInfo).actionInfo(actionInfo).services(services).build();
+					
+					try {
+						update(request);
+						success++;
+						log.info("Complaint closure success for complaint {}",service.getServiceRequestId());
+					}catch(Exception e) {
+						log.error("Error in complaint closure for compliant {}",service.getServiceRequestId(),e);
+					}
+				}
+				log.info("Total complaint closure success is {} out of {}",success,totalRecord);
+			}
+		}
+		
+		return serviceResponse;
+	}
+	
 	/**
 	 * Method to enrich the request for search based on roles.
 	 * 
@@ -1100,6 +1173,26 @@ public class GrievanceService {
 		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING);
 		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING);
 		status.add(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING);
+		
+		serviceReqSearchCriteria.setStatus(status);
+	}
+	
+	
+	
+	/**
+	 * Method to enrich the request for search based on roles.
+	 * 
+	 * @param requestInfo
+	 * @param serviceReqSearchCriteria
+	 */
+	public void enrichCloseComplaintSearchRequest(RequestInfo requestInfo, ServiceReqSearchCriteria serviceReqSearchCriteria) {
+		log.info("Enriching request for closing complaint  search");
+		
+		serviceReqSearchCriteria.setTenantId(PGRConstants.TENANT_ID.split("[.]")[0]);
+		serviceReqSearchCriteria.setActive(true);
+		
+		List<String> status = new ArrayList<String>();
+		status.add(WorkFlowConfigs.STATUS_RESOLVED);
 		
 		serviceReqSearchCriteria.setStatus(status);
 	}

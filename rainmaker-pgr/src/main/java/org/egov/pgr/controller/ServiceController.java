@@ -128,5 +128,23 @@ public class ServiceController {
 				serviceReqSearchCriteria);
 		return new ResponseEntity<>(serviceReqResponse, HttpStatus.OK);
 	}
+	
+	/**
+	 * Controller endpoint to fetch service requests for closure of complaints
+	 * 
+	 * @param requestInfoWrapper
+	 * @param serviceReqSearchCriteria
+	 * @return ResponseEntity<?>
+	 * 
+	 */
+	@PostMapping("updateForClosure/_batch")
+	@ResponseBody
+	private ResponseEntity<?> updateForClosure(@RequestBody @Valid RequestInfoWrapper requestInfoWrapper,
+			@ModelAttribute @Valid ServiceReqSearchCriteria serviceReqSearchCriteria) {
+		pgrRequestValidator.validateEscalationSearch(serviceReqSearchCriteria, requestInfoWrapper.getRequestInfo());
+		Object serviceReqResponse = service.getClosedComplaintsRequestDetails(requestInfoWrapper.getRequestInfo(),
+				serviceReqSearchCriteria);
+		return new ResponseEntity<>(serviceReqResponse, HttpStatus.OK);
+	}
 
 }
