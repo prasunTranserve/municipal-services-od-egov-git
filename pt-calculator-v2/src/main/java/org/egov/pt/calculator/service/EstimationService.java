@@ -1,12 +1,18 @@
 package org.egov.pt.calculator.service;
 
+import static org.egov.pt.calculator.util.CalculatorConstants.*;
+
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -17,19 +23,30 @@ import org.egov.pt.calculator.util.CalculatorUtils;
 import org.egov.pt.calculator.util.Configurations;
 import org.egov.pt.calculator.util.PBFirecessUtils;
 import org.egov.pt.calculator.validator.CalculationValidator;
-import org.egov.pt.calculator.web.models.*;
+import org.egov.pt.calculator.web.models.BillingSlab;
 import org.egov.pt.calculator.web.models.BillingSlabSearchCriteria;
-import org.egov.pt.calculator.web.models.collections.Payment;
-import org.egov.pt.calculator.web.models.demand.*;
 import org.egov.pt.calculator.web.models.Calculation;
 import org.egov.pt.calculator.web.models.CalculationCriteria;
 import org.egov.pt.calculator.web.models.CalculationReq;
 import org.egov.pt.calculator.web.models.CalculationRes;
+import org.egov.pt.calculator.web.models.MutationBillingSlab;
+import org.egov.pt.calculator.web.models.MutationBillingSlabRes;
+import org.egov.pt.calculator.web.models.MutationBillingSlabSearchCriteria;
 import org.egov.pt.calculator.web.models.TaxHeadEstimate;
+import org.egov.pt.calculator.web.models.collections.Payment;
 import org.egov.pt.calculator.web.models.demand.Category;
+import org.egov.pt.calculator.web.models.demand.Demand;
+import org.egov.pt.calculator.web.models.demand.DemandDetail;
+import org.egov.pt.calculator.web.models.demand.DemandRequest;
+import org.egov.pt.calculator.web.models.demand.DemandResponse;
 import org.egov.pt.calculator.web.models.demand.TaxHeadMaster;
-import org.egov.pt.calculator.web.models.property.*;
-import org.egov.pt.calculator.web.models.propertyV2.AssessmentResponseV2;
+import org.egov.pt.calculator.web.models.demand.TaxPeriod;
+import org.egov.pt.calculator.web.models.demand.TaxPeriodResponse;
+import org.egov.pt.calculator.web.models.property.OwnerInfo;
+import org.egov.pt.calculator.web.models.property.Property;
+import org.egov.pt.calculator.web.models.property.PropertyDetail;
+import org.egov.pt.calculator.web.models.property.RequestInfoWrapper;
+import org.egov.pt.calculator.web.models.property.Unit;
 import org.egov.pt.calculator.web.models.propertyV2.PropertyV2;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +55,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-
-import static org.egov.pt.calculator.util.CalculatorConstants.*;
 
 @Service
 @Slf4j
@@ -187,56 +205,63 @@ public class EstimationService {
 		/*
 		 * by default land should get only one slab from database per tenantId
 		 */
-		if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType()) && filteredBillingSlabs.size() != 1)
-			throw new CustomException(PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANCT,PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANT_MSG
-					.replace("{count}",String.valueOf(filteredBillingSlabs.size())));
-
-		else if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType())) {
-			taxAmt = taxAmt.add(BigDecimal.valueOf(filteredBillingSlabs.get(0).getUnitRate() * detail.getLandArea()));
+		List<TaxHeadEstimate> taxHeadEstimates;
+		
+		boolean isManualInput = true;
+		if(isManualInput) {
+			verifyPropertyAdditionalDetails(criteria);
+			taxHeadEstimates =  getEstimatesForTax(criteria);
 		} else {
-
-			double unBuiltRate = 0.0;
-			int groundUnitsCount = 0;
-			Double groundUnitsArea = 0.0;
-			int i = 0;
-
-			for (Unit unit : detail.getUnits()) {
-
-				BillingSlab slab = getSlabForCalc(filteredBillingSlabs, unit);
-				BigDecimal currentUnitTax = getTaxForUnit(slab, unit);
-				billingSlabIds.add(slab.getId()+"|"+i);
-
-				/*
-				 * counting the number of units & total area in ground floor for unbuilt area
-				 * tax calculation
-				 */
-				if (unit.getFloorNo().equalsIgnoreCase("0")) {
-					groundUnitsCount += 1;
-					groundUnitsArea += unit.getUnitArea();
-					if (null != slab.getUnBuiltUnitRate())
-						unBuiltRate += slab.getUnBuiltUnitRate();
+			if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType()) && filteredBillingSlabs.size() != 1)
+				throw new CustomException(PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANCT,PT_ESTIMATE_BILLINGSLABS_UNMATCH_VACANT_MSG
+						.replace("{count}",String.valueOf(filteredBillingSlabs.size())));
+	
+			else if (PT_TYPE_VACANT_LAND.equalsIgnoreCase(detail.getPropertyType())) {
+				taxAmt = taxAmt.add(BigDecimal.valueOf(filteredBillingSlabs.get(0).getUnitRate() * detail.getLandArea()));
+			} else {
+	
+				double unBuiltRate = 0.0;
+				int groundUnitsCount = 0;
+				Double groundUnitsArea = 0.0;
+				int i = 0;
+	
+				for (Unit unit : detail.getUnits()) {
+	
+					BillingSlab slab = getSlabForCalc(filteredBillingSlabs, unit);
+					BigDecimal currentUnitTax = getTaxForUnit(slab, unit);
+					billingSlabIds.add(slab.getId()+"|"+i);
+	
+					/*
+					 * counting the number of units & total area in ground floor for unbuilt area
+					 * tax calculation
+					 */
+					if (unit.getFloorNo().equalsIgnoreCase("0")) {
+						groundUnitsCount += 1;
+						groundUnitsArea += unit.getUnitArea();
+						if (null != slab.getUnBuiltUnitRate())
+							unBuiltRate += slab.getUnBuiltUnitRate();
+					}
+					taxAmt = taxAmt.add(currentUnitTax);
+					usageExemption = usageExemption
+							.add(getExemption(unit, currentUnitTax, assessmentYear, propertyBasedExemptionMasterMap));
+					i++;
 				}
-				taxAmt = taxAmt.add(currentUnitTax);
-				usageExemption = usageExemption
-						.add(getExemption(unit, currentUnitTax, assessmentYear, propertyBasedExemptionMasterMap));
-				i++;
+				/*
+				 * making call to get unbuilt area tax estimate
+				 */
+				taxAmt = taxAmt.add(getUnBuiltRate(detail, unBuiltRate, groundUnitsCount, groundUnitsArea));
+	
+				/*
+				 * special case to handle property with one unit
+				 */
+				if (detail.getUnits().size() == 1)
+					usageExemption = getExemption(detail.getUnits().get(0), taxAmt, assessmentYear,
+							propertyBasedExemptionMasterMap);
 			}
-			/*
-			 * making call to get unbuilt area tax estimate
-			 */
-			taxAmt = taxAmt.add(getUnBuiltRate(detail, unBuiltRate, groundUnitsCount, groundUnitsArea));
-
-			/*
-			 * special case to handle property with one unit
-			 */
-			if (detail.getUnits().size() == 1)
-				usageExemption = getExemption(detail.getUnits().get(0), taxAmt, assessmentYear,
-						propertyBasedExemptionMasterMap);
+	
+			taxHeadEstimates =  getEstimatesForTax(requestInfo,taxAmt, usageExemption, property, propertyBasedExemptionMasterMap,
+					timeBasedExemptionMasterMap,masterMap);
 		}
-
-		List<TaxHeadEstimate> taxHeadEstimates =  getEstimatesForTax(requestInfo,taxAmt, usageExemption, property, propertyBasedExemptionMasterMap,
-				timeBasedExemptionMasterMap,masterMap);
-
 
 		Map<String,List> estimatesAndBillingSlabs = new HashMap<>();
 		estimatesAndBillingSlabs.put("estimates",taxHeadEstimates);
@@ -244,6 +269,71 @@ public class EstimationService {
 
 		return estimatesAndBillingSlabs;
 
+	}
+
+	private void verifyPropertyAdditionalDetails(CalculationCriteria criteria) {
+		criteria.setHoldingTax(criteria.getHoldingTax()==null? BigDecimal.ZERO : criteria.getHoldingTax());
+		criteria.setLightTax(criteria.getLightTax()==null? BigDecimal.ZERO : criteria.getLightTax());
+		criteria.setWaterTax(criteria.getWaterTax()==null? BigDecimal.ZERO : criteria.getWaterTax());
+		criteria.setDrainageTax(criteria.getDrainageTax()==null? BigDecimal.ZERO : criteria.getDrainageTax());
+		criteria.setLatrineTax(criteria.getLatrineTax()==null? BigDecimal.ZERO : criteria.getLatrineTax());
+		criteria.setParkingTax(criteria.getParkingTax()==null? BigDecimal.ZERO : criteria.getParkingTax());
+		criteria.setSolidWasteUserCharges(criteria.getSolidWasteUserCharges()==null? BigDecimal.ZERO : criteria.getSolidWasteUserCharges());
+		criteria.setOwnershipExemption(criteria.getOwnershipExemption()==null? BigDecimal.ZERO : criteria.getOwnershipExemption());
+		criteria.setUsageExemption(criteria.getUsageExemption()==null? BigDecimal.ZERO : criteria.getUsageExemption());
+		criteria.setInterest(criteria.getInterest()==null? BigDecimal.ZERO : criteria.getInterest());
+		criteria.setPenalty(criteria.getPenalty()==null? BigDecimal.ZERO : criteria.getPenalty());
+		
+	}
+
+	private List<TaxHeadEstimate> getEstimatesForTax(CalculationCriteria criteria) {
+
+		List<TaxHeadEstimate> estimates = new ArrayList<>();
+		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(criteria.getHoldingTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LIGHT_TAX).estimateAmount(criteria.getLightTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getWaterTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_DRAINAGE_TAX).estimateAmount(criteria.getDrainageTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getLatrineTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LATRINE_TAX).estimateAmount(criteria.getLatrineTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getParkingTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PARKING_TAX).estimateAmount(criteria.getParkingTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getSolidWasteUserCharges()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SOLID_WASTE_USER_CHARGES).estimateAmount(criteria.getSolidWasteUserCharges()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getOwnershipExemption()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OWNERSHIP_EXCEMPTION).estimateAmount(criteria.getOwnershipExemption().negate()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getUsageExemption()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_USAGE_EXCEMPTION).estimateAmount(criteria.getUsageExemption().negate()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getInterest()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_INTEREST).estimateAmount(criteria.getInterest()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
+		}
+		
+		return estimates;
 	}
 
 	/**
@@ -750,13 +840,26 @@ public class EstimationService {
 		Calculation calculation = new Calculation();
 		calculation.setTenantId(property.getTenantId());
 		setTaxperiodForCalculation(requestInfo,property.getTenantId(),calculation);
-		BigDecimal fee = getFeeFromSlabs(property, calculation, requestInfo,additionalDetails);
+		//auto calculation
+		//BigDecimal fee = getFeeFromSlabs(property, calculation, requestInfo,additionalDetails);
+		//Manual calculation
+		BigDecimal fee = getFee(property);
 		calculation.setTaxAmount(fee);
 		postProcessTheFee(requestInfo,property,calculation,additionalDetails);
 		feeStructure.put(property.getAcknowldgementNumber(), calculation);
 		searchDemand(requestInfo,property,calculation,feeStructure);
 
 		return feeStructure;
+	}
+
+	private BigDecimal getFee(PropertyV2 property) {
+		ObjectMapper mapper = new ObjectMapper(); 
+		BigDecimal fee = BigDecimal.ZERO;
+		JsonNode propertyAdditionalDetails = mapper.convertValue(property.getAdditionalDetails(), JsonNode.class);
+		if(propertyAdditionalDetails.has(MUTATION_CHARGE)) {
+			fee = BigDecimal.valueOf(propertyAdditionalDetails.get(MUTATION_CHARGE).asDouble());
+		}
+		return fee;
 	}
 
 	private void setTaxperiodForCalculation(RequestInfo requestInfo, String tenantId,Calculation calculation){

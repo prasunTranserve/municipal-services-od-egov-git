@@ -30,6 +30,9 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import static org.egov.pt.util.PTConstants.*;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class AssessmentValidator {
@@ -308,6 +311,62 @@ public class AssessmentValidator {
 		if(!CollectionUtils.isEmpty(errorMap))
 			throw new CustomException(errorMap);
 
+	}
+	
+	public void validateAssessmentAndMutationAmount(JsonNode additionalDetails) {
+		Map<String, String> errorMap = new HashMap<>();
+		if(additionalDetails != null) {
+			if(isNonNumeric(additionalDetails, HOLDING_TAX)) {
+				errorMap.put("INVALID_REQUEST","Holding Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, LIGHT_TAX)) {
+				errorMap.put("INVALID_REQUEST","Light Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, WATER_TAX)) {
+				errorMap.put("INVALID_REQUEST","Water Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, DRAINAGE_TAX)) {
+				errorMap.put("INVALID_REQUEST","Drainage Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, PARKING_TAX)) {
+				errorMap.put("INVALID_REQUEST","Parking Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, SOLID_WASTE_USER_CHANGES)) {
+				errorMap.put("INVALID_REQUEST","Solid Waste User changes cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, OWNERSHIP_EXEMPTION)) {
+				errorMap.put("INVALID_REQUEST","Owner ship Exemption cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, USAGE_EXEMPTION)) {
+				errorMap.put("INVALID_REQUEST","Usage Exemption cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, INTEREST)) {
+				errorMap.put("INVALID_REQUEST","Interest cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, PENALTY)) {
+				errorMap.put("INVALID_REQUEST","Penalty Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, LATRINE_TAX)) {
+				errorMap.put("INVALID_REQUEST","Latrine Tax cannot be non-numeric");
+			}
+			if(isNonNumeric(additionalDetails, MUTATION_CHARGE)) {
+				errorMap.put("INVALID_REQUEST","Mutation Charge cannot be non-numeric");
+			}
+			
+		}
+		if(!CollectionUtils.isEmpty(errorMap))
+			throw new CustomException(errorMap);
+
+	}
+	
+	private boolean isNonNumeric(JsonNode additionalDetails, String node) {
+		if(additionalDetails.has(node) 
+				&& additionalDetails.get(node) != null
+				&& !additionalDetails.get(node).asText().matches(DECIMAL_REGEX)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 

@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -194,7 +195,7 @@ public class MasterDataService {
 				if (objFinYear.compareTo(assessmentYear.split("-")[0]) == 0)
 					return objMap;
 
-				else if (assessmentYear.split("-")[0].compareTo(objFinYear) > 0
+				else if (objFinYear.compareTo(assessmentYear.split("-")[0]) > 0
 						&& maxYearFromTheList.compareTo(objFinYear) <= 0) {
 					maxYearFromTheList = objFinYear;
 					objToBeReturned = objMap;
@@ -225,13 +226,22 @@ public class MasterDataService {
 	 * @return Returns start day in milli seconds
 	 */
 	private Long getStartDayInMillis(String startDay) {
-		try {
-			SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-			Date date = df.parse(startDay);
+		if(startDay.contains("/")) {
+			try {
+				SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+				Date date = df.parse(startDay);
+				return date.getTime();
+			} catch (ParseException e) {
+				throw new CustomException("INVALID_START_DAY", "The startDate of the penalty cannot be parsed");
+			}
+		} else {
+			LocalDate today = LocalDate.now();
+			int month = today.getMonthValue();
+			int year = today.getYear();
+			Date date = new Date(year, month, Integer.parseInt(startDay));
 			return date.getTime();
-		} catch (ParseException e) {
-			throw new CustomException("INVALID_START_DAY", "The startDate of the penalty cannot be parsed");
 		}
+		
 	}
 	
 	/**

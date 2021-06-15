@@ -1,5 +1,7 @@
 package org.egov.pt.calculator.web.models;
 
+import java.math.BigDecimal;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -48,5 +50,38 @@ public class CalculationCriteria   {
 
         @JsonProperty("toDate")
         private Long toDate;
+        
+        @JsonProperty("holdingTax")
+        private BigDecimal holdingTax;
+        
+        @JsonProperty("lightTax")
+        private BigDecimal lightTax;
+        
+        @JsonProperty("waterTax")
+        private BigDecimal waterTax;
+        
+        @JsonProperty("drainageTax")
+        private BigDecimal drainageTax;
+        
+        @JsonProperty("latrineTax")
+        private BigDecimal latrineTax;
+        
+        @JsonProperty("parkingTax")
+        private BigDecimal parkingTax;
+        
+        @JsonProperty("solidWasteUserCharges")
+        private BigDecimal solidWasteUserCharges;
+        
+        @JsonProperty("ownershipExemption")
+        private BigDecimal ownershipExemption;
+        
+        @JsonProperty("usageExemption")
+        private BigDecimal usageExemption;
+        
+        @JsonProperty("interest")
+        private BigDecimal interest;
+        
+        @JsonProperty("penalty")
+        private BigDecimal penalty;
 }
 

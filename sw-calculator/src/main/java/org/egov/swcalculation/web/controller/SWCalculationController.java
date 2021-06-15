@@ -6,6 +6,10 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.egov.swcalculation.service.DemandService;
+import org.egov.swcalculation.service.SWCalculationService;
+import org.egov.swcalculation.service.SWCalculationServiceImpl;
+import org.egov.swcalculation.util.ResponseInfoFactory;
 import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationReq;
@@ -13,10 +17,6 @@ import org.egov.swcalculation.web.models.CalculationRes;
 import org.egov.swcalculation.web.models.DemandResponse;
 import org.egov.swcalculation.web.models.GetBillCriteria;
 import org.egov.swcalculation.web.models.RequestInfoWrapper;
-import org.egov.swcalculation.service.DemandService;
-import org.egov.swcalculation.service.SWCalculationService;
-import org.egov.swcalculation.service.SWCalculationServiceImpl;
-import org.egov.swcalculation.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +74,7 @@ public class SWCalculationController {
 			@ModelAttribute @Valid GetBillCriteria getBillCriteria) {
 		return new ResponseEntity<>(demandService.updateDemands(getBillCriteria, requestInfoWrapper), HttpStatus.OK);
 	}
+
 	
 	@PostMapping("/_jobscheduler")
 	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {

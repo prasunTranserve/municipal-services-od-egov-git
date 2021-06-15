@@ -1,5 +1,8 @@
 package org.egov.swservice.repository.builder;
 
+import static org.egov.swservice.util.SWConstants.SEARCH_TYPE_CONNECTION;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,8 +17,6 @@ import org.egov.swservice.web.models.SearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
-import static org.egov.swservice.util.SWConstants.SEARCH_TYPE_CONNECTION;
 
 @Component
 public class SWQueryBuilder {
@@ -35,7 +36,7 @@ public class SWQueryBuilder {
 	private static String holderSelectValues = "connectionholder.tenantid as holdertenantid, connectionholder.connectionid as holderapplicationId, userid, connectionholder.status as holderstatus, isprimaryholder, connectionholdertype, holdershippercentage, connectionholder.relationship as holderrelationship, connectionholder.createdby as holdercreatedby, connectionholder.createdtime as holdercreatedtime, connectionholder.lastmodifiedby as holderlastmodifiedby, connectionholder.lastmodifiedtime as holderlastmodifiedtime";
 	
 	private final static String SEWERAGE_SEARCH_QUERY = "SELECT conn.*, sc.*, document.*, plumber.*, sc.connectionExecutionDate,"
-			+ "sc.noOfWaterClosets, sc.noOfToilets,sc.proposedWaterClosets, sc.proposedToilets, sc.connectionType, sc.connection_id as connection_Id, sc.appCreatedDate,"
+			+ "sc.noOfWaterClosets, sc.noOfToilets, sc.usageCategory, sc.connectionCategory, sc.noOfFlats, sc.pipeSize, sc.proposedWaterClosets, sc.proposedToilets, sc.connectionType, sc.connection_id as connection_Id, sc.appCreatedDate,"
 			+ "  sc.detailsprovidedby, sc.estimationfileStoreId , sc.sanctionfileStoreId , sc.estimationLetterDate,"
 			+ " conn.id as conn_id, conn.tenantid, conn.applicationNo, conn.applicationStatus, conn.status, conn.connectionNo, conn.oldConnectionNo, conn.property_id,"
 			+ " conn.roadcuttingarea, conn.action, conn.adhocpenalty, conn.adhocrebate, conn.createdBy as sw_createdBy,"
@@ -78,7 +79,8 @@ public class SWQueryBuilder {
 		boolean propertyIdsPresent = false;
 		
 		if (!StringUtils.isEmpty(criteria.getMobileNumber()) || !StringUtils.isEmpty(criteria.getPropertyId())) {
-			List<Property> propertyList = sewerageServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			// List<Property> propertyList = sewerageServicesUtil.propertySearchOnCriteria(criteria, requestInfo);
+			List<Property> propertyList = new ArrayList<>();
 			propertyList.forEach(property -> propertyIds.add(property.getId()));
 			criteria.setPropertyIds(propertyIds);
 			if (!propertyIds.isEmpty()) {

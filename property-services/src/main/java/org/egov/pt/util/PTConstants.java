@@ -74,6 +74,15 @@ public class PTConstants {
     public static final String NOTIFICATION_PAYMENT_PARTIAL_ONLINE = "PT_NOTIFICATION_PAYMENT_PARTIAL_ONLINE";
 
     public static final String NOTIFICATION_OLDPROPERTYID_ABSENT = "pt.oldpropertyid.absent";
+    
+    public static final String MDMS_PT_FINANCIAL_YEAR_RANGE_FEILD_NAME = "finYearRange";
+    
+    public static final String MDMS_FINACIALYEAR_PATH = "$.MdmsRes.egf-master.FinancialYear[?(@.code==\"{}\")]";
+    
+    public static final String EG_PT_FINANCIAL_MASTER_NOT_FOUND = "EG_PT_FINANCIAL_MASTER_NOT_FOUND";
+    
+	public static final String EG_PT_FINANCIAL_MASTER_NOT_FOUND_MSG = "No Financial Year data is available for the current year value of : ";
+	
 
     public static final List<String> ASSESSSMENT_NOTIFICATION_CODES = Collections.unmodifiableList(Arrays.asList(NOTIFICATION_PAYMENT_ONLINE,
             NOTIFICATION_PAYMENT_OFFLINE, NOTIFICATION_PAYMENT_FAIL,NOTIFICATION_PAYMENT_PARTIAL_OFFLINE,
@@ -311,5 +320,33 @@ public class PTConstants {
     public static final String ASMT_USER_EVENT_PAY = "pay";
 
     public static final String VIEW_APPLICATION_CODE = "View Application";
+    
+    /* Tax heads fields in additional details */
+    
+    public static final String HOLDING_TAX = "holdingTax";
+    
+    public static final String LIGHT_TAX = "lightTax";
+    
+    public static final String WATER_TAX = "waterTax";
+    
+    public static final String DRAINAGE_TAX = "drainageTax";
+    
+    public static final String PARKING_TAX = "parkingTax";
+    
+    public static final String SOLID_WASTE_USER_CHANGES = "solidWasteUserCharges";
+    
+    public static final String OWNERSHIP_EXEMPTION = "ownershipExemption";
+    
+    public static final String USAGE_EXEMPTION = "usageExemption";
+    
+    public static final String INTEREST = "interest";
+    
+    public static final String PENALTY = "penalty";
+    
+    public static final String LATRINE_TAX = "latrineTax";
+    
+    public static final String MUTATION_CHARGE = "mutationCharge";
+    
+    public static final String DECIMAL_REGEX = "^\\d*\\.?\\d+$";
 }
 

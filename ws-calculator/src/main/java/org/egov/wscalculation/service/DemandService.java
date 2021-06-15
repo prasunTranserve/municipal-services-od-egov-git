@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -36,7 +38,6 @@ import org.egov.wscalculation.web.models.DemandDetailAndCollection;
 import org.egov.wscalculation.web.models.DemandRequest;
 import org.egov.wscalculation.web.models.DemandResponse;
 import org.egov.wscalculation.web.models.GetBillCriteria;
-import org.egov.wscalculation.web.models.Property;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxPeriod;
@@ -45,8 +46,6 @@ import org.egov.wscalculation.web.models.WaterConnectionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -177,11 +176,11 @@ public class DemandService {
 			}
 			WaterConnectionRequest waterConnectionRequest = WaterConnectionRequest.builder().waterConnection(connection)
 					.requestInfo(requestInfo).build();
-			Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
+			// Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
 			String tenantId = calculation.getTenantId();
 			String consumerCode = isForConnectionNO ? calculation.getConnectionNo()
 					: calculation.getApplicationNO();
-			User owner = property.getOwners().get(0).toCommonUser();
+			User owner = waterConnectionRequest.getWaterConnection().getConnectionHolders().get(0).toCommonUser();
 			if (!CollectionUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionHolders())) {
 				owner = waterConnectionRequest.getWaterConnection().getConnectionHolders().get(0).toCommonUser();
 			}
@@ -524,8 +523,8 @@ public class DemandService {
 				if(connection.getApplicationType().equalsIgnoreCase("MODIFY_WATER_CONNECTION")){
 					WaterConnectionRequest waterConnectionRequest = WaterConnectionRequest.builder().waterConnection(connection)
 							.requestInfo(requestInfo).build();
-					Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
-					User owner = property.getOwners().get(0).toCommonUser();
+					// Property property = wsCalculationUtil.getProperty(waterConnectionRequest);
+					User owner = new User();
 					if (!CollectionUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionHolders())) {
 						owner = waterConnectionRequest.getWaterConnection().getConnectionHolders().get(0).toCommonUser();
 					}
@@ -592,6 +591,7 @@ public class DemandService {
 			}
 		}
 		
+		boolean isRebateUpdated = false;
 		boolean isPenaltyUpdated = false;
 		boolean isInterestUpdated = false;
 		
@@ -602,15 +602,27 @@ public class DemandService {
 		if (null == interestPenaltyEstimates)
 			return isCurrentDemand;
 
+		BigDecimal rebate = interestPenaltyEstimates.get(WSCalculationConstant.WS_TIME_REBATE);
 		BigDecimal penalty = interestPenaltyEstimates.get(WSCalculationConstant.WS_TIME_PENALTY);
 		BigDecimal interest = interestPenaltyEstimates.get(WSCalculationConstant.WS_TIME_INTEREST);
+		if(rebate == null)
+			rebate = BigDecimal.ZERO;
 		if(penalty == null)
 			penalty = BigDecimal.ZERO;
 		if(interest == null)
 			interest = BigDecimal.ZERO;
 
-		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
+		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
+		if (rebate.compareTo(BigDecimal.ZERO) != 0) {
+			latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE,
+					demand.getDemandDetails());
+			if (latestRebateDemandDetail != null) {
+				updateTaxAmount(rebate, latestRebateDemandDetail);
+				isRebateUpdated = true;
+			}
+		}
+		
 		if (interest.compareTo(BigDecimal.ZERO) != 0) {
 			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_INTEREST,
 					details);
@@ -628,7 +640,11 @@ public class DemandService {
 				isPenaltyUpdated = true;
 			}
 		}
-
+		
+		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)
+			demand.getDemandDetails().add(
+					DemandDetail.builder().taxAmount(rebate.setScale(2, 2).negate()).taxHeadMasterCode(WSCalculationConstant.WS_TIME_REBATE)
+							.demandId(demand.getId()).tenantId(demand.getTenantId()).build());
 		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0)
 			details.add(
 					DemandDetail.builder().taxAmount(penalty.setScale(2, 2)).taxHeadMasterCode(WSCalculationConstant.WS_TIME_PENALTY)

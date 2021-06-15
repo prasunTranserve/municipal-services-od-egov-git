@@ -1,5 +1,6 @@
 package org.egov.pt.models;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,7 +77,6 @@ public class Assessment {
 
 	@JsonProperty("workflow")
 	private ProcessInstance workflow;
-
 
 	public enum Source {
 

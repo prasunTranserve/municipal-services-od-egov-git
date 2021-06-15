@@ -74,6 +74,8 @@ public class WSCalculationConstant {
 	 * Time Taxes Config
 	 */
 
+	public static final String WS_TIME_REBATE = "WS_TIME_REBATE";
+	
 	public static final String WS_TIME_INTEREST = "WS_TIME_INTEREST";
 
 	public static final String WS_TIME_PENALTY = "WS_TIME_PENALTY";
@@ -179,6 +181,8 @@ public class WSCalculationConstant {
 	public static final String WATER_CONNECTION_BILL_GENERATION_SMS_MESSAGE = "WATER_CONNECTION_BILL_GENERATION_SMS_MESSAGE";
 	
 	public static final String WATER_CONNECTION_BILL_GENERATION_APP_MESSAGE = "WATER_CONNECTION_BILL_GENERATION_APP_MESSAGE";
+
+	public static final String WATER_CONNECTION_APP_STATUS_ACTIVATED_STRING = "CONNECTION_ACTIVATED";
 	
 	public static final String  USREVENTS_EVENT_TYPE = "SYSTEMGENERATED";
 	

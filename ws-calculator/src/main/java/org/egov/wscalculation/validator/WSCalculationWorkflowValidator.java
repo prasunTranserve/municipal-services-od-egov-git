@@ -1,10 +1,14 @@
 package org.egov.wscalculation.validator;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.MRConstants;
-import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.Property;
 import org.egov.wscalculation.web.models.Status;
@@ -15,11 +19,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -42,10 +43,10 @@ public class WSCalculationWorkflowValidator {
 			 String waterApplicationNumber = waterConnection.getApplicationNo();
 			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, errorMap);
 
-			 String propertyId = waterConnection.getPropertyId();
-			 Property property = util.getProperty(requestInfo,tenantId,propertyId);
+			//  String propertyId = waterConnection.getPropertyId();
+			//  Property property = util.getProperty(requestInfo,tenantId,propertyId);
 			 //String propertyApplicationNumber = property.getAcknowldgementNumber();
-			 propertyValidation(requestInfo,tenantId,property,errorMap);
+			//  propertyValidation(requestInfo,tenantId,property,errorMap);
 		 }
 		 else{
 			 errorMap.put("WATER_CONNECTION_ERROR",

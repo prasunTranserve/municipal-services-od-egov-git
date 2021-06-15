@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
@@ -20,11 +21,15 @@ import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
 import org.egov.pt.repository.AssessmentRepository;
 import org.egov.pt.util.AssessmentUtils;
+import org.egov.pt.util.CommonUtils;
 import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.PropertyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 public class AssessmentService {
@@ -72,12 +77,12 @@ public class AssessmentService {
 	 * @param request
 	 * @return
 	 */
-	public Assessment createAssessment(AssessmentRequest request) {
+	public Assessment createAssessment(AssessmentRequest request, boolean autoTriggered) {
 		Property property = utils.getPropertyForAssessment(request);
 		validator.validateAssessmentCreate(request, property);
-		assessmentEnrichmentService.enrichAssessmentCreate(request);
+		assessmentEnrichmentService.enrichAssessmentCreate(request, autoTriggered);
 
-		if(config.getIsAssessmentWorkflowEnabled()){
+		if(config.getIsAssessmentWorkflowEnabled() && !autoTriggered){
 			assessmentEnrichmentService.enrichWorkflowForInitiation(request);
 			ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(request.getRequestInfo(),
 					Collections.singletonList(request.getAssessment().getWorkflow()));
@@ -85,6 +90,7 @@ public class AssessmentService {
 			request.getAssessment().getWorkflow().setState(state);
 		}
 		else {
+			assessmentEnrichmentService.enrichDemand(request, property);
 			calculationService.calculateTax(request, property);
 		}
 		producer.push(props.getCreateAssessmentTopic(), request);
@@ -100,7 +106,7 @@ public class AssessmentService {
 	 * @return
 	 */
 	public Assessment updateAssessment(AssessmentRequest request) {
-
+		validateAssessment(request.getAssessment().getAdditionalDetails());
 		Assessment assessment = request.getAssessment();
 		RequestInfo requestInfo = request.getRequestInfo();
 		Property property = utils.getPropertyForAssessment(request);
@@ -154,12 +160,24 @@ public class AssessmentService {
 				* */
 
 
-		}
-		else if(!config.getIsAssessmentWorkflowEnabled()){
+		} else if(config.getIsAssessmentWorkflowEnabled() && request.getAssessment().getStatus().equals(Status.ACTIVE)){
+			assessmentEnrichmentService.enrichWorkflowForInitiation(request);
+			ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(request.getRequestInfo(),
+					Collections.singletonList(request.getAssessment().getWorkflow()));
+			State state = workflowService.callWorkFlow(workflowRequest);
+			request.getAssessment().getWorkflow().setState(state);
+			// To initiate the workflow change the status
+			request.getAssessment().setStatus(Status.INWORKFLOW);
+			producer.push(props.getUpdateAssessmentTopic(), request);
+		} else if(!config.getIsAssessmentWorkflowEnabled()) {
 			calculationService.calculateTax(request, property);
 			producer.push(props.getUpdateAssessmentTopic(), request);
 		}
 		return request.getAssessment();
+	}
+
+	public void validateAssessment(JsonNode additionalDetails) {
+		validator.validateAssessmentAndMutationAmount(additionalDetails);
 	}
 
 	public List<Assessment> searchAssessments(AssessmentSearchCriteria criteria){
@@ -224,6 +242,10 @@ public class AssessmentService {
 		list1.retainAll(list2);
 		return !CollectionUtils.isEmpty(list1);
 
+	}
+
+	public void validateAssessment(PropertyRequest request, String assessmentYear) {
+		Map<String, Object> financialYearMaster =utils.getFinancialYear(request.getRequestInfo(), assessmentYear, request.getProperty().getTenantId());
 	}
 
 

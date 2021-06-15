@@ -15,6 +15,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.swservice.config.SWConfiguration;
@@ -42,11 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -90,16 +90,15 @@ public class PaymentUpdateService {
 	/**
 	 * After payment change the application status
 	 *
-	 * @param record
-	 *            payment request
+	 * @param record payment request
 	 */
 	public void process(HashMap<String, Object> record) {
 		try {
 			PaymentRequest paymentRequest = mapper.convertValue(record, PaymentRequest.class);
 			boolean isServiceMatched = false;
 			for (PaymentDetail paymentDetail : paymentRequest.getPayment().getPaymentDetails()) {
-				if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getReceiptBusinessservice()) ||
-						SWConstants.SEWERAGE_SERVICE_BUSINESS_ID.equals(paymentDetail.getBusinessService())) {
+				if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getReceiptBusinessservice())
+						|| SWConstants.SEWERAGE_SERVICE_BUSINESS_ID.equals(paymentDetail.getBusinessService())) {
 					isServiceMatched = true;
 				}
 			}
@@ -125,13 +124,15 @@ public class PaymentUpdateService {
 						throw new CustomException("INVALID_RECEIPT",
 								"More than one application found on consumerCode " + criteria.getApplicationNumber());
 					}
-					sewerageConnections
-							.forEach(sewerageConnection -> sewerageConnection.getProcessInstance().setAction(SWConstants.ACTION_PAY));
+					sewerageConnections.forEach(sewerageConnection -> sewerageConnection.getProcessInstance()
+							.setAction(SWConstants.ACTION_PAY));
 					SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder()
-							.sewerageConnection(connection).requestInfo(paymentRequest.getRequestInfo())
-							.build();
+							.sewerageConnection(connection).requestInfo(paymentRequest.getRequestInfo()).build();
 
-					Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+					// Property property =
+					// validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+					Property property = Property.builder()
+							.tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId()).build();
 					wfIntegrator.callWorkFlow(sewerageConnectionRequest, property);
 					enrichmentService.enrichFileStoreIds(sewerageConnectionRequest);
 					repo.updateSewerageConnection(sewerageConnectionRequest, false);
@@ -145,7 +146,7 @@ public class PaymentUpdateService {
 
 	/**
 	 *
-	 * @param uuid - UUID for the User
+	 * @param uuid        - UUID for the User
 	 * @param requestInfo - RequestInfo Object
 	 * @return User
 	 */
@@ -172,6 +173,7 @@ public class PaymentUpdateService {
 
 	/**
 	 * consume payment request for processing the notification of payment
+	 * 
 	 * @param paymentRequest
 	 */
 	public void sendNotificationForPayment(PaymentRequest paymentRequest) {
@@ -187,30 +189,29 @@ public class PaymentUpdateService {
 				return;
 			for (PaymentDetail paymentDetail : paymentRequest.getPayment().getPaymentDetails()) {
 				log.info("Consuming Business Service : {}", paymentDetail.getBusinessService());
-				if (SWConstants.SEWERAGE_SERVICE_BUSINESS_ID.equals(paymentDetail.getBusinessService()) ||
-						config.getReceiptBusinessservice().equals(paymentDetail.getBusinessService())) {
+				if (SWConstants.SEWERAGE_SERVICE_BUSINESS_ID.equals(paymentDetail.getBusinessService())
+						|| config.getReceiptBusinessservice().equals(paymentDetail.getBusinessService())) {
 					SearchCriteria criteria = new SearchCriteria();
 					if (SWConstants.SEWERAGE_SERVICE_BUSINESS_ID.equals(paymentDetail.getBusinessService())) {
-						criteria = SearchCriteria.builder()
-								.tenantId(paymentRequest.getPayment().getTenantId())
+						criteria = SearchCriteria.builder().tenantId(paymentRequest.getPayment().getTenantId())
 								.connectionNumber(paymentDetail.getBill().getConsumerCode()).build();
 					} else {
-						criteria = SearchCriteria.builder()
-								.tenantId(paymentRequest.getPayment().getTenantId())
+						criteria = SearchCriteria.builder().tenantId(paymentRequest.getPayment().getTenantId())
 								.applicationNumber(paymentDetail.getBill().getConsumerCode()).build();
 					}
 					List<SewerageConnection> sewerageConnections = sewerageService.search(criteria,
 							paymentRequest.getRequestInfo());
 					if (CollectionUtils.isEmpty(sewerageConnections)) {
-						throw new CustomException("INVALID_RECEIPT",
-								"No sewerageConnection found for the consumerCode " + paymentDetail.getBill().getConsumerCode());
+						throw new CustomException("INVALID_RECEIPT", "No sewerageConnection found for the consumerCode "
+								+ paymentDetail.getBill().getConsumerCode());
 					}
-					Collections.sort(sewerageConnections, Comparator.comparing(wc -> wc.getAuditDetails().getLastModifiedTime()));
+					Collections.sort(sewerageConnections,
+							Comparator.comparing(wc -> wc.getAuditDetails().getLastModifiedTime()));
 					long count = sewerageConnections.stream().count();
-					Optional<SewerageConnection> connections = Optional.of(sewerageConnections.stream().skip(count - 1).findFirst().get());
+					Optional<SewerageConnection> connections = Optional
+							.of(sewerageConnections.stream().skip(count - 1).findFirst().get());
 					SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder()
-							.sewerageConnection(connections.get()).requestInfo(paymentRequest.getRequestInfo())
-							.build();
+							.sewerageConnection(connections.get()).requestInfo(paymentRequest.getRequestInfo()).build();
 					sendPaymentNotification(sewerageConnectionRequest, paymentDetail);
 				}
 			}
@@ -224,41 +225,43 @@ public class PaymentUpdateService {
 	 * @param sewerageConnectionRequest
 	 * @param paymentDetail
 	 */
-	public void sendPaymentNotification(SewerageConnectionRequest sewerageConnectionRequest, PaymentDetail paymentDetail) {
-		Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
+	public void sendPaymentNotification(SewerageConnectionRequest sewerageConnectionRequest,
+			PaymentDetail paymentDetail) {
+		// Property property = validateProperty.getOrValidateProperty(sewerageConnectionRequest);
 		if (config.getIsUserEventsNotificationEnabled() != null && config.getIsUserEventsNotificationEnabled()) {
-			EventRequest eventRequest = getEventRequest(sewerageConnectionRequest, property, paymentDetail);
+			EventRequest eventRequest = getEventRequest(sewerageConnectionRequest, paymentDetail);
 			if (eventRequest != null) {
 				notificationUtil.sendEventNotification(eventRequest);
 			}
 		}
 		if (config.getIsSMSEnabled() != null && config.getIsSMSEnabled()) {
-			List<SMSRequest> smsRequests = getSmsRequest(sewerageConnectionRequest, property, paymentDetail);
+			List<SMSRequest> smsRequests = getSmsRequest(sewerageConnectionRequest, paymentDetail);
 			if (!CollectionUtils.isEmpty(smsRequests)) {
 				notificationUtil.sendSMS(smsRequests);
 			}
 		}
 	}
+
 	/**
 	 *
 	 * @param request
 	 * @param property
 	 * @return
 	 */
-	private EventRequest getEventRequest(SewerageConnectionRequest request, Property property, PaymentDetail paymentDetail) {
-		String localizationMessage = notificationUtil
-				.getLocalizationMessages(property.getTenantId(), request.getRequestInfo());
+	private EventRequest getEventRequest(SewerageConnectionRequest request, PaymentDetail paymentDetail) {
+		String localizationMessage = notificationUtil.getLocalizationMessages(request.getSewerageConnection().getTenantId(),
+				request.getRequestInfo());
 		String message = notificationUtil.getMessageTemplate(SWConstants.PAYMENT_NOTIFICATION_APP, localizationMessage);
 		if (message == null) {
 			log.info("No message template found for, {} " + SWConstants.PAYMENT_NOTIFICATION_APP);
 			return null;
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
-		//send the notification to the connection holders
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
+		// send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(request.getSewerageConnection().getConnectionHolders())) {
 			request.getSewerageConnection().getConnectionHolders().forEach(holder -> {
 				if (!StringUtils.isEmpty(holder.getMobileNumber())) {
@@ -266,11 +269,12 @@ public class PaymentUpdateService {
 				}
 			});
 		}
-		Map<String, String> getReplacedMessage = workflowNotificationService.getMessageForMobileNumber(mobileNumbersAndNames, request,
-				message, property);
+		Map<String, String> getReplacedMessage = workflowNotificationService
+				.getMessageForMobileNumber(mobileNumbersAndNames, request, message);
 		Map<String, String> mobileNumberAndMesssage = replacePaymentInfo(getReplacedMessage, paymentDetail);
 		Set<String> mobileNumbers = mobileNumberAndMesssage.keySet().stream().collect(Collectors.toSet());
-		Map<String, String> mapOfPhnoAndUUIDs = workflowNotificationService.fetchUserUUIDs(mobileNumbers, request.getRequestInfo(), property.getTenantId());
+		Map<String, String> mapOfPhnoAndUUIDs = workflowNotificationService.fetchUserUUIDs(mobileNumbers,
+				request.getRequestInfo(), request.getSewerageConnection().getTenantId());
 		if (CollectionUtils.isEmpty(mapOfPhnoAndUUIDs.keySet())) {
 			log.info("UUID search failed!");
 		}
@@ -283,11 +287,12 @@ public class PaymentUpdateService {
 			List<String> toUsers = new ArrayList<>();
 			toUsers.add(mapOfPhnoAndUUIDs.get(mobile));
 			Recepient recepient = Recepient.builder().toUsers(toUsers).toRoles(null).build();
-			Action action = workflowNotificationService.getActionForEventNotification(mobileNumberAndMesssage, mobile, request, property);
-			events.add(Event.builder().tenantId(property.getTenantId())
-					.description(mobileNumberAndMesssage.get(mobile)).eventType(SWConstants.USREVENTS_EVENT_TYPE)
-					.name(SWConstants.USREVENTS_EVENT_NAME).postedBy(SWConstants.USREVENTS_EVENT_POSTEDBY)
-					.source(Source.WEBAPP).recepient(recepient).eventDetails(null).actions(action).build());
+			Action action = workflowNotificationService.getActionForEventNotification(mobileNumberAndMesssage, mobile,
+					request);
+			events.add(Event.builder().tenantId(request.getSewerageConnection().getTenantId()).description(mobileNumberAndMesssage.get(mobile))
+					.eventType(SWConstants.USREVENTS_EVENT_TYPE).name(SWConstants.USREVENTS_EVENT_NAME)
+					.postedBy(SWConstants.USREVENTS_EVENT_POSTEDBY).source(Source.WEBAPP).recepient(recepient)
+					.eventDetails(null).actions(action).build());
 		}
 		if (!CollectionUtils.isEmpty(events)) {
 			return EventRequest.builder().requestInfo(request.getRequestInfo()).events(events).build();
@@ -303,9 +308,8 @@ public class PaymentUpdateService {
 	 * @param paymentDetail
 	 * @return
 	 */
-	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest,
-										   Property property, PaymentDetail paymentDetail) {
-		String localizationMessage = notificationUtil.getLocalizationMessages(property.getTenantId(),
+	private List<SMSRequest> getSmsRequest(SewerageConnectionRequest sewerageConnectionRequest, PaymentDetail paymentDetail) {
+		String localizationMessage = notificationUtil.getLocalizationMessages(sewerageConnectionRequest.getSewerageConnection().getTenantId(),
 				sewerageConnectionRequest.getRequestInfo());
 		String message = notificationUtil.getMessageTemplate(SWConstants.PAYMENT_NOTIFICATION_SMS, localizationMessage);
 		if (message == null) {
@@ -313,11 +317,11 @@ public class PaymentUpdateService {
 			return Collections.emptyList();
 		}
 		Map<String, String> mobileNumbersAndNames = new HashMap<>();
-		property.getOwners().forEach(owner -> {
-			if (owner.getMobileNumber() != null)
-				mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
-		});
-		//send the notification to the connection holders
+		// property.getOwners().forEach(owner -> {
+		// 	if (owner.getMobileNumber() != null)
+		// 		mobileNumbersAndNames.put(owner.getMobileNumber(), owner.getName());
+		// });
+		// send the notification to the connection holders
 		if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 			sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().forEach(holder -> {
 				if (!StringUtils.isEmpty(holder.getMobileNumber())) {
@@ -325,12 +329,13 @@ public class PaymentUpdateService {
 				}
 			});
 		}
-		Map<String, String> getReplacedMessage = workflowNotificationService.getMessageForMobileNumber(mobileNumbersAndNames,
-				sewerageConnectionRequest, message, property);
+		Map<String, String> getReplacedMessage = workflowNotificationService
+				.getMessageForMobileNumber(mobileNumbersAndNames, sewerageConnectionRequest, message);
 		Map<String, String> mobileNumberAndMessage = replacePaymentInfo(getReplacedMessage, paymentDetail);
 		List<SMSRequest> smsRequest = new ArrayList<>();
 		mobileNumberAndMessage.forEach((mobileNumber, msg) -> {
-			SMSRequest req = SMSRequest.builder().mobileNumber(mobileNumber).message(msg).category(org.egov.swservice.web.models.Category.TRANSACTION).build();
+			SMSRequest req = SMSRequest.builder().mobileNumber(mobileNumber).message(msg)
+					.category(org.egov.swservice.web.models.Category.TRANSACTION).build();
 			smsRequest.add(req);
 		});
 		return smsRequest;
@@ -350,30 +355,34 @@ public class PaymentUpdateService {
 				message = message.replace("<Amount paid>", paymentDetail.getTotalAmountPaid().toString());
 			}
 			if (message.contains("<Billing Period>")) {
-				int fromDateLength = (int) (Math.log10(paymentDetail.getBill().getBillDetails().get(0).getFromPeriod()) + 1);
+				int fromDateLength = (int) (Math.log10(paymentDetail.getBill().getBillDetails().get(0).getFromPeriod())
+						+ 1);
 				LocalDate fromDate = Instant
-						.ofEpochMilli(fromDateLength > 10 ? paymentDetail.getBill().getBillDetails().get(0).getFromPeriod() :
-								paymentDetail.getBill().getBillDetails().get(0).getFromPeriod() * 1000)
+						.ofEpochMilli(
+								fromDateLength > 10 ? paymentDetail.getBill().getBillDetails().get(0).getFromPeriod()
+										: paymentDetail.getBill().getBillDetails().get(0).getFromPeriod() * 1000)
 						.atZone(ZoneId.systemDefault()).toLocalDate();
-				int toDateLength = (int) (Math.log10(paymentDetail.getBill().getBillDetails().get(0).getToPeriod()) + 1);
+				int toDateLength = (int) (Math.log10(paymentDetail.getBill().getBillDetails().get(0).getToPeriod())
+						+ 1);
 				LocalDate toDate = Instant
-						.ofEpochMilli(toDateLength > 10 ? paymentDetail.getBill().getBillDetails().get(0).getToPeriod() :
-								paymentDetail.getBill().getBillDetails().get(0).getToPeriod() * 1000)
+						.ofEpochMilli(toDateLength > 10 ? paymentDetail.getBill().getBillDetails().get(0).getToPeriod()
+								: paymentDetail.getBill().getBillDetails().get(0).getToPeriod() * 1000)
 						.atZone(ZoneId.systemDefault()).toLocalDate();
 				StringBuilder builder = new StringBuilder();
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-				String billingPeriod = builder.append(fromDate.format(formatter)).append(" - ").append(toDate.format(formatter)).toString();
+				String billingPeriod = builder.append(fromDate.format(formatter)).append(" - ")
+						.append(toDate.format(formatter)).toString();
 				message = message.replace("<Billing Period>", billingPeriod);
 			}
-			if (message.contains("<receipt download link>")){
+			if (message.contains("<receipt download link>")) {
 				String link = config.getNotificationUrl() + config.getReceiptDownloadLink();
 				link = link.replace("$consumerCode", paymentDetail.getBill().getConsumerCode());
 				link = link.replace("$tenantId", paymentDetail.getTenantId());
-				link = link.replace("$businessService",paymentDetail.getBusinessService());
-				link = link.replace("$receiptNumber",paymentDetail.getReceiptNumber());
+				link = link.replace("$businessService", paymentDetail.getBusinessService());
+				link = link.replace("$receiptNumber", paymentDetail.getReceiptNumber());
 				link = link.replace("$mobile", mobAndMesg.getKey());
 				link = sewerageServicesUtil.getShortenedURL(link);
-				message = message.replace("<receipt download link>",link);
+				message = message.replace("<receipt download link>", link);
 			}
 			messageToReturn.put(mobAndMesg.getKey(), message);
 		}

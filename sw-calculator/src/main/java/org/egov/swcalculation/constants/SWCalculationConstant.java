@@ -201,6 +201,8 @@ public class SWCalculationConstant {
 
 	public static final String ACTION_STATUS_PAID = "PAID";
 
+	public static final String SEWERAGE_CONNECTION_APP_STATUS_ACTIVATED_STRING = "CONNECTION_ACTIVATED";
+
 	public static final String USREVENTS_EVENT_TYPE = "SYSTEMGENERATED";
 
 	public static final String USREVENTS_EVENT_NAME = "SEWERAGE BILL GENERATION";

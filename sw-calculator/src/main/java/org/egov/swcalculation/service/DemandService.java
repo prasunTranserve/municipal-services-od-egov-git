@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -46,8 +48,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -185,10 +185,10 @@ public class DemandService {
 			SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder()
 					.sewerageConnection(connection).requestInfo(requestInfo).build();
 			
-			Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
+			// Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
 			
 			String consumerCode = isForConnectionNO ?  calculation.getConnectionNo() : calculation.getApplicationNO();
-			User owner = property.getOwners().get(0).toCommonUser();
+			User owner = sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().get(0).toCommonUser();
 			if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 				owner = sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().get(0).toCommonUser();
 			}
@@ -408,8 +408,8 @@ public class DemandService {
 				if(connection.getApplicationType().equalsIgnoreCase("MODIFY_SEWERAGE_CONNECTION")){
 					SewerageConnectionRequest sewerageConnectionRequest = SewerageConnectionRequest.builder().sewerageConnection(connection)
 							.requestInfo(requestInfo).build();
-					Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
-					User owner = property.getOwners().get(0).toCommonUser();
+					// Property property = sWCalculationUtil.getProperty(sewerageConnectionRequest);
+					User owner = new User();
 					if (!CollectionUtils.isEmpty(sewerageConnectionRequest.getSewerageConnection().getConnectionHolders())) {
 						owner = sewerageConnectionRequest.getSewerageConnection().getConnectionHolders().get(0).toCommonUser();
 					}
@@ -586,6 +586,7 @@ public class DemandService {
 			}
 		}
 		
+		boolean isRebateUpdated = false;
 		boolean isPenaltyUpdated = false;
 		boolean isInterestUpdated = false;
 		
@@ -594,15 +595,27 @@ public class DemandService {
 		if (null == interestPenaltyEstimates)
 			return isCurrentDemand;
 
+		BigDecimal rebate = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_REBATE);
 		BigDecimal penalty = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_PENALTY);
 		BigDecimal interest = interestPenaltyEstimates.get(SWCalculationConstant.SW_TIME_INTEREST);
+		if(rebate == null)
+			rebate = BigDecimal.ZERO;
 		if(penalty == null)
 			penalty = BigDecimal.ZERO;
 		if(interest == null)
 			interest = BigDecimal.ZERO;
 
-		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
+		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
+		if (rebate.compareTo(BigDecimal.ZERO) != 0) {
+			latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_REBATE,
+					demand.getDemandDetails());
+			if (latestRebateDemandDetail != null) {
+				updateTaxAmount(rebate, latestRebateDemandDetail);
+				isRebateUpdated = true;
+			}
+		}
+		
 		if (interest.compareTo(BigDecimal.ZERO) != 0) {
 			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_INTEREST,
 					demand.getDemandDetails());
@@ -621,6 +634,10 @@ public class DemandService {
 			}
 		}
 
+		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)
+			demand.getDemandDetails().add(
+					DemandDetail.builder().taxAmount(rebate.setScale(2, 2).negate()).taxHeadMasterCode(SWCalculationConstant.SW_TIME_REBATE)
+							.demandId(demand.getId()).tenantId(demand.getTenantId()).build());
 		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0)
 			demand.getDemandDetails().add(
 					DemandDetail.builder().taxAmount(penalty.setScale(2, 2)).taxHeadMasterCode(SWCalculationConstant.SW_TIME_PENALTY)

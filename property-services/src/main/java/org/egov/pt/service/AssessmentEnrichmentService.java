@@ -1,10 +1,7 @@
 package org.egov.pt.service;
 
 
-import static org.egov.pt.util.PTConstants.ASMT_MODULENAME;
-import static org.egov.pt.util.PTConstants.ASMT_WORKFLOW_CODE;
-import static org.egov.pt.util.PTConstants.WORKFLOW_SENDBACK_CITIZEN;
-import static org.egov.pt.util.PTConstants.WORKFLOW_START_ACTION;
+import static org.egov.pt.util.PTConstants.*;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 @Service
 public class AssessmentEnrichmentService {
 
@@ -55,13 +56,13 @@ public class AssessmentEnrichmentService {
      *
      * @param request
      */
-    public void enrichAssessmentCreate(AssessmentRequest request) {
+    public void enrichAssessmentCreate(AssessmentRequest request, boolean autoTriggered) {
     	
         Assessment assessment = request.getAssessment();
         assessment.setId(String.valueOf(UUID.randomUUID()));
         assessment.setAssessmentNumber(getAssessmentNo(request));
 
-        if(config.getIsAssessmentWorkflowEnabled())
+        if(config.getIsAssessmentWorkflowEnabled() && !autoTriggered)
             assessment.setStatus(Status.INWORKFLOW);
         else
             assessment.setStatus(Status.ACTIVE);
@@ -227,5 +228,68 @@ public class AssessmentEnrichmentService {
         assessment.setWorkflow(processInstance);
 
     }
+
+	public void enrichDemand(AssessmentRequest request, Property property) {
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+		JsonNode propertyAdditionalDetail = property.getAdditionalDetails();
+		
+		if(propertyAdditionalDetail.has(HOLDING_TAX)) {
+			JsonNode holdingTaxNode = propertyAdditionalDetail.get(HOLDING_TAX);
+			node.set(HOLDING_TAX, holdingTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(LIGHT_TAX)) {
+			JsonNode lightTaxNode = propertyAdditionalDetail.get(LIGHT_TAX);
+			node.set(LIGHT_TAX, lightTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(WATER_TAX)) {
+			JsonNode waterTaxNode = propertyAdditionalDetail.get(WATER_TAX);
+			node.set(WATER_TAX, waterTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(DRAINAGE_TAX)) {
+			JsonNode drainageTaxNode = propertyAdditionalDetail.get(DRAINAGE_TAX);
+			node.set(DRAINAGE_TAX, drainageTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(LATRINE_TAX)) {
+			JsonNode latrineTaxNode = propertyAdditionalDetail.get(LATRINE_TAX);
+			node.set(LATRINE_TAX, latrineTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(PARKING_TAX)) {
+			JsonNode parkingTaxNode = propertyAdditionalDetail.get(PARKING_TAX);
+			node.set(PARKING_TAX, parkingTaxNode);
+		}
+		
+		if(propertyAdditionalDetail.has(SOLID_WASTE_USER_CHANGES)) {
+			JsonNode solidWasteUserChargesNode = propertyAdditionalDetail.get(SOLID_WASTE_USER_CHANGES);
+			node.set(SOLID_WASTE_USER_CHANGES, solidWasteUserChargesNode);
+		}
+		
+		if(propertyAdditionalDetail.has(OWNERSHIP_EXEMPTION)) {
+			JsonNode ownershipExemptionNode = propertyAdditionalDetail.get(OWNERSHIP_EXEMPTION);
+			node.set(OWNERSHIP_EXEMPTION, ownershipExemptionNode);
+		}
+		
+		if(propertyAdditionalDetail.has(USAGE_EXEMPTION)) {
+			JsonNode usageExemptionNode = propertyAdditionalDetail.get(USAGE_EXEMPTION);
+			node.set(USAGE_EXEMPTION, usageExemptionNode);
+		}
+		
+		if(propertyAdditionalDetail.has(INTEREST)) {
+			JsonNode interestNode = propertyAdditionalDetail.get(INTEREST);
+			node.set(INTEREST, interestNode);
+		}
+		
+		if(propertyAdditionalDetail.has(PENALTY)) {
+			JsonNode penaltyNode = propertyAdditionalDetail.get(PENALTY);
+			node.set(PENALTY, penaltyNode);
+		}
+		
+		request.getAssessment().setAdditionalDetails(node);
+		
+	}
 
 }

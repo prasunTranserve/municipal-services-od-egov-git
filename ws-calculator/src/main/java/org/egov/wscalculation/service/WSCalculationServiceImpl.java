@@ -5,33 +5,42 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.tracer.model.CustomException;
+import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
-import org.egov.wscalculation.web.models.AdhocTaxReq;
-import org.egov.wscalculation.web.models.Calculation;
-import org.egov.wscalculation.web.models.CalculationCriteria;
-import org.egov.wscalculation.web.models.CalculationReq;
-import org.egov.wscalculation.web.models.TaxHeadCategory;
-import org.egov.wscalculation.web.models.Property;
-import org.egov.wscalculation.web.models.TaxHeadEstimate;
-import org.egov.wscalculation.web.models.TaxHeadMaster;
-import org.egov.wscalculation.web.models.WaterConnection;
-import org.egov.wscalculation.web.models.WaterConnectionRequest;
 import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
+import org.egov.wscalculation.web.controller.CalculatorController;
+import org.egov.wscalculation.web.models.AdhocTaxReq;
+import org.egov.wscalculation.web.models.Calculation;
+import org.egov.wscalculation.web.models.CalculationCriteria;
+import org.egov.wscalculation.web.models.CalculationReq;
+import org.egov.wscalculation.web.models.RequestInfoWrapper;
+import org.egov.wscalculation.web.models.TaxHeadCategory;
+import org.egov.wscalculation.web.models.TaxHeadEstimate;
+import org.egov.wscalculation.web.models.TaxHeadMaster;
+import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.jayway.jsonpath.JsonPath;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,9 +68,18 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	
 	@Autowired
 	private ServiceRequestRepository repository;
+
+	@Autowired
+    private RestTemplate restTemplate;
+
+	@Autowired
+	private WSCalculationConfiguration config;
 	
 	@Autowired
 	private WSCalculationUtil wSCalculationUtil;
+
+	@Autowired
+	private CalculatorController calculatorController;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Water Charge And Estimation Charge
@@ -128,10 +146,10 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		@SuppressWarnings("unchecked")
 		List<String> billingSlabIds = estimatesAndBillingSlabs.get("billingSlabIds");
 		WaterConnection waterConnection = criteria.getWaterConnection();
-		Property property = wSCalculationUtil.getProperty(
-				WaterConnectionRequest.builder().waterConnection(waterConnection).requestInfo(requestInfo).build());
+		// Property property = wSCalculationUtil.getProperty(
+		// 		WaterConnectionRequest.builder().waterConnection(waterConnection).requestInfo(requestInfo).build());
 		
-		String tenantId = null != property.getTenantId() ? property.getTenantId() : criteria.getTenantId();
+		String tenantId = null != waterConnection.getTenantId() ? waterConnection.getTenantId() : criteria.getTenantId();
 
 		@SuppressWarnings("unchecked")
 		Map<String, TaxHeadCategory> taxHeadCategoryMap = ((List<TaxHeadMaster>) masterMap
@@ -236,6 +254,37 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			getBillingPeriod(mdmsResponse, requestInfo, tenantId);
 		}
 	}
+
+	// @Scheduled(fixedDelay = 300000L)
+	@Scheduled(cron = "${cron.schedule.expression}")
+	public void callJobscheduler() {
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		headers.set("Authorization", config.getAuthAuthorization());
+
+		MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+		body.add("username", config.getAuthUsername());
+		body.add("scope", config.getAuthScope());
+		body.add("password", config.getAuthPassword());
+		body.add("grant_type", config.getAuthGrantType());
+		body.add("tenantId", config.getAuthTenantId());
+		body.add("userType", config.getAuthUserType());
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(body, headers);
+		
+		Map authResponse = new LinkedHashMap<String, String>();
+		authResponse =restTemplate.postForEntity(config.getUserHost() + config.getUserAuthTokenEndPoint(), request, Map.class).getBody();
+		
+		String accessToken = authResponse.get("access_token").toString();
+		log.info("EMPLOYEE Access Token : " + accessToken);
+
+		RequestInfo requestInfo = RequestInfo.builder().apiId(config.getRequestApiId()).ver(config.getRequestVer()).action(config.getRequestAction())
+		.did(config.getRequestDid()).key("").msgId(config.getRequestMsgId()).authToken(accessToken).build();
+		
+		String uri = config.getSwCalculatorHost() + config.getSwJobSchedulerEndpoint();
+		repository.fetchResult(new StringBuilder(uri), RequestInfoWrapper.builder().requestInfo(requestInfo).build());
+	}
 	
 
 	@SuppressWarnings("unchecked")
@@ -246,7 +295,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		Long demandGenerateDateMillis = (Long) master.get(WSCalculationConstant.Demand_Generate_Date_String);
 
 		String connectionType = "Non-metred";
-
+		// the value 86400 is wrong as to convert millis to days the millis need to divide by 86400000
 		if (demandStartingDate.getDayOfMonth() == (demandGenerateDateMillis) / 86400) {
 
 			ArrayList<String> connectionNos = wSCalculationDao.searchConnectionNos(connectionType, tenantId);

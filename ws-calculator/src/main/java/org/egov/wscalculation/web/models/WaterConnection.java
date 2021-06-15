@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import javax.validation.constraints.Size;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.springframework.validation.annotation.Validated;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -39,6 +39,12 @@ import io.swagger.annotations.ApiModelProperty;
 
 	@JsonProperty("noOfTaps")
 	private Integer noOfTaps = null;
+	
+	@JsonProperty("noOfFlats")
+	private Integer noOfFlats = null;
+
+	@JsonProperty("usageCategory")
+	private String usageCategory = null;
 
 
 	public WaterConnection waterSource(String waterSource) {
@@ -60,9 +66,15 @@ import io.swagger.annotations.ApiModelProperty;
 	public void setWaterSource(String waterSource) {
 		this.waterSource = waterSource;
 	}
+	
 
 	public WaterConnection meterId(String meterId) {
 		this.meterId = meterId;
+		return this;
+	}
+
+	public WaterConnection usageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
 		return this;
 	}
 
@@ -88,6 +100,21 @@ import io.swagger.annotations.ApiModelProperty;
 	}
 
 	/**
+	 * The Usage Category.
+	 * 
+	 * @return usageCategory
+	 **/
+	@ApiModelProperty(value = "The Usage Category.")
+
+	public String getUsageCategory() {
+		return usageCategory;
+	}
+
+	public void setUsageCategory(String usageCategory) {
+		this.usageCategory = usageCategory;
+	}
+
+	/**
 	 * The date of meter installation date.
 	 * 
 	 * @return meterInstallationDate
@@ -107,6 +134,11 @@ import io.swagger.annotations.ApiModelProperty;
 		return this;
 	}
 
+	public WaterConnection noOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
+		return this;
+	}
+
 	/**
 	 * No of taps for non-metered calculation attribute.
 	 * 
@@ -122,6 +154,21 @@ import io.swagger.annotations.ApiModelProperty;
 		this.noOfTaps = noOfTaps;
 	}
 
+		/**
+	 * No of taps for calculation attribute.
+	 * 
+	 * @return noOfFlats
+	 **/
+	@ApiModelProperty(value = "No of flats for calculation attribute.")
+
+	public Integer getNoOfFlats() {
+		return noOfFlats;
+	}
+
+	public void setNoOfFlats(Integer noOfFlats) {
+		this.noOfFlats = noOfFlats;
+	}
+	
 	/**
 	 * Proposed taps for non-metered calculation attribute.
 	 * 

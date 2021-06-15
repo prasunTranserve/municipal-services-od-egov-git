@@ -9,22 +9,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.jayway.jsonpath.JsonPath;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.constants.WCConstants;
+import org.egov.waterconnection.repository.ServiceRequestRepository;
+import org.egov.waterconnection.util.WaterServicesUtil;
 import org.egov.waterconnection.web.models.RoadCuttingInfo;
 import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
-import org.egov.waterconnection.repository.ServiceRequestRepository;
-import org.egov.waterconnection.util.WaterServicesUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -145,9 +145,9 @@ public class MDMSValidator {
 			errorMap.put("INVALID_WATER_ROAD_TYPE", messageBuilder.toString());
 		}*/
 
-		if(waterConnection.getRoadCuttingInfo() == null){
-			errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
-		}
+		// if(waterConnection.getRoadCuttingInfo() == null){
+		// 	errorMap.put("INVALID_ROAD_INFO", "Road Cutting Information should not be empty");
+		// }
 
 		if(waterConnection.getRoadCuttingInfo() != null){
 			for(RoadCuttingInfo roadCuttingInfo : waterConnection.getRoadCuttingInfo()){

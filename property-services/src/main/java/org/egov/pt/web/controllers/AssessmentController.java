@@ -35,7 +35,7 @@ public class AssessmentController {
 	@PostMapping("/_create")
 	public ResponseEntity<AssessmentResponse> create(@Valid @RequestBody AssessmentRequest assessmentRequest) {
 
-		Assessment assessment = assessmentService.createAssessment(assessmentRequest);
+		Assessment assessment = assessmentService.createAssessment(assessmentRequest, false);
 		ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(assessmentRequest.getRequestInfo(), true);
 		AssessmentResponse response = AssessmentResponse.builder()
 				.assessments(Arrays.asList(assessment))
