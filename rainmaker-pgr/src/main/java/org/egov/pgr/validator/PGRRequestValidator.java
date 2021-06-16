@@ -448,12 +448,12 @@ public class PGRRequestValidator {
 			 * Code to check if the reopen happens within defaultExpiryTimeBeforeReopen no of days after resolve. 
 			 */
 			if(WorkFlowConfigs.ACTION_REOPEN.equals(actionInfo.getAction()) && currentStatus.equals(WorkFlowConfigs.STATUS_RESOLVED)) {
-				if(null != getLastModifiedTime(service, history)) {
-					Long timeDifference = new Date().getTime() - getLastModifiedTime(service, history);
+				if(null != pgrUtils.getLastModifiedTime(service, history)) {
+					Long timeDifference = new Date().getTime() - pgrUtils.getLastModifiedTime(service, history);
 					if(TimeUnit.MILLISECONDS.toHours(timeDifference) > defaultExpiryTimeBeforeReopen) {
 						Long days = defaultExpiryTimeBeforeReopen / 24;
 						String error = ErrorConstants.INVALID_ACTION_REOPEN_EXPIRED_MSG;
-						error = error.replaceAll("$days", days.toString());
+						error = error.replace("$days", days.toString());
 						errorMap.put(ErrorConstants.INVALID_ACTION_REOPEN_EXPIRED_CODE, error);
 					}
 					
@@ -491,17 +491,7 @@ public class PGRRequestValidator {
 		return serviceResponse;
 	}
 	
-	private Long getLastModifiedTime(Service service, ActionHistory history) {
-		Long lasModifiedTime = null;
-		//Search will always return actions in the order of latest action - oldest action.
-		if(null == service.getAuditDetails().getLastModifiedTime())
-			lasModifiedTime = history.getActions().get(0).getWhen(); //time when the latest action was taken
-		else
-			lasModifiedTime = service.getAuditDetails().getLastModifiedTime();
-		
-		return lasModifiedTime;
-		
-	}
+	
 	
 	/**
 	 * validates the legality of the escalation search criteria given
