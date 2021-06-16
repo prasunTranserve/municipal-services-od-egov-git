@@ -9,15 +9,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Relationship {
 	
-	FATHER("FATHER"),
+    FATHER("FATHER"),
     HUSBAND("HUSBAND"),
-    MOTHER("MOTHER"),
-    BROTHER("BROTHER"),
-    SISTER("SISTER"),
-    GRANDFATHER("GRANDFATHER"),
-    GRANDMOTHER("GRANDMOTHER"),
-    FATHERINLAW("FATHERINLAW"),
-    MOTHERINLAW("MOTHERINLAW"),;
+    MOTHER("MOTHER");
 
   private String value;
 

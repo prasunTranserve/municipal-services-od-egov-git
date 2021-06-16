@@ -171,17 +171,19 @@ public class TranslationService {
         calculationCriteria.put("property", propertyMap);
         calculationCriteria.put("tenantId", property.getTenantId());
 
-        calculationCriteria.put("holdingTax", assessmentRequest.getAssessment().getAdditionalDetails().get("holdingTax"));
-        calculationCriteria.put("lightTax", assessmentRequest.getAssessment().getAdditionalDetails().get("lightTax"));
-        calculationCriteria.put("waterTax", assessmentRequest.getAssessment().getAdditionalDetails().get("waterTax"));
-        calculationCriteria.put("drainageTax", assessmentRequest.getAssessment().getAdditionalDetails().get("drainageTax"));
-        calculationCriteria.put("latrineTax", assessmentRequest.getAssessment().getAdditionalDetails().get("latrineTax"));
-        calculationCriteria.put("parkingTax", assessmentRequest.getAssessment().getAdditionalDetails().get("parkingTax"));
-        calculationCriteria.put("solidWasteUserCharges", assessmentRequest.getAssessment().getAdditionalDetails().get("solidWasteUserCharges"));
-        calculationCriteria.put("ownershipExemption", assessmentRequest.getAssessment().getAdditionalDetails().get("ownershipExemption"));
-        calculationCriteria.put("usageExemption", assessmentRequest.getAssessment().getAdditionalDetails().get("usageExemption"));
-        calculationCriteria.put("interest", assessmentRequest.getAssessment().getAdditionalDetails().get("interest"));
-        calculationCriteria.put("penalty", assessmentRequest.getAssessment().getAdditionalDetails().get("penalty"));
+        if(assessment.getAdditionalDetails() != null) {
+	        calculationCriteria.put("holdingTax", assessment.getAdditionalDetails().get("holdingTax"));
+	        calculationCriteria.put("lightTax", assessment.getAdditionalDetails().get("lightTax"));
+	        calculationCriteria.put("waterTax", assessment.getAdditionalDetails().get("waterTax"));
+	        calculationCriteria.put("drainageTax", assessment.getAdditionalDetails().get("drainageTax"));
+	        calculationCriteria.put("latrineTax", assessment.getAdditionalDetails().get("latrineTax"));
+	        calculationCriteria.put("parkingTax", assessment.getAdditionalDetails().get("parkingTax"));
+	        calculationCriteria.put("solidWasteUserCharges", assessment.getAdditionalDetails().get("solidWasteUserCharges"));
+	        calculationCriteria.put("ownershipExemption", assessment.getAdditionalDetails().get("ownershipExemption"));
+	        calculationCriteria.put("usageExemption", assessment.getAdditionalDetails().get("usageExemption"));
+	        calculationCriteria.put("interest", assessment.getAdditionalDetails().get("interest"));
+	        calculationCriteria.put("penalty", assessment.getAdditionalDetails().get("penalty"));
+        }
         
         Map<String, Object> calculationReq = new HashMap<>();
         calculationReq.put("RequestInfo", requestInfo);

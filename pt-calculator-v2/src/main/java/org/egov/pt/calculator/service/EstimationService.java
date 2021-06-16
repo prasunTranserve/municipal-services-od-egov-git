@@ -333,6 +333,11 @@ public class EstimationService {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
 		}
 		
+		// TODO: For now to skip exception for no demand
+		if(estimates.isEmpty()) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(BigDecimal.ONE).build());
+		}
+		
 		return estimates;
 	}
 
