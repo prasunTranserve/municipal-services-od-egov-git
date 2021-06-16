@@ -11,13 +11,7 @@ public enum Relationship {
 	
     FATHER("FATHER"),
     HUSBAND("HUSBAND"),
-    MOTHER("MOTHER"),
-    BROTHER("BROTHER"),
-    SISTER("SISTER"),
-    GRANDFATHER("GRANDFATHER"),
-    GRANDMOTHER("GRANDMOTHER"),
-    FATHERINLAW("FATHERINLAW"),
-    MOTHERINLAW("MOTHERINLAW");
+    MOTHER("MOTHER");
 
   private String value;
 

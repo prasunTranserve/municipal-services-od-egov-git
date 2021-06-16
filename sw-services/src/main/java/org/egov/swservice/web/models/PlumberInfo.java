@@ -46,13 +46,7 @@ public class PlumberInfo {
 	public enum RelationshipEnum {
 		FATHER("FATHER"),
 		HUSBAND("HUSBAND"),
-		MOTHER("MOTHER"),
-		BROTHER("BROTHER"),
-		SISTER("SISTER"),
-		GRANDFATHER("GRANDFATHER"),
-		GRANDMOTHER("GRANDMOTHER"),
-		FATHERINLAW("FATHERINLAW"),
-		MOTHERINLAW("MOTHERINLAW");
+		MOTHER("MOTHER");
 
 		private String value;
 
