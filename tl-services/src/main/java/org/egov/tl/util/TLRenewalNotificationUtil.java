@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -31,13 +32,16 @@ public class TLRenewalNotificationUtil {
     private Producer producer;
 
     private NotificationUtil notificationUtil;
+    
+    private RestTemplate restTemplate;
 
     @Autowired
-    public TLRenewalNotificationUtil(TLConfiguration config, ServiceRequestRepository serviceRequestRepository, Producer producer, NotificationUtil notificationUtil) {
+    public TLRenewalNotificationUtil(TLConfiguration config, ServiceRequestRepository serviceRequestRepository, Producer producer, NotificationUtil notificationUtil, RestTemplate restTemplate) {
         this.config = config;
         this.serviceRequestRepository = serviceRequestRepository;
         this.producer = producer;
         this.notificationUtil = notificationUtil;
+        this.restTemplate = restTemplate;
     }
 
 
@@ -65,10 +69,26 @@ public class TLRenewalNotificationUtil {
                 message = getInitiatedMsg(license, messageTemplate);
                 break;
 
-            case ACTION_STATUS_APPLIED:
-                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPLIED, localizationMessage);
-                message = getAppliedMsg(license, messageTemplate);
-                break;
+//            case ACTION_STATUS_APPLIED:
+//                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPLIED, localizationMessage);
+//                message = getAppliedMsg(license, messageTemplate);
+//                break;
+                
+    		case ACTION_STATUS_PENDINGPAYMENT:
+    			messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPLIED, localizationMessage);
+    			BigDecimal amountToBePaid = getAmountToBePaid(requestInfo, license);
+    			message = getAppliedMsg(license,amountToBePaid, messageTemplate);
+    			break;
+    			
+    		case ACTION_STATUS_DOCVERIFICATION:
+    			messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_DOC_VERIFICATION, localizationMessage);
+    			message = getDocverificationMsg(license, messageTemplate);
+    			break;
+    			
+    		case ACTION_STATUS_FORWARD_DOCVERIFICATION:
+    			messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_FORWARD_DOC_VERIFICATION, localizationMessage);
+    			message = getDocverificationMsg(license, messageTemplate);
+    			break;
 
             case ACTION_STATUS_FIELDINSPECTION:
                 messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_FIELD_INSPECTION, localizationMessage);
@@ -80,22 +100,23 @@ public class TLRenewalNotificationUtil {
                 message = getPendingApprovalMsg(license, messageTemplate);
                 break;
 
+            case ACTION_STATUS_RENEWAL_APPROVED:
+                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPROVED, localizationMessage);
+                message = getApprovedMsg(license, messageTemplate);
+                break;
+                
             case ACTION_STATUS_REJECTED:
                 messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_REJECTED, localizationMessage);
                 message = getRejectedMsg(license, messageTemplate);
                 break;
 
-            case ACTION_STATUS_RENEWAL_APPROVED:
-                BigDecimal amountToBePaid = getAmountToBePaid(requestInfo, license);
-                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPROVED, localizationMessage);
-                message = getApprovedMsg(license, amountToBePaid, messageTemplate);
-                break;
-
-            case ACTION_STATUS_RENEWAL_INITIATE_APPROVED:
-                BigDecimal amountToBePaid2 = getAmountToBePaid(requestInfo, license);
-                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPROVED, localizationMessage);
-                message = getApprovedMsg(license, amountToBePaid2, messageTemplate);
-                break;
+          
+// This is disabled because in this there is no directrenewal workflow and renewal should go through all the levels.
+//            case ACTION_STATUS_RENEWAL_INITIATE_APPROVED:
+//                BigDecimal amountToBePaid2 = getAmountToBePaid(requestInfo, license);
+//                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_APPROVED, localizationMessage);
+//                message = getApprovedMsg(license, amountToBePaid2, messageTemplate);
+//                break;
 
             /*
              * case ACTION_STATUS_PAID : messageTemplate =
@@ -103,15 +124,25 @@ public class TLRenewalNotificationUtil {
              * message = getApprovalPendingMsg(license,messageTemplate); break;
              */
 
+            case ACTION_SENDBACKTOCITIZEN_DOCVERIFICATION:
+                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
+                message = getCitizenSendBack(license, messageTemplate);
+                break;
+                
             case ACTION_SENDBACKTOCITIZEN_FIELDINSPECTION:
-                messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
+                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
+                message = getCitizenSendBack(license, messageTemplate);
+                break;
+                
+            case ACTION_SENDBACKTOCITIZEN_PENDINGAPPROVAL:
+                messageTemplate = getMessageTemplate(TLConstants.RENEWAL_NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
                 message = getCitizenSendBack(license, messageTemplate);
                 break;
 
-            case ACTION_FORWARD_CITIZENACTIONREQUIRED:
-                messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FORWARD_CITIZEN, localizationMessage);
-                message = getCitizenForward(license, messageTemplate);
-                break;
+//            case ACTION_FORWARD_CITIZENACTIONREQUIRED:
+//                messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FORWARD_CITIZEN, localizationMessage);
+//                message = getCitizenForward(license, messageTemplate);
+//                break;
 
             case ACTION_CANCEL_CANCELLED:
                 messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_CANCELLED, localizationMessage);
@@ -210,13 +241,25 @@ public class TLRenewalNotificationUtil {
      *            Message from localization for apply
      * @return customized message for apply
      */
-    private String getAppliedMsg(TradeLicense license, String message) {
-        // message = message.replace("<1>",);
-        message = message.replace("<2>", license.getTradeName());
-        message = message.replace("<3>", license.getApplicationNumber());
+    private String getAppliedMsg(TradeLicense license, BigDecimal amountToBePaid, String message) {
+		// message = message.replace("<1>",);
+		message = message.replace("<2>", license.getTradeName());
+		message = message.replace("<3>", license.getApplicationNumber());
+		message = message.replace("<4>", amountToBePaid.toString());
 
-        return message;
-    }
+		String UIHost = config.getUiAppHost();
+
+		String paymentPath = config.getPayLinkSMS();
+		paymentPath = paymentPath.replace("$consumercode",license.getApplicationNumber());
+		paymentPath = paymentPath.replace("$tenantId",license.getTenantId());
+		paymentPath = paymentPath.replace("$businessservice",businessService_TL);
+
+		String finalPath = UIHost + paymentPath;
+
+		message = message.replace(PAYMENT_LINK_PLACEHOLDER,getShortenedUrl(finalPath));
+		
+		return message;
+	}
 
     /**
      * Creates customized message for submitted
@@ -243,25 +286,14 @@ public class TLRenewalNotificationUtil {
      *            Message from localization for approved
      * @return customized message for approved
      */
-    private String getApprovedMsg(TradeLicense license, BigDecimal amountToBePaid, String message) {
-        message = message.replace("<2>", license.getTradeName());
-        message = message.replace("<3>", license.getApplicationNumber());
-        String date = epochToDate(license.getValidTo());
+    private String getApprovedMsg(TradeLicense license, String message) {
+		message = message.replace("<2>", license.getTradeName());
+		message = message.replace("<3>", license.getLicenseNumber());
+		String date = epochToDate(license.getValidTo());
         message = message.replace("<4>", date);
 
-        String UIHost = config.getUiAppHost();
-
-        String paymentPath = config.getPayLinkSMS();
-        paymentPath = paymentPath.replace("$consumercode",license.getApplicationNumber());
-        paymentPath = paymentPath.replace("$tenantId",license.getTenantId());
-        paymentPath = paymentPath.replace("$businessservice",businessService_TL);
-
-        String finalPath = UIHost + paymentPath;
-
-        message = message.replace(PAYMENT_LINK_PLACEHOLDER,notificationUtil.getShortenedUrl(finalPath));
-
-        return message;
-    }
+		return message;
+	}
 
     private String epochToDate(Long validTo){
         Long timeStamp= validTo / 1000L;
@@ -310,6 +342,21 @@ public class TLRenewalNotificationUtil {
         return message;
     }
 
+	/**
+	 * Creates customized message for doc verification
+	 * 
+	 * @param license
+	 *            tenantId of the tradeLicense
+	 * @param message
+	 *            Message from localization for apply
+	 * @return customized message for apply
+	 */
+	private String getDocverificationMsg(TradeLicense license, String message) {
+		message = message.replace("<2>", license.getApplicationNumber());
+		message = message.replace("<3>", license.getTradeName());
+
+		return message;
+	}
 
     /**
      * Creates customized message for rejected
@@ -547,5 +594,25 @@ public class TLRenewalNotificationUtil {
     public void sendEventNotification(EventRequest request) {
         producer.push(config.getSaveUserEventsTopic(), request);
     }
+    
+    /**
+	 * Method to shortent the url
+	 * returns the same url if shortening fails
+	 * @param url
+	 */
+	public String getShortenedUrl(String url){
+
+		HashMap<String,String> body = new HashMap<>();
+		body.put("url",url);
+		StringBuilder builder = new StringBuilder(config.getUrlShortnerHost());
+		builder.append(config.getUrlShortnerEndpoint());
+		String res = restTemplate.postForObject(builder.toString(), body, String.class);
+
+		if(StringUtils.isEmpty(res)){
+			log.error("URL_SHORTENING_ERROR","Unable to shorten url: "+url); ;
+			return url;
+		}
+		else return res;
+	}
 
 }

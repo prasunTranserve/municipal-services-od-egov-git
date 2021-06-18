@@ -104,6 +104,7 @@ public class TradeLicenseService {
        if(businessServicefromPath==null)
             businessServicefromPath = businessService_TL;
        tlValidator.validateBusinessService(tradeLicenseRequest,businessServicefromPath);
+       tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
        Object mdmsData = util.mDMSCall(tradeLicenseRequest);
        actionValidator.validateCreateRequest(tradeLicenseRequest);
        enrichmentService.enrichTLCreateRequest(tradeLicenseRequest, mdmsData);
@@ -274,6 +275,7 @@ public class TradeLicenseService {
             if (businessServicefromPath == null)
                 businessServicefromPath = businessService_TL;
             tlValidator.validateBusinessService(tradeLicenseRequest, businessServicefromPath);
+            tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
             Object mdmsData = util.mDMSCall(tradeLicenseRequest);
             String businessServiceName = null;
             switch (businessServicefromPath) {
@@ -293,6 +295,7 @@ public class TradeLicenseService {
             actionValidator.validateUpdateRequest(tradeLicenseRequest, businessService);
             enrichmentService.enrichTLUpdateRequest(tradeLicenseRequest, businessService);
             tlValidator.validateUpdate(tradeLicenseRequest, searchResult, mdmsData);
+            tlValidator.validateNonUpdatableFileds(tradeLicenseRequest, searchResult);
             switch(businessServicefromPath)
             {
                 case businessService_BPA:

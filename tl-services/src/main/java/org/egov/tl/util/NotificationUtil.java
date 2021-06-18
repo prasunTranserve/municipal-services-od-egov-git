@@ -66,9 +66,26 @@ public class NotificationUtil {
 			message = getInitiatedMsg(license, messageTemplate);
 			break;
 
-		case ACTION_STATUS_APPLIED:
+//		case ACTION_STATUS_APPLIED:
+//			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_APPLIED, localizationMessage);
+//			message = getAppliedMsg(license, messageTemplate);
+//			break;
+			
+			
+		case ACTION_STATUS_PENDINGPAYMENT:
 			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_APPLIED, localizationMessage);
-			message = getAppliedMsg(license, messageTemplate);
+			BigDecimal amountToBePaid = getAmountToBePaid(requestInfo, license);
+			message = getAppliedMsg(license,amountToBePaid, messageTemplate);
+			break;
+			
+		case ACTION_STATUS_DOCVERIFICATION:
+			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_DOC_VERIFICATION, localizationMessage);
+			message = getDocverificationMsg(license, messageTemplate);
+			break;
+			
+		case ACTION_STATUS_FORWARD_DOCVERIFICATION:
+			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FORWARD_DOC_VERIFICATION, localizationMessage);
+			message = getDocverificationMsg(license, messageTemplate);
 			break;
 
 		/*
@@ -76,11 +93,21 @@ public class NotificationUtil {
 		 * getMessageTemplate(TLConstants.NOTIFICATION_PAID,localizationMessage);
 		 * message = getApprovalPendingMsg(license,messageTemplate); break;
 		 */
+			
+		case ACTION_STATUS_FIELDINSPECTION:
+			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FIELD_INSPECTION, localizationMessage);
+			message = getFieldInspectionMsg(license, messageTemplate);
+			break;
+			
+			
+        case ACTION_STATUS_PENDINGAPPROVAL:
+            messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_PENDINGAPPROVAL, localizationMessage);
+            message = getApprovalPendingMsg(license, messageTemplate);
+            break;
 
 		case ACTION_STATUS_APPROVED:
-			BigDecimal amountToBePaid = getAmountToBePaid(requestInfo, license);
 			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_APPROVED, localizationMessage);
-			message = getApprovedMsg(license, amountToBePaid, messageTemplate);
+			message = getApprovedMsg(license, messageTemplate);
 			break;
 
 		case ACTION_STATUS_REJECTED:
@@ -88,20 +115,27 @@ public class NotificationUtil {
 			message = getRejectedMsg(license, messageTemplate);
 			break;
 
-		case ACTION_STATUS_FIELDINSPECTION:
-			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FIELD_INSPECTION, localizationMessage);
-			message = getFieldInspectionMsg(license, messageTemplate);
-			break;
+
 
 		case ACTION_SENDBACKTOCITIZEN_FIELDINSPECTION:
 			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
 			message = getCitizenSendBack(license, messageTemplate);
 			break;
-
-		case ACTION_FORWARD_CITIZENACTIONREQUIRED:
-			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FORWARD_CITIZEN, localizationMessage);
-			message = getCitizenForward(license, messageTemplate);
+			
+		case ACTION_SENDBACKTOCITIZEN_PENDINGAPPROVAL:
+			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
+			message = getCitizenSendBack(license, messageTemplate);
 			break;
+			
+		case ACTION_SENDBACKTOCITIZEN_DOCVERIFICATION:
+			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_SENDBACK_CITIZEN, localizationMessage);
+			message = getCitizenSendBack(license, messageTemplate);
+			break;
+
+//		case ACTION_FORWARD_CITIZENACTIONREQUIRED:
+//			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_FORWARD_CITIZEN, localizationMessage);
+//			message = getCitizenForward(license, messageTemplate);
+//			break;
 
 		case ACTION_CANCEL_CANCELLED:
 			messageTemplate = getMessageTemplate(TLConstants.NOTIFICATION_CANCELLED, localizationMessage);
@@ -201,10 +235,38 @@ public class NotificationUtil {
 	 *            Message from localization for apply
 	 * @return customized message for apply
 	 */
-	private String getAppliedMsg(TradeLicense license, String message) {
+	private String getAppliedMsg(TradeLicense license, BigDecimal amountToBePaid, String message) {
 		// message = message.replace("<1>",);
 		message = message.replace("<2>", license.getTradeName());
 		message = message.replace("<3>", license.getApplicationNumber());
+		message = message.replace("<4>", amountToBePaid.toString());
+
+		String UIHost = config.getUiAppHost();
+
+		String paymentPath = config.getPayLinkSMS();
+		paymentPath = paymentPath.replace("$consumercode",license.getApplicationNumber());
+		paymentPath = paymentPath.replace("$tenantId",license.getTenantId());
+		paymentPath = paymentPath.replace("$businessservice",businessService_TL);
+
+		String finalPath = UIHost + paymentPath;
+
+		message = message.replace(PAYMENT_LINK_PLACEHOLDER,getShortenedUrl(finalPath));
+		
+		return message;
+	}
+	
+	/**
+	 * Creates customized message for doc verification
+	 * 
+	 * @param license
+	 *            tenantId of the tradeLicense
+	 * @param message
+	 *            Message from localization for apply
+	 * @return customized message for apply
+	 */
+	private String getDocverificationMsg(TradeLicense license, String message) {
+		message = message.replace("<2>", license.getApplicationNumber());
+		message = message.replace("<3>", license.getTradeName() );
 
 		return message;
 	}
@@ -234,24 +296,31 @@ public class NotificationUtil {
 	 *            Message from localization for approved
 	 * @return customized message for approved
 	 */
-	private String getApprovedMsg(TradeLicense license, BigDecimal amountToBePaid, String message) {
+	private String getApprovedMsg(TradeLicense license,  String message) {
 		message = message.replace("<2>", license.getTradeName());
-		message = message.replace("<3>", amountToBePaid.toString());
-
-
-		String UIHost = config.getUiAppHost();
-
-		String paymentPath = config.getPayLinkSMS();
-		paymentPath = paymentPath.replace("$consumercode",license.getApplicationNumber());
-		paymentPath = paymentPath.replace("$tenantId",license.getTenantId());
-		paymentPath = paymentPath.replace("$businessservice",businessService_TL);
-
-		String finalPath = UIHost + paymentPath;
-
-		message = message.replace(PAYMENT_LINK_PLACEHOLDER,getShortenedUrl(finalPath));
+		message = message.replace("<3>", license.getLicenseNumber());
+		String date = epochToDate(license.getValidTo());
+        message = message.replace("<4>", date);
+        
 		return message;
 	}
 
+	 private String epochToDate(Long validTo){
+	        Long timeStamp= validTo / 1000L;
+	        java.util.Date time=new java.util.Date((Long)timeStamp*1000);
+	        Calendar cal = Calendar.getInstance();
+	        cal.setTime(time);
+	        String day = String.valueOf(cal.get(Calendar.DAY_OF_MONTH));
+	        Integer mon = cal.get(Calendar.MONTH);
+	        mon=mon+1;
+	        String month = String.valueOf(mon);
+	        String year = String.valueOf(cal.get(Calendar.YEAR));
+	        StringBuilder date = new StringBuilder(day);
+	        date.append("/").append(month).append("/").append(year);
+
+	        return date.toString();
+	    }
+	
 	/**
 	 * Creates customized message for rejected
 	 * 

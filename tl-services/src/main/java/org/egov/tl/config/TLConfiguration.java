@@ -305,5 +305,7 @@ public class TLConfiguration {
     @Value("${egov.usr.events.view.application.code}")
     private String viewApplicationCode;
 
+    @Value("${egov.tl.maximumTardeUnits.size}")
+    private Integer maximumTardeUnits ;
 
 }
