@@ -1,29 +1,37 @@
 package org.egov.tl.validator;
 
-import com.jayway.jsonpath.JsonPath;
+import static org.egov.tl.util.TLConstants.businessService_BPA;
+import static org.egov.tl.util.TLConstants.businessService_TL;
+
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
 import org.egov.tl.config.TLConfiguration;
 import org.egov.tl.repository.TLRepository;
-import org.egov.tl.service.TradeLicenseService;
 import org.egov.tl.service.UserService;
-import org.egov.tl.util.BPAConstants;
 import org.egov.tl.util.TLConstants;
 import org.egov.tl.util.TradeUtil;
-import org.egov.tl.web.models.*;
-import org.egov.tl.web.models.user.UserDetailResponse;
+import org.egov.tl.web.models.OwnerInfo;
+import org.egov.tl.web.models.TradeLicense;
+import org.egov.tl.web.models.TradeLicenseRequest;
+import org.egov.tl.web.models.TradeLicenseSearchCriteria;
+import org.egov.tl.web.models.TradeUnit;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.egov.tl.util.TLConstants.businessService_BPA;
-import static org.egov.tl.util.TLConstants.businessService_TL;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Component
 public class TLValidator {
@@ -99,6 +107,7 @@ public class TLValidator {
             }
         }
     }
+    
 
     private void validateTLSpecificNotNullFields(TradeLicenseRequest request) {
         request.getLicenses().forEach(license -> {
@@ -158,32 +167,44 @@ public class TLValidator {
      *  Validates the fromDate and toDate of the request
      * @param request The input TradeLicenseRequest Object
      */
-	private void valideDates(TradeLicenseRequest request, Object mdmsData) {
-		/*
-		 * request.getLicenses().forEach(license -> { Map<String,Long> taxPeriods =
-		 * null; if(license.getValidTo()==null) throw new
-		 * CustomException("INVALID VALIDTO DATE"," Validto cannot be null"); //
-		 * if(license.getApplicationType() != null &&
-		 * license.getApplicationType().toString().equals(TLConstants.
-		 * APPLICATION_TYPE_RENEWAL)){ // taxPeriods =
-		 * tradeUtil.getTaxPeriods(license,mdmsData); // }else{ // taxPeriods =
-		 * tradeUtil.getTaxPeriods(license,mdmsData); // } taxPeriods =
-		 * tradeUtil.getTaxPeriods(license,mdmsData); if(license.getValidTo()!=null &&
-		 * license.getValidTo()>taxPeriods.get(TLConstants.MDMS_ENDDATE)){ Date expiry =
-		 * new Date(license.getValidTo()); throw new
-		 * CustomException("INVALID TO DATE"," Validto cannot be greater than: "+expiry)
-		 * ; } if(license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.
-		 * LicenseTypeEnum.TEMPORARY.toString())) { Long startOfDay = getStartOfDay();
-		 * if (!config.getIsPreviousTLAllowed() && license.getValidFrom() != null &&
-		 * license.getValidFrom() < startOfDay) throw new
-		 * CustomException("INVALID FROM DATE",
-		 * "The validFrom date cannot be less than CurrentDate"); if
-		 * ((license.getValidFrom() != null && license.getValidTo() != null) &&
-		 * (license.getValidTo() - license.getValidFrom()) < config.getMinPeriod())
-		 * throw new CustomException("INVALID PERIOD",
-		 * "The license should be applied for minimum of 30 days"); } });
-		 */}
+    private void valideDates(TradeLicenseRequest request ,Object mdmsData){
+//        request.getLicenses().forEach(license -> {
+//            Map<String,Long> taxPeriods = null;
+//            if(license.getValidTo()==null)
+//                throw new CustomException("INVALID VALIDTO DATE"," Validto cannot be null");
+////            if(license.getApplicationType() != null && license.getApplicationType().toString().equals(TLConstants.APPLICATION_TYPE_RENEWAL)){
+////                taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
+////            }else{
+////                taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
+////            }
+////            taxPeriods = tradeUtil.getTaxPeriods(license,mdmsData);
+////            if(license.getValidTo()!=null && license.getValidTo()>taxPeriods.get(TLConstants.MDMS_ENDDATE)){
+////                Date expiry = new Date(license.getValidTo());
+////                throw new CustomException("INVALID TO DATE"," Validto cannot be greater than: "+expiry);
+////            }
+//            if(license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.TEMPORARY.toString())) {
+//                Long startOfDay = getStartOfDay();
+//                if (!config.getIsPreviousTLAllowed() && license.getValidFrom() != null
+//                        && license.getValidFrom() < startOfDay)
+//                    throw new CustomException("INVALID FROM DATE", "The validFrom date cannot be less than CurrentDate");
+//                if ((license.getValidFrom() != null && license.getValidTo() != null) && (license.getValidTo() - license.getValidFrom()) < config.getMinPeriod())
+//                    throw new CustomException("INVALID PERIOD", "The license should be applied for minimum of 30 days");
+//            }
+//        });
+    
 
+//    	});
+   
+    	
+    	request.getLicenses().forEach(license -> {
+    			Long startOfDay = getStartOfDay();
+    			if (!config.getIsPreviousTLAllowed() && license.getValidFrom() != null
+    					&& license.getValidFrom() < startOfDay)
+    				throw new CustomException("INVALID FROM DATE", "The validFrom date cannot be less than CurrentDate");
+    	});
+    	
+    	
+    }
     /**
      * Returns the start of the current day in millis
      * @return time in millis
@@ -292,7 +313,7 @@ public class TLValidator {
             businessService = businessService_TL;
         switch (businessService) {
             case businessService_TL:
-                valideDates(request, mdmsData);
+               // valideDates(request, mdmsData);
                 propertyValidator.validateProperty(request);
                 validateTLSpecificNotNullFields(request);
                 break;
@@ -661,8 +682,259 @@ public class TLValidator {
     }
 
 
+ 
+    
+    public void validateValidFromValidToAndTradeUnitsSize(TradeLicenseRequest request) {
+
+    	List<TradeLicense> licenses = request.getLicenses();
+
+        for(TradeLicense license : licenses)
+        {
+            List<TradeUnit> units = license.getTradeLicenseDetail().getTradeUnits();
+            if (units!= null && units.size()>config.getMaximumTardeUnits()) {
+            	throw new CustomException("MAXIMUM TRADE UNITS ERROR"," The maximum trade units can be "+config.getMaximumTardeUnits());
+			}
+            
+            if(license.getValidFrom()==null)
+            {
+            	throw new CustomException("VALID FROM ERROR"," The Valid From date is mandatory ");
+            }
+            
+            if(license.getValidTo()==null)
+            {
+            	throw new CustomException("VALID TO ERROR"," The Valid To date is mandatory ");
+            }
+            
+            if(license.getLicenseType()!=null && license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.TEMPORARY.toString()))
+            {
+            	for (TradeUnit tradeUnit : units) {
+            		if(tradeUnit.getUomValue()!=null)
+            		{
+            			Long tradePeriod =  getDifferenceDays(license.getValidFrom(),license.getValidTo());
+            			if(!tradePeriod.toString().equalsIgnoreCase(tradeUnit.getUomValue()))
+            			{
+            				throw new CustomException("UOM VALUE ERROR"," The uom value should be equal to the no .of days between Trade starting date and Trade ending date ");
+            			}
+            		}
+            	}
+            }else if(license.getLicenseType()!=null && license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.PERMANENT.toString()))
+            {
+            	
+            	Integer	numberOfYears = null ;
+            	
+            	if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+       		 {
+       			 JsonNode additionalDetailsNode = null;
+       		 
+       			additionalDetailsNode = license.getTradeLicenseDetail().getAdditionalDetail();
+       		 
+       		 if(additionalDetailsNode != null)
+       		 {
+       			 String tradeYears = null;
+       			 
+       			 if(additionalDetailsNode.get("licensePeriod") != null)
+       				 tradeYears = additionalDetailsNode.get("licensePeriod").textValue();
+       			 
+       			 if(tradeYears!=null)
+       			 {
+       				 try {
+						numberOfYears = Integer.parseInt(tradeYears);
+						if(!validateDifferenceYears(license.getValidFrom(),license.getValidTo(),numberOfYears))
+						{
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The difference between Valid From date and valid to date in years should be equal to License Period ");
+						}
+						
+						} catch (NumberFormatException e) {
+							
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+						}
+       			 }else
+       				 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+       			 
+       		 }else
+       			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+       		 
+       		 }else
+       			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+            	
+            	
+            }
+            
+            
+        }
+    }
+
+    
+    public  long getDifferenceDays( long ValidfromDate, long ValidtoDate) {
+    	
+    	    long diff = ValidtoDate - ValidfromDate;
+    	    return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+    	
+    }
+
+    public  boolean validateDifferenceYears( Long ValidfromDate, Long ValidtoDate , int years) {
+    	
+    	boolean noOfYearsMatched = false ;
+		
+		Calendar fromDate = new GregorianCalendar(); 
+    	fromDate.setTimeInMillis(ValidfromDate);
+    	
+    	fromDate.add(Calendar.YEAR, years);
+    	
+    	Long calculatedValidToDate = fromDate.getTimeInMillis();
+    	
+    	if(calculatedValidToDate.longValue()==ValidtoDate.longValue())
+    	{
+    		noOfYearsMatched = true ;
+    	}
+    	
+		return noOfYearsMatched;
+
+    }
+    /** This method validates the not updatable fields on edit like Trade Units,Trade City,Trade Dates,Trade Duration
+     * 
+     */
+    public void validateNonUpdatableFileds(TradeLicenseRequest request, List<TradeLicense> searchResult)
+    {
+
+    	Map<String,TradeLicense> idToTradeLicenseFromSearch = new HashMap<>();
+    	searchResult.forEach(tradeLicense -> {
+    		idToTradeLicenseFromSearch.put(tradeLicense.getId(),tradeLicense);
+    	});
+    	request.getLicenses().forEach(license -> {
+
+    		if(!license.getAction().equalsIgnoreCase(TLConstants.TL_ACTION_INITIATE))
+    		{
+
+    			Long requestValidFrom = license.getValidFrom();
+    			Long requestValidTo = license.getValidTo();
+    			Long requestcommencementDate = license.getCommencementDate();
+
+    			Long existingValidFrom = idToTradeLicenseFromSearch.get(license.getId()).getValidFrom();
+    			Long existingValidTo = idToTradeLicenseFromSearch.get(license.getId()).getValidTo();
+    			Long existingCommencementDate = idToTradeLicenseFromSearch.get(license.getId()).getCommencementDate();
+
+    			if(requestValidTo.longValue()!=existingValidTo.longValue())
+    			{
+    				throw new CustomException("VALID TO DATE ERROR","The valid to date cannot be modified .");
+    			}
+    			
+    			if(requestValidFrom.longValue()!=existingValidFrom.longValue())
+    			{
+    				throw new CustomException("VALID FROM DATE ERROR","The valid from date cannot be modified .");
+    			}
+
+    		
+    			
+    			if(requestcommencementDate.longValue()!=existingCommencementDate.longValue())
+    			{
+    				throw new CustomException("COMMENCEMENT DATE ERROR","The commencement date cannot be modified .");
+    			}
+
+    			if(!license.getLicenseType().toString().equalsIgnoreCase(idToTradeLicenseFromSearch.get(license.getId()).getLicenseType().toString()))
+    			{
+    				throw new CustomException("LICENSE TYPE ERROR","The License Type cannot be modified .");
+    			}
+
+    			if(!license.getApplicationType().toString().equalsIgnoreCase(idToTradeLicenseFromSearch.get(license.getId()).getApplicationType().toString()))
+    			{
+    				throw new CustomException("APPLICATION TYPE ERROR","The Application Type cannot be modified .");
+    			}
+
+    			if(!license.getTenantId().equalsIgnoreCase(idToTradeLicenseFromSearch.get(license.getId()).getTenantId()))
+    			{
+    				throw new CustomException("TENANT ID ERROR","The Tenant Id cannot be modified .");
+    			}
 
 
+    			if(license.getLicenseType()!=null && license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.PERMANENT.toString()))
+    			{
+    				String tradeYears = "" ;
+    				String dataBaseTradeYears = "" ;
+
+    				if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+    				{
+    					JsonNode additionalDetailsNode = null;
+
+    					additionalDetailsNode = license.getTradeLicenseDetail().getAdditionalDetail();
+
+    					if(additionalDetailsNode != null)
+    						tradeYears = additionalDetailsNode.get("licensePeriod").textValue();
+    				}
+
+    				if(idToTradeLicenseFromSearch.get(license.getId()).getTradeLicenseDetail().getAdditionalDetail()!= null)
+    				{
+    					JsonNode additionalDetailsNode = null;
+
+    					additionalDetailsNode = idToTradeLicenseFromSearch.get(license.getId()).getTradeLicenseDetail().getAdditionalDetail();
+
+    					if(additionalDetailsNode != null)
+    						dataBaseTradeYears = additionalDetailsNode.get("licensePeriod").textValue();
+    				}
+
+    				if(!tradeYears.equalsIgnoreCase(dataBaseTradeYears))
+    				{
+    					throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The License Period cannot be modified.");
+    				}
+
+    			}
+
+
+    			List<TradeUnit>  requestTradeUnits = license.getTradeLicenseDetail().getTradeUnits();
+
+    			List<TradeUnit>  searchedTradeUnits = idToTradeLicenseFromSearch.get(license.getId()).getTradeLicenseDetail().getTradeUnits();
+
+    			if(requestTradeUnits != null && searchedTradeUnits != null)
+    			{
+    				if(requestTradeUnits.size()!=searchedTradeUnits.size())
+    				{
+    					throw new CustomException("TRADE UNITS ERROR","The Trade units cannot be modified."); 
+    				}
+
+    				for (TradeUnit searchedTradeUnit : searchedTradeUnits) {
+    					if (getTradeUnitInList( requestTradeUnits, searchedTradeUnit.getId(), searchedTradeUnit.getUom(),searchedTradeUnit.getTradeType(),searchedTradeUnit.getUomValue()) == null) {
+    						throw new CustomException("TRADE UNITS ERROR","The Trade units cannot be modified."); 
+    					}
+    				}
+    			}
+
+    		}
+    	});
+    }
+    
+    
+    private  TradeUnit getTradeUnitInList(final List<TradeUnit> requestTradeUnits, final String id, final String uom, final String tradeType, final String uomValue) {
+
+        return requestTradeUnits.stream()
+                .filter(tradeUnit -> tradeUnit.getId().equalsIgnoreCase(id))
+                .filter(tradeUnit -> {
+                	
+                	if(tradeUnit.getUom()==null && uom == null)
+                		return true ;
+                				
+                	if(tradeUnit.getUom()!=null && uom != null && tradeUnit.getUom().equalsIgnoreCase(uom))
+                		return true;
+                	else
+					return false;
+                })
+                .filter(tradeUnit -> tradeUnit.getTradeType().equalsIgnoreCase(tradeType))
+                .filter(tradeUnit -> { 
+                	
+                	if(tradeUnit.getUomValue()==null && uomValue == null)
+                		return true ;
+                	
+                	if(tradeUnit.getUomValue()!=null && uomValue != null && tradeUnit.getUomValue().equalsIgnoreCase(uomValue))
+                		return true;
+                	else 
+                		return false;
+                	})
+                .findFirst().orElse(null);
+    }
+
+
+
+   
+   
 
 
 }

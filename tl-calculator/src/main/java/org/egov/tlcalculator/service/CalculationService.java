@@ -260,7 +260,15 @@ public class CalculationService {
               if(billingSlabs.size()>1)
                   throw new CustomException("BILLINGSLAB ERROR","Found multiple BillingSlabs for the given TradeType");
               if(CollectionUtils.isEmpty(billingSlabs))
-                  throw new CustomException("BILLINGSLAB ERROR","No BillingSlab Found for the given tradeType");
+              {
+            	 String[] tenantArray = license.getTenantId().split("\\.");
+            	 String city = "" ;
+            	 if(tenantArray.length>1)
+            	 {
+            		 city = tenantArray[1];
+            	 }
+                  throw new CustomException("BILLINGSLAB ERROR","Provided UOM(Unit of Measurement) value is not supported for selected Trade Type in "+city+".");
+              }
              System.out.println("TradeUnit: "+tradeUnit.getTradeType()+ " rate: "+billingSlabs.get(0).getRate());
 
              billingSlabIds.add(billingSlabs.get(0).getId()+"|"+i+"|"+tradeUnit.getId());
