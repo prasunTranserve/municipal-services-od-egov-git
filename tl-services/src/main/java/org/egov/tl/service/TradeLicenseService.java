@@ -30,6 +30,8 @@ import static org.egov.tracer.http.HttpUtils.isInterServiceCall;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Service
 @Slf4j
 public class TradeLicenseService {
@@ -104,6 +106,7 @@ public class TradeLicenseService {
        if(businessServicefromPath==null)
             businessServicefromPath = businessService_TL;
        tlValidator.validateBusinessService(tradeLicenseRequest,businessServicefromPath);
+       setValidToDateInLicense(tradeLicenseRequest);
        tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
        Object mdmsData = util.mDMSCall(tradeLicenseRequest);
        actionValidator.validateCreateRequest(tradeLicenseRequest);
@@ -275,6 +278,7 @@ public class TradeLicenseService {
             if (businessServicefromPath == null)
                 businessServicefromPath = businessService_TL;
             tlValidator.validateBusinessService(tradeLicenseRequest, businessServicefromPath);
+            setValidToDateInLicense(tradeLicenseRequest);
             tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
             Object mdmsData = util.mDMSCall(tradeLicenseRequest);
             String businessServiceName = null;
@@ -374,6 +378,59 @@ public class TradeLicenseService {
         tlBatchService.getLicensesAndPerformAction(serviceName, jobname, requestInfo);
 
 
+    }
+    
+    public void setValidToDateInLicense(TradeLicenseRequest tradeLicenseRequest)
+    {
+    	tradeLicenseRequest.getLicenses().forEach(license -> {
+
+    		if(license.getAction().equalsIgnoreCase(TLConstants.TL_ACTION_INITIATE) && license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.PERMANENT.toString()) )
+    		{
+    			
+    			Integer	numberOfYears = null ;
+            	
+            	if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+       		 {
+       			 JsonNode additionalDetailsNode = null;
+       		 
+       			additionalDetailsNode = license.getTradeLicenseDetail().getAdditionalDetail();
+       		 
+       		 if(additionalDetailsNode != null)
+       		 {
+       			 String tradeYears = null;
+       			 
+       			 if(additionalDetailsNode.get("licensePeriod") != null)
+       				 tradeYears = additionalDetailsNode.get("licensePeriod").textValue();
+       			 
+       			 if(tradeYears!=null)
+       			 {
+       				 try {
+						numberOfYears = Integer.parseInt(tradeYears);
+						
+						Long ValidfromDate = license.getValidFrom();
+						
+						Calendar fromDate = new GregorianCalendar(); 
+			        	fromDate.setTimeInMillis(ValidfromDate);
+			        	
+			        	fromDate.add(Calendar.YEAR, numberOfYears);
+			        	
+			        	Long calculatedValidToDate = fromDate.getTimeInMillis();
+			        	
+			        	license.setValidTo(calculatedValidToDate);
+						
+						
+       				 } catch (NumberFormatException e) {
+							
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+						}
+    			
+    			
+       			 }
+    		}
+       		 }
+    		}
+    	});
+    	
     }
 
 }
