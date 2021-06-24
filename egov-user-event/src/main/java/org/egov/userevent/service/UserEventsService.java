@@ -424,6 +424,27 @@ public class UserEventsService {
 			} else {
 				event.setPostedBy(request.getRequestInfo().getUserInfo().getUuid());
 			}
+			
+			
+			String message = event.getDescription() ;
+			String templateId = "" ;
+			
+			String[] splittedMessage = message.split(properties.getMessageDelimiter());
+			if (splittedMessage != null) {
+				if (splittedMessage.length == 1) {
+					message = splittedMessage[0];
+					log.info(String.format(" TemplateId not found for the  message '%s'", message));
+				}
+				if (splittedMessage.length == 2) {
+					message = splittedMessage[0];
+					templateId = splittedMessage[1];
+					log.info(String.format("Email sent with message- '%s'  with template id %s", message, templateId));
+
+				}
+			}
+			
+			event.setDescription(message);
+			
 
 			AuditDetails auditDetails = AuditDetails.builder()
 					.createdBy(request.getRequestInfo().getUserInfo().getUuid()).createdTime(new Date().getTime())
@@ -468,6 +489,26 @@ public class UserEventsService {
 			List<RecepientEvent> recepientEventList = new ArrayList<>();
 			utils.manageRecepients(event, recepientEventList);
 			event.setRecepientEventMap(recepientEventList);
+			
+			
+			String message = event.getDescription() ;
+			String templateId = "" ;
+			
+			String[] splittedMessage = message.split(properties.getMessageDelimiter());
+			if (splittedMessage != null) {
+				if (splittedMessage.length == 1) {
+					message = splittedMessage[0];
+					log.info(String.format(" TemplateId not found for the  message '%s'", message));
+				}
+				if (splittedMessage.length == 2) {
+					message = splittedMessage[0];
+					templateId = splittedMessage[1];
+					log.info(String.format("User event with message- '%s'  with template id %s", message, templateId));
+
+				}
+			}
+			
+			event.setDescription(message);
 
 			AuditDetails auditDetails = event.getAuditDetails();
 			if(null != event.getInternallyUpdted()) {
