@@ -438,7 +438,7 @@ public class UserEventsService {
 				if (splittedMessage.length == 2) {
 					message = splittedMessage[0];
 					templateId = splittedMessage[1];
-					log.info(String.format("Email sent with message- '%s'  with template id %s", message, templateId));
+					log.info(String.format("User event with message- '%s'  with template id %s", message, templateId));
 
 				}
 			}
