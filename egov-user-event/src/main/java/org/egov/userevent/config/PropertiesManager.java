@@ -94,4 +94,7 @@ public class PropertiesManager {
 	
 	@Value("${egov.localisation.is.statelevel}")
 	public Boolean isLocalizationStateLevel;
+	
+	@Value("${email.message.delimiter}")
+	private String messageDelimiter ; 
 }
