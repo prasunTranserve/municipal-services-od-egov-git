@@ -198,37 +198,6 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 		tenantIds.forEach(tenantId -> demandService.generateDemandForTenantId(tenantId, requestInfo));
 	}
 
-	// @Scheduled(fixedDelay = 300000L)
-	@Scheduled(cron = "${cron.schedule.expression}")
-	public void callJobscheduler() {
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		headers.set("Authorization", config.getAuthAuthorization());
-
-		MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-		body.add("username", config.getAuthUsername());
-		body.add("scope", config.getAuthScope());
-		body.add("password", config.getAuthPassword());
-		body.add("grant_type", config.getAuthGrantType());
-		body.add("tenantId", config.getAuthTenantId());
-		body.add("userType", config.getAuthUserType());
-
-		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(body, headers);
-		
-		Map authResponse = new LinkedHashMap<String, String>();
-		authResponse =restTemplate.postForEntity(config.getUserHost() + config.getUserAuthTokenEndPoint(), request, Map.class).getBody();
-		
-		String accessToken = authResponse.get("access_token").toString();
-		log.info("EMPLOYEE Access Token : " + accessToken);
-
-		RequestInfo requestInfo = RequestInfo.builder().apiId(config.getRequestApiId()).ver(config.getRequestVer()).action(config.getRequestAction())
-		.did(config.getRequestDid()).key("").msgId(config.getRequestMsgId()).authToken(accessToken).build();
-		
-		String uri = config.getSwCalculatorHost() + config.getSwJobSchedulerEndpoint();
-		repository.fetchResult(new StringBuilder(uri), RequestInfoWrapper.builder().requestInfo(requestInfo).build());
-	}
-
 	/**
 	 * 
 	 * @param request
