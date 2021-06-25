@@ -72,6 +72,8 @@ public class MDMSService {
         
         bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_CALCULATIONTYPE)
         		.build());
+        bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_OC_COMPOUNDING_FEE).build());
+        
         ModuleDetail bpaModuleDtls = ModuleDetail.builder().masterDetails(bpaMasterDetails)
                 .moduleName(BPACalculatorConstants.MDMS_BPA).build();
 
@@ -162,6 +164,20 @@ public class MDMSService {
         defaultMap.put( BPACalculatorConstants.MDMS_CALCULATIONTYPE_AMOUNT,feeAmount);
         return defaultMap;
     }
+    
+    public Map getOcCompoundingFee(Object mdmsData, String compoundingType) {
+		
+		List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_OC_COMPOUNDING_FEE_PATH);
+		String filterExp = "$.[?(@.compoundingType == '"+ compoundingType +"')]";
+		List<Object> calTypes = JsonPath.read(jsonOutput, filterExp);
+		
+		if(calTypes.size() == 0) {
+			//return defaultMap(feeType);
+		}
+		HashMap<String,Object> ocCompoundingFee = (HashMap<String, Object>) calTypes.get(0);
+		
+		return ocCompoundingFee;
+	}
 
 
 }

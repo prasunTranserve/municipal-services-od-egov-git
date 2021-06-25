@@ -318,7 +318,8 @@ public class EnrichmentService {
 			populateBusinessService(bpaRequest, edcr);
 
 		} else {
-			bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_OC_MODULE_CODE);
+			populateBusinessService(bpaRequest, edcr);
+			//bpaRequest.getBPA().setBusinessService(BPAConstants.BPA_OC_MODULE_CODE);
 			bpaRequest.getBPA().setLandId(values.get("landId"));
 		}
 

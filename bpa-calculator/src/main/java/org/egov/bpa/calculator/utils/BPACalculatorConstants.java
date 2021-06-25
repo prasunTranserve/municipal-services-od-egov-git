@@ -15,8 +15,11 @@ public class BPACalculatorConstants {
 	public static final String MDMS_ENDDATE = "endingDate";
 
 	public static final String MDMS_CALCULATIONTYPE = "CalculationType";
+	
+	public static final String MDMS_OC_COMPOUNDING_FEE = "ocCompoundingFee";
 
 	public static final String MDMS_CALCULATIONTYPE_PATH = "$.MdmsRes.BPA.CalculationType";
+	public static final String MDMS_OC_COMPOUNDING_FEE_PATH = "$.MdmsRes.BPA.ocCompoundingFee";
 
 	public static final String MDMS_BPA_PATH = "$.MdmsRes.BPA";
 
@@ -255,8 +258,11 @@ public class BPACalculatorConstants {
 	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre";
 	public static final String BASE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.baseFar";
 	public static final String PROVIDED_FAR_PATH = "edcrDetail.*.planDetail.farDetails.providedFar";
+	public static final String PERMISSABLE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.permissableFar";
 	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
 	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
+	public static final String PROJECT_VALUE_FOR_EIDP_PATH = "edcrDetail.*.planDetail.planInformation.projectValueForEIDP";
+	public static final String PROJECT_UNDERTAKING_BY_GOVT_PATH = "edcrDetail.*.planDetail.planInformation.isProjectUndertakingByGovt";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
 	public static final String RISK_TYPE = "RISK_TYPE";
@@ -264,19 +270,28 @@ public class BPACalculatorConstants {
 	public static final String OCCUPANCY_TYPE = "OCCUPANCY_TYPE";
 	public static final String SUB_OCCUPANCY_TYPE = "SUB_OCCUPANCY_TYPE";
 	public static final String PLOT_AREA = "PLOT_AREA";
+	public static final String PLOT_AREA_EDCR = "PLOT_AREA_EDCR";
 	public static final String TOTAL_FLOOR_AREA = "TOTAL_FLOOR_AREA";
+	public static final String TOTAL_FLOOR_AREA_EDCR = "TOTAL_FLOOR_AREA_EDCR";
 	public static final String EWS_AREA = "EWS_AREA";
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
 	public static final String BASE_FAR = "BASE_FAR";
 	public static final String PROVIDED_FAR = "PROVIDED_FAR";
+	public static final String PERMISSABLE_FAR = "PERMISSABLE_FAR";
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
 	public static final String TOTAL_NO_OF_DWELLING_UNITS = "TOTAL_NO_OF_DWELLING_UNITS";
 	public static final String AREA_TYPE = "AREA_TYPE";
 	public static final String AREA_TYPE_PLOT = "PLOT";
 	public static final String SECURITY_DEPOSIT = "SECURITY_DEPOSIT";
+	public static final String DEVIATION_FLOOR_AREA = "DEVIATION_FLOOR_AREA";
+	public static final String PROJECT_VALUE_FOR_EIDP = "PROJECT_VALUE_FOR_EIDP";
+	public static final String PROJECT_VALUE_FOR_EIDP_OC = "PROJECT_VALUE_FOR_EIDP_OC";
+	public static final String PROJECT_UNDERTAKING_BY_GOVT = "IS_PROJECT_UNDERTAKING_BY_GOVT";
 
+	public static final String BUILDING_PLAN_OC = "BUILDING_OC_PLAN_SCRUTINY";
+	
 	/* Tax heads for BPA */
 	public static final String TAXHEAD_BPA_BUILDING_OPERATION_FEE = "BPA_BLDNG_OPRN_FEE";
 	public static final String TAXHEAD_BPA_LAND_DEVELOPMENT_FEE = "BPA_LAND_DEV_FEE";
@@ -286,5 +301,24 @@ public class BPACalculatorConstants {
 	public static final String TAXHEAD_BPA_PURCHASABLE_FAR = "BPA_SANC_PUR_FAR";
 	public static final String TAXHEAD_BPA_SHELTER_FEE = "BPA_SANC_SHELTER_FEE";
 	public static final String TAXHEAD_BPA_SANCTION_FEE = "BPA_SANC_SANC_FEE";
+	public static final String TAXHEAD_BPA_EIDP_FEE = "BPA_SANC_EIDP_FEE";
 	
+	/* Tax heads for BPA OC*/
+	public static final String TAXHEAD_BPA_OC_SANC_CWWC_FEE = "BPA_OC_SANC_WORKER_WELFARE_CESS";
+	public static final String TAXHEAD_BPA_OC_SANC_EIDP_FEE = "BPA_OC_SANC_EIDP_FEE";
+	public static final String TAXHEAD_BPA_OC_SANC_COMPOUND_FAR_FEE = "BPA_OC_SANC_COMPOUND_FAR_FEE";
+	public static final String TAXHEAD_BPA_OC_SANC_COMPOUND_SETBACK_FEE = "BPA_OC_SANC_COMPOUND_SETBACK_FEE";
+	public static final String TAXHEAD_BPA_OC_SCRUTINY_FEE = "BPA_OC_SCRUTINY_FEE";
+	public static final String TAXHEAD_BPA_OC_CERT_FEE = "BPA_OC_CERT_FEE";
+	
+
+	public static final String OC_COMPOUNDING_INDIVIDUAL_RESIDENTIAL = "Individual/Residential";
+	public static final String OC_COMPOUNDING_GOVT = "Govt";
+	public static final String OC_COMPOUNDING_OTHER = "Other";
+	
+	public static final String MDMS_SETBACK = "SETBACK";
+	public static final String MDMS_FAR = "FAR";
+	
+	
+
 }
