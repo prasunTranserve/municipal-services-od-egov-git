@@ -15,7 +15,7 @@ public class SWCalculatorQueryBuilder {
 		return distinctTenantIdsCriteria;
 	}
 
-	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, List<Object> preparedStatement) {
+	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, Boolean isOldApplication, List<Object> preparedStatement) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 		// Add connection type
 		addClauseIfRequired(preparedStatement, query);
@@ -31,6 +31,11 @@ public class SWCalculatorQueryBuilder {
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.applicationstatus = ? ");
 		preparedStatement.add(applicationStatus);
+
+		// Add isOldApplication
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.isOldApplication = ? ");
+		preparedStatement.add(isOldApplication);
 		
 		//Add not null condition
 		addClauseIfRequired(preparedStatement, query);
