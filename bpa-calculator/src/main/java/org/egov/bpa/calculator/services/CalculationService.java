@@ -368,6 +368,14 @@ public class CalculationService {
 
 	}
 	
+	/**
+	 * Calculate BPA OC fees
+	 * @param requestInfo
+	 * @param criteria
+	 * @param estimates
+	 * @param mdmsData
+	 * @param feeType
+	 */
 	private void calculateBpaOcFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, Object mdmsData, String feeType) {
 		Map<String, Object> paramMap = prepareBpaOcParamMap(requestInfo, criteria, feeType);
@@ -377,6 +385,13 @@ public class CalculationService {
 		}
 	}
 
+	/**
+	 * Calculate Total BPA OC
+	 * @param paramMap
+	 * @param estimates
+	 * @param mdmsData
+	 * @return
+	 */
 	private BigDecimal calculateTotalBpaOcFeeAmount(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates, Object mdmsData) {
 		BigDecimal calculatedTotalOcAmout = BigDecimal.ZERO;
@@ -399,19 +414,22 @@ public class CalculationService {
 		if (StringUtils.hasText(applicationType) && (StringUtils.hasText(serviceType))
 				&& StringUtils.hasText(occupancyType) && (StringUtils.hasText(feeType))) {
 			if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE)) {
-				
 				calculatedTotalOcAmout = calculateTotalOcApplicationFee(paramMap, estimates);
-				
 			} else if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)) {
-				
 				calculatedTotalOcAmout = calculateTotalOcSanctionFee(paramMap, estimates, mdmsData);
 			}
-
 		}
 		
 		return calculatedTotalOcAmout;
 	}
 
+	/**
+	 * Calculate Sanction Fee for BPA OC
+	 * @param paramMap
+	 * @param estimates
+	 * @param mdmsData
+	 * @return
+	 */
 	private BigDecimal calculateTotalOcSanctionFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates, Object mdmsData) {
 		BigDecimal totalOcSanctionFee = BigDecimal.ZERO;
 		BigDecimal compSetbackFee = BigDecimal.ZERO;
@@ -419,18 +437,22 @@ public class CalculationService {
 		BigDecimal eidpFee = BigDecimal.ZERO;
 		BigDecimal cessFee = BigDecimal.ZERO;
 
-		if(hasDeviation(paramMap)) {
-			compSetbackFee = calculateOccupancyCompoundingFeeForSetback(paramMap, estimates, mdmsData);
-			compFARFee = calculateOccupancyCompoundingFeeForFAR(paramMap, estimates, mdmsData);
-			eidpFee = calculateOccupancyEidpFee(paramMap, estimates);
-			cessFee = calculateOccupancyConstructionWorkerWelfareCess(paramMap, estimates);
-		}
+		compSetbackFee = calculateOccupancyCompoundingFeeForSetback(paramMap, estimates, mdmsData);
+		compFARFee = calculateOccupancyCompoundingFeeForFAR(paramMap, estimates, mdmsData);
+		eidpFee = calculateOccupancyEidpFee(paramMap, estimates);
+		cessFee = calculateOccupancyConstructionWorkerWelfareCess(paramMap, estimates);
 		
 		totalOcSanctionFee = compFARFee.add(compSetbackFee).add(eidpFee).add(cessFee);
 		
 		return totalOcSanctionFee;
 	}
 
+	/**
+	 * Calculate BPA OC application fee
+	 * @param paramMap
+	 * @param estimates
+	 * @return
+	 */
 	private BigDecimal calculateTotalOcApplicationFee(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal totalOCApplicationFee = BigDecimal.ZERO;
@@ -438,41 +460,20 @@ public class CalculationService {
 		BigDecimal ocCertificateFee = BigDecimal.ZERO;
 		
 		ocCertificateFee = calculateOccupancyCertificateFee(paramMap, estimates);
-		if(hasDeviation(paramMap)) {
-			scrutinyFee = calculateOccupancyScrutinyFee(paramMap, estimates);
-		}
+		scrutinyFee = calculateOccupancyScrutinyFee(paramMap, estimates);
 		
 		totalOCApplicationFee = ocCertificateFee.add(scrutinyFee);
 		
 		return totalOCApplicationFee;
 	}
 
-	private boolean hasDeviation(Map<String, Object> paramMap) {
-		boolean hasDeviation = false;
-		
-		// BuildUp are checking
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)
-				&& null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
-			Double totalBuitUpAreaOc = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-			Double totalBuitUpAreaEdcr = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR);
-			if(totalBuitUpAreaOc > totalBuitUpAreaEdcr) {
-				hasDeviation = true;
-			}
-		}
-		
-		//Plot Area checking
-		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)
-				&& null != paramMap.get(BPACalculatorConstants.PLOT_AREA_EDCR)) {
-			Double plotAreaOc = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
-			Double plotAreaEdcr = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA_EDCR);
-			if(plotAreaOc > plotAreaEdcr) {
-				hasDeviation = true;
-			}
-		}
-		
-		return hasDeviation;
-	}
-
+	/**
+	 * Prepare required data for BPA OC
+	 * @param requestInfo
+	 * @param criteria
+	 * @param feeType
+	 * @return
+	 */
 	private Map<String, Object> prepareBpaOcParamMap(RequestInfo requestInfo, CalulationCriteria criteria, String feeType) {
 		BPA bpa = criteria.getBpa();
 		String applicationType = criteria.getApplicationType();
@@ -614,6 +615,16 @@ public class CalculationService {
 		if (!CollectionUtils.isEmpty(isProjectUndertakingByGovtArray)) {
 			boolean isProjectUndertakingByGovt = ((String) isProjectUndertakingByGovtArray.get(0)).equalsIgnoreCase("YES") ? true : false;
 			paramMap.put(BPACalculatorConstants.PROJECT_UNDERTAKING_BY_GOVT, isProjectUndertakingByGovt);
+		}
+		
+		JSONArray edcrBlockDetailArray = edcrContext.read(BPACalculatorConstants.BLOCKS_PATH);
+		if (!CollectionUtils.isEmpty(edcrBlockDetailArray)) {
+			paramMap.put(BPACalculatorConstants.BLOCK_DETAILS_EDCR, edcrBlockDetailArray.get(0));
+		}
+		
+		JSONArray ocBlockDetailArray = ocContext.read(BPACalculatorConstants.BLOCKS_PATH);
+		if (!CollectionUtils.isEmpty(ocBlockDetailArray)) {
+			paramMap.put(BPACalculatorConstants.BLOCK_DETAILS_OC, ocBlockDetailArray.get(0));
 		}
 		
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
@@ -807,6 +818,12 @@ public class CalculationService {
 		return calculatedTotalAmout;
 	}
 	
+	/**
+	 * Calculate CWWC fee for BPA OC
+	 * @param paramMap
+	 * @param estimates
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyConstructionWorkerWelfareCess(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal welfareCess = BigDecimal.ZERO;
 		String applicationType = null;
@@ -829,7 +846,7 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 				&& (StringUtils.hasText(serviceType)
 				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
-				&& deviationBuitUpArea > 0) {
+				&& deviationBuitUpArea.compareTo(0D) > 0) {
 			
 			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuaEdcr))
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, RoundingMode.UP);
@@ -845,6 +862,12 @@ public class CalculationService {
 		return welfareCess;
 	}
 
+	/**
+	 * Calculate OC EIDP Fee
+	 * @param paramMap
+	 * @param estimates
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyEidpFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal eidpFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -871,7 +894,7 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 				&& (StringUtils.hasText(serviceType)
 				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
-				&& projectCost != null) {
+				&& projectCost != null && deviationBUA.compareTo(0D) > 0) {
 		
 			BigDecimal deviationPercentage = BigDecimal.valueOf(deviationBUA).divide(BigDecimal.valueOf(edcrTotalBUA), 2, RoundingMode.UP)
 					.setScale(2, RoundingMode.UP);
@@ -883,6 +906,13 @@ public class CalculationService {
 		return eidpFee;
 	}
 
+	/**
+	 * Calculate FAR Fee for BPA OC
+	 * @param paramMap
+	 * @param estimates
+	 * @param mdmsData
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyCompoundingFeeForFAR(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates, Object mdmsData) {
 		BigDecimal compoundFARFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -916,7 +946,8 @@ public class CalculationService {
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 				&& (StringUtils.hasText(serviceType)
-				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
+				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
+				&& deviation.compareTo(BigDecimal.ZERO) > 0) {
 			
 			BigDecimal baseFarBUA = plotArea.multiply(baseFAR);
 			BigDecimal permissableFarBUA = plotArea.multiply(permissableFAR);
@@ -936,6 +967,13 @@ public class CalculationService {
 		return compoundFARFee;
 	}
 
+	/**
+	 * Calculate Compounding FAR fee for BPA OC
+	 * @param paramMap
+	 * @param mdmsData
+	 * @param applicableBUA
+	 * @return
+	 */
 	private BigDecimal calculateOcCompoundingFar(Map<String, Object> paramMap, Object mdmsData, BigDecimal applicableBUA) {
 		BigDecimal compoundingFarFee = BigDecimal.ZERO;
 		Map mdmsCompoundingFee = mdmsService.getOcCompoundingFee(mdmsData, BPACalculatorConstants.MDMS_FAR);
@@ -993,6 +1031,12 @@ public class CalculationService {
 		return rate;
 	}
 
+	/**
+	 * CAlculate OC purchable FAR fee
+	 * @param paramMap
+	 * @param applicableBUA
+	 * @return
+	 */
 	private BigDecimal calculateOcPurchableFAR(Map<String, Object> paramMap, BigDecimal applicableBUA) {
 		BigDecimal purchasableFARFee = BigDecimal.ZERO;
 		Double benchmarkValuePerAcre = null;
@@ -1018,24 +1062,32 @@ public class CalculationService {
 		
 	}
 
+	/**
+	 * Calculate BPA OC Fee for Setback
+	 * @param paramMap
+	 * @param estimates
+	 * @param mdmsData
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyCompoundingFeeForSetback(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates, Object mdmsData) {
 		BigDecimal compoundSetbackFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
-		Double edcrTotalBUA = null;
-		Double deviationBUA = null;
+		JSONArray blockDetailOc = null;
+		JSONArray blockDetailEdcr = null;
+		
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
-			edcrTotalBUA = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR);
+		if (null != paramMap.get(BPACalculatorConstants.BLOCK_DETAILS_OC)) {
+			blockDetailOc = (JSONArray) paramMap.get(BPACalculatorConstants.BLOCK_DETAILS_OC);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
+		if (null != paramMap.get(BPACalculatorConstants.BLOCK_DETAILS_EDCR)) {
+			blockDetailEdcr = (JSONArray) paramMap.get(BPACalculatorConstants.BLOCK_DETAILS_EDCR);
 		}
 		
 		Map mdmsCompoundingFee = mdmsService.getOcCompoundingFee(mdmsData, BPACalculatorConstants.MDMS_SETBACK);
@@ -1044,19 +1096,101 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 				&& (StringUtils.hasText(serviceType)
 				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
-				&& deviationBUA > 0) {
+				&& blockDetailOc != null && blockDetailEdcr != null) {
 			
-			
-			BigDecimal deviationPercentage = BigDecimal.valueOf(deviationBUA)
-					.multiply(HUNDRED).setScale(2, RoundingMode.UP)
-					.divide(BigDecimal.valueOf(edcrTotalBUA), 2, RoundingMode.UP).setScale(2, RoundingMode.UP);
-			Double rate = getRateForSetback(paramMap ,mdmsCompoundingFee, deviationPercentage);
+			compoundSetbackFee = calculateOccupancyCompoundingSetbackFee(mdmsCompoundingFee, blockDetailOc, blockDetailEdcr, paramMap);
 			
 		}
 		generateTaxHeadEstimate(estimates, compoundSetbackFee, BPACalculatorConstants.TAXHEAD_BPA_OC_SANC_COMPOUND_SETBACK_FEE, Category.FEE);
 		return compoundSetbackFee;
 	}
 
+	/**
+	 * Calculate compounding fee for all setback in BPA OC
+	 * @param mdmsCompoundingFee
+	 * @param blockDetailOc
+	 * @param blockDetailEdcr
+	 * @param paramMap
+	 * @return
+	 */
+	private BigDecimal calculateOccupancyCompoundingSetbackFee(Map mdmsCompoundingFee, JSONArray blockDetailOc,
+			JSONArray blockDetailEdcr, Map<String, Object> paramMap) {
+		BigDecimal totalSetbackFee = BigDecimal.ZERO;
+		BigDecimal frontYardFee = BigDecimal.ZERO;
+		BigDecimal rearYardFee = BigDecimal.ZERO;
+		BigDecimal sideYard1Fee = BigDecimal.ZERO;
+		BigDecimal sideYard2Fee = BigDecimal.ZERO;
+		
+		for(int i=0; i<blockDetailOc.size(); i++) {
+			LinkedHashMap blockOc = (LinkedHashMap) blockDetailOc.get(i);
+			LinkedHashMap levelZeroSetBackOc = (LinkedHashMap) blockOc.get("levelZeroSetBack");
+			
+			LinkedHashMap blockEdcr = (LinkedHashMap) blockDetailEdcr.get(i);
+			LinkedHashMap levelZeroSetBackEdcr = (LinkedHashMap) blockEdcr.get("levelZeroSetBack");
+			
+			frontYardFee = calculateSetbackFee(BPACalculatorConstants.JSON_FRONT_YARD, levelZeroSetBackOc,
+					levelZeroSetBackEdcr, mdmsCompoundingFee, paramMap);
+			
+			rearYardFee = calculateSetbackFee(BPACalculatorConstants.JSON_REAR_YARD, levelZeroSetBackOc,
+					levelZeroSetBackEdcr, mdmsCompoundingFee, paramMap);
+			
+			sideYard1Fee = calculateSetbackFee(BPACalculatorConstants.JSON_SIDE_YARD1, levelZeroSetBackOc,
+					levelZeroSetBackEdcr, mdmsCompoundingFee, paramMap);
+			
+			sideYard2Fee = calculateSetbackFee(BPACalculatorConstants.JSON_SIDE_YARD2, levelZeroSetBackOc,
+					levelZeroSetBackEdcr, mdmsCompoundingFee, paramMap);
+			
+			totalSetbackFee = totalSetbackFee.add(frontYardFee).add(rearYardFee).add(sideYard1Fee).add(sideYard2Fee);
+		}
+		
+		return totalSetbackFee;
+	}
+
+	/**
+	 * Calculate setback fee in BPA OC
+	 * @param setbackSide
+	 * @param levelZeroSetBackOc
+	 * @param levelZeroSetBackEdcr
+	 * @param mdmsCompoundingFee
+	 * @param paramMap
+	 * @return
+	 */
+	private BigDecimal calculateSetbackFee(String setbackSide, LinkedHashMap levelZeroSetBackOc,
+			LinkedHashMap levelZeroSetBackEdcr, Map mdmsCompoundingFee, Map<String, Object> paramMap) {
+		BigDecimal setBackFee = BigDecimal.ZERO;
+		BigDecimal meanDeviationPercentage = BigDecimal.ZERO;
+		BigDecimal meanOc = BigDecimal.ZERO;
+		BigDecimal meanEdcr = BigDecimal.ZERO;
+		BigDecimal areaOc = BigDecimal.ZERO;
+		BigDecimal areaEdcr = BigDecimal.ZERO;
+		
+		if(levelZeroSetBackOc != null && levelZeroSetBackEdcr != null) {
+			LinkedHashMap setbackItemOc = (LinkedHashMap) levelZeroSetBackOc.get(setbackSide);
+			LinkedHashMap setbackItemEdcr = (LinkedHashMap) levelZeroSetBackEdcr.get(setbackSide);
+			if(setbackItemOc != null && setbackItemEdcr != null) {
+				meanOc = BigDecimal.valueOf((Double) setbackItemOc.get("mean"));
+				meanEdcr = BigDecimal.valueOf((Double) setbackItemEdcr.get("mean"));
+				meanDeviationPercentage = meanEdcr.subtract(meanOc).multiply(HUNDRED).divide(meanEdcr, 2, RoundingMode.UP);
+				Double rate = getRateForSetback(paramMap, mdmsCompoundingFee, meanDeviationPercentage);
+				
+				areaOc = BigDecimal.valueOf((Double) setbackItemOc.get("area"));
+				areaEdcr = BigDecimal.valueOf((Double) setbackItemEdcr.get("area"));
+				if(areaEdcr.compareTo(areaOc) > 0) {
+					setBackFee = areaEdcr.subtract(areaOc).multiply(BigDecimal.valueOf(rate)).setScale(2, RoundingMode.UP);
+				}
+			}
+		}
+		
+		return setBackFee;
+	}
+
+	/**
+	 * Get setback Rate 
+	 * @param paramMap
+	 * @param mdmsCompoundingFee
+	 * @param deviationPercentage
+	 * @return
+	 */
 	private Double getRateForSetback(Map<String, Object> paramMap, Map mdmsCompoundingFee, BigDecimal deviationPercentage) {
 		Double rate = 0D;
 		boolean isProjectUndertakingByGovt = false;
@@ -1094,7 +1228,7 @@ public class CalculationService {
 			Double from = Double.parseDouble(deviationData.get("from").toString());
 			Double to = Double.parseDouble(deviationData.get("to").toString());
 			if(BigDecimal.valueOf(from).compareTo(deviationPercentage) < 0 
-					&& BigDecimal.valueOf(to).compareTo(deviationPercentage) <= 0) {
+					&& BigDecimal.valueOf(to).compareTo(deviationPercentage) >= 0) {
 				JSONArray feeArray = (JSONArray) item.get("fee");
 				for (int i = 0; i < feeArray.size(); i++) {
 					LinkedHashMap diff = (LinkedHashMap) feeArray.get(i);
@@ -1109,6 +1243,12 @@ public class CalculationService {
 		return rate;
 	}
 
+	/**
+	 * Calculate BPA OC Scrutiny fee
+	 * @param paramMap
+	 * @param estimates
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		Double deviationBUA = null;
@@ -1119,7 +1259,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (deviationBUA != null) {
+		if (deviationBUA != null && deviationBUA.compareTo(0D) > 0) {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 				ocScrutinyFee = calculateOccupancyScrutinyFeeForResidentialOccupancy(paramMap);
 			}
@@ -1152,6 +1292,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for Agriculture
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForAgricultureOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1181,6 +1326,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for Transportation
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForTransportationOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1211,6 +1361,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for Education
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForEducationOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1241,6 +1396,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for Industrial Zone
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForIndustrialZoneOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1270,6 +1430,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for public utility
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForPublicUtilityOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1293,14 +1458,18 @@ public class CalculationService {
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				
 				ocScrutinyFee = calculateConstantFeeNew(deviationBUA, 5);
-
 			}
 		}
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for public semi
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForPublicSemiPublicInstitutionalOccupancy(
 			Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
@@ -1402,6 +1571,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * OC Scrutiny Fee for Commercial
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForCommercialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1432,6 +1606,11 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * Scrutiny Fee for Residential
+	 * @param paramMap
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyScrutinyFeeForResidentialOccupancy(Map<String, Object> paramMap) {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		String applicationType = null;
@@ -1462,6 +1641,12 @@ public class CalculationService {
 		return ocScrutinyFee;
 	}
 
+	/**
+	 * Calculate BPA OC certificate Fee
+	 * @param paramMap
+	 * @param estimates
+	 * @return
+	 */
 	private BigDecimal calculateOccupancyCertificateFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal flatFee = BigDecimal.ZERO;
 		String applicationType = null;

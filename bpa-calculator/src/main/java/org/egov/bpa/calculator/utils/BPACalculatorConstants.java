@@ -263,6 +263,7 @@ public class BPACalculatorConstants {
 	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
 	public static final String PROJECT_VALUE_FOR_EIDP_PATH = "edcrDetail.*.planDetail.planInformation.projectValueForEIDP";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT_PATH = "edcrDetail.*.planDetail.planInformation.isProjectUndertakingByGovt";
+	public static final String BLOCKS_PATH = "edcrDetail.*.planDetail.blocks";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
 	public static final String RISK_TYPE = "RISK_TYPE";
@@ -289,6 +290,8 @@ public class BPACalculatorConstants {
 	public static final String PROJECT_VALUE_FOR_EIDP = "PROJECT_VALUE_FOR_EIDP";
 	public static final String PROJECT_VALUE_FOR_EIDP_OC = "PROJECT_VALUE_FOR_EIDP_OC";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT = "IS_PROJECT_UNDERTAKING_BY_GOVT";
+	public static final String BLOCK_DETAILS_OC = "BLOCK_DETAILS_OC";
+	public static final String BLOCK_DETAILS_EDCR = "BLOCK_DETAILS_EDCR";
 
 	public static final String BUILDING_PLAN_OC = "BUILDING_OC_PLAN_SCRUTINY";
 	
@@ -319,6 +322,9 @@ public class BPACalculatorConstants {
 	public static final String MDMS_SETBACK = "SETBACK";
 	public static final String MDMS_FAR = "FAR";
 	
+	public static final String JSON_FRONT_YARD = "frontYard";
+	public static final String JSON_REAR_YARD = "rearYard";
+	public static final String JSON_SIDE_YARD1 = "sideYard1";
+	public static final String JSON_SIDE_YARD2 = "sideYard2";
 	
-
 }
