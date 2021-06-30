@@ -10,11 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.swcalculation.constants.SWCalculationConstant;
 import org.egov.swcalculation.service.MasterDataService;
 import org.egov.swcalculation.util.CalculatorUtils;
-import org.egov.swcalculation.web.models.Property;
 import org.egov.swcalculation.web.models.SewerageConnection;
-import org.egov.swcalculation.web.models.Status;
 import org.egov.swcalculation.web.models.workflow.ProcessInstance;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONArray;
@@ -50,7 +49,8 @@ public class SWCalculationWorkflowValidator {
             int size = sewerageConnectionList.size();
             sewerageConnection = sewerageConnectionList.get(size-1);
             String sewerageApplicationNumber = sewerageConnection.getApplicationNo();
-            sewerageConnectionValidation(requestInfo,tenantId,sewerageApplicationNumber,errorMap);
+            String sewerageApplicationStatus = sewerageConnection.getApplicationStatus();
+            sewerageConnectionValidation(requestInfo,tenantId,sewerageApplicationNumber,sewerageApplicationStatus,errorMap);
             // String propertyId = sewerageConnection.getPropertyId();
             // Property property = util.getProperty(requestInfo,tenantId,propertyId);
             //String propertyApplicationNumber = property.getAcknowldgementNumber();
@@ -65,31 +65,36 @@ public class SWCalculationWorkflowValidator {
         return  errorMap;
     }
 
-    public void sewerageConnectionValidation(RequestInfo requestInfo,String tenantId, String sewerageApplicationNumber,Map<String,String> errorMap){
-        Boolean isApplicationApproved = workflowValidation(requestInfo,tenantId,sewerageApplicationNumber);
+    public void sewerageConnectionValidation(RequestInfo requestInfo,String tenantId, String sewerageApplicationNumber, String sewerageApplicationStatus, Map<String,String> errorMap){
+        Boolean isApplicationApproved = workflowValidation(requestInfo,tenantId,sewerageApplicationNumber, sewerageApplicationStatus);
         if(!isApplicationApproved)
             errorMap.put("SEWERAGE_APPLICATION_ERROR","Demand cannot be generated as sewerage connection application with application number "+sewerageApplicationNumber+" is in workflow and not approved yet");
     }
 
-    public void propertyValidation(RequestInfo requestInfo,String tenantId, Property property,Map<String,String> errorMap){
-        Boolean isApplicationApproved = workflowValidation(requestInfo,tenantId,property.getAcknowldgementNumber());
-        JSONObject mdmsResponse=getWnsPTworkflowConfig(requestInfo,tenantId);
-        if(mdmsResponse.getBoolean("inWorkflowStatusAllowed")&&!isApplicationApproved){
-            if(property.getStatus().equals(Status.INWORKFLOW))
-                isApplicationApproved=true;
-        }
+    // public void propertyValidation(RequestInfo requestInfo,String tenantId, Property property,Map<String,String> errorMap){
+    //     Boolean isApplicationApproved = workflowValidation(requestInfo,tenantId,property.getAcknowldgementNumber());
+    //     JSONObject mdmsResponse=getWnsPTworkflowConfig(requestInfo,tenantId);
+    //     if(mdmsResponse.getBoolean("inWorkflowStatusAllowed")&&!isApplicationApproved){
+    //         if(property.getStatus().equals(Status.INWORKFLOW))
+    //             isApplicationApproved=true;
+    //     }
 
-        if(!isApplicationApproved)
-            errorMap.put("PROPERTY_APPLICATION_ERROR","Demand cannot be generated as property application with application number "+property.getAcknowldgementNumber()+" is not approved yet");
-    }
+    //     if(!isApplicationApproved)
+    //         errorMap.put("PROPERTY_APPLICATION_ERROR","Demand cannot be generated as property application with application number "+property.getAcknowldgementNumber()+" is not approved yet");
+    // }
 
-    public Boolean workflowValidation(RequestInfo requestInfo,String tenantId, String businessIds){
+    public Boolean workflowValidation(RequestInfo requestInfo,String tenantId, String businessIds, String sewerageApplicationStatus){
     	List<ProcessInstance> processInstancesList = util.getWorkFlowProcessInstance(requestInfo,tenantId,businessIds);
         Boolean isApplicationApproved = false;
 
-        for(ProcessInstance processInstances : processInstancesList){
-            if(processInstances.getState().getIsTerminateState()){
-                isApplicationApproved=true;
+        if (processInstancesList.isEmpty() && 
+            sewerageApplicationStatus.equalsIgnoreCase(SWCalculationConstant.SEWERAGE_CONNECTION_APP_STATUS_ACTIVATED_STRING)) {
+					isApplicationApproved = true;
+		} else {
+            for(ProcessInstance processInstances : processInstancesList){
+                if(processInstances.getState().getIsTerminateState()){
+                    isApplicationApproved=true;
+                }
             }
         }
 
