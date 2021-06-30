@@ -9,9 +9,8 @@ import java.util.Map;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.MRConstants;
+import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.util.CalculatorUtil;
-import org.egov.wscalculation.web.models.Property;
-import org.egov.wscalculation.web.models.Status;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.egov.wscalculation.web.models.workflow.ProcessInstance;
 import org.json.JSONArray;
@@ -41,7 +40,8 @@ public class WSCalculationWorkflowValidator {
 			 waterConnection = waterConnectionList.get(size-1);
 
 			 String waterApplicationNumber = waterConnection.getApplicationNo();
-			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, errorMap);
+			 String waterApplicationStatus = waterConnection.getApplicationStatus();
+			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus, errorMap);
 
 			//  String propertyId = waterConnection.getPropertyId();
 			//  Property property = util.getProperty(requestInfo,tenantId,propertyId);
@@ -60,36 +60,42 @@ public class WSCalculationWorkflowValidator {
 	}
 
 	public void waterConnectionValidation(RequestInfo requestInfo, String tenantId, String waterApplicationNumber,
-			Map<String, String> errorMap) {
-		Boolean isApplicationApproved = workflowValidation(requestInfo, tenantId, waterApplicationNumber);
+			String waterApplicationStatus, Map<String, String> errorMap) {
+		Boolean isApplicationApproved = workflowValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus);
 		if (!isApplicationApproved)
 			errorMap.put("WATER_APPLICATION_ERROR",
 					"Demand cannot be generated as water connection application with application number "
 							+ waterApplicationNumber + " is in workflow and not approved yet");
 	}
 
-	public void propertyValidation(RequestInfo requestInfo, String tenantId, Property property,
-			Map<String, String> errorMap) {
-		Boolean isApplicationApproved = workflowValidation(requestInfo, tenantId, property.getAcknowldgementNumber());
-		JSONObject mdmsResponse=getWnsPTworkflowConfig(requestInfo,tenantId);
-		if(mdmsResponse.getBoolean("inWorkflowStatusAllowed")&&!isApplicationApproved){
-			if(property.getStatus().equals(Status.INWORKFLOW))
-				isApplicationApproved=true;
-		}
+	// public void propertyValidation(RequestInfo requestInfo, String tenantId, Property property,
+	// 		Map<String, String> errorMap) {
+	// 	Boolean isApplicationApproved = workflowValidation(requestInfo, tenantId, property.getAcknowldgementNumber());
+	// 	JSONObject mdmsResponse=getWnsPTworkflowConfig(requestInfo,tenantId);
+	// 	if(mdmsResponse.getBoolean("inWorkflowStatusAllowed")&&!isApplicationApproved){
+	// 		if(property.getStatus().equals(Status.INWORKFLOW))
+	// 			isApplicationApproved=true;
+	// 	}
 
-		if (!isApplicationApproved)
-			errorMap.put("PROPERTY_APPLICATION_ERROR",
-					"Demand cannot be generated as property application with application number "
-							+ property.getAcknowldgementNumber() + " is not approved yet");
-	}
+	// 	if (!isApplicationApproved)
+	// 		errorMap.put("PROPERTY_APPLICATION_ERROR",
+	// 				"Demand cannot be generated as property application with application number "
+	// 						+ property.getAcknowldgementNumber() + " is not approved yet");
+	// }
 
-	public Boolean workflowValidation(RequestInfo requestInfo, String tenantId, String businessIds) {
+	public Boolean workflowValidation(RequestInfo requestInfo, String tenantId, String businessIds,
+			String waterApplicationStatus) {
 		List<ProcessInstance> processInstancesList = util.getWorkFlowProcessInstance(requestInfo,tenantId,businessIds);
 		Boolean isApplicationApproved = false;
 
-		for (ProcessInstance processInstances : processInstancesList) {
-			if (processInstances.getState().getIsTerminateState()) {
-				isApplicationApproved = true;
+		if (processInstancesList.isEmpty() && 
+				waterApplicationStatus.equalsIgnoreCase(WSCalculationConstant.WATER_CONNECTION_APP_STATUS_ACTIVATED_STRING)) {
+					isApplicationApproved = true;
+		} else {
+			for (ProcessInstance processInstances : processInstancesList) {
+				if (processInstances.getState().getIsTerminateState()) {
+					isApplicationApproved = true;
+				}
 			}
 		}
 
