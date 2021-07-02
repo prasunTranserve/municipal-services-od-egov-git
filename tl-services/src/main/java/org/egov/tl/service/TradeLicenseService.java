@@ -106,8 +106,11 @@ public class TradeLicenseService {
        if(businessServicefromPath==null)
             businessServicefromPath = businessService_TL;
        tlValidator.validateBusinessService(tradeLicenseRequest,businessServicefromPath);
+       if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+	   {
        setValidToDateInLicense(tradeLicenseRequest);
        tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
+	   }
        Object mdmsData = util.mDMSCall(tradeLicenseRequest);
        actionValidator.validateCreateRequest(tradeLicenseRequest);
        enrichmentService.enrichTLCreateRequest(tradeLicenseRequest, mdmsData);
@@ -277,9 +280,13 @@ public class TradeLicenseService {
         else{
             if (businessServicefromPath == null)
                 businessServicefromPath = businessService_TL;
+            
             tlValidator.validateBusinessService(tradeLicenseRequest, businessServicefromPath);
+            if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+     	   {
             setValidToDateInLicense(tradeLicenseRequest);
             tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
+     	   }
             Object mdmsData = util.mDMSCall(tradeLicenseRequest);
             String businessServiceName = null;
             switch (businessServicefromPath) {
@@ -299,7 +306,10 @@ public class TradeLicenseService {
             actionValidator.validateUpdateRequest(tradeLicenseRequest, businessService);
             enrichmentService.enrichTLUpdateRequest(tradeLicenseRequest, businessService);
             tlValidator.validateUpdate(tradeLicenseRequest, searchResult, mdmsData);
+            if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+      	   {
             tlValidator.validateNonUpdatableFileds(tradeLicenseRequest, searchResult);
+      	   }
             switch(businessServicefromPath)
             {
                 case businessService_BPA:
