@@ -78,6 +78,35 @@ public class CalculatorController {
 
 
 	/**
+	 * Estimates the tradeLicense fee 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = {"/{servicename}/_estimate","/_estimate"}, method = RequestMethod.POST)
+	public ResponseEntity<CalculationRes> estimate(@Valid @RequestBody CalculationReq calculationReq,@PathVariable(required = false) String servicename) {
+
+		if(servicename==null)
+			servicename = businessService_TL;
+		List<Calculation> calculations = null;
+		
+		switch(servicename)
+		{
+			case businessService_TL:
+				calculations = calculationService.estimate(calculationReq);
+				break;
+
+			default:
+				throw new CustomException("UNKNOWN_BUSINESSSERVICE", " Business Service not supported");
+		}
+		
+		
+
+		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
+		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
+	
+	
+	/**
 	 * Generates Bill for the given criteria
 	 *
 	 * @param requestInfoWrapper   Wrapper containg the requestInfo

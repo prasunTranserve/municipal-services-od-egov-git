@@ -77,6 +77,19 @@ public class CalculationService {
        producer.push(config.getSaveTopic(),calculationRes);
        return calculations;
    }
+   
+   /**
+    * Calculates tax estimates 
+    * @param calculationReq The calculationCriteria request
+    * @return List of calculations for all applicationNumbers or tradeLicenses in calculationReq
+    */
+  public List<Calculation> estimate(CalculationReq calculationReq){
+      String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
+      Object mdmsData = mdmsService.mDMSCall(calculationReq.getRequestInfo(),tenantId);
+      List<Calculation> calculations = getCalculation(calculationReq.getRequestInfo(),
+              calculationReq.getCalulationCriteria(),mdmsData);
+      return calculations;
+  }
 
 
     /***

@@ -81,6 +81,19 @@ public class TradeUtil {
         return uri;
     }
 
+    public StringBuilder getEstimatesURI(String businessService) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getCalculatorHost());
+        if (businessService == null)
+            businessService = businessService_TL;
+        switch (businessService) {
+            case businessService_TL:
+                uri.append(config.getEstimateEndpointTL());
+                break;
+                
+        }
+        return uri;
+    }
 
     /**
      * Creates search url for pt-services-v2 service
