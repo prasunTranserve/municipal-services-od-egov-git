@@ -36,7 +36,8 @@ public class SewerageCalculatorDaoImpl implements SewerageCalculatorDao {
 	public List<String> getConnectionsNoList(String tenantId, String connectionType) {
 		List<Object> preparedStatement = new ArrayList<>();
 		String applicationStatus = SWCalculationConstant.SEWERAGE_CONNECTION_APP_STATUS_ACTIVATED_STRING;
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, preparedStatement);
+		Boolean isOldApplication = Boolean.FALSE;
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, isOldApplication, preparedStatement);
 		StringBuilder builder = new StringBuilder();
 		builder.append("sewerage ").append(connectionType).append(" connection list : ").append(query);
 		log.info(builder.toString());
