@@ -10,8 +10,11 @@ import org.egov.tl.repository.TLRepository;
 import org.egov.tl.service.notification.EditNotificationService;
 import org.egov.tl.util.TLConstants;
 import org.egov.tl.util.TradeUtil;
+import org.egov.tl.validator.MDMSValidator;
 import org.egov.tl.validator.TLValidator;
 import org.egov.tl.web.models.*;
+import org.egov.tl.web.models.calculation.Calculation;
+import org.egov.tl.web.models.calculation.CalculationRes;
 import org.egov.tl.web.models.user.UserDetailResponse;
 import org.egov.tl.web.models.workflow.BusinessService;
 import org.egov.tl.workflow.ActionValidator;
@@ -65,6 +68,8 @@ public class TradeLicenseService {
     private TradeUtil tradeUtil;
 
     private TLBatchService tlBatchService;
+    
+    private MDMSValidator mdmsValidator;
 
     @Value("${workflow.bpa.businessServiceCode.fallback_enabled}")
     private Boolean pickWFServiceNameFromTradeTypeOnly;
@@ -75,7 +80,7 @@ public class TradeLicenseService {
                                TLValidator tlValidator, TLWorkflowService TLWorkflowService,
                                CalculationService calculationService, TradeUtil util, DiffService diffService,
                                TLConfiguration config, EditNotificationService editNotificationService, WorkflowService workflowService,
-                               TradeUtil tradeUtil, TLBatchService tlBatchService) {
+                               TradeUtil tradeUtil, TLBatchService tlBatchService ,MDMSValidator mdmsValidator) {
         this.wfIntegrator = wfIntegrator;
         this.enrichmentService = enrichmentService;
         this.userService = userService;
@@ -91,6 +96,7 @@ public class TradeLicenseService {
         this.workflowService = workflowService;
         this.tradeUtil = tradeUtil;
         this.tlBatchService = tlBatchService;
+        this.mdmsValidator = mdmsValidator ;
     }
 
 
@@ -144,6 +150,27 @@ public class TradeLicenseService {
         return tradeLicenseRequest.getLicenses();
 	}
 
+    
+    public CalculationRes estimate(TradeLicenseRequest tradeLicenseRequest,String businessServicefromPath){
+       if(businessServicefromPath==null)
+            businessServicefromPath = businessService_TL;
+       
+       RequestInfo requestInfo = tradeLicenseRequest.getRequestInfo();
+       List<TradeLicense> licenses = tradeLicenseRequest.getLicenses();
+       
+       Object mdmsData = util.mDMSCall(tradeLicenseRequest);
+       mdmsValidator.validateMdmsData(tradeLicenseRequest, mdmsData);
+       
+       CalculationRes calculationResponse = new CalculationRes() ;
+       
+       if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+	   {
+    	   calculationResponse = calculationService.getCalculationEstimates(requestInfo,licenses);
+	   }
+
+        return calculationResponse ;
+	}
+    
     public void validateMobileNumberUniqueness(TradeLicenseRequest request) {
         for (TradeLicense license : request.getLicenses()) {
             for (TradeUnit tradeUnit : license.getTradeLicenseDetail().getTradeUnits()) {
