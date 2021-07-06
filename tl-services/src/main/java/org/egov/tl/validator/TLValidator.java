@@ -739,6 +739,12 @@ public class TLValidator {
        			 {
        				 try {
 						numberOfYears = Integer.parseInt(tradeYears);
+						
+						if(numberOfYears<1)
+						{
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The License Period should be minimum 1 year . ");	
+						}
+						
 						if(!validateDifferenceYears(license.getValidFrom(),license.getValidTo(),numberOfYears))
 						{
 							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The difference between Valid From date and valid to date in years should be equal to License Period ");
