@@ -11,12 +11,21 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.config.WSConfiguration;
+import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.repository.ServiceRequestRepository;
-import org.egov.waterconnection.web.models.*;
+import org.egov.waterconnection.web.models.ConnectionUserRequest;
+import org.egov.waterconnection.web.models.OwnerInfo;
+import org.egov.waterconnection.web.models.Status;
+import org.egov.waterconnection.web.models.WaterConnection;
+import org.egov.waterconnection.web.models.WaterConnectionRequest;
 import org.egov.waterconnection.web.models.users.UserDetailResponse;
 import org.egov.waterconnection.web.models.users.UserSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class UserService {
@@ -51,7 +58,19 @@ public class UserService {
 			request.getWaterConnection().getConnectionHolders().forEach(holderInfo -> {
 				addUserDefaultFields(request.getWaterConnection().getTenantId(), role, holderInfo);
 				UserDetailResponse userDetailResponse = userExists(holderInfo, request.getRequestInfo());
-				if (CollectionUtils.isEmpty(userDetailResponse.getUser())) {
+				UserDetailResponse userDetailResponseWithUid = userExistsWithUid(holderInfo, request.getRequestInfo());
+				if (request.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.LINK_MOBILE_NUMBER)) {
+					holderInfo.setId(userDetailResponseWithUid.getUser().get(0).getId());
+					holderInfo.setUuid(userDetailResponseWithUid.getUser().get(0).getUuid());
+					addUserDefaultFields(request.getWaterConnection().getTenantId(), role, holderInfo);
+
+					StringBuilder uri = new StringBuilder(configuration.getUserHost()).append(configuration.getUserContextPath())
+						.append(configuration.getUserUpdateEndPoint());
+					userDetailResponse = userCall(new ConnectionUserRequest(request.getRequestInfo(), holderInfo), uri);
+					if (userDetailResponse.getUser().get(0).getUuid() == null) {
+						throw new CustomException("INVALID USER RESPONSE", "The user updated has uuid as null");
+					}
+				} else if (CollectionUtils.isEmpty(userDetailResponse.getUser())) {
 					/*
 					 * Sets userName equal to mobileNumber
 					 *
@@ -90,6 +109,15 @@ public class UserService {
 				setOwnerFields(holderInfo, userDetailResponse, request.getRequestInfo());
 			});
 		}
+	}
+
+	private UserDetailResponse userExistsWithUid(OwnerInfo holderInfo, @Valid RequestInfo requestInfo) {
+		UserSearchRequest userSearchRequest = getBaseUserSearchRequest(holderInfo.getTenantId(), requestInfo);
+		userSearchRequest.setUserType(holderInfo.getType());
+		userSearchRequest.setName(holderInfo.getName());
+		StringBuilder uri = new StringBuilder(configuration.getUserHost())
+				.append(configuration.getUserSearchEndpoint());
+		return userCall(userSearchRequest, uri);
 	}
 
 	/**
