@@ -58,19 +58,7 @@ public class UserService {
 			request.getWaterConnection().getConnectionHolders().forEach(holderInfo -> {
 				addUserDefaultFields(request.getWaterConnection().getTenantId(), role, holderInfo);
 				UserDetailResponse userDetailResponse = userExists(holderInfo, request.getRequestInfo());
-				UserDetailResponse userDetailResponseWithUid = userExistsWithUid(holderInfo, request.getRequestInfo());
-				if (request.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.LINK_MOBILE_NUMBER)) {
-					holderInfo.setId(userDetailResponseWithUid.getUser().get(0).getId());
-					holderInfo.setUuid(userDetailResponseWithUid.getUser().get(0).getUuid());
-					addUserDefaultFields(request.getWaterConnection().getTenantId(), role, holderInfo);
-
-					StringBuilder uri = new StringBuilder(configuration.getUserHost()).append(configuration.getUserContextPath())
-						.append(configuration.getUserUpdateEndPoint());
-					userDetailResponse = userCall(new ConnectionUserRequest(request.getRequestInfo(), holderInfo), uri);
-					if (userDetailResponse.getUser().get(0).getUuid() == null) {
-						throw new CustomException("INVALID USER RESPONSE", "The user updated has uuid as null");
-					}
-				} else if (CollectionUtils.isEmpty(userDetailResponse.getUser())) {
+				if (CollectionUtils.isEmpty(userDetailResponse.getUser())) {
 					/*
 					 * Sets userName equal to mobileNumber
 					 *
@@ -368,5 +356,31 @@ public class UserService {
 
 		//Update connection holder.
 		createUser(request);
+	}
+
+	public void linkMobileWithConnectionHolder(WaterConnectionRequest waterConnectionRequest) {
+		if (!CollectionUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionHolders())) {
+			Role role = getCitizenRole();
+			waterConnectionRequest.getWaterConnection().getConnectionHolders().forEach(holderInfo -> {
+				UserDetailResponse userDetailResponse = userExistsWithUid(holderInfo,
+						waterConnectionRequest.getRequestInfo());
+				if (!CollectionUtils.isEmpty(userDetailResponse.getUser())) {
+					holderInfo.setId(userDetailResponse.getUser().get(0).getId());
+					holderInfo.setUuid(userDetailResponse.getUser().get(0).getUuid());
+					addUserDefaultFields(waterConnectionRequest.getWaterConnection().getTenantId(), role, holderInfo);
+
+					StringBuilder uri = new StringBuilder(configuration.getUserHost())
+							.append(configuration.getUserContextPath()).append(configuration.getUserUpdateEndPoint());
+					userDetailResponse = userCall(
+							new ConnectionUserRequest(waterConnectionRequest.getRequestInfo(), holderInfo), uri);
+					if (userDetailResponse.getUser().get(0).getUuid() == null) {
+						throw new CustomException("INVALID USER RESPONSE", "The user updated has uuid as null");
+					}
+				}
+				
+				// Assigns value of fields from user got from userDetailResponse to owner object
+				setOwnerFields(holderInfo, userDetailResponse, waterConnectionRequest.getRequestInfo());
+			});
+		}
 	}
 }

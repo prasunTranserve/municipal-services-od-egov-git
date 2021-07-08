@@ -157,10 +157,7 @@ public class WaterServiceImpl implements WaterService {
 	@Override
 	public List<WaterConnection> updateWaterConnection(WaterConnectionRequest waterConnectionRequest) {
 		if (waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.LINK_MOBILE_NUMBER)) {
-			WaterConnection searchResult = getConnectionForUpdateRequest(
-				waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
-			userService.updateUser(waterConnectionRequest, searchResult);
-			return Arrays.asList(waterConnectionRequest.getWaterConnection());
+			return linkMobileWithWaterConnection(waterConnectionRequest);
 		}
 		if (wsUtil.isModifyConnectionRequest(waterConnectionRequest)) {
 			// Received request to update the connection for modifyConnection WF
@@ -198,6 +195,11 @@ public class WaterServiceImpl implements WaterService {
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
 		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
 		enrichmentService.postForMeterReading(waterConnectionRequest, WCConstants.UPDATE_APPLICATION);
+		return Arrays.asList(waterConnectionRequest.getWaterConnection());
+	}
+
+	private List<WaterConnection> linkMobileWithWaterConnection(WaterConnectionRequest waterConnectionRequest) {
+		userService.linkMobileWithConnectionHolder(waterConnectionRequest);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
