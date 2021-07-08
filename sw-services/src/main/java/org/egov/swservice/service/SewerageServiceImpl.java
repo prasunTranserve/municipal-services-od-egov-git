@@ -152,6 +152,9 @@ public class SewerageServiceImpl implements SewerageService {
 	 */
 	@Override
 	public List<SewerageConnection> updateSewerageConnection(SewerageConnectionRequest sewerageConnectionRequest) {
+		if (sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.LINK_MOBILE_NUMBER)) {
+			return linkMobileWithSewerageConnection(sewerageConnectionRequest);
+		}
 		if (sewerageServicesUtil.isModifyConnectionRequest(sewerageConnectionRequest)) {
 			return modifySewerageConnection(sewerageConnectionRequest);
 		}
@@ -185,6 +188,17 @@ public class SewerageServiceImpl implements SewerageService {
 		enrichmentService.postStatusEnrichment(sewerageConnectionRequest);
 		sewerageDao.updateSewerageConnection(sewerageConnectionRequest,
 				sewerageServicesUtil.getStatusForUpdate(businessService, previousApplicationStatus));
+		return Arrays.asList(sewerageConnectionRequest.getSewerageConnection());
+	}
+
+	/**
+	 * Link mobile with connection
+	 * @param sewerageConnectionRequest
+	 * @return
+	 */
+	private List<SewerageConnection> linkMobileWithSewerageConnection(
+			SewerageConnectionRequest sewerageConnectionRequest) {
+		userService.linkMobileWithConnectionHolder(sewerageConnectionRequest);
 		return Arrays.asList(sewerageConnectionRequest.getSewerageConnection());
 	}
 

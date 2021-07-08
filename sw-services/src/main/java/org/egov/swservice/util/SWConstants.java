@@ -219,4 +219,6 @@ public class SWConstants {
 
 	public static final String SEARCH_TYPE_CONNECTION = "CONNECTION";
 
+	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
+
 }

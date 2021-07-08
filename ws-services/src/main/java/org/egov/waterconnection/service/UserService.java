@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.Valid;
 
@@ -99,10 +100,16 @@ public class UserService {
 		}
 	}
 
+	/**
+	 * Get user with by uuid
+	 * @param holderInfo
+	 * @param requestInfo
+	 * @return
+	 */
 	private UserDetailResponse userExistsWithUid(OwnerInfo holderInfo, @Valid RequestInfo requestInfo) {
 		UserSearchRequest userSearchRequest = getBaseUserSearchRequest(holderInfo.getTenantId(), requestInfo);
 		userSearchRequest.setUserType(holderInfo.getType());
-		userSearchRequest.setName(holderInfo.getName());
+		userSearchRequest.setUuid(Stream.of(holderInfo.getUuid()).collect(Collectors.toSet()));
 		StringBuilder uri = new StringBuilder(configuration.getUserHost())
 				.append(configuration.getUserSearchEndpoint());
 		return userCall(userSearchRequest, uri);
@@ -358,6 +365,10 @@ public class UserService {
 		createUser(request);
 	}
 
+	/**
+	 * update mobile for connection holder
+	 * @param waterConnectionRequest
+	 */
 	public void linkMobileWithConnectionHolder(WaterConnectionRequest waterConnectionRequest) {
 		if (!CollectionUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionHolders())) {
 			Role role = getCitizenRole();

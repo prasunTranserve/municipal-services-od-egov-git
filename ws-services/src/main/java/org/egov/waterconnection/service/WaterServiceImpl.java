@@ -198,6 +198,11 @@ public class WaterServiceImpl implements WaterService {
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
+	/**
+	 * Link Mobile number with connection
+	 * @param waterConnectionRequest
+	 * @return
+	 */
 	private List<WaterConnection> linkMobileWithWaterConnection(WaterConnectionRequest waterConnectionRequest) {
 		userService.linkMobileWithConnectionHolder(waterConnectionRequest);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
