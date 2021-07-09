@@ -197,6 +197,9 @@ public class WSConfiguration {
 	@Value("${disconnect.ws.workflow.name}")
 	private String disconnectWSBusinessServiceName;
 
+	@Value("${close.ws.workflow.name}")
+	private String closeWSBusinessServiceName;
+
 	@Value("${egov.collection.host}")
 	private String collectionHost;
 }

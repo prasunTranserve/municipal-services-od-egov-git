@@ -87,16 +87,20 @@ public class SewerageFieldValidator implements SewerageActionValidator {
 
 			}
 		}
-		if (SWConstants.SUBMIT_APPLICATION_CONST
-				.equals(sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())
-				|| SWConstants.APPROVE_CONNECTION.equalsIgnoreCase(
-				sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())) {
-			if (sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() == null
-					|| sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() < 0
-					|| sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() == 0) {
-				errorMap.put("INVALID_DATE_EFFECTIVE_FROM", "Date effective from cannot be null or negative");
+			if (!(sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.RECONNECT_SEWERAGE_CONNECTION) || 
+				sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.CLOSE_SEWERAGE_CONNECTION) || 
+				sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.DISCONNECT_SEWERAGE_CONNECTION))) {
+				if (SWConstants.SUBMIT_APPLICATION_CONST
+						.equals(sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())
+						|| SWConstants.APPROVE_CONNECTION.equalsIgnoreCase(
+						sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())) {
+					if (sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() == null
+							|| sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() < 0
+							|| sewerageConnectionRequest.getSewerageConnection().getDateEffectiveFrom() == 0) {
+						errorMap.put("INVALID_DATE_EFFECTIVE_FROM", "Date effective from cannot be null or negative");
+					}
+				}
 			}
-		}
 	}
 
 }

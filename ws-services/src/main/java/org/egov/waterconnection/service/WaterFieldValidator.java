@@ -86,35 +86,39 @@ public class WaterFieldValidator implements WaterActionValidator {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
 			}
 		}
-		if (WCConstants.SUBMIT_APPLICATION_CONST
-				.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())
-				|| WCConstants.APPROVE_CONNECTION.equalsIgnoreCase(
-				waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
-			if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == null
-					|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() < 0
-					|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == 0) {
-				errorMap.put("INVALID_DATE_EFFECTIVE_FROM", "Date effective from cannot be null or negative");
-			}
-			if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() != null) {
-				if (System.currentTimeMillis() > waterConnectionRequest.getWaterConnection().getDateEffectiveFrom()) {
-					errorMap.put("DATE_EFFECTIVE_FROM_IN_PAST", "Date effective from cannot be past");
+		if (!(waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.RECONNECT_WATER_CONNECTION) || 
+				waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION) || 
+				waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.DISCONNECT_WATER_CONNECTION))) {
+			if (WCConstants.SUBMIT_APPLICATION_CONST
+					.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())
+					|| WCConstants.APPROVE_CONNECTION.equalsIgnoreCase(
+					waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+				if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == null
+						|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() < 0
+						|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == 0) {
+					errorMap.put("INVALID_DATE_EFFECTIVE_FROM", "Date effective from cannot be null or negative");
 				}
-				if ((waterConnectionRequest.getWaterConnection().getConnectionExecutionDate() != null)
-						&& (waterConnectionRequest.getWaterConnection()
-						.getConnectionExecutionDate() > waterConnectionRequest.getWaterConnection()
-						.getDateEffectiveFrom())) {
+				if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() != null) {
+					if (System.currentTimeMillis() > waterConnectionRequest.getWaterConnection().getDateEffectiveFrom()) {
+						errorMap.put("DATE_EFFECTIVE_FROM_IN_PAST", "Date effective from cannot be past");
+					}
+					if ((waterConnectionRequest.getWaterConnection().getConnectionExecutionDate() != null)
+							&& (waterConnectionRequest.getWaterConnection()
+							.getConnectionExecutionDate() > waterConnectionRequest.getWaterConnection()
+							.getDateEffectiveFrom())) {
 
-					errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_EXCECUTION_DATE",
-							"Date effective from cannot be before connection execution date");
-				}
-				if ((waterConnectionRequest.getWaterConnection().getMeterInstallationDate() != null)
-						&& (waterConnectionRequest.getWaterConnection()
-						.getMeterInstallationDate() > waterConnectionRequest.getWaterConnection()
-						.getDateEffectiveFrom())) {
-					errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_METER_INSTALLATION_DATE",
-							"Date effective from cannot be before meter installation date");
-				}
+						errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_EXCECUTION_DATE",
+								"Date effective from cannot be before connection execution date");
+					}
+					if ((waterConnectionRequest.getWaterConnection().getMeterInstallationDate() != null)
+							&& (waterConnectionRequest.getWaterConnection()
+							.getMeterInstallationDate() > waterConnectionRequest.getWaterConnection()
+							.getDateEffectiveFrom())) {
+						errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_METER_INSTALLATION_DATE",
+								"Date effective from cannot be before meter installation date");
+					}
 
+				}
 			}
 		}
 	}
