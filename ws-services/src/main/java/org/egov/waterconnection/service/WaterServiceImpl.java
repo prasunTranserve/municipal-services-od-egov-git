@@ -18,6 +18,7 @@ import org.egov.waterconnection.validator.ActionValidator;
 import org.egov.waterconnection.validator.MDMSValidator;
 import org.egov.waterconnection.validator.ValidateProperty;
 import org.egov.waterconnection.validator.WaterConnectionValidator;
+import org.egov.waterconnection.web.models.Connection.StatusEnum;
 import org.egov.waterconnection.web.models.Property;
 import org.egov.waterconnection.web.models.SearchCriteria;
 import org.egov.waterconnection.web.models.WaterConnection;
@@ -126,6 +127,9 @@ public class WaterServiceImpl implements WaterService {
 				break;
 			case WCConstants.CONNECTION_OWNERSHIP_CHANGE:
 				reqType = WCConstants.OWNERSHIP_CHANGE_CONNECTION;
+				break;
+			case WCConstants.CLOSE_WATER_CONNECTION:
+				reqType = WCConstants.CLOSE_CONNECTION;
 				break;
 			default:
 				reqType = WCConstants.MODIFY_CONNECTION;
@@ -284,6 +288,8 @@ public class WaterServiceImpl implements WaterService {
 		validateUpdate(waterConnectionRequest, searchResult);
 		wfIntegrator.callWorkFlow(waterConnectionRequest, property);
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
+		// setting status as Inactive for closed connection
+		inactiveConnection(waterConnectionRequest);
 		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
 		calculateFeeAndGenerateDemand(waterConnectionRequest, property);
 		// setting oldApplication Flag
@@ -298,7 +304,10 @@ public class WaterServiceImpl implements WaterService {
 		if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.DISCONNECT_WATER_CONNECTION)) {
 					waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.DISCONNECT_CONNECTION);
-		} else {
+		} else if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
+			waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.CLOSE_CONNECTION);
+		}  else {
 			waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.MODIFY_CONNECTION);
 		}
 	}
@@ -314,6 +323,9 @@ public class WaterServiceImpl implements WaterService {
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CONNECTION_OWNERSHIP_CHANGE)) {
 			businessServiceName = config.getWsWorkflowownershipChangeName();
+		} else if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
+			businessServiceName = config.getCloseWSBusinessServiceName();
 		} else {
 			businessServiceName = config.getModifyWSBusinessServiceName();
 		}
@@ -334,6 +346,9 @@ public class WaterServiceImpl implements WaterService {
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CONNECTION_OWNERSHIP_CHANGE)) {
 			businessServiceName = config.getWsWorkflowownershipChangeName();
+		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
+			businessServiceName = config.getCloseWSBusinessServiceName();
 		} else {
 			businessServiceName = config.getModifyWSBusinessServiceName();
 		}
@@ -369,14 +384,24 @@ public class WaterServiceImpl implements WaterService {
 			isApplicable = true;
 		}
 		if(WCConstants.APPLY_RECONNECTION.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
-				&& WCConstants.SUBMIT_APPLICATION_CONST.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+				&& WCConstants.ACTIVATE_CONNECTION.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			isApplicable = true;
 		}
 		if(WCConstants.CONNECTION_OWNERSHIP_CHANGE.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
 						&& WCConstants.ACTION_PAY.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			isApplicable = true;
 		}
+		if(WCConstants.ACTION_CLOSE_CONNECTION.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			isApplicable = true;
+		}
 		
 		return isApplicable;
+	}
+	
+	private void inactiveConnection(WaterConnectionRequest waterConnectionRequest) {
+		if (waterConnectionRequest.getWaterConnection().getProcessInstance().getAction()
+				.equalsIgnoreCase(WCConstants.ACTION_CLOSE_CONNECTION)) {
+					waterConnectionRequest.getWaterConnection().setStatus(StatusEnum.INACTIVE);
+		}
 	}
 }

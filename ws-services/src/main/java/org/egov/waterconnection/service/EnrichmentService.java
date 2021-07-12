@@ -125,6 +125,8 @@ public class EnrichmentService {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.APPLY_RECONNECTION);
 		} else if (reqType == WCConstants.OWNERSHIP_CHANGE_CONNECTION) {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CONNECTION_OWNERSHIP_CHANGE);
+		} else if (reqType == WCConstants.CLOSE_CONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CLOSE_WATER_CONNECTION);
 		} else {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.NEW_WATER_CONNECTION);
 		}

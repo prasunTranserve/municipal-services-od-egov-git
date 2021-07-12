@@ -205,4 +205,7 @@ public class WSConfiguration {
 	
 	@Value("${ws.workflow.ownershipChange.name}")
 	private String wsWorkflowownershipChangeName;
+	
+	@Value("${close.ws.workflow.name}")
+	private String closeWSBusinessServiceName;
 }

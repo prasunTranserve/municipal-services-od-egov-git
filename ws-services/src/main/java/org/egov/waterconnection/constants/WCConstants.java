@@ -224,7 +224,9 @@ public class WCConstants {
 	public static final String APPROVE_CONNECTION = "APPROVE_CONNECTION";
 
 	public static final String ACTION_DISCONNECT_CONNECTION = "DISCONNECT_CONNECTION";
-
+	
+	public static final String ACTION_CLOSE_CONNECTION = "CLOSE_CONNECTION";
+	
 	// Used to differentiate the type of request which is processing
 	public static final int CREATE_APPLICATION = 0;
 	public static final int UPDATE_APPLICATION = 1;
@@ -257,10 +259,14 @@ public class WCConstants {
 	public static final String MODIFIED_FINAL_STATE = "APPROVED";
 
 	public static final String MODIFIED_FINAL_STATE_DISCONNECTED = "CONNECTION_DISCONNECTED";
+	
+	public static final String MODIFIED_FINAL_STATE_CONNECTION_CLOSED = "CONNECTION_CLOSED";
 
 	public static final List<String> FINAL_CONNECTION_STATES = Collections
-			.unmodifiableList(Arrays.asList(MODIFIED_FINAL_STATE, STATUS_APPROVED,MODIFIED_FINAL_STATE_DISCONNECTED));
+			.unmodifiableList(Arrays.asList(MODIFIED_FINAL_STATE, STATUS_APPROVED,MODIFIED_FINAL_STATE_DISCONNECTED, MODIFIED_FINAL_STATE_CONNECTION_CLOSED));
 	
 	public static final String SEARCH_TYPE_CONNECTION = "CONNECTION";
+	
+	public static final String ROLE_EMPLOYEE = "EMPLOYEE";
 
 }

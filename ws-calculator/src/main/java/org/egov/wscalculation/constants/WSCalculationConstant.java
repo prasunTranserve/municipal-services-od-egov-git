@@ -186,6 +186,8 @@ public class WSCalculationConstant {
 
 	public static final String WATER_CONNECTION_APP_STATUS_DISCONNECTED_STRING = "CONNECTION_DISCONNECTED";
 	
+	public static final String WATER_CONNECTION_APP_STATUS_CLOSED_STRING = "CONNECTION_CLOSED";
+	
 	public static final String  USREVENTS_EVENT_TYPE = "SYSTEMGENERATED";
 	
 	public static final String  USREVENTS_EVENT_NAME = "WATER BILL GENERATION";

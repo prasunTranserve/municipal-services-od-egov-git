@@ -2,6 +2,7 @@ package org.egov.waterconnection.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.web.models.RoadCuttingInfo;
@@ -74,6 +75,7 @@ public class WaterFieldValidator implements WaterActionValidator {
 	}
 	
 	private void handleModifyConnectionRequest(WaterConnectionRequest waterConnectionRequest, Map<String, String> errorMap){
+		boolean isEmployee = waterConnectionRequest.getRequestInfo().getUserInfo().getRoles().stream().map(role -> role.getCode()).collect(Collectors.toList()).contains(WCConstants.ROLE_EMPLOYEE);
 		if (WCConstants.APPROVE_CONNECTION
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionType())) {
@@ -86,10 +88,11 @@ public class WaterFieldValidator implements WaterActionValidator {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
 			}
 		}
-		if (WCConstants.SUBMIT_APPLICATION_CONST
+		if ((WCConstants.SUBMIT_APPLICATION_CONST
 				.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())
 				|| WCConstants.APPROVE_CONNECTION.equalsIgnoreCase(
-				waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+				waterConnectionRequest.getWaterConnection().getProcessInstance().getAction()))
+				&& isEmployee) {
 			if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == null
 					|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() < 0
 					|| waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() == 0) {
