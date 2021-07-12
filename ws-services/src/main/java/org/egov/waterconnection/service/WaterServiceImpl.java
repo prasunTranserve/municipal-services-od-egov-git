@@ -337,16 +337,18 @@ public class WaterServiceImpl implements WaterService {
 
 	private void validateClosedOrDisconnectedConnections(WaterConnectionRequest waterConnectionRequest) {
 		List<WaterConnection> previousConnectionsList = getAllWaterApplications(waterConnectionRequest);
-		for (WaterConnection waterConnection : previousConnectionsList) {
-			StringBuilder builder = new StringBuilder();
-			if (waterConnection.getApplicationStatus().equalsIgnoreCase(WCConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED)) {
-				builder.append("WATER CONNECTION IS PERMANENTLY CLOSED FOR: ").append(waterConnectionRequest.getWaterConnection().getConnectionNo()).append(" :ID");
-				throw new CustomException("CLOSED_WATERCONNECTION", builder.toString());
-			} else if (waterConnection.getApplicationStatus().equalsIgnoreCase(WCConstants.MODIFIED_FINAL_STATE_DISCONNECTED)
-						&& !(waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.RECONNECT_WATER_CONNECTION) || 
-						waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION))) {
-							builder.append("WATER CONNECTION IS TEMPORARILY DISCONNECTED FOR: ").append(waterConnectionRequest.getWaterConnection().getConnectionNo()).append(" :ID");
-							throw new CustomException("DISCONNECTED_WATERCONNECTION", builder.toString());
+		if(!previousConnectionsList.isEmpty()) {
+			for (WaterConnection waterConnection : previousConnectionsList) {
+				StringBuilder builder = new StringBuilder();
+				if (waterConnection.getApplicationStatus().equalsIgnoreCase(WCConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED)) {
+					builder.append("WATER CONNECTION IS PERMANENTLY CLOSED FOR: ").append(waterConnectionRequest.getWaterConnection().getConnectionNo()).append(" :ID");
+					throw new CustomException("CLOSED_WATERCONNECTION", builder.toString());
+				} else if (waterConnection.getApplicationStatus().equalsIgnoreCase(WCConstants.MODIFIED_FINAL_STATE_DISCONNECTED)
+							&& !(waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.RECONNECT_WATER_CONNECTION) || 
+							waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION))) {
+								builder.append("WATER CONNECTION IS TEMPORARILY DISCONNECTED FOR: ").append(waterConnectionRequest.getWaterConnection().getConnectionNo()).append(" :ID");
+								throw new CustomException("DISCONNECTED_WATERCONNECTION", builder.toString());
+				}
 			}
 		}
 	}

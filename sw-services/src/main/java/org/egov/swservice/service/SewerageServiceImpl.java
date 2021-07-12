@@ -333,16 +333,18 @@ public class SewerageServiceImpl implements SewerageService {
 
 	private void validateClosedOrDisconnectedConnections(SewerageConnectionRequest sewerageConnectionRequest) {
 		List<SewerageConnection> previousConnectionsList = getAllSewerageApplications(sewerageConnectionRequest);
-		for (SewerageConnection sewerageConnection : previousConnectionsList) {
-			StringBuilder builder = new StringBuilder();
-			if (sewerageConnection.getApplicationStatus().equalsIgnoreCase(SWConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED)) {
-				builder.append("SEWERAGE CONNECTION IS PERMANENTLY CLOSED FOR: ").append(sewerageConnectionRequest.getSewerageConnection().getConnectionNo()).append(" :ID");
-				throw new CustomException("CLOSED_SEWERAGECONNECTION", builder.toString());
-			} else if (sewerageConnection.getApplicationStatus().equalsIgnoreCase(SWConstants.MODIFIED_FINAL_STATE_DISCONNECTED)
-						&& !(sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.RECONNECT_SEWERAGE_CONNECTION) || 
-						sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.CLOSE_SEWERAGE_CONNECTION))) {
-							builder.append("SEWERAGE CONNECTION IS TEMPORARILY DISCONNECTED FOR: ").append(sewerageConnectionRequest.getSewerageConnection().getConnectionNo()).append(" :ID");
-							throw new CustomException("DISCONNECTED_SEWERAGECONNECTION", builder.toString());
+		if(!previousConnectionsList.isEmpty()) {
+			for (SewerageConnection sewerageConnection : previousConnectionsList) {
+				StringBuilder builder = new StringBuilder();
+				if (sewerageConnection.getApplicationStatus().equalsIgnoreCase(SWConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED)) {
+					builder.append("SEWERAGE CONNECTION IS PERMANENTLY CLOSED FOR: ").append(sewerageConnectionRequest.getSewerageConnection().getConnectionNo()).append(" :ID");
+					throw new CustomException("CLOSED_SEWERAGECONNECTION", builder.toString());
+				} else if (sewerageConnection.getApplicationStatus().equalsIgnoreCase(SWConstants.MODIFIED_FINAL_STATE_DISCONNECTED)
+							&& !(sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.RECONNECT_SEWERAGE_CONNECTION) || 
+							sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.CLOSE_SEWERAGE_CONNECTION))) {
+								builder.append("SEWERAGE CONNECTION IS TEMPORARILY DISCONNECTED FOR: ").append(sewerageConnectionRequest.getSewerageConnection().getConnectionNo()).append(" :ID");
+								throw new CustomException("DISCONNECTED_SEWERAGECONNECTION", builder.toString());
+				}
 			}
 		}
 	}
