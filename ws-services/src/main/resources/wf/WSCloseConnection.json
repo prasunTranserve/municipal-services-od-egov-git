@@ -88,8 +88,8 @@
                 },
                 {
                     "sla": null,
-                    "state": "CONNECTION_DISCONNECTED",
-                    "applicationStatus": "CONNECTION_DISCONNECTED",
+                    "state": "CONNECTION_CLOSED",
+                    "applicationStatus": "CONNECTION_CLOSED",
                     "isStateUpdatable": false,
                     "docUploadRequired": false,
                     "isStartState": false,

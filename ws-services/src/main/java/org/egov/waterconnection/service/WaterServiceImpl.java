@@ -85,7 +85,6 @@ public class WaterServiceImpl implements WaterService {
 	@Override
 	public List<WaterConnection> createWaterConnection(WaterConnectionRequest waterConnectionRequest) {
 		int reqType = WCConstants.CREATE_APPLICATION;
-		validateClosedOrDisconnectedConnections(waterConnectionRequest);
 		if (wsUtil.isModifyConnectionRequest(waterConnectionRequest)) {
 			reqType = getModifyConnectionRequestType(waterConnectionRequest);
 			
@@ -123,7 +122,7 @@ public class WaterServiceImpl implements WaterService {
 			case WCConstants.DISCONNECT_WATER_CONNECTION:
 				reqType = WCConstants.DISCONNECT_CONNECTION;
 				break;
-			case WCConstants.APPLY_RECONNECTION:
+			case WCConstants.WATER_RECONNECTION:
 				reqType = WCConstants.RECONNECTION;
 				break;
 			case WCConstants.CONNECTION_OWNERSHIP_CHANGE:
@@ -227,7 +226,7 @@ public class WaterServiceImpl implements WaterService {
 	}
 
 	private void calculateFeeAndGenerateDemand(WaterConnectionRequest waterConnectionRequest, Property property) {
-		if(WCConstants.APPLY_RECONNECTION.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
+		if(WCConstants.WATER_RECONNECTION.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
 				|| WCConstants.CONNECTION_OWNERSHIP_CHANGE.equals(waterConnectionRequest.getWaterConnection().getApplicationType())) {
 			calculationService.calculateFeeAndGenerateDemand(waterConnectionRequest, property);
 		}
@@ -263,7 +262,12 @@ public class WaterServiceImpl implements WaterService {
 
 		return connections.get(0);
 	}
-
+	
+	/**
+	 * 
+	 * @param waterConnectionRequest
+	 * @return
+	 */
 	private List<WaterConnection> getAllWaterApplications(WaterConnectionRequest waterConnectionRequest) {
 		SearchCriteria criteria = SearchCriteria.builder()
 				.connectionNumber(waterConnectionRequest.getWaterConnection().getConnectionNo()).build();
@@ -301,6 +305,11 @@ public class WaterServiceImpl implements WaterService {
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
+	/**
+	 * 
+	 * @param waterConnectionRequest
+	 * @param searchResult
+	 */
 	private void validateUpdate(WaterConnectionRequest waterConnectionRequest, WaterConnection searchResult) {
 		if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.DISCONNECT_WATER_CONNECTION)) {
@@ -313,13 +322,18 @@ public class WaterServiceImpl implements WaterService {
 		}
 	}
 
+	/**
+	 * 
+	 * @param waterConnectionRequest
+	 * @return
+	 */
 	private String getApplicationStatus(WaterConnectionRequest waterConnectionRequest) {
 		String businessServiceName;
 		if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.DISCONNECT_WATER_CONNECTION)) {
 			businessServiceName = config.getDisconnectWSBusinessServiceName();
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
-				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.APPLY_RECONNECTION)) {
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.WATER_RECONNECTION)) {
 			businessServiceName = config.getWsWorkflowReconnectionName();
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CONNECTION_OWNERSHIP_CHANGE)) {
@@ -336,13 +350,18 @@ public class WaterServiceImpl implements WaterService {
 				waterConnectionRequest.getWaterConnection().getTenantId(), businessServiceName);
 	}
 
+	/**
+	 * get business service
+	 * @param waterConnectionRequest
+	 * @return
+	 */
 	private BusinessService getBusinessService(WaterConnectionRequest waterConnectionRequest) {
 		String businessServiceName;
 		if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.DISCONNECT_WATER_CONNECTION)) {
 			businessServiceName = config.getDisconnectWSBusinessServiceName();
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
-				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.APPLY_RECONNECTION)) {
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.WATER_RECONNECTION)) {
 			businessServiceName = config.getWsWorkflowReconnectionName();
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CONNECTION_OWNERSHIP_CHANGE)) {
@@ -358,6 +377,10 @@ public class WaterServiceImpl implements WaterService {
 				waterConnectionRequest.getWaterConnection().getTenantId(), waterConnectionRequest.getRequestInfo(), businessServiceName);
 	}
 
+	/**
+	 * Update oldApplication flag
+	 * @param waterConnectionRequest
+	 */
 	public void markOldApplication(WaterConnectionRequest waterConnectionRequest) {
 		if (isApplicableForOldApplicationUpdate(waterConnectionRequest)) {
 			String currentModifiedApplicationNo = waterConnectionRequest.getWaterConnection().getApplicationNo();
@@ -376,6 +399,11 @@ public class WaterServiceImpl implements WaterService {
 		}
 	}
 
+	/**
+	 * Checking when to update the oldApplication flag
+	 * @param waterConnectionRequest
+	 * @return
+	 */
 	private boolean isApplicableForOldApplicationUpdate(WaterConnectionRequest waterConnectionRequest) {
 		boolean isApplicable = false;
 		if(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction().equalsIgnoreCase(APPROVE_CONNECTION)) {
@@ -384,7 +412,7 @@ public class WaterServiceImpl implements WaterService {
 		if(WCConstants.ACTION_DISCONNECT_CONNECTION.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			isApplicable = true;
 		}
-		if(WCConstants.APPLY_RECONNECTION.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
+		if(WCConstants.WATER_RECONNECTION.equals(waterConnectionRequest.getWaterConnection().getApplicationType())
 				&& WCConstants.ACTIVATE_CONNECTION.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			isApplicable = true;
 		}
@@ -399,6 +427,10 @@ public class WaterServiceImpl implements WaterService {
 		return isApplicable;
 	}
 	
+	/**
+	 * Set inactive status
+	 * @param waterConnectionRequest
+	 */
 	private void inactiveConnection(WaterConnectionRequest waterConnectionRequest) {
 		if (waterConnectionRequest.getWaterConnection().getProcessInstance().getAction()
 				.equalsIgnoreCase(WCConstants.ACTION_CLOSE_CONNECTION)) {

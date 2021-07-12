@@ -60,7 +60,7 @@ public class CalculationService {
 
 	private CalculationReq generateCalculationRequest(WaterConnectionRequest request, CalculationCriteria criteria) {
 		CalculationReq calRequest = null;
-		if(request.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.APPLY_RECONNECTION)) {
+		if(request.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.WATER_RECONNECTION)) {
 			calRequest = CalculationReq.builder().calculationCriteria(Arrays.asList(criteria))
 					.requestInfo(request.getRequestInfo()).isconnectionCalculation(false).isReconnectionCalculation(true).isOwnershipChangeCalculation(false).build();
 		} else if(request.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CONNECTION_OWNERSHIP_CHANGE)) {

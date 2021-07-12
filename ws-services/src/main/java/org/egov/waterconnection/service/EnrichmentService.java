@@ -122,7 +122,7 @@ public class EnrichmentService {
 		} else if (reqType == WCConstants.DISCONNECT_CONNECTION) {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.DISCONNECT_WATER_CONNECTION);
 		} else if (reqType == WCConstants.RECONNECTION) {
-			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.APPLY_RECONNECTION);
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.WATER_RECONNECTION);
 		} else if (reqType == WCConstants.OWNERSHIP_CHANGE_CONNECTION) {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CONNECTION_OWNERSHIP_CHANGE);
 		} else if (reqType == WCConstants.CLOSE_CONNECTION) {

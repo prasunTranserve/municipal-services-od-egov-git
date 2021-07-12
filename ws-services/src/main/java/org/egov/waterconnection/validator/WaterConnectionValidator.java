@@ -148,6 +148,14 @@ public class WaterConnectionValidator {
 					&& (WCConstants.MODIFIED_FINAL_STATE_DISCONNECTED.equals(waterConnection.getApplicationStatus()))
 					|| WCConstants.STATUS_APPROVED.equals(waterConnection.getApplicationStatus()))) {
 				errorMap.put("INVALID APPLICATION", "The connection is either in workflow or already closed");
+			} 
+			if(reqType == WCConstants.DISCONNECT_CONNECTION && !(waterConnection.getStatus()==StatusEnum.ACTIVE 
+					&& (WCConstants.STATUS_APPROVED.equals(waterConnection.getApplicationStatus())))) {
+				errorMap.put("INVALID APPLICATION", "The connection is either in workflow or already closed");
+			}
+			if(reqType == WCConstants.MODIFY_CONNECTION && (WCConstants.MODIFIED_FINAL_STATE_DISCONNECTED.equals(waterConnection.getApplicationStatus())
+						|| WCConstants.CLOSE_WATER_CONNECTION.equals(waterConnection.getApplicationStatus()))) {
+				errorMap.put("INVALID APPLICATION", "The connection is either disconnected or already closed");
 			}
 		}
 		
