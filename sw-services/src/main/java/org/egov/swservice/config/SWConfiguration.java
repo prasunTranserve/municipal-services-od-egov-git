@@ -143,15 +143,15 @@ public class SWConfiguration {
 	private String shortenerURL;
 	
 	@Value("${egov.pdfservice.host}")
-    	private String pdfServiceHost;
+    private String pdfServiceHost;
     
-    	@Value("${egov.filestore.host}")
-    	private String fileStoreHost;
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
     
-    	@Value("${sw.editnotification.topic}")
-    	private String editNotificationTopic;
+    @Value("${sw.editnotification.topic}")
+	private String editNotificationTopic;
     
-    	@Value("${sw.consume.filestoreids.topic}")
+    @Value("${sw.consume.filestoreids.topic}")
 	private String fileStoreIdsTopic;
 
 	@Value("${egov.sewerageservice.savefilestoreIds}")
@@ -183,4 +183,10 @@ public class SWConfiguration {
 
 	@Value("${egov.usr.events.pay.link}")
 	private String userEventApplicationPayLink;
+
+	@Value("${disconnect.sw.workflow.name}")
+	private String disconnectSWBusinessServiceName;
+
+	@Value("${close.sw.workflow.name}")
+	private String closeSWBusinessServiceName;
 }

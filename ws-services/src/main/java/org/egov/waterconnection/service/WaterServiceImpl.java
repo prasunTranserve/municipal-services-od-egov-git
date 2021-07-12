@@ -85,6 +85,7 @@ public class WaterServiceImpl implements WaterService {
 	@Override
 	public List<WaterConnection> createWaterConnection(WaterConnectionRequest waterConnectionRequest) {
 		int reqType = WCConstants.CREATE_APPLICATION;
+		validateClosedOrDisconnectedConnections(waterConnectionRequest);
 		if (wsUtil.isModifyConnectionRequest(waterConnectionRequest)) {
 			reqType = getModifyConnectionRequestType(waterConnectionRequest);
 			

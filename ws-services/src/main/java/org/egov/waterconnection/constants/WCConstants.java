@@ -243,6 +243,8 @@ public class WCConstants {
 	public static final String DISCONNECT_WATER_CONNECTION = "DISCONNECT_WATER_CONNECTION";
 
 	public static final String CLOSE_WATER_CONNECTION = "CLOSE_WATER_CONNECTION";
+
+	public static final String RECONNECT_WATER_CONNECTION = "RECONNECT_WATER_CONNECTION";
 	
 	public static final String APPLY_RECONNECTION = "APPLY_RECONNECTION";
 	
@@ -260,6 +262,8 @@ public class WCConstants {
 
 	public static final String MODIFIED_FINAL_STATE_DISCONNECTED = "CONNECTION_DISCONNECTED";
 	
+	public static final String MODIFIED_FINAL_STATE_CONNECTION_CLOSED = "CONNECTION_CLOSED";
+
 	public static final String MODIFIED_FINAL_STATE_CONNECTION_CLOSED = "CONNECTION_CLOSED";
 
 	public static final List<String> FINAL_CONNECTION_STATES = Collections

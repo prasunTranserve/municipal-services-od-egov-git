@@ -102,22 +102,27 @@ public class WaterFieldValidator implements WaterActionValidator {
 				if (System.currentTimeMillis() > waterConnectionRequest.getWaterConnection().getDateEffectiveFrom()) {
 					errorMap.put("DATE_EFFECTIVE_FROM_IN_PAST", "Date effective from cannot be past");
 				}
-				if ((waterConnectionRequest.getWaterConnection().getConnectionExecutionDate() != null)
-						&& (waterConnectionRequest.getWaterConnection()
-						.getConnectionExecutionDate() > waterConnectionRequest.getWaterConnection()
-						.getDateEffectiveFrom())) {
+				if (waterConnectionRequest.getWaterConnection().getDateEffectiveFrom() != null) {
+					if (System.currentTimeMillis() > waterConnectionRequest.getWaterConnection().getDateEffectiveFrom()) {
+						errorMap.put("DATE_EFFECTIVE_FROM_IN_PAST", "Date effective from cannot be past");
+					}
+					if ((waterConnectionRequest.getWaterConnection().getConnectionExecutionDate() != null)
+							&& (waterConnectionRequest.getWaterConnection()
+							.getConnectionExecutionDate() > waterConnectionRequest.getWaterConnection()
+							.getDateEffectiveFrom())) {
 
-					errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_EXCECUTION_DATE",
-							"Date effective from cannot be before connection execution date");
-				}
-				if ((waterConnectionRequest.getWaterConnection().getMeterInstallationDate() != null)
-						&& (waterConnectionRequest.getWaterConnection()
-						.getMeterInstallationDate() > waterConnectionRequest.getWaterConnection()
-						.getDateEffectiveFrom())) {
-					errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_METER_INSTALLATION_DATE",
-							"Date effective from cannot be before meter installation date");
-				}
+						errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_EXCECUTION_DATE",
+								"Date effective from cannot be before connection execution date");
+					}
+					if ((waterConnectionRequest.getWaterConnection().getMeterInstallationDate() != null)
+							&& (waterConnectionRequest.getWaterConnection()
+							.getMeterInstallationDate() > waterConnectionRequest.getWaterConnection()
+							.getDateEffectiveFrom())) {
+						errorMap.put("DATE_EFFECTIVE_FROM_LESS_THAN_METER_INSTALLATION_DATE",
+								"Date effective from cannot be before meter installation date");
+					}
 
+				}
 			}
 		}
 	}
