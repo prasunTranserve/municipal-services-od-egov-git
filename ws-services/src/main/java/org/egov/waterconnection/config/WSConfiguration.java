@@ -199,4 +199,10 @@ public class WSConfiguration {
 
 	@Value("${egov.collection.host}")
 	private String collectionHost;
+	
+	@Value("${ws.workflow.reconnection.name}")
+	private String wsWorkflowReconnectionName;
+	
+	@Value("${ws.workflow.ownershipChange.name}")
+	private String wsWorkflowownershipChangeName;
 }

@@ -231,6 +231,8 @@ public class WCConstants {
 	public static final int MODIFY_CONNECTION =  2;
 	public static final int DISCONNECT_CONNECTION =  3;
 	public static final int CLOSE_CONNECTION =  4;
+	public static final int RECONNECTION =  5;
+	public static final int OWNERSHIP_CHANGE_CONNECTION =  6;
 	
 	public static final String NEW_WATER_CONNECTION = "NEW_WATER_CONNECTION";
 
@@ -239,6 +241,10 @@ public class WCConstants {
 	public static final String DISCONNECT_WATER_CONNECTION = "DISCONNECT_WATER_CONNECTION";
 
 	public static final String CLOSE_WATER_CONNECTION = "CLOSE_WATER_CONNECTION";
+	
+	public static final String APPLY_RECONNECTION = "APPLY_RECONNECTION";
+	
+	public static final String CONNECTION_OWNERSHIP_CHANGE = "CONNECTION_OWNERSHIP_CHANGE";
 	
 	public static final String WATER_SERVICE_BUSINESS_ID = "WS";
 
