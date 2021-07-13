@@ -71,6 +71,13 @@ public class WorkflowIntegrator {
 
 			if (sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.CLOSE_SEWERAGE_CONNECTION))
 				wfBusinessServiceName = config.getCloseSWBusinessServiceName();
+			
+			if (sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.SEWERAGE_RECONNECTION))
+				wfBusinessServiceName = config.getWsWorkflowReconnectionName();
+			
+			if (sewerageConnectionRequest.getSewerageConnection().getApplicationType().equalsIgnoreCase(SWConstants.CONNECTION_OWNERSHIP_CHANGE))
+				wfBusinessServiceName = config.getWsWorkflowownershipChangeName();
+			
 		}
 		SewerageConnection connection = sewerageConnectionRequest.getSewerageConnection();
 		ProcessInstance processInstance = ProcessInstance.builder()

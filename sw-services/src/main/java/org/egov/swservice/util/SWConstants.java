@@ -206,6 +206,10 @@ public class SWConstants {
 	public static final int DISCONNECT_CONNECTION =  3;
 
 	public static final int CLOSE_CONNECTION =  4;
+	
+	public static final int RECONNECTION =  5;
+	
+	public static final int OWNERSHIP_CHANGE_CONNECTION =  6;
 
 	public static final String APPROVE_CONNECTION = "APPROVE_CONNECTION";
 
@@ -217,7 +221,9 @@ public class SWConstants {
 
 	public static final String CLOSE_SEWERAGE_CONNECTION = "CLOSE_SEWERAGE_CONNECTION";
 
-	public static final String RECONNECT_SEWERAGE_CONNECTION = "RECONNECT_SEWERAGE_CONNECTION";
+	public static final String SEWERAGE_RECONNECTION = "SEWERAGE_RECONNECTION";
+	
+	public static final String CONNECTION_OWNERSHIP_CHANGE = "CONNECTION_OWNERSHIP_CHANGE";
 	
 	public static final String SEWERAGE_SERVICE_BUSINESS_ID = "SW";
 
@@ -239,5 +245,7 @@ public class SWConstants {
 	public static final String SEARCH_TYPE_CONNECTION = "CONNECTION";
 
 	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
+
+	public static final Object ROLE_EMPLOYEE = "EMPLOYEE";
 
 }

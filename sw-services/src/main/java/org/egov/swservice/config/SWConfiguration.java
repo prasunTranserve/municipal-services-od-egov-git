@@ -189,4 +189,10 @@ public class SWConfiguration {
 
 	@Value("${close.sw.workflow.name}")
 	private String closeSWBusinessServiceName;
+	
+	@Value("${reconnection.sw.workflow.name}")
+	private String wsWorkflowReconnectionName;
+	
+	@Value("${ownershipChange.sw.workflow.name}")
+	private String wsWorkflowownershipChangeName;
 }

@@ -94,15 +94,7 @@ public class EnrichmentService {
 		additionalDetail.put(SWConstants.APP_CREATED_DATE, BigDecimal.valueOf(System.currentTimeMillis()));
 		sewerageConnectionRequest.getSewerageConnection().setAdditionalDetails(additionalDetail);
 		// Setting ApplicationType
-		if (reqType == SWConstants.MODIFY_CONNECTION) {
-			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.MODIFY_SEWERAGE_CONNECTION);
-		} else if (reqType == SWConstants.DISCONNECT_CONNECTION) {
-			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.DISCONNECT_SEWERAGE_CONNECTION);
-		} else if (reqType == SWConstants.CLOSE_CONNECTION) {
-			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.CLOSE_SEWERAGE_CONNECTION);
-		} else {
-			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.NEW_SEWERAGE_CONNECTION);
-		}
+		setApplicationType(sewerageConnectionRequest, reqType);
 		setSewarageApplicationIdgenIds(sewerageConnectionRequest);
 		setStatusForCreate(sewerageConnectionRequest);
 
@@ -115,6 +107,23 @@ public class EnrichmentService {
 				roadCuttingInfo.setAuditDetails(auditDetails);
 			});
 		}
+	}
+
+	private void setApplicationType(SewerageConnectionRequest sewerageConnectionRequest, int reqType) {
+		if (reqType == SWConstants.MODIFY_CONNECTION) {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.MODIFY_SEWERAGE_CONNECTION);
+		} else if (reqType == SWConstants.DISCONNECT_CONNECTION) {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.DISCONNECT_SEWERAGE_CONNECTION);
+		} else if (reqType == SWConstants.RECONNECTION) {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.SEWERAGE_RECONNECTION);
+		} else if (reqType == SWConstants.OWNERSHIP_CHANGE_CONNECTION) {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.CONNECTION_OWNERSHIP_CHANGE);
+		} else if (reqType == SWConstants.CLOSE_CONNECTION) {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.CLOSE_SEWERAGE_CONNECTION);
+		} else {
+			sewerageConnectionRequest.getSewerageConnection().setApplicationType(SWConstants.NEW_SEWERAGE_CONNECTION);
+		}
+		
 	}
 
 	@SuppressWarnings("unchecked")
