@@ -100,13 +100,7 @@ public class EnrichmentService {
 		additionalDetail.put(WCConstants.APP_CREATED_DATE, BigDecimal.valueOf(System.currentTimeMillis()));
 		waterConnectionRequest.getWaterConnection().setAdditionalDetails(additionalDetail);
 	    //Setting ApplicationType
-		if (reqType == WCConstants.MODIFY_CONNECTION) {
-			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.MODIFY_WATER_CONNECTION);
-		} else if (reqType == WCConstants.DISCONNECT_CONNECTION) {
-			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.DISCONNECT_WATER_CONNECTION);
-		} else {
-			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.NEW_WATER_CONNECTION);
-		}
+		setApplicationType(waterConnectionRequest, reqType);
 		setApplicationIdGenIds(waterConnectionRequest);
 		setStatusForCreate(waterConnectionRequest);
 
@@ -121,6 +115,23 @@ public class EnrichmentService {
 		}
 		
 	}
+	
+	private void setApplicationType(WaterConnectionRequest waterConnectionRequest, int reqType) {
+		if (reqType == WCConstants.MODIFY_CONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.MODIFY_WATER_CONNECTION);
+		} else if (reqType == WCConstants.DISCONNECT_CONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.DISCONNECT_WATER_CONNECTION);
+		} else if (reqType == WCConstants.RECONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.WATER_RECONNECTION);
+		} else if (reqType == WCConstants.OWNERSHIP_CHANGE_CONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CONNECTION_OWNERSHIP_CHANGE);
+		} else if (reqType == WCConstants.CLOSE_CONNECTION) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CLOSE_WATER_CONNECTION);
+		} else {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.NEW_WATER_CONNECTION);
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	public void enrichingAdditionalDetails(WaterConnectionRequest waterConnectionRequest) {
 		HashMap<String, Object> additionalDetail = new HashMap<>();
