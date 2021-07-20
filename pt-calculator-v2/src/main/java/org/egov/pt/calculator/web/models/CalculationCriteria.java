@@ -83,5 +83,11 @@ public class CalculationCriteria   {
         
         @JsonProperty("penalty")
         private BigDecimal penalty;
+        
+        @JsonProperty("serviceTax")
+        private BigDecimal serviceTax;
+        
+        @JsonProperty("otherDues")
+        private BigDecimal otherDues;
 }
 

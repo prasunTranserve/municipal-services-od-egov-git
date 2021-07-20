@@ -75,6 +75,10 @@ public class CalculatorConstants {
 	
 	public static final String PT_PENALTY = "PT_PENALTY";
 	
+	public static final String PT_SERVICE_TAX = "PT_SERVICE_TAX";
+	
+	public static final String PT_OTHER_DUES = "PT_OTHER_DUES";
+	
 	public static final String ADHOC_PENALTY_KEY = "adhocPenalty";
 
 	public static final String ADHOC_PENALTY_REASON_KEY = "adhocPenaltyReason";
