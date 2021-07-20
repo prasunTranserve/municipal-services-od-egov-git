@@ -135,6 +135,7 @@ public class PaymentUpdateService {
 							.tenantId(sewerageConnectionRequest.getSewerageConnection().getTenantId()).build();
 					wfIntegrator.callWorkFlow(sewerageConnectionRequest, property);
 					enrichmentService.enrichFileStoreIds(sewerageConnectionRequest);
+					sewerageService.markOldApplication(sewerageConnectionRequest);
 					repo.updateSewerageConnection(sewerageConnectionRequest, false);
 				}
 			}
