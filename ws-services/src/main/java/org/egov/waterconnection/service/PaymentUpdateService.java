@@ -141,6 +141,7 @@ public class PaymentUpdateService {
 
 					wfIntegrator.callWorkFlow(waterConnectionRequest, property);
 					enrichmentService.enrichFileStoreIds(waterConnectionRequest);
+					waterService.markOldApplication(waterConnectionRequest);
 					repo.updateWaterConnection(waterConnectionRequest, false);
 				}
 			}
