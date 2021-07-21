@@ -68,6 +68,7 @@ public class OldPropertyRowMapper implements ResultSetExtractor<List<OldProperty
 						.street(rs.getString("street"))
 						.tenantId(tenanId)
 						.type(rs.getString("type"))
+						.ward(rs.getString("ward"))
 						//.additionalDetails(getJsonValue(addObj))
 						.build();
 
