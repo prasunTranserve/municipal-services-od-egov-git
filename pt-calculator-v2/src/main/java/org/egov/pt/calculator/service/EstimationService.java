@@ -283,6 +283,8 @@ public class EstimationService {
 		criteria.setUsageExemption(criteria.getUsageExemption()==null? BigDecimal.ZERO : criteria.getUsageExemption());
 		criteria.setInterest(criteria.getInterest()==null? BigDecimal.ZERO : criteria.getInterest());
 		criteria.setPenalty(criteria.getPenalty()==null? BigDecimal.ZERO : criteria.getPenalty());
+		criteria.setServiceTax(criteria.getServiceTax()==null? BigDecimal.ZERO : criteria.getServiceTax());
+		criteria.setOtherDues(criteria.getOtherDues()==null? BigDecimal.ZERO : criteria.getOtherDues());
 		
 	}
 
@@ -331,6 +333,14 @@ public class EstimationService {
 		
 		if(BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0) {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getServiceTax()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SERVICE_TAX).estimateAmount(criteria.getServiceTax()).build());
+		}
+		
+		if(BigDecimal.ZERO.compareTo(criteria.getOtherDues()) < 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OTHER_DUES).estimateAmount(criteria.getOtherDues()).build());
 		}
 		
 		// TODO: For now to skip exception for no demand

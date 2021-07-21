@@ -288,6 +288,16 @@ public class AssessmentEnrichmentService {
 				JsonNode penaltyNode = propertyAdditionalDetail.get(PENALTY);
 				node.set(PENALTY, penaltyNode);
 			}
+			
+			if(propertyAdditionalDetail.has(SERVICE_TAX)) {
+				JsonNode serviceTaxNode = propertyAdditionalDetail.get(SERVICE_TAX);
+				node.set(SERVICE_TAX, serviceTaxNode);
+			}
+			
+			if(propertyAdditionalDetail.has(OTHER_DUES)) {
+				JsonNode otherDuesNode = propertyAdditionalDetail.get(OTHER_DUES);
+				node.set(OTHER_DUES, otherDuesNode);
+			}
 		}
 		
 		request.getAssessment().setAdditionalDetails(node);

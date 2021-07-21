@@ -345,6 +345,10 @@ public class PTConstants {
     
     public static final String LATRINE_TAX = "latrineTax";
     
+    public static final String SERVICE_TAX = "serviceTax";
+    
+    public static final String OTHER_DUES = "otherDues";
+    
     public static final String MUTATION_CHARGE = "mutationCharge";
     
     public static final String DECIMAL_REGEX = "^\\d*\\.?\\d+$";

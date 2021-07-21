@@ -183,6 +183,8 @@ public class TranslationService {
 	        calculationCriteria.put("usageExemption", assessment.getAdditionalDetails().get("usageExemption"));
 	        calculationCriteria.put("interest", assessment.getAdditionalDetails().get("interest"));
 	        calculationCriteria.put("penalty", assessment.getAdditionalDetails().get("penalty"));
+	        calculationCriteria.put("serviceTax", assessment.getAdditionalDetails().get("serviceTax"));
+	        calculationCriteria.put("otherDues", assessment.getAdditionalDetails().get("otherDues"));
         }
         
         Map<String, Object> calculationReq = new HashMap<>();
