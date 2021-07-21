@@ -95,5 +95,7 @@ public class Address   {
         @JsonProperty("additionalDetails")
         private Object additionalDetails;
 
+        @JsonProperty("ward")
+        private String ward;
 
 }
