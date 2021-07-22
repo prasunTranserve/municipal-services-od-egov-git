@@ -291,62 +291,19 @@ public class EstimationService {
 	private List<TaxHeadEstimate> getEstimatesForTax(CalculationCriteria criteria) {
 
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(BigDecimal.ZERO.compareTo(criteria.getHoldingTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(criteria.getHoldingTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getLightTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LIGHT_TAX).estimateAmount(criteria.getLightTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getWaterTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getWaterTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getDrainageTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_DRAINAGE_TAX).estimateAmount(criteria.getDrainageTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getLatrineTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LATRINE_TAX).estimateAmount(criteria.getLatrineTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getParkingTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PARKING_TAX).estimateAmount(criteria.getParkingTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getSolidWasteUserCharges()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SOLID_WASTE_USER_CHARGES).estimateAmount(criteria.getSolidWasteUserCharges()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getOwnershipExemption()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OWNERSHIP_EXCEMPTION).estimateAmount(criteria.getOwnershipExemption().negate()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getUsageExemption()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_USAGE_EXCEMPTION).estimateAmount(criteria.getUsageExemption().negate()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getInterest()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_INTEREST).estimateAmount(criteria.getInterest()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getPenalty()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getServiceTax()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SERVICE_TAX).estimateAmount(criteria.getServiceTax()).build());
-		}
-		
-		if(BigDecimal.ZERO.compareTo(criteria.getOtherDues()) < 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OTHER_DUES).estimateAmount(criteria.getOtherDues()).build());
-		}
-		
-		// TODO: For now to skip exception for no demand
-		if(estimates.isEmpty()) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(BigDecimal.ONE).build());
-		}
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_HOLDING_TAX ).estimateAmount(criteria.getHoldingTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LIGHT_TAX).estimateAmount(criteria.getLightTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_WATER_TAX).estimateAmount(criteria.getWaterTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_DRAINAGE_TAX).estimateAmount(criteria.getDrainageTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_LATRINE_TAX).estimateAmount(criteria.getLatrineTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PARKING_TAX).estimateAmount(criteria.getParkingTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SOLID_WASTE_USER_CHARGES).estimateAmount(criteria.getSolidWasteUserCharges()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OWNERSHIP_EXCEMPTION).estimateAmount(criteria.getOwnershipExemption().negate()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_USAGE_EXCEMPTION).estimateAmount(criteria.getUsageExemption().negate()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_INTEREST).estimateAmount(criteria.getInterest()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_PENALTY).estimateAmount(criteria.getPenalty()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_SERVICE_TAX).estimateAmount(criteria.getServiceTax()).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(PT_OTHER_DUES).estimateAmount(criteria.getOtherDues()).build());
 		
 		return estimates;
 	}
