@@ -5,35 +5,24 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.swcalculation.config.SWCalculationConfiguration;
 import org.egov.swcalculation.constants.SWCalculationConstant;
-import org.egov.swcalculation.repository.ServiceRequestRepository;
 import org.egov.swcalculation.repository.SewerageCalculatorDao;
 import org.egov.swcalculation.util.SWCalculationUtil;
 import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationCriteria;
 import org.egov.swcalculation.web.models.CalculationReq;
-import org.egov.swcalculation.web.models.RequestInfoWrapper;
 import org.egov.swcalculation.web.models.SewerageConnection;
 import org.egov.swcalculation.web.models.TaxHeadCategory;
 import org.egov.swcalculation.web.models.TaxHeadEstimate;
 import org.egov.swcalculation.web.models.TaxHeadMaster;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,15 +47,6 @@ public class SWCalculationServiceImpl implements SWCalculationService {
 	
 	@Autowired
 	private SWCalculationUtil sWCalculationUtil;
-
-	@Autowired
-	private ServiceRequestRepository repository;
-
-	@Autowired
-    private RestTemplate restTemplate;
-
-	@Autowired
-	private SWCalculationConfiguration config;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Sewerage Charge
