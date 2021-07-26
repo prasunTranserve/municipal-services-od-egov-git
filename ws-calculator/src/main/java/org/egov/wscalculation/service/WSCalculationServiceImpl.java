@@ -5,42 +5,30 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.tracer.model.CustomException;
-import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
-import org.egov.wscalculation.util.WSCalculationUtil;
-import org.egov.wscalculation.web.controller.CalculatorController;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
-import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadCategory;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+
+import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,18 +56,6 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	
 	@Autowired
 	private ServiceRequestRepository repository;
-
-	@Autowired
-    private RestTemplate restTemplate;
-
-	@Autowired
-	private WSCalculationConfiguration config;
-	
-	@Autowired
-	private WSCalculationUtil wSCalculationUtil;
-
-	@Autowired
-	private CalculatorController calculatorController;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Water Charge And Estimation Charge

@@ -474,14 +474,10 @@ public class EstimationService {
 		}
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(scrutinyFee.compareTo(BigDecimal.ZERO) != 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SCRUTINY_FEE)
-					.estimateAmount(scrutinyFee.setScale(2, 2)).build());
-		}
-		if(securityCharge.compareTo(BigDecimal.ZERO) != 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SECURITY_CHARGE)
-					.estimateAmount(securityCharge.setScale(2, 2)).build());
-		}
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SCRUTINY_FEE)
+				.estimateAmount(scrutinyFee.setScale(2, 2)).build());
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SECURITY_CHARGE)
+				.estimateAmount(securityCharge.setScale(2, 2)).build());
 		
 		return estimates;
 	}

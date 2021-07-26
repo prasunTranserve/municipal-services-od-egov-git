@@ -153,6 +153,14 @@ public class PropertyValidator {
     	Property property = request.getProperty();
     	Map<String, String> errorMap = new HashMap<>();
     	
+    	// Demand validation commented for the time being
+//    	if(null != request.getRequestInfo().getUserInfo().getRoles().stream().filter(role -> role.getCode().equalsIgnoreCase("PT_FIELD_INSPECTOR")).findAny().orElse(null)
+//    			&& request.getProperty().getWorkflow().getAction().equalsIgnoreCase("FORWARD")) {
+//    		if(!isDemandUpdated(request.getProperty())) {
+//    			throw new CustomException("EG_PT_DEMAND_ERROR", "No demand is provided. At least one demand is required");
+//    		}
+//    	}
+    	
         if(request.getRequestInfo().getUserInfo().getType().equalsIgnoreCase("CITIZEN"))
             validateAssessees(request,propertyFromSearch, errorMap);
 
@@ -211,6 +219,65 @@ public class PropertyValidator {
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
     }
+
+//	private boolean isDemandUpdated(Property property) {
+//		boolean hasDemand = false;
+//		if(property.getAdditionalDetails() != null) {
+//	        if(property.getAdditionalDetails().get("holdingTax") != null 
+//	        		&& property.getAdditionalDetails().get("holdingTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("lightTax") != null 
+//	        		&& property.getAdditionalDetails().get("lightTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("waterTax") != null 
+//	        		&& property.getAdditionalDetails().get("waterTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("drainageTax") != null 
+//	        		&& property.getAdditionalDetails().get("drainageTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("latrineTax") != null 
+//	        		&& property.getAdditionalDetails().get("latrineTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("parkingTax") != null 
+//	        		&& property.getAdditionalDetails().get("parkingTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("solidWasteUserCharges") != null 
+//	        		&& property.getAdditionalDetails().get("solidWasteUserCharges").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("ownershipExemption") != null 
+//	        		&& property.getAdditionalDetails().get("ownershipExemption").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("usageExemption") != null 
+//	        		&& property.getAdditionalDetails().get("usageExemption").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("interest") != null 
+//	        		&& property.getAdditionalDetails().get("interest").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("penalty") != null 
+//	        		&& property.getAdditionalDetails().get("penalty").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("serviceTax") != null 
+//	        		&& property.getAdditionalDetails().get("serviceTax").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//	        if(property.getAdditionalDetails().get("otherDues") != null 
+//	        		&& property.getAdditionalDetails().get("otherDues").asDouble() > 0) {
+//	        	hasDemand = true;
+//	        };
+//        }
+//		return hasDemand;
+//	}
 
 	/**
 	 * Validates common criteria of update and mutation

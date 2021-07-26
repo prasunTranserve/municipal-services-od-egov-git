@@ -338,6 +338,7 @@ public class AssessmentPropertyRowMapper implements ResultSetExtractor<List<Prop
 		.id(rs.getString("addressid"))
 		.state(rs.getString("state"))
 		.city(rs.getString("city"))
+		.ward(rs.getString("ward"))
 		.geoLocation(geoLocation)
 		.locality(locality)
 		.tenantId(tenanId)
