@@ -368,9 +368,10 @@ public class GrievanceService {
 			ActionHistory history = historyMap.get(service.getServiceRequestId());
 						
 			if(!StringUtils.isEmpty(actionInfo.getAction())) {
-				if(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction()) != null) {
-					service.setStatus(StatusEnum.fromValue(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction())));
-					actionInfo.setStatus(pGRUtils.checkReopenForEscalation(history, actionInfo.getAction()));	
+				String escalationStatus = pGRUtils.checkReopenForEscalation(requestInfo,history, actionInfo.getAction() , service.getTenantId()) ;
+				if(escalationStatus != null) {
+					service.setStatus(StatusEnum.fromValue(escalationStatus));
+					actionInfo.setStatus(escalationStatus);	
 				}else {
 					service.setStatus(StatusEnum.fromValue(actionStatusMap.get(actionInfo.getAction())));
 				}
@@ -579,6 +580,24 @@ public class GrievanceService {
 									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING) || serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING)
 									|| serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING)))) {
 						//Do not need to set assign anyone for escalation flow if the status is pending
+						
+						
+						//If the role is escalated level 4 officer then fetch only complaints assigned to him
+						if(codes.contains(PGRConstants.ROLE_ESCALATION_OFFICER4) && serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING))
+						{
+								String loggedInUserUuid = requestInfo.getUserInfo().getUuid();
+								List<String> applicableServiceCodes = pGRUtils.getApplicableServiceCodes(requestInfo,loggedInUserUuid);
+								
+								if(applicableServiceCodes!=null && !applicableServiceCodes.isEmpty() )
+								{
+									List<String> applicableServiceCodesList = new ArrayList<String>(Arrays.asList(applicableServiceCodes.get(0).split(",")));
+									
+									serviceReqSearchCriteria.setServiceCodes(applicableServiceCodesList);
+								}else
+									throw new CustomException(ErrorConstants.NO_DATA_KEY, ErrorConstants.NO_DATA_MSG);
+						}
+						
+						
 					}
 					/**if(!CollectionUtils.isEmpty(serviceReqSearchCriteria.getStatus()) 
 							&& (serviceReqSearchCriteria.getStatus().contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING)
