@@ -29,6 +29,7 @@ import org.egov.pt.calculator.web.models.Calculation;
 import org.egov.pt.calculator.web.models.CalculationCriteria;
 import org.egov.pt.calculator.web.models.CalculationReq;
 import org.egov.pt.calculator.web.models.CalculationRes;
+import org.egov.pt.calculator.web.models.MigrationAssessmentReq;
 import org.egov.pt.calculator.web.models.MutationBillingSlab;
 import org.egov.pt.calculator.web.models.MutationBillingSlabRes;
 import org.egov.pt.calculator.web.models.MutationBillingSlabSearchCriteria;
@@ -1262,6 +1263,11 @@ public class EstimationService {
 			}
 		}
 		return ownerInfo;
+	}
+
+	public Map<String,Calculation> createDemandForMigration( MigrationAssessmentReq request) {
+		Map<String,Calculation> res = demandService.generateDemandsForMigration(request);
+		return res;
 	}
 
 

@@ -12,6 +12,7 @@ import org.egov.pt.service.AssessmentService;
 import org.egov.pt.util.ResponseInfoFactory;
 import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.AssessmentResponse;
+import org.egov.pt.web.contracts.MigrateAssessmentRequest;
 import org.egov.pt.web.contracts.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -82,4 +83,15 @@ public class AssessmentController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@PostMapping("/_migrateassessment")
+	public ResponseEntity<AssessmentResponse> migrateAssessment(@Valid @RequestBody MigrateAssessmentRequest request) {
+
+		Assessment assessment = assessmentService.migrateAssessment(request);
+		ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+		AssessmentResponse response = AssessmentResponse.builder()
+				.assessments(Arrays.asList(assessment))
+				.responseInfo(resInfo)
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
+	}
 }

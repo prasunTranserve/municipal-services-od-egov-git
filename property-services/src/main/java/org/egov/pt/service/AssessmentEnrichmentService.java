@@ -304,4 +304,32 @@ public class AssessmentEnrichmentService {
 		
 	}
 
+	public void enrichAssessmentMigrate(AssessmentRequest request) {
+        Assessment assessment = request.getAssessment();
+        assessment.setId(String.valueOf(UUID.randomUUID()));
+        assessment.setAssessmentNumber(getAssessmentNo(request));
+
+        assessment.setStatus(Status.ACTIVE);
+
+		AuditDetails auditDetails = assessmentUtils.getAuditDetails(request.getRequestInfo().getUserInfo().getUuid(),
+				true);
+
+        if(!CollectionUtils.isEmpty(assessment.getUnitUsageList())) {
+            for(UnitUsage unitUsage: assessment.getUnitUsageList()) {
+                unitUsage.setId(String.valueOf(UUID.randomUUID()));
+                unitUsage.setAuditDetails(auditDetails);
+                unitUsage.setTenantId(assessment.getTenantId());
+            }
+        }
+        if(!CollectionUtils.isEmpty(assessment.getDocuments())) {
+            for(Document doc: assessment.getDocuments()) {
+                doc.setId(String.valueOf(UUID.randomUUID()));
+                doc.setAuditDetails(auditDetails);
+                doc.setStatus(Status.ACTIVE);
+            }
+        }
+        assessment.setAuditDetails(auditDetails);
+
+    }
+	
 }

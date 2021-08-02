@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.AuditDetails;
+import org.egov.pt.models.GeoLocation;
 import org.egov.pt.models.Institution;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
@@ -328,6 +329,13 @@ public class EnrichmentService {
                     property.getWorkflow().setAssignes(assignes);
             }
     }
+
+	public void enrichPropertyForMigration(PropertyRequest request) {
+		Property property = request.getProperty();
+		if (property.getAddress().getGeoLocation() == null)
+			property.getAddress().setGeoLocation(new GeoLocation());
+		
+	}
 
 
 }

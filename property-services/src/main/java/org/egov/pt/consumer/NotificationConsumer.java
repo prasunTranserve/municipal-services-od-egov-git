@@ -55,6 +55,8 @@ public class NotificationConsumer {
 				if (PTConstants.MUTATION_PROCESS_CONSTANT.equalsIgnoreCase(request.getProperty().getCreationReason().toString())) {
 
 					notifService.sendNotificationForMutation(request);
+				} else if(PTConstants.MIGRATE_PROCESS_CONSTANT.equalsIgnoreCase(request.getProperty().getCreationReason().toString())) {
+					// do Nothing
 				} else {
 
 					notifService.sendNotificationForUpdate(request);					

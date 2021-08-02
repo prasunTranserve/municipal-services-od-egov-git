@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Assessment;
@@ -24,6 +26,7 @@ import org.egov.pt.util.AssessmentUtils;
 import org.egov.pt.util.CommonUtils;
 import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.MigrateAssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -246,6 +249,23 @@ public class AssessmentService {
 
 	public void validateAssessment(PropertyRequest request, String assessmentYear) {
 		Map<String, Object> financialYearMaster =utils.getFinancialYear(request.getRequestInfo(), assessmentYear, request.getProperty().getTenantId());
+	}
+
+	public Assessment migrateAssessment(MigrateAssessmentRequest request) {
+		AssessmentRequest assessmentRequest = createAssessmentRequest(request);
+		Property property = utils.getPropertyForAssessment(assessmentRequest);
+		assessmentEnrichmentService.enrichAssessmentMigrate(assessmentRequest);
+
+		calculationService.calculateMigrationFee(assessmentRequest, property, request.getDemands());
+		producer.push(props.getCreateAssessmentTopic(), request);
+
+		return request.getAssessment();
+	}
+
+	private AssessmentRequest createAssessmentRequest(@Valid MigrateAssessmentRequest request) {
+		AssessmentRequest assessmentRequest = AssessmentRequest.builder().requestInfo(request.getRequestInfo())
+				.assessment(request.getAssessment()).build();
+		return assessmentRequest;
 	}
 
 

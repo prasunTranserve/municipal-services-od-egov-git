@@ -11,7 +11,7 @@ import org.egov.pt.calculator.web.models.Calculation;
 import org.egov.pt.calculator.web.models.CalculationReq;
 import org.egov.pt.calculator.web.models.CalculationRes;
 import org.egov.pt.calculator.web.models.GetBillCriteria;
-import org.egov.pt.calculator.web.models.MutationCalculatorReq;
+import org.egov.pt.calculator.web.models.MigrationAssessmentReq;
 import org.egov.pt.calculator.web.models.demand.BillResponse;
 import org.egov.pt.calculator.web.models.demand.DemandResponse;
 import org.egov.pt.calculator.web.models.property.RequestInfoWrapper;
@@ -63,6 +63,11 @@ public class CalculatorController {
 	@PostMapping("/mutation/_calculate")
 	public ResponseEntity<Map<String, Calculation>> mutationCalculator(@RequestBody @Valid PropertyRequestV2 request) {
 		return new ResponseEntity<>(calculatorService.mutationCalculator(request.getProperty(), request.getRequestInfo()), HttpStatus.OK);
+	}
+	
+	@PostMapping("/migration/_calculate")
+	public ResponseEntity<Map<String, Calculation>> generateDemands(@RequestBody MigrationAssessmentReq request) {
+		return new ResponseEntity<>(calculatorService.createDemandForMigration(request), HttpStatus.OK);
 	}
 
 }
