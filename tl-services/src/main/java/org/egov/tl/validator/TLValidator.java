@@ -711,6 +711,13 @@ public class TLValidator {
             		if(tradeUnit.getUomValue()!=null)
             		{
             			Long tradePeriod =  getDifferenceDays(license.getValidFrom(),license.getValidTo());
+            			
+            			//Including the ending date also for trade .
+            			if(tradePeriod!=null)
+            			{
+            				tradePeriod = tradePeriod +1 ;
+            			}
+            			
             			if(!tradePeriod.toString().equalsIgnoreCase(tradeUnit.getUomValue()))
             			{
             				throw new CustomException("UOM VALUE ERROR"," The uom value should be equal to the no .of days between Trade starting date and Trade ending date ");
