@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,12 +49,16 @@ public class MigrationService {
 
 		AtomicInteger numOfSuccess = new AtomicInteger();
 		AtomicInteger numOfErrors = new AtomicInteger();
+		
+		List<TradeLicense>  migartionList = new ArrayList<TradeLicense>();
 
 		excelService.read(excelFile, skip, limit, (RowExcel row) -> {
 			LegacyRow legacyRow = null;
 
 			try {
 				legacyRow = legacyExcelRowMapper.map(row);
+				
+				
 
 				TradeLicense migratedTradeLicense= new 	TradeLicense();		
 
@@ -173,10 +179,14 @@ public class MigrationService {
 				migratedTradeLicense.setTradeinstitutionofficialcorrespondanceaddress(legacyRow.getTradeInstitutionOfficialCorrespondanceAddress().trim());
 
 				migratedTradeLicense.setCreatedtime(new Date().getTime());
+				Thread.sleep(1);
+				migartionList.add(migratedTradeLicense);
 
-
-
-				tradeLicenseExcelRepository.save(migratedTradeLicense);
+				if(numOfSuccess.longValue() %1000 ==0)
+				{
+					tradeLicenseExcelRepository.saveAll(migartionList);
+					migartionList.clear();
+				}
 
 
 			//	System.out.println(" saved to repoistory "+migratedTradeLicense.toString());
@@ -197,6 +207,12 @@ public class MigrationService {
 
 			return true;
 		});
+		
+		if(!migartionList.isEmpty())
+		{
+			tradeLicenseExcelRepository.saveAll(migartionList);
+			migartionList.clear();
+		}
 
 	}
 
