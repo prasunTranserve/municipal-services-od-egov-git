@@ -311,4 +311,6 @@ public class TLConfiguration {
     @Value("${egov.tl.maximumTardeUnits.size}")
     private Integer maximumTardeUnits ;
 
+    @Value("${egov.migration.filename}")
+    private String migrationFileName ;
 }
