@@ -294,6 +294,7 @@ public class BPACalculatorConstants {
 	public static final String PROJECT_UNDERTAKING_BY_GOVT = "IS_PROJECT_UNDERTAKING_BY_GOVT";
 	public static final String BLOCK_DETAILS_OC = "BLOCK_DETAILS_OC";
 	public static final String BLOCK_DETAILS_EDCR = "BLOCK_DETAILS_EDCR";
+	public static final String EDCR_PARAM_MAP = "EDCR_PARAM_MAP";
 
 	public static final String BUILDING_PLAN_OC = "BUILDING_OC_PLAN_SCRUTINY";
 	
@@ -315,6 +316,7 @@ public class BPACalculatorConstants {
 	public static final String TAXHEAD_BPA_OC_SANC_COMPOUND_SETBACK_FEE = "BPA_OC_SANC_COMPOUND_SETBACK_FEE";
 	public static final String TAXHEAD_BPA_OC_SCRUTINY_FEE = "BPA_OC_SCRUTINY_FEE";
 	public static final String TAXHEAD_BPA_OC_CERT_FEE = "BPA_OC_CERT_FEE";
+	public static final String TAXHEAD_BPA_OC_GRAND_OC_CERT = "BPA_OC_SANC_GRAND_OCCUPANCY_CERT_FEE";
 	
 
 	public static final String OC_COMPOUNDING_INDIVIDUAL_RESIDENTIAL = "Individual/Residential";
