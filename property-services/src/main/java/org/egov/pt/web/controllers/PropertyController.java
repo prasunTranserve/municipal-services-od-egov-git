@@ -118,7 +118,7 @@ public class PropertyController {
 //		return new ResponseEntity<>(response, HttpStatus.OK);
 //	}
     
-    @PostMapping("/_migratedata")
+    @PostMapping("/_migrateproperty")
     public ResponseEntity<PropertyResponse> createMigrateProperty(@RequestBody PropertyRequest propertyRequest) {
     	 Property property = propertyService.createMigrateProperty(propertyRequest);
          ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
