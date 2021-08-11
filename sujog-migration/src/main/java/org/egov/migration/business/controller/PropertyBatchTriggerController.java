@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class BatchTriggerController {
+public class PropertyBatchTriggerController {
 	
 	@Autowired
     public JobBuilderFactory jobBuilderFactory;

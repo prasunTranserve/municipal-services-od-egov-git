@@ -15,7 +15,7 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
 import org.egov.migration.common.model.RecordStatistic;
-import org.egov.migration.model.Property;
+import org.egov.migration.reader.model.Property;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

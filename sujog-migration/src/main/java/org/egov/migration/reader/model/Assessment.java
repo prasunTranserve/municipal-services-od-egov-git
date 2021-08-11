@@ -1,8 +1,6 @@
-package org.egov.migration.model;
+package org.egov.migration.reader.model;
 
 import javax.validation.constraints.NotEmpty;
-
-import org.egov.migration.validation.ValidTaxHead;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,20 +13,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class DemandDetail {
-	
-	@NotEmpty(message = "Cannot be blank/empty")
-	private String propertyId;
-	
+public class Assessment {
+
 	private String ulb;
 	
-	@ValidTaxHead
-	private String taxHead;
+	private String propertyId;
 	
-	@NotEmpty(message = "Cannot be blank/empty")
-	private String taxAmt;
+	private String assessmentNo;
 	
-	private String collectedAmt;
+	@NotEmpty(message = "Assessment financial year cannot be blank/empty")
+	private String finYear;
+	
+	private String status;
+	
+	@NotEmpty(message = "Assessment date cannot be blank/empty")
+	private String assessmentDate;
 	
 	private String createdDate;
 	

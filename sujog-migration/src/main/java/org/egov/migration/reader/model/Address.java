@@ -1,4 +1,4 @@
-package org.egov.migration.model;
+package org.egov.migration.reader.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

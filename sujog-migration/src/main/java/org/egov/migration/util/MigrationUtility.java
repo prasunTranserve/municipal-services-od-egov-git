@@ -17,8 +17,8 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.egov.migration.business.model.LocalityDTO;
 import org.egov.migration.config.SystemProperties;
-import org.egov.migration.model.Address;
-import org.egov.migration.model.Property;
+import org.egov.migration.reader.model.Address;
+import org.egov.migration.reader.model.Property;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

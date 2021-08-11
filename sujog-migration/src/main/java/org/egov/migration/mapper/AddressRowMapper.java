@@ -3,7 +3,7 @@ package org.egov.migration.mapper;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Row;
-import org.egov.migration.model.Address;
+import org.egov.migration.reader.model.Address;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.stereotype.Component;

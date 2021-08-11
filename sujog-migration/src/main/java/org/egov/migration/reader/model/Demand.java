@@ -1,4 +1,4 @@
-package org.egov.migration.model;
+package org.egov.migration.reader.model;
 
 import java.math.BigDecimal;
 import java.util.List;
