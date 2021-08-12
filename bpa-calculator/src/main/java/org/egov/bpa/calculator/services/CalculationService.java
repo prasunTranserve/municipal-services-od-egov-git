@@ -1031,14 +1031,16 @@ public class CalculationService {
 			
 			BigDecimal baseFarBUA = plotArea.multiply(baseFAR);
 			BigDecimal permissableFarBUA = plotArea.multiply(permissableFAR);
+			BigDecimal builtUpAreaBP = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR));
+			BigDecimal builtUpAreaOC = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA));
 			
-			if(baseFarBUA.compareTo(deviation) >= 0) {
+			if(baseFarBUA.compareTo(builtUpAreaOC) >= 0) {
 				compoundFARFee = calculateOcCompoundingFar(paramMap, mdmsData, deviation);
-			} else if(baseFarBUA.compareTo(deviation) < 0 && permissableFarBUA.compareTo(deviation) >= 0) {
-				BigDecimal fee1 = calculateOcCompoundingFar(paramMap, mdmsData, baseFarBUA);
-				BigDecimal fee2 = calculateOcPurchableFAR(paramMap, deviation.subtract(baseFarBUA));
+			} else if(baseFarBUA.compareTo(builtUpAreaOC) < 0 && permissableFarBUA.compareTo(builtUpAreaOC) >= 0) {
+				BigDecimal fee1 = calculateOcCompoundingFar(paramMap, mdmsData, baseFarBUA.subtract(builtUpAreaBP));
+				BigDecimal fee2 = calculateOcPurchableFAR(paramMap, builtUpAreaOC.subtract(baseFarBUA));
 				compoundFARFee = fee1.add(fee2);
-			} else if(deviation.compareTo(permissableFarBUA) > 0) {
+			} else if(builtUpAreaOC.compareTo(permissableFarBUA) > 0) {
 				compoundFARFee = calculateOcPurchableFAR(paramMap, deviation);
 			}
 			
@@ -1085,9 +1087,9 @@ public class CalculationService {
 			applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_GOVT;
 		} else if(occupancyType != null && subOccupancyType != null) {
 			if(BPACalculatorConstants.A.equals(occupancyType)
-					&& BPACalculatorConstants.A_P.equals(subOccupancyType)
-					&& BPACalculatorConstants.A_S.equals(subOccupancyType)
-					&& BPACalculatorConstants.A_R.equals(subOccupancyType)) {
+					&& (BPACalculatorConstants.A_P.equals(subOccupancyType)
+					|| BPACalculatorConstants.A_S.equals(subOccupancyType)
+					|| BPACalculatorConstants.A_R.equals(subOccupancyType))) {
 				applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_INDIVIDUAL_RESIDENTIAL;
 			} else {
 				applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_OTHER;
