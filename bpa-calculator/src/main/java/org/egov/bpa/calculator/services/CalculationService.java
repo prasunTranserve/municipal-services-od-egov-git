@@ -1293,9 +1293,9 @@ public class CalculationService {
 			applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_GOVT;
 		} else if(occupancyType != null && subOccupancyType != null) {
 			if(BPACalculatorConstants.A.equals(occupancyType)
-					&& BPACalculatorConstants.A_P.equals(subOccupancyType)
-					&& BPACalculatorConstants.A_S.equals(subOccupancyType)
-					&& BPACalculatorConstants.A_R.equals(subOccupancyType)) {
+					&& (BPACalculatorConstants.A_P.equals(subOccupancyType)
+					|| BPACalculatorConstants.A_S.equals(subOccupancyType)
+					|| BPACalculatorConstants.A_R.equals(subOccupancyType))) {
 				applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_INDIVIDUAL_RESIDENTIAL;
 			} else {
 				applicableRateType = BPACalculatorConstants.OC_COMPOUNDING_OTHER;
