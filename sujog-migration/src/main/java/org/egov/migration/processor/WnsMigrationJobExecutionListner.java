@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class PropertyMigrationJobExecutionListner implements JobExecutionListener {
+public class WnsMigrationJobExecutionListner implements JobExecutionListener {
 
 	@Autowired
 	private PropertiesData properties;
@@ -22,8 +22,8 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
-		String errorDirectory = properties.getPropertyErrorFileDirectory();
-		String successDirectory = properties.getPropertySuccessFileDirectory();
+		String errorDirectory = properties.getWnsErrorFileDirectory();
+		String successDirectory = properties.getWnsSuccessFileDirectory();
 		
 		String inputFile = jobExecution.getJobParameters().getString("fileName");
 		String errorFile = errorDirectory.concat("\\").concat(inputFile.replace(".", "_Error."));
@@ -38,5 +38,5 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 	public void afterJob(JobExecution jobExecution) {
 
 	}
-	
+
 }

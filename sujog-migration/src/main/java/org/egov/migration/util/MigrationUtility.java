@@ -8,14 +8,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.egov.migration.business.model.LocalityDTO;
+import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
 import org.egov.migration.reader.model.Property;
@@ -29,6 +32,9 @@ public class MigrationUtility {
 	
 	@Autowired
 	SystemProperties properties;
+	
+	@Autowired
+	RecordStatistic recordStatistic;
 
 	public static final BigDecimal sqmtrToSqyard = BigDecimal.valueOf(1.196);
 	
@@ -41,6 +47,8 @@ public class MigrationUtility {
 	public static final String comma = ",";
 	
 	public static final String dateFormat = "dd-MM-yy";
+
+	public static final String convertDateFormat = "dd/MM/yyyy";
 	
 	 @PostConstruct
 	  public void fillInstance() {
@@ -251,4 +259,79 @@ public class MigrationUtility {
 	public static SystemProperties getSystemProperties() {
 		return instance.properties;
 	}
+	
+	public static RecordStatistic getRecordStatistic() {
+		return instance.recordStatistic;
+	}
+
+	public static String addLeadingZeros(String cellValue) {
+		if(cellValue.contains("/")) {
+			return cellValue;
+		} else if(cellValue.length() < 6 && cellValue.matches(digitRegex)) {
+			StringBuffer zeros = new StringBuffer("000000");
+			zeros.append(cellValue);
+			return zeros.substring(zeros.length()-6, zeros.length());
+		} else {
+			return cellValue;
+		}
+	}
+
+	public static String getConnectionCategory(String connectionCategory) {
+		if(connectionCategory == null)
+			return null;
+		return connectionCategory.trim().toUpperCase();
+	}
+
+	public static String getConnectionType(String connectionType) {
+		return connectionType.replace("-", " ");
+	}
+
+	public static String getWaterSource(String waterSource) {
+		return waterSource;
+	}
+
+	public static Integer getDefaultZero(String noOfFlats) {
+		if(noOfFlats.trim().matches(digitRegex)) {
+			return Integer.parseInt(noOfFlats.trim());
+		}
+		return Integer.parseInt("0");
+	}
+
+	public static Long getMeterInstallationDate(String meterInstallationDate, String connectionType) {
+		if(MigrationConst.CONNECTION_METERED.equals(connectionType)) {
+			return getLongDate(connectionType, dateFormat);
+		} else {
+			return 0L;
+		}
+	}
+
+	public static String getConnectionBillingPeriod(String billingPeriod) {
+		DateTimeFormatter fromFormatter = DateTimeFormatter.ofPattern(dateFormat);
+		DateTimeFormatter toFormatter = DateTimeFormatter.ofPattern(convertDateFormat);
+		
+		LocalDate billingMonth = LocalDate.parse(billingPeriod, fromFormatter);
+		LocalDate firstDate = billingMonth.withDayOfMonth(1);
+		LocalDate lastDate = billingMonth.withDayOfMonth(billingMonth.lengthOfMonth());
+		
+		return firstDate.format(toFormatter).concat("-").concat(lastDate.format(toFormatter));
+	}
+	
+	public static void addErrorsForProperty(String propertyId, List<String> errors) {
+		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
+		if(errorMap.get(propertyId) == null) {
+			errorMap.put(propertyId, errors);
+		} else {
+			errorMap.get(propertyId).addAll(errors);
+		}
+	}
+	
+	public static void addErrorForProperty(String propertyId, String error) {
+		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
+		if(errorMap.get(propertyId) == null) {
+			errorMap.put(propertyId, Arrays.asList(error));
+		} else {
+			errorMap.get(propertyId).add(error);
+		}
+	}
+	
 }

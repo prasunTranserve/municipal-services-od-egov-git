@@ -8,6 +8,7 @@ import org.egov.migration.business.model.PropertyDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.service.PropertyService;
+import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,7 +27,14 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 	public void write(List<? extends PropertyDetailDTO> items) throws Exception {
 		
 		items.forEach(propertyDetail -> {
-			boolean isPropertyMigrated = propertyService.migrateItem(propertyDetail);
+			boolean isPropertyMigrated = false;
+			try {
+				isPropertyMigrated = propertyService.migrateItem(propertyDetail);
+			} catch (Exception e) {
+				log.error(String.format("PropertyId: %s, error message: %s", propertyDetail.getProperty().getOldPropertyId(), e.getMessage()));
+				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), e.getMessage());
+			}
+			
 			if(isPropertyMigrated) {
 				PropertyDTO migratedProperty = propertyDetail.getProperty();
 				recordStatistic.getSuccessRecords().put(migratedProperty.getOldPropertyId(), migratedProperty.getPropertyId());

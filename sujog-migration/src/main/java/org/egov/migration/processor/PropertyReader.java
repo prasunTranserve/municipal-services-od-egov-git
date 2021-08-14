@@ -132,23 +132,34 @@ public class PropertyReader implements ItemReader<Property> {
 	}
 	
 	private Property getProperty(Row propertyRow) {
-		Property property = propertyRowMapper.mapRow(this.ulb, propertyRow, this.propertyColMap);
-		log.info("Property: "+property.getPropertyId()+" reading...");
-		Address address = getAddress(property);
-		List<Owner> owners = getOwner(property.getPropertyId());
-		List<PropertyUnit> prpertyUnits = getPropertyUnit(property.getPropertyId());
-		List<Assessment> assessments = getAssessments(property.getPropertyId());
-		List<DemandDetail> demanDetails = getDemandDetails(property.getPropertyId());
-		List<Demand> demands = getDemands(property.getPropertyId());
+		Property property = new Property();
+		try {
+			property = propertyRowMapper.mapRow(this.ulb, propertyRow, this.propertyColMap);
+			log.info("Property: "+property.getPropertyId()+" reading...");
+			Address address = getAddress(property);
+			List<Owner> owners = getOwner(property.getPropertyId());
+			List<PropertyUnit> prpertyUnits = getPropertyUnit(property.getPropertyId());
+			List<Assessment> assessments = getAssessments(property.getPropertyId());
+			List<DemandDetail> demanDetails = getDemandDetails(property.getPropertyId());
+			List<Demand> demands = getDemands(property.getPropertyId());
+			
+			property.setAddress(address);
+			property.setOwners(owners);
+			property.setUnit(prpertyUnits);
+			property.setAssessments(assessments);
+			property.setDemands(demands);
+			property.setDemandDetails(demanDetails);
+			log.info("Property: "+property.getPropertyId()+" read successfully");
+			
+		} catch (Exception e) {
+			String propertyId = propertyColMap.get(MigrationConst.COL_PROPERTY_ID)==null ? null : MigrationUtility.readCellValue(propertyRow.getCell(propertyColMap.get(MigrationConst.COL_PROPERTY_ID)), false);
+			log.error(String.format("Some exception generated while reading property %s", property.getPropertyId()));
+			MigrationUtility.addErrorForProperty(propertyId, "Not able to read the data. Check the data");
+			MigrationUtility.addErrorForProperty(propertyId, e.getMessage());
+		}
 		
-		property.setAddress(address);
-		property.setOwners(owners);
-		property.setUnit(prpertyUnits);
-		property.setAssessments(assessments);
-		property.setDemands(demands);
-		property.setDemandDetails(demanDetails);
-		log.info("Property: "+property.getPropertyId()+" read successfully");
 		return property;
+		
 	}
 
 	private List<PropertyUnit> getPropertyUnit(String propertyId) {
@@ -249,8 +260,6 @@ public class PropertyReader implements ItemReader<Property> {
 				this.addressRowMap.put(MigrationUtility.removeLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.addressColMap.get(MigrationConst.COL_PROPERTY_ID)), false)), row.getRowNum());
 			}
 		});
-		
-		workbook.close();
 	}
 
 	private void updateOwnerRowMap(Workbook workbook) throws EncryptedDocumentException, IOException {

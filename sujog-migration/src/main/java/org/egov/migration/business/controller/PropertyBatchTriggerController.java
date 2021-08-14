@@ -1,12 +1,13 @@
 package org.egov.migration.business.controller;
 
+import java.io.File;
+
 import javax.validation.Valid;
 
 import org.egov.migration.common.model.MigrationRequest;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
 import org.egov.migration.processor.PropertyMigrationJobExecutionListner;
-import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -20,12 +21,14 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 public class PropertyBatchTriggerController {
 	
 	@Autowired
@@ -50,30 +53,34 @@ public class PropertyBatchTriggerController {
 	@PostMapping("/property-migrate/run")
 	public void runPropertyMigration(@RequestBody @Valid MigrationRequest request) {
 		properties.setAuthToken(request.getAuthToken());
-		
-		// Scanning of folder
-		String fileName = "jatni.xlsx";
-		String file = properties.getDataFileDirectory().concat("\\").concat(fileName);
-        try {
-        	recordStatistic.getErrorRecords().clear();
-        	recordStatistic.getSuccessRecords().clear();
-        	
-        	Job job = jobBuilderFactory.get("firstBatchJob")
-        			.incrementer(new RunIdIncrementer())
-        			.listener(propertyMigrationJobExecutionListner)
-        			.flow(stepPropertyMigrate).end().build();
-        	
-        	JobParameters jobParameters = new JobParametersBuilder()
-        			.addLong("time", System.currentTimeMillis())
-        			.addString("filePath", file)
-        			.addString("fileName", fileName)
-        			.toJobParameters();
-        	
-			jobLauncher.run(job, jobParameters);
-		} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
-				| JobParametersInvalidException e) {
-			e.printStackTrace();
+		File scanFolder = new File(properties.getPropertyDataFileDirectory());
+		for (File fileToProceed : scanFolder.listFiles()) {
+			if(fileToProceed.isFile() && fileToProceed.getName().endsWith(".xlsx")) {
+				// Scanning of folder
+				String fileName = fileToProceed.getName().toLowerCase();
+				String file = fileToProceed.getPath();
+				log.info(String.format("Processing %s", fileName));
+		        try {
+		        	recordStatistic.getErrorRecords().clear();
+		        	recordStatistic.getSuccessRecords().clear();
+		        	
+		        	Job job = jobBuilderFactory.get("firstBatchJob")
+		        			.incrementer(new RunIdIncrementer())
+		        			.listener(propertyMigrationJobExecutionListner)
+		        			.flow(stepPropertyMigrate).end().build();
+		        	
+		        	JobParameters jobParameters = new JobParametersBuilder()
+		        			.addLong("time", System.currentTimeMillis())
+		        			.addString("filePath", file)
+		        			.addString("fileName", fileName)
+		        			.toJobParameters();
+		        	
+					jobLauncher.run(job, jobParameters);
+				} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
+						| JobParametersInvalidException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
-
 }

@@ -3,12 +3,17 @@ package org.egov.migration.config;
 import java.io.IOException;
 
 import org.apache.poi.EncryptedDocumentException;
+import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.processor.PropertyItemWriter;
 import org.egov.migration.processor.PropertyReader;
 import org.egov.migration.processor.PropertyTransformProcessor;
+import org.egov.migration.processor.WnsItemReader;
+import org.egov.migration.processor.WnsItemWriter;
+import org.egov.migration.processor.WnsTransformProcessor;
 import org.egov.migration.reader.model.Property;
+import org.egov.migration.reader.model.WnsConnection;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -42,14 +47,9 @@ public class BatchConfiguration {
     @Autowired
     public StepBuilderFactory stepBuilderFactory;
     
-    @Autowired
-    private PropertiesData properties;
-    
     @Bean
     @StepScope
     public ItemReader<Property> getPropertyReader() throws EncryptedDocumentException, IOException, Exception {
-    	String file = properties.getDataFileDirectory()+"//jatni.xlsx";
-    	
     	PropertyReader propertyReader = new PropertyReader();
     	propertyReader.setSkipRecord(1);
     	return propertyReader;
@@ -65,17 +65,38 @@ public class BatchConfiguration {
 		return new PropertyItemWriter();
 	}
     
+    @Bean
+    @StepScope
+    public ItemReader<WnsConnection> getWnsReader() throws EncryptedDocumentException, IOException, Exception {
+    	WnsItemReader wnsItemReader = new WnsItemReader();
+    	wnsItemReader.setSkipRecord(1);
+    	return wnsItemReader;
+    }
+    
+    @Bean
+    public ItemProcessor<WnsConnection, ConnectionDTO> getWnsProcessor() {
+		return new WnsTransformProcessor();
+	}
+    
+    @Bean
+    public ItemWriter<ConnectionDTO> getWnsWriter() {
+		return new WnsItemWriter();
+	}
+    
     @Bean(name = "stepPropertyMigrate")
     protected Step stepPropertyMigrate() throws EncryptedDocumentException, IOException, Exception {
-        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(50)
+        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(1)
           .reader(getPropertyReader())
           .processor(getPropertyProcessor())
           .writer(getPropertyWriter()).build();
     }
+    
+    @Bean(name = "stepWnsMigrate")
+    protected Step stepWnsMigrate() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepWnsMigrate").<WnsConnection, ConnectionDTO> chunk(5)
+          .reader(getWnsReader())
+          .processor(getWnsProcessor())
+          .writer(getWnsWriter()).build();
+    }
 
-//    @Bean(name = "firstBatchJob")
-//    public Job job(@Qualifier("stepPropertyMigrate") Step stepPropertyMigrate) throws EncryptedDocumentException, IOException, Exception {
-//        return jobBuilderFactory.get("firstBatchJob").incrementer(new RunIdIncrementer())
-//                .flow(stepPropertyMigrate()).end().build();
-//    }
 }

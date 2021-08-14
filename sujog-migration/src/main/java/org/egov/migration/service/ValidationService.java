@@ -14,10 +14,9 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.reader.model.Property;
+import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.util.MigrationUtility;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ValidationService {
 	
-	@Autowired
-	private PropertyService propertyService;
-	
-	@Autowired
-	private RecordStatistic recordStatistic;
-
 	public boolean isValidProperty(Property property) {
 		List<String> errMessages = new ArrayList<String>();
 		Set<ConstraintViolation<Property>> violations = new HashSet<>();
@@ -54,7 +47,7 @@ public class ValidationService {
 		if(errMessages.isEmpty()) {
 			return true;
 		} else {
-			recordStatistic.getErrorRecords().put(property.getPropertyId(), errMessages);
+			MigrationUtility.addErrorsForProperty(property.getPropertyId(), errMessages);
 			return false;
 		}
 		
@@ -86,6 +79,11 @@ public class ValidationService {
 				errMessages.add("Total demand amount not matches for fin Year "+finYear);
 			}
 		});
+	}
+
+	public boolean isValidConnection(WnsConnection connection) {
+		// TODO Auto-generated method stub
+		return true;
 	}
 
 }

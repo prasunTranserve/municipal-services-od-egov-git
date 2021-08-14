@@ -11,14 +11,23 @@ import lombok.Setter;
 @Setter
 public class PropertiesData {
 	
-	@Value("${file.path.input.directory}")
-	private String dataFileDirectory;
+	@Value("${file.path.input.directory.property}")
+	private String propertyDataFileDirectory;
 	
-	@Value("${file.path.output.error}")
-	private String errorFileDirectory;
+	@Value("${file.path.input.directory.wns}")
+	private String wnsDataFileDirectory;
 	
-	@Value("${file.path.output.success}")
-	private String successFileDirectory;
+	@Value("${file.path.output.property.error}")
+	private String propertyErrorFileDirectory;
+	
+	@Value("${file.path.output.property.success}")
+	private String propertySuccessFileDirectory;
+	
+	@Value("${file.path.output.wns.error}")
+	private String wnsErrorFileDirectory;
+	
+	@Value("${file.path.output.wns.success}")
+	private String wnsSuccessFileDirectory;
 	
 	@Value("${remomte.api.pt.host}")
 	private String ptServiceHost;

@@ -1,8 +1,5 @@
 package org.egov.migration.reader.model;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 

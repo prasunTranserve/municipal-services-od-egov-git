@@ -9,10 +9,16 @@ app:
 file:
   path:
     input:
-      directory: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Files
+      directory: 
+        property: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Files\property
+        wns: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Files\wns
     output:
-      success: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Success
-      error: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Error
+      property:
+        success: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Success\property
+        error: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Error\property
+      wns:
+        success: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Success\wns
+        error: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Error\wns
     
 remomte:
   api:
