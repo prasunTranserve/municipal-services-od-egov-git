@@ -27,6 +27,9 @@ import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class PropertyTransformProcessor implements ItemProcessor<Property, PropertyDetailDTO> {
 
 	public static final String finYearRegex = "\\d{4}-\\d{2}";
@@ -52,18 +55,25 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	}
 
 	private PropertyDetailDTO transformProperty(Property property) {
-		PropertyDTO propertyDTO = new PropertyDTO();
-		transformProperty(propertyDTO, property);
-		transformAddress(propertyDTO, property.getAddress());
-		transformOwner(propertyDTO, property);
-		transformUnit(propertyDTO, property);
+		try {
+			PropertyDTO propertyDTO = new PropertyDTO();
+			transformProperty(propertyDTO, property);
+			transformAddress(propertyDTO, property.getAddress());
+			transformOwner(propertyDTO, property);
+			transformUnit(propertyDTO, property);
 
-		AssessmentDTO assessmentDTO = new AssessmentDTO();
-		transformAssessment(assessmentDTO, property.getAssessments());
+			AssessmentDTO assessmentDTO = new AssessmentDTO();
+			transformAssessment(assessmentDTO, property.getAssessments());
 
-		List<DemandDTO> demandDTOs = transformDemand(property);
+			List<DemandDTO> demandDTOs = transformDemand(property);
 
-		return PropertyDetailDTO.builder().property(propertyDTO).assessment(assessmentDTO).demands(demandDTOs).build();
+			return PropertyDetailDTO.builder().property(propertyDTO).assessment(assessmentDTO).demands(demandDTOs).build();
+		} catch (Exception e) {
+			log.error(String.format("Some exception generated while reading property %s, Message: ", property.getPropertyId(), e.getMessage()));
+			MigrationUtility.addErrorForProperty(property.getPropertyId(), e.getMessage());
+			return null;
+		}
+		
 	}
 
 	private void transformUnit(PropertyDTO propertyDTO, Property property) {
@@ -121,7 +131,7 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	private void transformOwner(PropertyDTO propertyDTO, Property property) {
 		propertyDTO.setOwners(property.getOwners().stream().map(owner -> {
 			OwnerInfoDTO ownerInfoDTO = new OwnerInfoDTO();
-			ownerInfoDTO.setSalutation(owner.getSalutation());
+			ownerInfoDTO.setSalutation(MigrationUtility.getSalutation(owner.getSalutation()));
 			ownerInfoDTO.setName(owner.getOwnerName().trim());
 			ownerInfoDTO.setMobileNumber(MigrationUtility.processMobile(owner.getMobileNumber()));
 			ownerInfoDTO.setEmailId(null);

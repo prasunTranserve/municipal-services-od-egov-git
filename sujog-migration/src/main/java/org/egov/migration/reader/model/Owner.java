@@ -2,6 +2,10 @@ package org.egov.migration.reader.model;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import org.egov.migration.util.MigrationConst;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +22,8 @@ public class Owner {
 
 	private String salutation;
 	
+	@Pattern(regexp = MigrationConst.OWNER_NAME_PATTERN, message = "OwnerName not a valid name")
+	@Size(max = 50, message = "Owner name can not be greater than 50 character")
 	@NotEmpty(message = "Owner name can not be blank/empty")
 	private String ownerName;
 	

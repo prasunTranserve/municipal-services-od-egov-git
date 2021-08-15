@@ -26,34 +26,43 @@ import lombok.extern.slf4j.Slf4j;
 public class ValidationService {
 	
 	public boolean isValidProperty(Property property) {
-		List<String> errMessages = new ArrayList<String>();
-		Set<ConstraintViolation<Property>> violations = new HashSet<>();
-		if (MigrationUtility.isActiveProperty(property)) {
+		try {
+			List<String> errMessages = new ArrayList<String>();
+			Set<ConstraintViolation<Property>> violations = new HashSet<>();
+			if (MigrationUtility.isActiveProperty(property)) {
 
-			ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-			Validator validator = factory.getValidator();
+				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+				Validator validator = factory.getValidator();
 
-			violations = validator.validate(property);
-			if (!violations.isEmpty()) {
-				errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
+				violations = validator.validate(property);
+				if (!violations.isEmpty()) {
+					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
+				}
+				
+				validateDemandAmout(property, errMessages);
+			} else {
+				log.error("Property: "+ property.getPropertyId() +" is not a valid record");
+				errMessages.add("Inactive property");
 			}
 			
-			validateDemandAmout(property, errMessages);
-		} else {
-			log.error("Property: "+ property.getPropertyId() +" is not a valid record");
-			errMessages.add("Inactive property");
-		}
-		
-		if(errMessages.isEmpty()) {
-			return true;
-		} else {
-			MigrationUtility.addErrorsForProperty(property.getPropertyId(), errMessages);
+			if(errMessages.isEmpty()) {
+				return true;
+			} else {
+				MigrationUtility.addErrorsForProperty(property.getPropertyId(), errMessages);
+				return false;
+			}
+		} catch (Exception e) {
+			log.error(String.format("Exception generated while validationg property %s, message: ", property.getPropertyId(), e.getMessage()));
+			MigrationUtility.addErrorForProperty(property.getPropertyId(), e.getMessage());
 			return false;
 		}
+		
 		
 	}
 
 	private void validateDemandAmout(Property property, List<String> errMessages) {
+		if(property.getDemandDetails() == null)
+			return;
 		Map<String, BigDecimal> finYearDemandAmtMap = new HashMap<>();
 		
 		BigDecimal demandDetailsTotalAmount = BigDecimal.valueOf(property.getDemandDetails().stream().mapToDouble(dedmanDetail -> Double.parseDouble(dedmanDetail.getTaxAmt()))
@@ -75,7 +84,8 @@ public class ValidationService {
 			});
 		
 		finYearDemandAmtMap.keySet().forEach(finYear -> {
-			if(finYearDemandAmtMap.get(finYear).compareTo(demandDetailsTotalAmount) != 0) {
+			BigDecimal diffAmt = finYearDemandAmtMap.get(finYear).subtract(demandDetailsTotalAmount);
+			if(diffAmt.abs().compareTo(BigDecimal.ONE) > 0) {
 				errMessages.add("Total demand amount not matches for fin Year "+finYear);
 			}
 		});
@@ -85,5 +95,5 @@ public class ValidationService {
 		// TODO Auto-generated method stub
 		return true;
 	}
-
+	
 }

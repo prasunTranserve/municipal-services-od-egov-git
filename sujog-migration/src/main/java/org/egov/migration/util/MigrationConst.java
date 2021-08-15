@@ -132,6 +132,11 @@ public class MigrationConst {
 	public static final String CONNECTION_METERED = "Metered";
 	public static final String CONNECTION_NON_METERED = "Non Metered";
 	public static final String METER_WORKING = "Working";
+	
+	public static final String PROPERTY_ID = "PROPERTY_ID";
+	public static final String ASSESSMENT_NUMBER = "ASSESSMENT_NUMBER";
+	
+	public static final String OWNER_NAME_PATTERN = "^[^\\\\$\\\"'<>?\\\\\\\\~`!@#$%^()+={}\\\\[\\\\]*,:;“”‘’]*$";
 
 	
 }

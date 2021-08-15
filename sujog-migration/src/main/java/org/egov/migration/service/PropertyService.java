@@ -21,6 +21,7 @@ import org.egov.migration.business.model.PropertyResponse;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.common.model.RequestInfo;
 import org.egov.migration.config.PropertiesData;
+import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,7 +68,7 @@ public class PropertyService {
 			}
 			AssessmentDTO assessmentDTO = searchAssessment(propertyDetail);
 			if (assessmentDTO == null) {
-				boolean isAssessmentMigrated = migrateAssessment(propertyDetail);
+				boolean isAssessmentMigrated = doMigrateAssessment(propertyDetail);
 				if (!isAssessmentMigrated) {
 					MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
 							ASSESSMENT_MIGRATION_ERROR_MSG);
@@ -82,6 +83,44 @@ public class PropertyService {
 
 	}
 
+	public boolean migrateProperty(PropertyDetailDTO propertyDetail) {
+		boolean isPropertyMigrated = false;
+
+		PropertyDTO propertyDTO = searchProperty(propertyDetail);
+		if (propertyDTO == null) {
+			isPropertyMigrated = doMigrateProperty(propertyDetail);
+		} else {
+			log.info(String.format("%s property already migrated", propertyDTO.getPropertyId()));
+			isPropertyMigrated = true;
+			propertyDetail.setProperty(propertyDTO);
+		}
+		
+		return isPropertyMigrated;
+	}
+	
+	public boolean migrateAssessment(PropertyDetailDTO propertyDetail) {
+		boolean isAssessmentMigrated = false;
+		PropertyDTO propertyDTO = searchProperty(propertyDetail);
+		if (propertyDTO != null) {
+			AssessmentDTO assessmentDTO = searchAssessment(propertyDetail);
+			if (assessmentDTO == null) {
+				isAssessmentMigrated = doMigrateAssessment(propertyDetail);
+//				if (!isAssessmentMigrated) {
+//					MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
+//							ASSESSMENT_MIGRATION_ERROR_MSG);
+//				}
+			} else {
+				log.info(String.format("Assessment for property %s already migrated", assessmentDTO.getPropertyId()));
+				isAssessmentMigrated = true;
+			}
+			return isAssessmentMigrated;
+		} else {
+			MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
+					PROPERTY_MIGRATION_ERROR_MSG);
+			return false;
+		}
+	}
+	
 	private AssessmentDTO searchAssessment(PropertyDetailDTO propertyDetail) {
 		// http://local.egov.org/property-services/assessment/_search?tenantId=od.jatni&propertyIds=PT-2021-08-10-000672
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getAsmtSearchEndPoint())
@@ -141,7 +180,7 @@ public class PropertyService {
 		return migrateAssessmentRequest;
 	}
 
-	private boolean migrateProperty(PropertyDetailDTO propertyDetail) {
+	private boolean doMigrateProperty(PropertyDetailDTO propertyDetail) {
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost())
 				.append(properties.getMigratePropertyEndpoint());
 
@@ -169,7 +208,7 @@ public class PropertyService {
 		return requestInfo;
 	}
 
-	private boolean migrateAssessment(PropertyDetailDTO propertyDetail) {
+	private boolean doMigrateAssessment(PropertyDetailDTO propertyDetail) {
 		propertyDetail.getAssessment().setPropertyId(propertyDetail.getProperty().getPropertyId());
 
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost())
@@ -180,6 +219,9 @@ public class PropertyService {
 		if (response == null) {
 			return false;
 		}
+		
+		AssessmentResponse assessmentResponse = mapper.convertValue(response, AssessmentResponse.class);
+		propertyDetail.setAssessment(assessmentResponse.getAssessments().get(0));
 		return true;
 	}
 
@@ -272,18 +314,23 @@ public class PropertyService {
 				Row headerRow = sheet.createRow(rownum++);
 				Cell headerCellProperty = headerRow.createCell(0);
 				headerCellProperty.setCellValue("OLD_PROPERTY_ID");
-				Cell headerCellMessage = headerRow.createCell(1);
-				headerCellMessage.setCellValue("DIGIT_PROPERTY_ID");
+				Cell headerCellPropertyId = headerRow.createCell(1);
+				headerCellPropertyId.setCellValue("DIGIT_PROPERTY_ID");
+				Cell headerCellAssessmentNumber = headerRow.createCell(2);
+				headerCellAssessmentNumber.setCellValue("DIGIT_ASSESSMENT_NUMBER");
 			}
 
 			for (String oldPropertyId : recordStatistic.getSuccessRecords().keySet()) {
-				String propertyId = recordStatistic.getSuccessRecords().get(oldPropertyId);
+				String propertyId = recordStatistic.getSuccessRecords().get(oldPropertyId).get(MigrationConst.PROPERTY_ID);
+				String assessmentNumber = recordStatistic.getSuccessRecords().get(oldPropertyId).get(MigrationConst.ASSESSMENT_NUMBER);
 				Row row = sheet.createRow(rownum++);
 				int cellnum = 0;
 				Cell cellProperty = row.createCell(cellnum++);
 				cellProperty.setCellValue(oldPropertyId);
-				Cell cellMessage = row.createCell(cellnum++);
-				cellMessage.setCellValue(propertyId);
+				Cell cellPropertyId = row.createCell(cellnum++);
+				cellPropertyId.setCellValue(propertyId);
+				Cell cellAssessmentNumber = row.createCell(cellnum++);
+				cellAssessmentNumber.setCellValue(assessmentNumber);
 
 			}
 

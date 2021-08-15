@@ -15,6 +15,9 @@ public class AssessmentDTO {
 
 	@JsonProperty("tenantId")
 	private String tenantId ;
+	
+	@JsonProperty("assessmentNumber")
+	private String assessmentNumber ;
 
 	@JsonProperty("financialYear")
 	private String financialYear ;

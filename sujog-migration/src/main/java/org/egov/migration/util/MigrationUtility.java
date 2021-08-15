@@ -8,8 +8,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +19,9 @@ import javax.annotation.PostConstruct;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.egov.migration.business.model.AssessmentDTO;
 import org.egov.migration.business.model.LocalityDTO;
+import org.egov.migration.business.model.PropertyDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
@@ -66,7 +70,7 @@ public class MigrationUtility {
 			value = getNumericValue(cell, isDecimal);
 			break;
 		case STRING:
-			value = cell.getStringCellValue().trim();
+			value = cell.getStringCellValue().trim().replaceAll("  +", " ");;
 			break;
 		case BOOLEAN:
 			value = String.valueOf(cell.getBooleanCellValue());
@@ -93,7 +97,9 @@ public class MigrationUtility {
 	}
 
 	public static String getOwnershioCategory(String ownershipCategory) {
-		if ("Single Owner".equalsIgnoreCase(ownershipCategory)) {
+		if(ownershipCategory == null) {
+			return "INDIVIDUAL.SINGLEOWNER";
+		} else if ("Single Owner".equalsIgnoreCase(ownershipCategory)) {
 			return "INDIVIDUAL.SINGLEOWNER";
 		} else if ("Multi Owner".equalsIgnoreCase(ownershipCategory)) {
 			return "INDIVIDUAL.MULTIPLEOWNERS";
@@ -103,7 +109,9 @@ public class MigrationUtility {
 	}
 
 	public static String getUsageCategory(String usageCategory) {
-		if ("Residential".equalsIgnoreCase(usageCategory)) {
+		if(usageCategory == null) {
+			return "RESIDENTIAL";
+		} else if ("Residential".equalsIgnoreCase(usageCategory)) {
 			return "RESIDENTIAL";
 		} else if ("Commercial".equalsIgnoreCase(usageCategory)) {
 			return "NONRESIDENTIAL.COMMERCIAL";
@@ -116,6 +124,8 @@ public class MigrationUtility {
 	}
 
 	public static BigDecimal convertAreaToYard(String area) {
+		if(area == null)
+			return null;
 		return BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
 	}
 
@@ -127,19 +137,31 @@ public class MigrationUtility {
 		if(mobileNumber==null)
 			return null;
 		
-		String specialCharRegex = "[\\D]";
-		String leadingZeroRegex = "^0+(?!$)";
+//		String specialCharRegex = "[\\D]";
+//		String leadingZeroRegex = "^0+(?!$)";
+//		
+//		mobileNumber = mobileNumber.trim();
+//		
+//		if(mobileNumber.startsWith("+")) {
+//			mobileNumber = mobileNumber.replaceAll(specialCharRegex, "");
+//			mobileNumber = mobileNumber.substring(2);
+//		}
+//		mobileNumber = mobileNumber.replaceAll(specialCharRegex, "");
+//		mobileNumber = mobileNumber.replaceAll(leadingZeroRegex, "");
+		if(!mobileNumber.matches(digitRegex))
+			return null;
 		
-		mobileNumber = mobileNumber.trim();
-		
-		if(mobileNumber.startsWith("+")) {
-			mobileNumber = mobileNumber.replaceAll(specialCharRegex, "");
-			mobileNumber = mobileNumber.substring(2);
-		}
-		mobileNumber = mobileNumber.replaceAll(specialCharRegex, "");
-		mobileNumber = mobileNumber.replaceAll(leadingZeroRegex, "");
+		if(!startsWith6to9(mobileNumber))
+			return null;
 		
 		return mobileNumber.length() == 10 ? mobileNumber : null;
+	}
+
+	private static boolean startsWith6to9(String mobileNumber) {
+		char startWith = mobileNumber.charAt(0);
+		if(startWith=='6' || startWith=='7' || startWith=='8' || startWith=='9')
+			return true;
+		return false;
 	}
 
 	public static String getGender(String gender) {
@@ -157,6 +179,10 @@ public class MigrationUtility {
 
 	public static String getCorrespondanceAddress(Address address) {
 		String correspondenceAddress = null;
+		if( address == null) {
+			return null;
+		}
+		
 		if (address.getAddressLine1() != null) {
 			correspondenceAddress = address.getAddressLine1();
 		}
@@ -183,6 +209,9 @@ public class MigrationUtility {
 	}
 
 	public static Long getLongDate(String dateString, String dateformat) {
+		if(dateString == null) {
+			return 0L;
+		}
 		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
@@ -220,7 +249,7 @@ public class MigrationUtility {
 	}
 
 	public static boolean isActiveProperty(Property property) {
-		if(property.getStatus() != null && property.getStatus().trim().toUpperCase().equalsIgnoreCase(property_active)) {
+		if(property != null && property.getStatus() != null && property.getStatus().trim().toUpperCase().equalsIgnoreCase(property_active)) {
 			return true;
 		}
 		return false;
@@ -245,7 +274,6 @@ public class MigrationUtility {
 	}
 
 	public static BigDecimal getAnnualRentValue(String arv) {
-		// TODO Auto-generated method stub
 		if(arv == null)
 			return null;
 		
@@ -283,6 +311,9 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionType(String connectionType) {
+		if(connectionType == null) {
+			return null;
+		}
 		return connectionType.replace("-", " ");
 	}
 
@@ -319,19 +350,42 @@ public class MigrationUtility {
 	public static void addErrorsForProperty(String propertyId, List<String> errors) {
 		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
 		if(errorMap.get(propertyId) == null) {
-			errorMap.put(propertyId, errors);
-		} else {
-			errorMap.get(propertyId).addAll(errors);
+			errorMap.put(propertyId, new ArrayList<>());
 		}
+		errorMap.get(propertyId).addAll(errors);
 	}
 	
 	public static void addErrorForProperty(String propertyId, String error) {
 		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
 		if(errorMap.get(propertyId) == null) {
-			errorMap.put(propertyId, Arrays.asList(error));
-		} else {
-			errorMap.get(propertyId).add(error);
-		}
+			errorMap.put(propertyId, new ArrayList<>());
+		} 
+		errorMap.get(propertyId).add(error);
 	}
 	
+	public static void addSuccessForProperty(PropertyDTO migratedProperty) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if(successMap.get(migratedProperty.getOldPropertyId()) == null) {
+			successMap.put(migratedProperty.getOldPropertyId(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(migratedProperty.getOldPropertyId());
+		itemMap.put(MigrationConst.PROPERTY_ID, migratedProperty.getPropertyId());
+	}
+	
+	public static void addSuccessForAssessment(PropertyDTO migratedProperty, AssessmentDTO migratedAssessment) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if(successMap.get(migratedProperty.getOldPropertyId()) == null) {
+			successMap.put(migratedProperty.getOldPropertyId(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(migratedProperty.getOldPropertyId());
+		itemMap.put(MigrationConst.ASSESSMENT_NUMBER, migratedAssessment.getAssessmentNumber());
+	}
+
+	public static String getSalutation(String salutation) {
+		salutation = salutation.trim();
+		if(salutation.length()>5) {
+			return null;
+		}
+		return salutation;
+	}
 }

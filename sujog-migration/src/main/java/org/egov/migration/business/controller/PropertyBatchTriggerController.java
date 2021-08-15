@@ -1,6 +1,7 @@
 package org.egov.migration.business.controller;
 
 import java.io.File;
+import java.time.LocalDateTime;
 
 import javax.validation.Valid;
 
@@ -59,7 +60,7 @@ public class PropertyBatchTriggerController {
 				// Scanning of folder
 				String fileName = fileToProceed.getName().toLowerCase();
 				String file = fileToProceed.getPath();
-				log.info(String.format("Processing %s", fileName));
+				log.info(String.format("Processing %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
 		        try {
 		        	recordStatistic.getErrorRecords().clear();
 		        	recordStatistic.getSuccessRecords().clear();
@@ -76,6 +77,7 @@ public class PropertyBatchTriggerController {
 		        			.toJobParameters();
 		        	
 					jobLauncher.run(job, jobParameters);
+					log.info(String.format("Processing end %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
 				} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
 						| JobParametersInvalidException e) {
 					e.printStackTrace();

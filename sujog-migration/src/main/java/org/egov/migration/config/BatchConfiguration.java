@@ -85,7 +85,7 @@ public class BatchConfiguration {
     
     @Bean(name = "stepPropertyMigrate")
     protected Step stepPropertyMigrate() throws EncryptedDocumentException, IOException, Exception {
-        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(1)
+        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(20)
           .reader(getPropertyReader())
           .processor(getPropertyProcessor())
           .writer(getPropertyWriter()).build();
