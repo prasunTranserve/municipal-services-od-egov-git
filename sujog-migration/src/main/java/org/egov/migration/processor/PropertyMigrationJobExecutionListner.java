@@ -1,5 +1,7 @@
 package org.egov.migration.processor;
 
+import java.io.File;
+
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
 import org.springframework.batch.core.JobExecution;
@@ -26,8 +28,8 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 		String successDirectory = properties.getPropertySuccessFileDirectory();
 		
 		String inputFile = jobExecution.getJobParameters().getString("fileName");
-		String errorFile = errorDirectory.concat("\\").concat(inputFile.replace(".", "_Error."));
-		String successFile = successDirectory.concat("\\").concat(inputFile.replace(".", "_success."));
+		String errorFile = errorDirectory.concat(File.separator).concat(inputFile.replace(".", "_Error."));
+		String successFile = successDirectory.concat(File.separator).concat(inputFile.replace(".", "_success."));
 		
 		recordStatistic.setSuccessFile(successFile);
 		recordStatistic.setErrorFile(errorFile);
