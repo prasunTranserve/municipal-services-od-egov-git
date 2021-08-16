@@ -1,14 +1,17 @@
 package org.egov.migration.business.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 import javax.validation.Valid;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.egov.migration.common.model.MigrationRequest;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
 import org.egov.migration.processor.PropertyMigrationJobExecutionListner;
+import org.egov.migration.service.PropertyService;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -51,6 +54,9 @@ public class PropertyBatchTriggerController {
 	@Autowired
 	PropertyMigrationJobExecutionListner propertyMigrationJobExecutionListner;
 	
+	@Autowired
+	PropertyService propertyService;
+	
 	@PostMapping("/property-migrate/run")
 	public void runPropertyMigration(@RequestBody @Valid MigrationRequest request) {
 		properties.setAuthToken(request.getAuthToken());
@@ -78,8 +84,15 @@ public class PropertyBatchTriggerController {
 		        	
 					jobLauncher.run(job, jobParameters);
 					log.info(String.format("Processing end %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
+					propertyService.writeExecutionTime();
 				} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
 						| JobParametersInvalidException e) {
+					e.printStackTrace();
+				} catch (InvalidFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}

@@ -3,7 +3,7 @@ masterdata:
     holding_tax: PT_HOLDING_TAX
     light: PT_LIGHT_TAX
     service_tax: PT_SERVICE_TAX
-    street_tax: PT_OTHER_DUES
+    street_tax: PT_LIGHT_TAX
     water_tax: PT_WATER_TAX
     light_tax: PT_LIGHT_TAX
     drainage_tax: PT_DRAINAGE_TAX

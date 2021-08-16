@@ -23,4 +23,7 @@ public class RecordStatistic {
 	
 	private String errorFile;
 
+	private String startTime;
+	
+	private String endTime;
 }

@@ -343,5 +343,53 @@ public class PropertyService {
 		}
 
 	}
+	
+	public void writeExecutionTime() throws IOException, InvalidFormatException {
+		String fileName = recordStatistic.getSuccessFile();
+		boolean isNewlyCreated = false;
+		File file = new File(fileName);
+		if (!file.exists()) {
+			file.createNewFile();
+			isNewlyCreated = true;
+		}
+		FileInputStream inputStream = new FileInputStream(file);
+
+		int rownum = 0;
+		try {
+			Workbook workbook;
+			Sheet sheet;
+			if (!isNewlyCreated) {
+				workbook = new XSSFWorkbook(inputStream);
+				sheet = workbook.getSheet("SUCCESS_RECORD");
+			} else {
+				workbook = new XSSFWorkbook();
+				sheet = workbook.createSheet("SUCCESS_RECORD");
+			}
+
+			rownum = sheet.getLastRowNum() + 3;
+
+			Row headerRow = sheet.createRow(rownum++);
+			Cell headerCellStartTime = headerRow.createCell(0);
+			headerCellStartTime.setCellValue("Start Time");
+			Cell headerCellEndTime = headerRow.createCell(1);
+			headerCellEndTime.setCellValue("End Time");
+
+			Row row = sheet.createRow(rownum++);
+			int cellnum = 0;
+			Cell cellStartTime = row.createCell(cellnum++);
+			cellStartTime.setCellValue(recordStatistic.getStartTime());
+			Cell cellEndTime = row.createCell(cellnum++);
+			cellEndTime.setCellValue(recordStatistic.getEndTime());
+
+
+			FileOutputStream fos = new FileOutputStream(new File(fileName));
+			workbook.write(fos);
+			workbook.close();
+			fos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 }
