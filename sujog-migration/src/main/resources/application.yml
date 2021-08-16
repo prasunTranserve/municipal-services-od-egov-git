@@ -1,0 +1,34 @@
+server:
+  port: 9090
+  
+spring:  application:    name: sujog-migration
+  profiles:    include:    - lookup
+app:
+  timezone: UTC
+
+file:
+  path:
+    input:
+      directory: 
+        property: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Files\property
+        wns: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Files\wns
+    output:
+      property:
+        success: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Success\property
+        error: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Error\property
+      wns:
+        success: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Success\wns
+        error: C:\Users\prasunAdmin\Desktop\Tasks\Migration\Batch_file\Error\wns
+    
+remomte:
+  api:
+    auth:
+      token: 7a0f6d0c-6d6b-4b0d-814e-3cdb8f5ccefd
+    pt:
+      host: http://localhost:8083/property-services
+      search: /property/_search
+      migrate: /property/_migrateproperty
+      asmt:
+        search: /assessment/_search
+        migrate: /assessment/_migrateassessment
+      

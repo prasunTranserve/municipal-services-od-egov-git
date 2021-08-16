@@ -11,6 +11,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.models.Assessment;
 import org.egov.pt.models.Property;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.Demand;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -194,6 +195,11 @@ public class TranslationService {
         return calculationReq;
 
     }
+
+	public void translateDemand(List<Demand> demands, Map<String, Object> oldPropertyObject) {
+		oldPropertyObject.put("demands", demands);
+		
+	}
 
 
 

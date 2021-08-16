@@ -301,6 +301,8 @@ public class PropertyConfiguration {
     @Value("${egov.calculation.mutation.endpoint}")
     private String mutationCalculationEndpoint;
 
+    @Value("${egov.calculation.migration.endpoint}")
+    private String migrationCalculationEndpoint;
 
     @Value("${egov.localization.statelevel}")
     private Boolean isLocalizationStateLevel;

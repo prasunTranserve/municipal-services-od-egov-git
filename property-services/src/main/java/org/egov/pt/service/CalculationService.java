@@ -1,5 +1,6 @@
 package org.egov.pt.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -7,6 +8,7 @@ import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Property;
 import org.egov.pt.repository.ServiceRequestRepository;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.Demand;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +75,19 @@ public class CalculationService {
 //     }
 
 
+     public void calculateMigrationFee(AssessmentRequest request, Property property, List<Demand> demands){
+    	 
+         StringBuilder uri = new StringBuilder(config.getCalculationHost())
+			        		 .append(config.getCalculationContextPath())
+			                 .append(config.getMigrationCalculationEndpoint());
 
+         Map<String, Object> oldPropertyObject = translationService.translate(request, property);
+         translationService.translateDemand(demands, oldPropertyObject);
+         
+         Object response = serviceRequestRepository.fetchResult(uri, oldPropertyObject);
+         if(response == null)
+             throw new CustomException("CALCULATION_ERROR","The calculation object is coming null from calculation service");
+     }
 
 
 }

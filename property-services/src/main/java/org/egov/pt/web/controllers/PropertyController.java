@@ -117,5 +117,17 @@ public class PropertyController {
 //				.build();
 //		return new ResponseEntity<>(response, HttpStatus.OK);
 //	}
+    
+    @PostMapping("/_migrateproperty")
+    public ResponseEntity<PropertyResponse> createMigrateProperty(@RequestBody PropertyRequest propertyRequest) {
+    	 Property property = propertyService.createMigrateProperty(propertyRequest);
+         ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
+         PropertyResponse response = PropertyResponse.builder()
+                 .properties(Arrays.asList(property))
+                 .responseInfo(resInfo)
+                 .build();
+         return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+	}
 
 }

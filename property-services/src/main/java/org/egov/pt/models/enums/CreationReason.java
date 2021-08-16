@@ -27,7 +27,9 @@ public enum CreationReason {
   
   SUBDIVISION("SUBDIVISION"), 
   
-  DATA_UPLOAD ("DATA_UPLOAD");
+  DATA_UPLOAD ("DATA_UPLOAD"),
+  
+  MIGRATE("MIGRATE");
 
   private String value;
 

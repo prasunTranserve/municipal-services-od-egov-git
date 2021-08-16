@@ -389,4 +389,15 @@ public class PropertyService {
 		util.enrichOwner(userDetailResponse, properties, false);
 		return properties;
 	}
+
+	public Property createMigrateProperty(PropertyRequest request) {
+		enrichmentService.enrichCreateRequest(request);
+		enrichmentService.enrichPropertyForMigration(request);
+		userService.createMigrateUser(request);
+		request.getProperty().setStatus(Status.ACTIVE);
+		
+		producer.push(config.getSavePropertyTopic(), request);
+		request.getProperty().setWorkflow(null);
+		return request.getProperty();
+	}
 }

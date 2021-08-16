@@ -650,4 +650,65 @@ public class DemandService {
 		latestDetailInfo.getLatestDemandDetail().setTaxAmount(newTaxAmountForLatestDemandDetail);
 	}
 
+	public Map<String, Calculation> generateDemandsForMigration( MigrationAssessmentReq request) {
+		Map<String, Calculation> returnMap = new HashMap<>();
+		
+		enrichDemand(request);
+		
+		DemandRequest dmReq = DemandRequest.builder().demands(request.getDemands()).requestInfo(request.getRequestInfo()).build();
+		String url = new StringBuilder().append(configs.getBillingServiceHost())
+				.append(configs.getDemandCreateEndPoint()).toString();
+		DemandResponse res = new DemandResponse();
+
+		try {
+			res = restTemplate.postForObject(url, dmReq, DemandResponse.class);
+
+		} catch (HttpClientErrorException e) {
+			throw new ServiceCallException(e.getResponseBodyAsString());
+		}
+		log.info(" The demand Response is : " + res);
+		return returnMap;
+	}
+
+	private void enrichDemand( MigrationAssessmentReq request) {
+		for(CalculationCriteria criteria : request.getCalculationCriteria()) {
+			Property property = criteria.getProperty();
+			for(Demand demand : request.getDemands()) {
+				updateDemandForMigration(property, demand);
+			}
+			
+		}
+		
+	}
+	
+	private void updateDemandForMigration(Property property, Demand demand) {
+
+		String tenantId = property.getTenantId();
+		PropertyDetail detail = property.getPropertyDetails().get(0);
+		String propertyType = detail.getPropertyType();
+		String consumerCode = property.getPropertyId();
+
+		OwnerInfo owner = null;
+
+		for(OwnerInfo ownerInfo : detail.getOwners()){
+			if(ownerInfo.getStatus().toString().equalsIgnoreCase(OwnerInfo.OwnerStatus.ACTIVE.toString())){
+				owner = ownerInfo;
+				break;
+			}
+		}	
+
+		for(DemandDetail demandDetail : demand.getDemandDetails()) {
+			demandDetail.setTenantId(tenantId);
+		}
+		
+		demand.setTenantId(tenantId);
+		demand.setBusinessService(configs.getPtModuleCode());
+		demand.setConsumerType(propertyType);
+		demand.setConsumerCode(consumerCode);
+		demand.setPayer(owner.toCommonUser());
+		demand.setStatus(Demand.DemandStatusEnum.ACTIVE);
+		demand.setMinimumAmountPayable(BigDecimal.valueOf(configs.getPtMinAmountPayable()));
+
+	}
+
 }
