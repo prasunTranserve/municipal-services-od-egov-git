@@ -1,5 +1,9 @@
 package org.egov.migration.processor;
 
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
 import org.springframework.batch.core.JobExecution;
@@ -22,21 +26,25 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
+		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
 		String errorDirectory = properties.getPropertyErrorFileDirectory();
 		String successDirectory = properties.getPropertySuccessFileDirectory();
 		
 		String inputFile = jobExecution.getJobParameters().getString("fileName");
-		String errorFile = errorDirectory.concat("\\").concat(inputFile.replace(".", "_Error."));
-		String successFile = successDirectory.concat("\\").concat(inputFile.replace(".", "_success."));
+		String errorFile = errorDirectory.concat(File.separator).concat(timestamp).concat("_").concat(inputFile.replace(".", "_Error."));
+		String successFile = successDirectory.concat(File.separator).concat(timestamp).concat("_").concat(inputFile.replace(".", "_success."));
 		
 		recordStatistic.setSuccessFile(successFile);
 		recordStatistic.setErrorFile(errorFile);
+		
+		recordStatistic.setStartTime(timestamp);
 		
 	}
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
-
+		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+		
+		recordStatistic.setEndTime(timestamp);
 	}
-	
 }

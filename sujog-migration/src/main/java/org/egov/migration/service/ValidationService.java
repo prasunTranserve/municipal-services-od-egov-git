@@ -27,6 +27,9 @@ public class ValidationService {
 	
 	public boolean isValidProperty(Property property) {
 		try {
+			if(property == null || property.getPropertyId() == null) {
+				return false;
+			}
 			List<String> errMessages = new ArrayList<String>();
 			Set<ConstraintViolation<Property>> violations = new HashSet<>();
 			if (MigrationUtility.isActiveProperty(property)) {
@@ -38,7 +41,7 @@ public class ValidationService {
 				if (!violations.isEmpty()) {
 					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
 				}
-				
+				validateFinancialYear(property, errMessages);
 				validateDemandAmout(property, errMessages);
 			} else {
 				log.error("Property: "+ property.getPropertyId() +" is not a valid record");
@@ -58,6 +61,20 @@ public class ValidationService {
 		}
 		
 		
+	}
+
+	private void validateFinancialYear(Property property, List<String> errMessages) {
+		if(property.getAssessments() != null) {
+			property.getAssessments().forEach(asmt -> {
+				if(asmt.getFinYear().matches(MigrationUtility.finyearRegex)) {
+					int firstYear = Integer.parseInt(asmt.getFinYear().split("-")[0]);
+					int lastYear = Integer.parseInt("20".concat(asmt.getFinYear().split("-")[1]));
+					if(firstYear+1 != lastYear) {
+						MigrationUtility.addErrorForProperty(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
+					}
+				}
+			});
+		}
 	}
 
 	private void validateDemandAmout(Property property, List<String> errMessages) {
@@ -95,5 +112,4 @@ public class ValidationService {
 		// TODO Auto-generated method stub
 		return true;
 	}
-	
 }

@@ -54,6 +54,8 @@ public class MigrationUtility {
 
 	public static final String convertDateFormat = "dd/MM/yyyy";
 	
+	public static final String finyearRegex = "^\\d{4}-\\d{2}$";
+	
 	 @PostConstruct
 	  public void fillInstance() {
 	    instance = this;
@@ -234,7 +236,7 @@ public class MigrationUtility {
 	
 		String year = finYear.split("-")[0];
 		
-		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year) , 4, 1, 22, 0, 0);
+		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year) , 4, 2, 1, 0, 0);
 		return finFirstDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 	
@@ -243,7 +245,7 @@ public class MigrationUtility {
 			return null;
 	
 		String year = finYear.split("-")[0];
-		LocalDateTime finLastDate = LocalDateTime.of(Integer.parseInt(year) , 3, 31, 22, 0, 0);
+		LocalDateTime finLastDate = LocalDateTime.of(Integer.parseInt(year) , 3, 30, 13, 0, 0);
 		finLastDate = finLastDate.plusYears(1);
 		return finLastDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
