@@ -171,9 +171,16 @@ public class PropertyQueryBuilder {
 			Set<String> tenantIds = criteria.getTenantIds();
 			if(!CollectionUtils.isEmpty(tenantIds))
 			{
-				addClauseIfRequired(preparedStmtList,builder);
+				//addClauseIfRequired(preparedStmtList,builder);
 				builder.append("property.tenantid IN (").append(createQuery(tenantIds)).append(")");
 				addToPreparedStatement(preparedStmtList,tenantIds);
+				appendAndQuery = true;
+			}
+			if(criteria.getTenantId()!=null)
+			{
+				builder.append("property.tenantid=?");
+				preparedStmtList.add(criteria.getTenantId());
+				appendAndQuery = true;
 			}
 		}
 		else
