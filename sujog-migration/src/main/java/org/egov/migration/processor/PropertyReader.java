@@ -136,6 +136,9 @@ public class PropertyReader implements ItemReader<Property> {
 		try {
 			property = propertyRowMapper.mapRow(this.ulb, propertyRow, this.propertyColMap);
 			log.info("Property: "+property.getPropertyId()+" reading...");
+			if(MigrationUtility.isPropertyEmpty(property)) {
+				return null;
+			}
 			Address address = getAddress(property);
 			List<Owner> owners = getOwner(property.getPropertyId());
 			List<PropertyUnit> prpertyUnits = getPropertyUnit(property.getPropertyId());

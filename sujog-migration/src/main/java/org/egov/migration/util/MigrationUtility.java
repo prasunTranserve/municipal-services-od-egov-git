@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.util.NumberToTextConverter;
 import org.egov.migration.business.model.AssessmentDTO;
 import org.egov.migration.business.model.LocalityDTO;
 import org.egov.migration.business.model.PropertyDTO;
@@ -91,9 +92,9 @@ public class MigrationUtility {
 		Double value = cell.getNumericCellValue();
 		String returnVal;
 		if(isDecimal) {
-			returnVal = String.valueOf(value);
+			returnVal = NumberToTextConverter.toText(value);
 		} else {
-			returnVal = String.valueOf(value.longValue());
+			returnVal = NumberToTextConverter.toText(value.longValue());
 		}
 		return returnVal;
 	}
@@ -389,5 +390,12 @@ public class MigrationUtility {
 			return null;
 		}
 		return salutation;
+	}
+
+	public static boolean isPropertyEmpty(Property property) {
+		if(property.getPropertyId() == null && property.getStatus() == null) {
+			return true;
+		}
+		return false;
 	}
 }

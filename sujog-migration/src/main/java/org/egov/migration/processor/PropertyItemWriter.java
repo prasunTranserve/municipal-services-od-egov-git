@@ -36,8 +36,6 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 			}
 			
 			if(isPropertyMigrated) {
-//				PropertyDTO migratedProperty = propertyDetail.getProperty();
-//				recordStatistic.getSuccessRecords().put(migratedProperty.getOldPropertyId(), migratedProperty.getPropertyId());
 				MigrationUtility.addSuccessForProperty(propertyDetail.getProperty());
 			} else {
 				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), "Property Not migrated");
@@ -60,8 +58,6 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 			}
 			
 			if(!isAssessmentMigrated && propertyDetail.getProperty().getPropertyId() != null) {
-//				PropertyDTO migratedProperty = propertyDetail.getProperty();
-//				recordStatistic.getSuccessRecords().put(migratedProperty.getOldPropertyId(), migratedProperty.getPropertyId());
 				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), "Assessment not migrated");
 			} else if(isAssessmentMigrated) {
 				MigrationUtility.addSuccessForAssessment(propertyDetail.getProperty(), propertyDetail.getAssessment());

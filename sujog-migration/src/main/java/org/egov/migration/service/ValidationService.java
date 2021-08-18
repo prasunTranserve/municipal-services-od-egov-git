@@ -68,8 +68,8 @@ public class ValidationService {
 			property.getAssessments().forEach(asmt -> {
 				if(asmt.getFinYear().matches(MigrationUtility.finyearRegex)) {
 					int firstYear = Integer.parseInt(asmt.getFinYear().split("-")[0]);
-					int lastYear = Integer.parseInt("20".concat(asmt.getFinYear().split("-")[1]));
-					if(firstYear+1 != lastYear) {
+					int lastYear = Integer.parseInt(asmt.getFinYear().split("-")[1]);
+					if(((firstYear+1)%100) != lastYear) {
 						MigrationUtility.addErrorForProperty(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
 					}
 				}
@@ -78,7 +78,7 @@ public class ValidationService {
 	}
 
 	private void validateDemandAmout(Property property, List<String> errMessages) {
-		if(property.getDemandDetails() == null)
+		if(property.getDemands() ==null || property.getDemandDetails() == null)
 			return;
 		Map<String, BigDecimal> finYearDemandAmtMap = new HashMap<>();
 		
