@@ -961,8 +961,10 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP)) {
-			projectCost = new BigDecimal((String)paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP));
+		if (null != paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP)) {			
+			projectCost = paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP) != null
+					? new BigDecimal(paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP) + "")
+					: BigDecimal.ZERO;
 		}
 		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
 			edcrTotalBUA = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR);
@@ -1250,8 +1252,8 @@ public class CalculationService {
 			LinkedHashMap setbackItemOc = (LinkedHashMap) levelZeroSetBackOc.get(setbackSide);
 			LinkedHashMap setbackItemEdcr = (LinkedHashMap) levelZeroSetBackEdcr.get(setbackSide);
 			if(setbackItemOc != null && setbackItemEdcr != null) {
-				meanOc = BigDecimal.valueOf((Double) setbackItemOc.get("mean"));
-				meanEdcr = BigDecimal.valueOf((Double) setbackItemEdcr.get("mean"));
+				meanOc = setbackItemOc.get("mean") != null ?new BigDecimal(setbackItemOc.get("mean")+""):BigDecimal.ZERO;
+				meanEdcr = setbackItemOc.get("mean") != null ?new BigDecimal(setbackItemEdcr.get("mean")+""):BigDecimal.ZERO;
 				meanDeviationPercentage = meanEdcr.subtract(meanOc).multiply(HUNDRED).divide(meanEdcr, 2, RoundingMode.UP);
 				Double rate = getRateForSetback(paramMap, mdmsCompoundingFee, meanDeviationPercentage);
 				
