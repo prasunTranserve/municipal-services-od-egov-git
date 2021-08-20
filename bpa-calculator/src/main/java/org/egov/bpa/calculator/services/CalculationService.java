@@ -575,6 +575,15 @@ public class CalculationService {
 				paramMap.put(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR, totalBuitUpArea);
 			}
 		}
+		
+		JSONArray edcrTotalBuiltUpAreas = edcrContext.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(edcrTotalBuiltUpAreas)) {
+			if (null != edcrTotalBuiltUpAreas.get(0)) {
+				String edcrTotalBuiltUpAreaString = edcrTotalBuiltUpAreas.get(0).toString();
+				Double totalBuiltUpArea = Double.parseDouble(edcrTotalBuiltUpAreaString);
+				paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR, totalBuiltUpArea);
+			}
+		}
 
 		JSONArray totalBuitUpAreas = ocContext.read(BPACalculatorConstants.TOTAL_FLOOR_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalBuitUpAreas)) {
@@ -967,7 +976,7 @@ public class CalculationService {
 					: BigDecimal.ZERO;
 		}
 		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
-			edcrTotalBUA = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR);
+			edcrTotalBUA = (Double) paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
 			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
@@ -978,8 +987,8 @@ public class CalculationService {
 				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
 				&& projectCost != null && deviationBUA.compareTo(0D) > 0) {
 		
-			BigDecimal deviationPercentage = BigDecimal.valueOf(deviationBUA).divide(BigDecimal.valueOf(edcrTotalBUA), 2, RoundingMode.UP)
-					.setScale(2, RoundingMode.UP);
+			BigDecimal deviationPercentage = BigDecimal.valueOf(deviationBUA)
+					.divide(BigDecimal.valueOf(edcrTotalBUA), 4);
 			
 			eidpFee = projectCost.multiply(deviationPercentage).divide(HUNDRED,2, RoundingMode.UP);
 		}

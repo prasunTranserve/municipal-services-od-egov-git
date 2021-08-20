@@ -255,6 +255,7 @@ public class BPACalculatorConstants {
 	public static final String SUB_OCCUPANCY_TYPE_PATH = "edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code";
 	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
 	public static final String TOTAL_FLOOR_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalFloorArea";
+	public static final String TOTAL_BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea";
 	public static final String EWS_AREA_PATH = "edcrDetail.*.planDetail.totalEWSFeeEffectiveArea";
 	public static final String SHELTER_FEE_PATH = "edcrDetail.*.planDetail.planInformation.shelterFeeRequired";
 	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre";
@@ -276,6 +277,7 @@ public class BPACalculatorConstants {
 	public static final String PLOT_AREA_EDCR = "PLOT_AREA_EDCR";
 	public static final String TOTAL_FLOOR_AREA = "TOTAL_FLOOR_AREA";
 	public static final String TOTAL_FLOOR_AREA_EDCR = "TOTAL_FLOOR_AREA_EDCR";
+	public static final String TOTAL_BUILTUP_AREA_EDCR = "TOTAL_BUILTUP_AREA_EDCR";
 	public static final String EWS_AREA = "EWS_AREA";
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
