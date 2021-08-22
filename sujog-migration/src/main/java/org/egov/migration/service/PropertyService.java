@@ -24,7 +24,12 @@ import org.egov.migration.config.PropertiesData;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PropertyService {
 
-	private static final String PROPERTY_MIGRATION_ERROR_MSG = "Property not migrated due to server error";
+	private static final String PROPERTY_MIGRATION_ERROR_MSG = "Property is not available during assessment migration";
 	private static final String ASSESSMENT_MIGRATION_ERROR_MSG = "Property migrated but Assessment and Demand not migrated due to server error";
 
 	@Autowired
@@ -49,7 +54,7 @@ public class PropertyService {
 	@Autowired
 	private RecordStatistic recordStatistic;
 
-	public boolean migrateItem(PropertyDetailDTO propertyDetail) {
+	public boolean migrateItem(PropertyDetailDTO propertyDetail) throws Exception {
 		boolean isPropertyMigrated = false;
 
 		PropertyDTO propertyDTO = searchProperty(propertyDetail);
@@ -70,20 +75,20 @@ public class PropertyService {
 			if (assessmentDTO == null) {
 				boolean isAssessmentMigrated = doMigrateAssessment(propertyDetail);
 				if (!isAssessmentMigrated) {
-					MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
+					MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),
 							ASSESSMENT_MIGRATION_ERROR_MSG);
 				}
 			}
 			return true;
 		} else {
-			MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
+			MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),
 					PROPERTY_MIGRATION_ERROR_MSG);
 			return false;
 		}
 
 	}
 
-	public boolean migrateProperty(PropertyDetailDTO propertyDetail) {
+	public boolean migrateProperty(PropertyDetailDTO propertyDetail) throws Exception {
 		boolean isPropertyMigrated = false;
 
 		PropertyDTO propertyDTO = searchProperty(propertyDetail);
@@ -98,30 +103,29 @@ public class PropertyService {
 		return isPropertyMigrated;
 	}
 	
-	public boolean migrateAssessment(PropertyDetailDTO propertyDetail) {
+	public boolean migrateAssessment(PropertyDetailDTO propertyDetail) throws Exception {
+		if(propertyDetail.getProperty().getPropertyId() == null)
+			return false;
 		boolean isAssessmentMigrated = false;
 		PropertyDTO propertyDTO = searchProperty(propertyDetail);
 		if (propertyDTO != null) {
 			AssessmentDTO assessmentDTO = searchAssessment(propertyDetail);
 			if (assessmentDTO == null) {
 				isAssessmentMigrated = doMigrateAssessment(propertyDetail);
-//				if (!isAssessmentMigrated) {
-//					MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
-//							ASSESSMENT_MIGRATION_ERROR_MSG);
-//				}
 			} else {
 				log.info(String.format("Assessment for property %s already migrated", assessmentDTO.getPropertyId()));
+				propertyDetail.setAssessment(assessmentDTO);
 				isAssessmentMigrated = true;
 			}
 			return isAssessmentMigrated;
 		} else {
-			MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(),
+			MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),
 					PROPERTY_MIGRATION_ERROR_MSG);
 			return false;
 		}
 	}
 	
-	private AssessmentDTO searchAssessment(PropertyDetailDTO propertyDetail) {
+	private AssessmentDTO searchAssessment(PropertyDetailDTO propertyDetail) throws Exception {
 		// http://local.egov.org/property-services/assessment/_search?tenantId=od.jatni&propertyIds=PT-2021-08-10-000672
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getAsmtSearchEndPoint())
 				.append("?").append("tenantId=").append(propertyDetail.getProperty().getTenantId())
@@ -141,7 +145,7 @@ public class PropertyService {
 
 	}
 
-	private PropertyDTO searchProperty(PropertyDetailDTO propertyDetail) {
+	private PropertyDTO searchProperty(PropertyDetailDTO propertyDetail) throws Exception {
 		// http://localhost:8083/property-services/property/_search?oldpropertyids=008000436&tenantId=od.jatni
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getPtSearchEndpoint())
 				.append("?").append("oldpropertyids=").append(propertyDetail.getProperty().getOldPropertyId())
@@ -163,10 +167,6 @@ public class PropertyService {
 	private Map<String, Object> prepareSearchPropertyRequest(PropertyDetailDTO propertyDetail) {
 		Map<String, Object> migratePropertyRequest = new HashMap<>();
 		migratePropertyRequest.put("RequestInfo", prepareRequestInfo());
-		// migratePropertyRequest.put("oldpropertyids",
-		// propertyDetail.getProperty().getOldPropertyId());
-		// migratePropertyRequest.put("tenantId",
-		// propertyDetail.getProperty().getTenantId());
 		return migratePropertyRequest;
 	}
 
@@ -180,7 +180,7 @@ public class PropertyService {
 		return migrateAssessmentRequest;
 	}
 
-	private boolean doMigrateProperty(PropertyDetailDTO propertyDetail) {
+	private boolean doMigrateProperty(PropertyDetailDTO propertyDetail) throws Exception {
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost())
 				.append(properties.getMigratePropertyEndpoint());
 
@@ -208,7 +208,7 @@ public class PropertyService {
 		return requestInfo;
 	}
 
-	private boolean doMigrateAssessment(PropertyDetailDTO propertyDetail) {
+	private boolean doMigrateAssessment(PropertyDetailDTO propertyDetail) throws Exception {
 		propertyDetail.getAssessment().setPropertyId(propertyDetail.getProperty().getPropertyId());
 
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost())
@@ -390,6 +390,36 @@ public class PropertyService {
 			e.printStackTrace();
 		}
 
+	}
+
+	public void refreshAuthToken() {
+
+		StringBuilder url = new StringBuilder(properties.getAuthTokenUrl());
+		
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		headers.setBasicAuth("ZWdvdi11c2VyLWNsaWVudDplZ292LXVzZXItc2VjcmV0");
+		
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+		map.add("username",properties.getUsername());
+		map.add("scope","read");
+		map.add("password",properties.getPassword());
+		map.add("grant_type","password");
+		map.add("tenantId",properties.getTenantId());
+		map.add("userType","EMPLOYEE");
+		
+		HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(map, headers);
+		
+		try {
+			Object response = remoteService.fetchResult(url, entity);
+			Map authResponse = mapper.convertValue(response, Map.class);
+			String authToken = authResponse.get("access_token").toString();
+			properties.setAuthToken(authResponse.get("access_token").toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 }

@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -21,47 +23,53 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.util.NumberToTextConverter;
 import org.egov.migration.business.model.AssessmentDTO;
+import org.egov.migration.business.model.ConnectionDTO;
+import org.egov.migration.business.model.DemandDTO;
 import org.egov.migration.business.model.LocalityDTO;
+import org.egov.migration.business.model.MeterReadingDTO;
 import org.egov.migration.business.model.PropertyDTO;
+import org.egov.migration.business.model.SewerageConnectionDTO;
+import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
 import org.egov.migration.reader.model.Property;
+import org.egov.migration.reader.model.WnsConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MigrationUtility {
-	
+
 	private static MigrationUtility instance;
-	
+
 	@Autowired
 	SystemProperties properties;
-	
+
 	@Autowired
 	RecordStatistic recordStatistic;
 
 	public static final BigDecimal sqmtrToSqyard = BigDecimal.valueOf(1.196);
-	
+
 	public static final String decimalRegex = "((\\d+)(((\\.)(\\d+)){0,1}))";
-	
+
 	public static final String digitRegex = "\\d+";
-	
+
 	public static final String property_active = "A";
-	
+
 	public static final String comma = ",";
-	
+
 	public static final String dateFormat = "dd-MM-yy";
 
 	public static final String convertDateFormat = "dd/MM/yyyy";
-	
+
 	public static final String finyearRegex = "^\\d{4}-\\d{2}$";
-	
-	 @PostConstruct
-	  public void fillInstance() {
-	    instance = this;
-	  }
-	
+
+	@PostConstruct
+	public void fillInstance() {
+		instance = this;
+	}
+
 	public static String readCellValue(Cell cell, boolean isDecimal) {
 		if (cell == null) {
 			return null;
@@ -73,7 +81,8 @@ public class MigrationUtility {
 			value = getNumericValue(cell, isDecimal);
 			break;
 		case STRING:
-			value = cell.getStringCellValue().trim().replaceAll("  +", " ");;
+			value = cell.getStringCellValue().trim().replaceAll("  +", " ");
+			;
 			break;
 		case BOOLEAN:
 			value = String.valueOf(cell.getBooleanCellValue());
@@ -83,15 +92,15 @@ public class MigrationUtility {
 	}
 
 	private static String getNumericValue(Cell cell, boolean isDecimal) {
-		if(DateUtil.isCellDateFormatted(cell)) {
+		if (DateUtil.isCellDateFormatted(cell)) {
 			Date cellValue = cell.getDateCellValue();
 			DateFormat formatter = new SimpleDateFormat(dateFormat);
 			return formatter.format(cellValue);
 		}
-		
+
 		Double value = cell.getNumericCellValue();
 		String returnVal;
-		if(isDecimal) {
+		if (isDecimal) {
 			returnVal = NumberToTextConverter.toText(value);
 		} else {
 			returnVal = NumberToTextConverter.toText(value.longValue());
@@ -100,7 +109,7 @@ public class MigrationUtility {
 	}
 
 	public static String getOwnershioCategory(String ownershipCategory) {
-		if(ownershipCategory == null) {
+		if (ownershipCategory == null) {
 			return "INDIVIDUAL.SINGLEOWNER";
 		} else if ("Single Owner".equalsIgnoreCase(ownershipCategory)) {
 			return "INDIVIDUAL.SINGLEOWNER";
@@ -112,7 +121,7 @@ public class MigrationUtility {
 	}
 
 	public static String getUsageCategory(String usageCategory) {
-		if(usageCategory == null) {
+		if (usageCategory == null) {
 			return "RESIDENTIAL";
 		} else if ("Residential".equalsIgnoreCase(usageCategory)) {
 			return "RESIDENTIAL";
@@ -127,7 +136,7 @@ public class MigrationUtility {
 	}
 
 	public static BigDecimal convertAreaToYard(String area) {
-		if(area == null)
+		if (area == null)
 			return null;
 		return BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
 	}
@@ -137,9 +146,9 @@ public class MigrationUtility {
 	}
 
 	public static String processMobile(String mobileNumber) {
-		if(mobileNumber==null)
+		if (mobileNumber == null)
 			return null;
-		
+
 //		String specialCharRegex = "[\\D]";
 //		String leadingZeroRegex = "^0+(?!$)";
 //		
@@ -151,18 +160,18 @@ public class MigrationUtility {
 //		}
 //		mobileNumber = mobileNumber.replaceAll(specialCharRegex, "");
 //		mobileNumber = mobileNumber.replaceAll(leadingZeroRegex, "");
-		if(!mobileNumber.matches(digitRegex))
+		if (!mobileNumber.matches(digitRegex))
 			return null;
-		
-		if(!startsWith6to9(mobileNumber))
+
+		if (!startsWith6to9(mobileNumber))
 			return null;
-		
+
 		return mobileNumber.length() == 10 ? mobileNumber : null;
 	}
 
 	private static boolean startsWith6to9(String mobileNumber) {
 		char startWith = mobileNumber.charAt(0);
-		if(startWith=='6' || startWith=='7' || startWith=='8' || startWith=='9')
+		if (startWith == '6' || startWith == '7' || startWith == '8' || startWith == '9')
 			return true;
 		return false;
 	}
@@ -182,10 +191,10 @@ public class MigrationUtility {
 
 	public static String getCorrespondanceAddress(Address address) {
 		String correspondenceAddress = null;
-		if( address == null) {
+		if (address == null) {
 			return null;
 		}
-		
+
 		if (address.getAddressLine1() != null) {
 			correspondenceAddress = address.getAddressLine1();
 		}
@@ -195,13 +204,13 @@ public class MigrationUtility {
 					? correspondenceAddress.concat(comma).concat(address.getAddressLine2())
 					: address.getAddressLine2();
 		}
-		
+
 		if (address.getCity() != null) {
 			correspondenceAddress = correspondenceAddress != null
 					? correspondenceAddress.concat(comma).concat(address.getCity())
 					: address.getCity();
 		}
-		
+
 		if (address.getPin() != null) {
 			correspondenceAddress = correspondenceAddress != null
 					? correspondenceAddress.concat(comma).concat(address.getPin())
@@ -212,19 +221,20 @@ public class MigrationUtility {
 	}
 
 	public static Long getLongDate(String dateString, String dateformat) {
-		if(dateString == null) {
+		if (dateString == null) {
 			return 0L;
 		}
-		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atStartOfDay()
+				.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
 	public static BigDecimal getAmount(String taxAmt) {
-		if(taxAmt==null || !taxAmt.matches(decimalRegex)) {
+		if (taxAmt == null || !taxAmt.matches(decimalRegex)) {
 			return BigDecimal.ZERO;
 		}
 		return new BigDecimal(taxAmt).setScale(2, RoundingMode.UP);
 	}
-	
+
 	public static String removeLeadingZeros(String value) {
 		return value;
 //		String regex = "^0+(?!$)";
@@ -232,36 +242,37 @@ public class MigrationUtility {
 	}
 
 	public static Long getTaxPeriodFrom(String finYear) {
-		if(finYear==null)
+		if (finYear == null)
 			return null;
-	
+
 		String year = finYear.split("-")[0];
-		
-		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year) , 4, 2, 1, 0, 0);
+
+		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year), 4, 2, 1, 0, 0);
 		return finFirstDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
-	
+
 	public static Long getTaxPeriodTo(String finYear) {
-		if(finYear==null)
+		if (finYear == null)
 			return null;
-	
+
 		String year = finYear.split("-")[0];
-		LocalDateTime finLastDate = LocalDateTime.of(Integer.parseInt(year) , 3, 30, 13, 0, 0);
+		LocalDateTime finLastDate = LocalDateTime.of(Integer.parseInt(year), 3, 30, 13, 0, 0);
 		finLastDate = finLastDate.plusYears(1);
 		return finLastDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
 	public static boolean isActiveProperty(Property property) {
-		if(property != null && property.getStatus() != null && property.getStatus().trim().toUpperCase().equalsIgnoreCase(property_active)) {
+		if (property != null && property.getStatus() != null
+				&& property.getStatus().trim().toUpperCase().equalsIgnoreCase(property_active)) {
 			return true;
 		}
 		return false;
 	}
-	
+
 	public static Long getFloorNo(String floorNo) {
-		if(floorNo == null) {
+		if (floorNo == null) {
 			return null;
-		} else if(floorNo.matches(digitRegex)) {
+		} else if (floorNo.matches(digitRegex)) {
 			return Long.parseLong(floorNo);
 		} else {
 			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().replace(" ", "_"));
@@ -270,51 +281,51 @@ public class MigrationUtility {
 
 	public static String getOccupancyType(String occupancyType, BigDecimal arv) {
 		String ocType = MigrationConst.OCCUPANCY_TYPE_SELFOCCUPIED;
-		if(arv != null) {
+		if (arv != null) {
 			ocType = MigrationConst.OCCUPANCY_TYPE_RENTED;
 		}
 		return ocType;
 	}
 
 	public static BigDecimal getAnnualRentValue(String arv) {
-		if(arv == null)
+		if (arv == null)
 			return null;
-		
-		if(arv.matches(decimalRegex)) {
+
+		if (arv.matches(decimalRegex)) {
 			return new BigDecimal(arv.trim()).setScale(2, RoundingMode.UP);
 		}
 		return BigDecimal.ZERO;
 	}
-	
 
 	public static SystemProperties getSystemProperties() {
 		return instance.properties;
 	}
-	
+
 	public static RecordStatistic getRecordStatistic() {
 		return instance.recordStatistic;
 	}
 
 	public static String addLeadingZeros(String cellValue) {
-		if(cellValue.contains("/")) {
+		return cellValue;
+		/*if (cellValue.contains("/")) {
 			return cellValue;
-		} else if(cellValue.length() < 6 && cellValue.matches(digitRegex)) {
+		} else if (cellValue.length() < 6 && cellValue.matches(digitRegex)) {
 			StringBuffer zeros = new StringBuffer("000000");
 			zeros.append(cellValue);
-			return zeros.substring(zeros.length()-6, zeros.length());
+			return zeros.substring(zeros.length() - 6, zeros.length());
 		} else {
 			return cellValue;
-		}
+		}*/
 	}
 
 	public static String getConnectionCategory(String connectionCategory) {
-		if(connectionCategory == null)
+		if (connectionCategory == null)
 			return null;
 		return connectionCategory.trim().toUpperCase();
 	}
 
 	public static String getConnectionType(String connectionType) {
-		if(connectionType == null) {
+		if (connectionType == null) {
 			return null;
 		}
 		return connectionType.replace("-", " ");
@@ -325,15 +336,20 @@ public class MigrationUtility {
 	}
 
 	public static Integer getDefaultZero(String noOfFlats) {
-		if(noOfFlats.trim().matches(digitRegex)) {
+		if(noOfFlats == null)
+			return 0;
+		
+		if (noOfFlats.trim().matches(digitRegex)) {
 			return Integer.parseInt(noOfFlats.trim());
 		}
 		return Integer.parseInt("0");
 	}
 
 	public static Long getMeterInstallationDate(String meterInstallationDate, String connectionType) {
-		if(MigrationConst.CONNECTION_METERED.equals(connectionType)) {
-			return getLongDate(connectionType, dateFormat);
+		if (MigrationConst.CONNECTION_METERED.equals(connectionType)) {
+			if(meterInstallationDate == null)
+				return 0L;
+			return getLongDate(meterInstallationDate, dateFormat);
 		} else {
 			return 0L;
 		}
@@ -342,42 +358,42 @@ public class MigrationUtility {
 	public static String getConnectionBillingPeriod(String billingPeriod) {
 		DateTimeFormatter fromFormatter = DateTimeFormatter.ofPattern(dateFormat);
 		DateTimeFormatter toFormatter = DateTimeFormatter.ofPattern(convertDateFormat);
-		
+
 		LocalDate billingMonth = LocalDate.parse(billingPeriod, fromFormatter);
 		LocalDate firstDate = billingMonth.withDayOfMonth(1);
 		LocalDate lastDate = billingMonth.withDayOfMonth(billingMonth.lengthOfMonth());
-		
+
 		return firstDate.format(toFormatter).concat("-").concat(lastDate.format(toFormatter));
 	}
-	
-	public static void addErrorsForProperty(String propertyId, List<String> errors) {
+
+	public static void addErrors(String key, List<String> errors) {
 		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
-		if(errorMap.get(propertyId) == null) {
-			errorMap.put(propertyId, new ArrayList<>());
+		if (errorMap.get(key) == null) {
+			errorMap.put(key, new ArrayList<>());
 		}
-		errorMap.get(propertyId).addAll(errors);
+		errorMap.get(key).addAll(errors);
 	}
-	
-	public static void addErrorForProperty(String propertyId, String error) {
+
+	public static void addError(String key, String error) {
 		Map<String, List<String>> errorMap = MigrationUtility.instance.recordStatistic.getErrorRecords();
-		if(errorMap.get(propertyId) == null) {
-			errorMap.put(propertyId, new ArrayList<>());
-		} 
-		errorMap.get(propertyId).add(error);
+		if (errorMap.get(key) == null) {
+			errorMap.put(key, new ArrayList<>());
+		}
+		errorMap.get(key).add(error);
 	}
-	
+
 	public static void addSuccessForProperty(PropertyDTO migratedProperty) {
 		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
-		if(successMap.get(migratedProperty.getOldPropertyId()) == null) {
+		if (successMap.get(migratedProperty.getOldPropertyId()) == null) {
 			successMap.put(migratedProperty.getOldPropertyId(), new HashMap<>());
 		}
 		Map<String, String> itemMap = successMap.get(migratedProperty.getOldPropertyId());
 		itemMap.put(MigrationConst.PROPERTY_ID, migratedProperty.getPropertyId());
 	}
-	
+
 	public static void addSuccessForAssessment(PropertyDTO migratedProperty, AssessmentDTO migratedAssessment) {
 		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
-		if(successMap.get(migratedProperty.getOldPropertyId()) == null) {
+		if (successMap.get(migratedProperty.getOldPropertyId()) == null) {
 			successMap.put(migratedProperty.getOldPropertyId(), new HashMap<>());
 		}
 		Map<String, String> itemMap = successMap.get(migratedProperty.getOldPropertyId());
@@ -386,16 +402,150 @@ public class MigrationUtility {
 
 	public static String getSalutation(String salutation) {
 		salutation = salutation.trim();
-		if(salutation.length()>5) {
+		if (salutation.length() > 5) {
 			return null;
 		}
 		return salutation;
 	}
 
 	public static boolean isPropertyEmpty(Property property) {
-		if(property.getPropertyId() == null && property.getStatus() == null) {
+		if (property.getPropertyId() == null && property.getStatus() == null) {
 			return true;
 		}
 		return false;
 	}
+
+	public static String getMeterStatus(WnsConnection connection) {
+		if (connection.getMeterReading().getMeterStatus() == null) {
+			return "Breakdown";
+		} else if (connection.getMeterReading().getMeterStatus().equalsIgnoreCase("NW")) {
+			return "Breakdown";
+		} else if (connection.getMeterReading().getMeterStatus().equalsIgnoreCase("W")) {
+			return "Working";
+		}
+		return "Breakdown";
+	}
+
+	public static Integer getWaterClosets(WnsConnection connection) {
+		if (connection.getService().getNoOfClosets() == null) {
+			return 0;
+		}
+		return Integer.parseInt(connection.getService().getNoOfClosets());
+	}
+
+	public static Integer getToilets(WnsConnection connection) {
+		if (connection.getService().getNoOfToilets() == null) {
+			return 0;
+		}
+		return Integer.parseInt(connection.getService().getNoOfToilets());
+	}
+
+	public static Double getMeterLastReading(WnsConnection connection) {
+		if (connection.getMeterReading().getPreviousReading() == null) {
+			return 0D;
+		} else {
+			return Double.parseDouble(connection.getMeterReading().getPreviousReading());
+		}
+	}
+
+	public static Long getMeterLastReadingDate(WnsConnection connection) {
+		if (connection.getMeterReading().getPreviousReadingDate() == null) {
+			LocalDate currentDate = LocalDate.parse(connection.getMeterReading().getCurrentReadingDate(),
+					DateTimeFormatter.ofPattern(dateFormat));
+			return currentDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+		LocalDate previousDate = LocalDate.parse(connection.getMeterReading().getPreviousReadingDate(),
+				DateTimeFormatter.ofPattern(dateFormat));
+		return previousDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+	}
+
+	public static Double getMeterCurrentReading(WnsConnection connection) {
+		if (connection.getMeterReading().getCurrentReading() == null) {
+			return 0D;
+		} else {
+			return Double.parseDouble(connection.getMeterReading().getCurrentReading());
+		}
+	}
+
+	public static Long getMeterCurrentReadingDate(WnsConnection connection) {
+		if (connection.getMeterReading().getCurrentReadingDate() == null) {
+			return LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+		LocalDate currentDate = LocalDate.parse(connection.getMeterReading().getCurrentReadingDate(),
+				DateTimeFormatter.ofPattern(dateFormat));
+		return currentDate.atTime(01,00).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+	}
+
+	public static void addSuccessForWaterConnection(WaterConnectionDTO waterConnection) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(waterConnection.getOldConnectionNo()) == null) {
+			successMap.put(waterConnection.getOldConnectionNo(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(waterConnection.getOldConnectionNo());
+		itemMap.put(MigrationConst.WATER_CONNECTION_NO, waterConnection.getConnectionNo());
+	}
+	
+	public static void addSuccessForSewerageConnection(SewerageConnectionDTO sewerageConnection) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(sewerageConnection.getOldConnectionNo()) == null) {
+			successMap.put(sewerageConnection.getOldConnectionNo(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(sewerageConnection.getOldConnectionNo());
+		itemMap.put(MigrationConst.SEWERAGE_CONNECTION_NO, sewerageConnection.getConnectionNo());
+	}
+
+	public static void addSuccessForMeterReading(ConnectionDTO conn) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(conn.getWaterConnection().getOldConnectionNo()) == null) {
+			successMap.put(conn.getWaterConnection().getOldConnectionNo(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(conn.getWaterConnection().getOldConnectionNo());
+		itemMap.put(MigrationConst.METER_READING, conn.getMeterReading().getId());
+	}
+	
+	public static void addSuccessForWaterDemand(ConnectionDTO conn) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(conn.getWaterConnection().getOldConnectionNo()) == null) {
+			successMap.put(conn.getWaterConnection().getOldConnectionNo(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(conn.getWaterConnection().getOldConnectionNo());
+		if(itemMap.get(MigrationConst.DEMAND_WATER) == null) {
+			itemMap.put(MigrationConst.DEMAND_WATER, conn.getWaterDemands().stream().map(DemandDTO::getId).collect(Collectors.joining(",")));
+		}
+		
+	}
+	
+	public static void addSuccessForSewerageDemand(ConnectionDTO conn) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(conn.getSewerageConnection().getOldConnectionNo()) == null) {
+			successMap.put(conn.getSewerageConnection().getOldConnectionNo(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(conn.getSewerageConnection().getOldConnectionNo());
+		if(itemMap.get(MigrationConst.DEMAND_SEWERAGE) == null) {
+			itemMap.put(MigrationConst.DEMAND_SEWERAGE, conn.getSewerageDemands().stream().map(DemandDTO::getId).collect(Collectors.joining(",")));
+		}
+		
+	}
+
+	public static boolean isActiveConnection(WnsConnection connection) {
+		String applicationStatus = connection.getApplicationStatus().trim().replaceAll("  +", " ");
+		if(MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(applicationStatus)
+				&& MigrationConst.STATUS_ACTIVE.equalsIgnoreCase(connection.getStatus().trim())) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean isNumeric(String noOfTaps) {
+		if(noOfTaps.trim().matches(digitRegex))
+			return true;
+		return false;
+	}
+
+	public static Double getConsumption(MeterReadingDTO meterReadingDTO) {
+		if(meterReadingDTO.getCurrentReading() != null && meterReadingDTO.getLastReading() != null)
+			return meterReadingDTO.getCurrentReading().doubleValue() - meterReadingDTO.getLastReading().doubleValue();
+		return Double.parseDouble("0");
+	}
+
 }

@@ -15,6 +15,13 @@ masterdata:
     interest: PT_INTEREST
     penalty: PT_PENALTY
     other: PT_OTHER_DUES
+    drain_tax: PT_DRAINAGE_TAX
+    house_tax: PT_HOLDING_TAX
+    latin_tax: PT_LATRINE_TAX
+    latrin_tax: PT_LATRINE_TAX
+    street_light: PT_LIGHT_TAX
+    holdging_tax: PT_HOLDING_TAX
+    o: PT_OTHER_DUES
     
   tenants:
     cuttack: od.cuttack

@@ -19,7 +19,7 @@ public class MeterReadingRowMapper {
 		meterReading.setConnectionNo(columnMap.get(MigrationConst.COL_CONNECTION_NO)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_NO)), false));
 		meterReading.setConnectionFacility(columnMap.get(MigrationConst.COL_CONNECTION_FACILTY)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_FACILTY)), false));
 		meterReading.setBillingPeriod(columnMap.get(MigrationConst.COL_BILLING_PERIOD)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_BILLING_PERIOD)), false));
-		meterReading.setMeterSerialNo(columnMap.get(MigrationConst.COL_METER_SERIAL_NO)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_METER_SERIAL_NO)), false));
+		meterReading.setMeterStatus(columnMap.get(MigrationConst.COL_METER_STATUS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_METER_STATUS)), false));
 		meterReading.setPreviousReading(columnMap.get(MigrationConst.COL_PREVIOUS_READING)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PREVIOUS_READING)), false));
 		meterReading.setPreviousReadingDate(columnMap.get(MigrationConst.COL_PREVIOUS_READING_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PREVIOUS_READING_DATE)), false));
 		meterReading.setCurrentReading(columnMap.get(MigrationConst.COL_CURRENT_READING)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CURRENT_READING)), false));

@@ -2,6 +2,11 @@ package org.egov.migration.reader.model;
 
 import java.util.List;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,19 +21,32 @@ import lombok.Setter;
 public class WnsConnection {
 	
 	private String ulb;
+	
 	private String connectionApplicationNo;
+	
+	@NotEmpty(message = "Connection facility cannot be empty/blank")
 	private String connectionFacility;
+	
+	@NotEmpty(message = "Application Status cannot be empty/blank")
 	private String applicationStatus;
+	
+	private String status;
+	
 	private String connectionNo;
+	
 	private String applicationType;
+	
+	@Pattern(regexp = "\\d+", message = "Word can not be non numeric")
 	private String ward;
 	
-	private WnsService service;
+	@NotNull(message = "Connection service is missing")
+	private @Valid WnsConnectionService service;
 	
-	private WnsConnectionHolder connectionHolder;
+	@NotNull(message = "Connection owner/holder is missing")
+	private @Valid WnsConnectionHolder connectionHolder;
 	
-	private WnsMeterReading meterReading;
+	private @Valid WnsMeterReading meterReading;
 	
-	private List<WnsDemand> demands;
+	private List<@Valid WnsDemand> demands;
 	
 }

@@ -70,7 +70,7 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 			return PropertyDetailDTO.builder().property(propertyDTO).assessment(assessmentDTO).demands(demandDTOs).build();
 		} catch (Exception e) {
 			log.error(String.format("Some exception generated while reading property %s, Message: ", property.getPropertyId(), e.getMessage()));
-			MigrationUtility.addErrorForProperty(property.getPropertyId(), e.getMessage());
+			MigrationUtility.addError(property.getPropertyId(), e.getMessage());
 			return null;
 		}
 		

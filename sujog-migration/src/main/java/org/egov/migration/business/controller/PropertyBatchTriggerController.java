@@ -58,7 +58,7 @@ public class PropertyBatchTriggerController {
 	PropertyService propertyService;
 	
 	@PostMapping("/property-migrate/run")
-	public void runPropertyMigration(@RequestBody @Valid MigrationRequest request) {
+	public void runPropertyMigration(@RequestBody MigrationRequest request) {
 		properties.setAuthToken(request.getAuthToken());
 		File scanFolder = new File(properties.getPropertyDataFileDirectory());
 		for (File fileToProceed : scanFolder.listFiles()) {

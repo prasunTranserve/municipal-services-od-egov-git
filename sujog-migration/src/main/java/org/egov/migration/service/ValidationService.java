@@ -14,8 +14,11 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
+import org.egov.migration.reader.model.Demand;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
+import org.egov.migration.reader.model.WnsDemand;
+import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.stereotype.Service;
 
@@ -51,12 +54,12 @@ public class ValidationService {
 			if(errMessages.isEmpty()) {
 				return true;
 			} else {
-				MigrationUtility.addErrorsForProperty(property.getPropertyId(), errMessages);
+				MigrationUtility.addErrors(property.getPropertyId(), errMessages);
 				return false;
 			}
 		} catch (Exception e) {
 			log.error(String.format("Exception generated while validationg property %s, message: ", property.getPropertyId(), e.getMessage()));
-			MigrationUtility.addErrorForProperty(property.getPropertyId(), e.getMessage());
+			MigrationUtility.addError(property.getPropertyId(), e.getMessage());
 			return false;
 		}
 		
@@ -70,7 +73,7 @@ public class ValidationService {
 					int firstYear = Integer.parseInt(asmt.getFinYear().split("-")[0]);
 					int lastYear = Integer.parseInt(asmt.getFinYear().split("-")[1]);
 					if(((firstYear+1)%100) != lastYear) {
-						MigrationUtility.addErrorForProperty(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
+						MigrationUtility.addError(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
 					}
 				}
 			});
@@ -109,7 +112,78 @@ public class ValidationService {
 	}
 
 	public boolean isValidConnection(WnsConnection connection) {
+		try {
+			if(connection == null || connection.getConnectionNo() == null) {
+				return false;
+			}
+			List<String> errMessages = new ArrayList<String>();
+			Set<ConstraintViolation<WnsConnection>> violations = new HashSet<>();
+			if (MigrationUtility.isActiveConnection(connection)) {
+
+				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+				Validator validator = factory.getValidator();
+
+				violations = validator.validate(connection);
+				if (!violations.isEmpty()) {
+					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
+				}
+				ValidateWaterConnection(connection, errMessages);
+				ValidateSewerageConnection(connection, errMessages);
+				validateMeterReading(connection, errMessages);
+				validateDemand(connection, errMessages);
+			} else {
+				log.error("Connection: "+ connection.getConnectionNo() +" is not a valid record");
+				errMessages.add("Connection not Approved and Active");
+			}
+			
+			if(errMessages.isEmpty()) {
+				return true;
+			} else {
+				MigrationUtility.addErrors(connection.getConnectionNo(), errMessages);
+				return false;
+			}
+		} catch (Exception e) {
+			log.error(String.format("Exception generated while validationg property %s, message: ", connection.getConnectionNo(), e.getMessage()));
+			MigrationUtility.addError(connection.getConnectionNo(), e.getMessage());
+			return false;
+		}
+	}
+
+	private void ValidateSewerageConnection(WnsConnection connection, List<String> errMessages) {
+		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(connection.getService().getNoOfClosets() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfClosets())) {
+				errMessages.add("No of closets either missing or non numric");
+			}
+		}
+	}
+
+	private void ValidateWaterConnection(WnsConnection connection, List<String> errMessages) {
+		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(connection.getService().getNoOfTaps() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfTaps())) {
+				errMessages.add("No of Taps either missing or non numric");
+			}
+		}
+	}
+
+	private void validateMeterReading(WnsConnection connection, List<String> errMessages) {
 		// TODO Auto-generated method stub
-		return true;
+		
+	}
+
+	private void validateDemand(WnsConnection connection, List<String> errMessages) {
+		if(connection.getDemands() != null && !connection.getDemands().isEmpty()) {
+			WnsDemand demand = connection.getDemands().get(0);
+			if(demand.getConnectionFacility().equalsIgnoreCase("Water")
+					&& MigrationUtility.getAmount(demand.getSewerageFee()).compareTo(BigDecimal.ZERO) > 0) {
+				errMessages.add("Water facility have sewerage fee");
+			}
+			
+			if(demand.getConnectionFacility().equalsIgnoreCase("Sewerage")
+					&& MigrationUtility.getAmount(demand.getWaterCharges()).compareTo(BigDecimal.ZERO) > 0) {
+				errMessages.add("Water facility have sewerage fee");
+			}
+		}
 	}
 }

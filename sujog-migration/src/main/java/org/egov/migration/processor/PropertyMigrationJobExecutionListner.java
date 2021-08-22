@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
+import org.egov.migration.service.PropertyService;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 	@Autowired
 	RecordStatistic recordStatistic;
 	
+	@Autowired
+	PropertyService propertyService;
+	
 	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
@@ -39,6 +43,7 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 		
 		recordStatistic.setStartTime(timestamp);
 		
+		//propertyService.refreshAuthToken();
 	}
 
 	@Override

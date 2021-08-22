@@ -157,8 +157,8 @@ public class PropertyReader implements ItemReader<Property> {
 		} catch (Exception e) {
 			String propertyId = propertyColMap.get(MigrationConst.COL_PROPERTY_ID)==null ? null : MigrationUtility.readCellValue(propertyRow.getCell(propertyColMap.get(MigrationConst.COL_PROPERTY_ID)), false);
 			log.error(String.format("Some exception generated while reading property %s", property.getPropertyId()));
-			MigrationUtility.addErrorForProperty(propertyId, "Not able to read the data. Check the data");
-			MigrationUtility.addErrorForProperty(propertyId, e.getMessage());
+			MigrationUtility.addError(propertyId, "Not able to read the data. Check the data");
+			MigrationUtility.addError(propertyId, e.getMessage());
 		}
 		
 		return property;

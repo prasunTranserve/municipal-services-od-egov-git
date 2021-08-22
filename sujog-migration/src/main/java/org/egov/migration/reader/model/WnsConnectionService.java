@@ -1,5 +1,7 @@
 package org.egov.migration.reader.model;
 
+import javax.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,12 +13,16 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class WnsService {
+public class WnsConnectionService {
 	
 	private String ulb;
 	private String connectionNo;
 	private String connectionFacility;
+	
+	@NotNull(message = "Connection Category is missing")
 	private String connectionCategory;
+	
+	@NotNull(message = "Connection type is missing")
 	private String connectionType;
 	private String waterSource;
 	private String meterSerialNo;

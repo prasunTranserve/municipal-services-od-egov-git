@@ -24,7 +24,7 @@ import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
 import org.egov.migration.reader.model.WnsDemand;
 import org.egov.migration.reader.model.WnsMeterReading;
-import org.egov.migration.reader.model.WnsService;
+import org.egov.migration.reader.model.WnsConnectionService;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.item.ItemReader;
@@ -55,14 +55,12 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	private Map<String, Integer> serviceRowMap;
 	private Map<String, Integer> meterReadingRowMap;
 	private Map<String, Integer> holderRowMap;
-	private Map<String, List<Integer>> demand1RowMap;
-	private Map<String, List<Integer>> demand2RowMap;
+	private Map<String, List<Integer>> demandRowMap;
 	
 	private Sheet serviceSheet;
 	private Sheet meterReadingSheet;
 	private Sheet holderSheet;
-	private Sheet demand1Sheet;
-	private Sheet demand2Sheet;
+	private Sheet demandSheet;
 	
 	@Autowired
 	private ConnectionRowMapper connectionRowMapper;
@@ -117,12 +115,10 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		WnsConnection connection = connectionRowMapper.mapRow(this.ulb, connectionRow, this.connectionColMap);
 		log.info("ConnectionNo: "+connection.getConnectionNo()+" reading...");
 		
-		WnsService service = getConnectionService(connection.getConnectionNo());
+		WnsConnectionService service = getConnectionService(connection.getConnectionNo());
 		WnsConnectionHolder holder = getConnectionHolder(connection.getConnectionNo());
 		WnsMeterReading meterReading = getMeterReading(connection.getConnectionNo());
-//		List<WnsDemand> demand1 = getDemand1(connection.getConnectionNo());
-//		List<WnsDemand> demand2 = getDemand2(connection.getConnectionNo());
-		List<WnsDemand> demand = getConsolidateDemand(getDemand1(connection.getConnectionNo()), getDemand2(connection.getConnectionNo()));
+		List<WnsDemand> demand = getDemand(connection.getConnectionNo());
 		
 		connection.setService(service);
 		connection.setConnectionHolder(holder);
@@ -142,18 +138,11 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		}
 	}
 
-	private List<WnsDemand> getDemand2(String connectionNo) {
+	private List<WnsDemand> getDemand(String connectionNo) {
 		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
-		if(this.demand2RowMap.get(connectionNo) == null)
+		if(this.demandRowMap.get(MigrationUtility.addLeadingZeros(connectionNo)) == null)
 			return null;
-		return this.demand2RowMap.get(connectionNo).stream().map(rowIndex -> demandRowMapper.mapRow(this.ulb, demand2Sheet.getRow(rowIndex), this.demandColMap)).collect(Collectors.toList());
-	}
-
-	private List<WnsDemand> getDemand1(String connectionNo) {
-		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
-		if(this.demand1RowMap.get(MigrationUtility.addLeadingZeros(connectionNo)) == null)
-			return null;
-		return this.demand1RowMap.get(connectionNo).stream().map(rowIndex -> demandRowMapper.mapRow(this.ulb, demand1Sheet.getRow(rowIndex), this.demandColMap)).collect(Collectors.toList());
+		return this.demandRowMap.get(connectionNo).stream().map(rowIndex -> demandRowMapper.mapRow(this.ulb, demandSheet.getRow(rowIndex), this.demandColMap)).collect(Collectors.toList());
 	}
 
 	private WnsMeterReading getMeterReading(String connectionNo) {
@@ -170,7 +159,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		return connectionHolderRowMapper.mapRow(this.ulb, this.holderSheet.getRow(this.holderRowMap.get(connectionNo)), this.holderColMap);
 	}
 
-	private WnsService getConnectionService(String connectionNo) {
+	private WnsConnectionService getConnectionService(String connectionNo) {
 		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
 		if(this.serviceRowMap.get(connectionNo) == null)
 			return null;
@@ -188,50 +177,30 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		updatConnectionServiceRowMap(workbook);
 		updateHolderRowMap(workbook);
 		updateMeterReadingRowMap(workbook);
-		updateDemand1RowMap(workbook);
-		updateDemand2RowMap(workbook);
+		updateDemandRowMap(workbook);
 	
 		updateConnectionColumnMap(connectionSheet.getRow(0));
 	}
 
-	private void updateDemand1RowMap(Workbook workbook) {
-		this.demand1RowMap = new HashMap<>();
-		this.demand1Sheet = workbook.getSheet(MigrationConst.SHEET_DEMAND_1);
-		this.demand1Sheet.rowIterator().forEachRemaining(row -> {
+	private void updateDemandRowMap(Workbook workbook) {
+		this.demandRowMap = new HashMap<>();
+		this.demandSheet = workbook.getSheet(MigrationConst.SHEET_DEMAND);
+		this.demandSheet.rowIterator().forEachRemaining(row -> {
 			if(row.getRowNum()==0) {
 				updateDemandColumnMap(row);
 			} else {
 				String connectionNo = MigrationUtility.readCellValue(row.getCell(this.demandColMap.get(MigrationConst.COL_CONNECTION_NO)), false);
-				List<Integer> list = this.demand1RowMap.get(connectionNo);
+				List<Integer> list = this.demandRowMap.get(connectionNo);
 				if(list == null) {
 					list = new ArrayList<>();
 				}
 				list.add(row.getRowNum());
-				this.demand1RowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.demandColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), list);
+				this.demandRowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.demandColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), list);
 			}
 		});
 		
 	}
 	
-	private void updateDemand2RowMap(Workbook workbook) {
-		this.demand2RowMap = new HashMap<>();
-		this.demand2Sheet = workbook.getSheet(MigrationConst.SHEET_DEMAND_2);
-		this.demand2Sheet.rowIterator().forEachRemaining(row -> {
-			if(row.getRowNum()==0) {
-				//updateDemandColumnMap(row);
-			} else {
-				String connectionNo = MigrationUtility.readCellValue(row.getCell(this.demandColMap.get(MigrationConst.COL_CONNECTION_NO)), false);
-				List<Integer> list = this.demand2RowMap.get(connectionNo);
-				if(list == null) {
-					list = new ArrayList<>();
-				}
-				list.add(row.getRowNum());
-				this.demand2RowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.demandColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), list);
-			}
-		});
-		
-	}
-
 	private void updateDemandColumnMap(Row row) {
 		this.demandColMap = new HashMap<>();
 		Iterator<Cell> cellIterator = row.cellIterator();
