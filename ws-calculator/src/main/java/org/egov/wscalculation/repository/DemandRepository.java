@@ -66,5 +66,18 @@ public class DemandRepository {
         }
     }
 
+	public List<Demand> migrateDemand(RequestInfo requestInfo, List<Demand> demands) {
+		StringBuilder url = new StringBuilder(config.getBillingServiceHost());
+        url.append(config.getDemandMigrateEndPoint());
+        DemandRequest request = new DemandRequest(requestInfo,demands);
+        Object result = serviceRequestRepository.fetchResult(url, request);
+        try{
+           return  mapper.convertValue(result,DemandResponse.class).getDemands();
+        }
+        catch(IllegalArgumentException e){
+            throw new CustomException("PARSING_ERROR","Failed to parse response of create demand");
+        }
+	}
+
 
 }

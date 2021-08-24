@@ -2,6 +2,8 @@ package org.egov.wscalculation.service;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
@@ -12,4 +14,6 @@ public interface MeterService {
 	List<MeterReading> createMeterReading(MeterConnectionRequest meterConnectionRequest);
 	
 	List<MeterReading> searchMeterReadings(MeterReadingSearchCriteria criteria, RequestInfo requestInfo);
+
+	List<MeterReading> migrateMeterReading(@Valid MeterConnectionRequest meterConnectionRequest);
 }

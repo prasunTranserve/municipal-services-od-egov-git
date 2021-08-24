@@ -15,4 +15,6 @@ public interface WaterService {
 	
 	List<WaterConnection> updateWaterConnection(WaterConnectionRequest waterConnectionRequest);
 
+	List<WaterConnection> migrateWaterConnection(WaterConnectionRequest waterConnectionRequest);
+
 }

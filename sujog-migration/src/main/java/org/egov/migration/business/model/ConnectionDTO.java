@@ -1,5 +1,6 @@
 package org.egov.migration.business.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -14,12 +15,26 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConnectionDTO {
+	
+	private boolean water;
+	
+	private boolean sewerage;
 
-	private WaterConnectionDTO water;
+	private WaterConnectionDTO waterConnection;
 	
-	private SewerageConnectionDTO sewerage;
+	private SewerageConnectionDTO sewerageConnection;
 	
-	private List<DemandDTO> demands;
+	private MeterReadingDTO meterReading;
 	
+	private List<DemandDTO> waterDemands;
+	
+	private List<DemandDTO> sewerageDemands;
+	
+//	public void addDemands(List<DemandDTO> demandList) {
+//		if(demands == null) {
+//			demands = new ArrayList<>();
+//		}
+//		demands.addAll(demandList);
+//	}
 	
 }

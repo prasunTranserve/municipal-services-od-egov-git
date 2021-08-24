@@ -70,6 +70,17 @@ public class WaterController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	@RequestMapping(value = "/_migrate", method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<WaterConnectionResponse> migrateWaterConnection(
+			@RequestBody WaterConnectionRequest waterConnectionRequest) {
+		List<WaterConnection> waterConnection = waterService.migrateWaterConnection(waterConnectionRequest);
+		WaterConnectionResponse response = WaterConnectionResponse.builder().waterConnection(waterConnection)
+				.responseInfo(responseInfoFactory
+						.createResponseInfoFromRequestInfo(waterConnectionRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
+	}
 
 }

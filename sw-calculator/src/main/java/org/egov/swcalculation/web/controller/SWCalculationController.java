@@ -14,6 +14,8 @@ import org.egov.swcalculation.web.models.AdhocTaxReq;
 import org.egov.swcalculation.web.models.Calculation;
 import org.egov.swcalculation.web.models.CalculationReq;
 import org.egov.swcalculation.web.models.CalculationRes;
+import org.egov.swcalculation.web.models.Demand;
+import org.egov.swcalculation.web.models.DemandRequest;
 import org.egov.swcalculation.web.models.DemandResponse;
 import org.egov.swcalculation.web.models.GetBillCriteria;
 import org.egov.swcalculation.web.models.RequestInfoWrapper;
@@ -89,5 +91,15 @@ public class SWCalculationController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
+	}
+	
+	@PostMapping("/_migrateDemand")
+	public ResponseEntity<DemandResponse> migrateDemand(@RequestBody @Valid DemandRequest demandRequest) {
+		List<Demand> demands = demandService.migrateDemand(demandRequest);
+		DemandResponse response = DemandResponse.builder().demands(demands)
+				.responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(demandRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

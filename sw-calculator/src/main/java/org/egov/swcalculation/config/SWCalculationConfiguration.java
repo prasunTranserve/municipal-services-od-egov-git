@@ -58,6 +58,9 @@ public class SWCalculationConfiguration {
 	
 	@Value("${egov.demand.search.endpoint}")
 	private String demandSearchEndPoint;
+	
+	@Value("${egov.demand.migrate.endpoint}")
+	private String demandMigrateEndPoint;
 
 	@Value("${egov.sewerageservice.pagination.default.limit}")
 	private String limit;

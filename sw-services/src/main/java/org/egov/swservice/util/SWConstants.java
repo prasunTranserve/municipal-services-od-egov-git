@@ -247,5 +247,7 @@ public class SWConstants {
 	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
 
 	public static final Object ROLE_EMPLOYEE = "EMPLOYEE";
+	
+	public static final String APPLICATION_STATUS_ACTIVATED = "CONNECTION_ACTIVATED";
 
 }

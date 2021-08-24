@@ -14,8 +14,12 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
+import org.egov.migration.reader.model.Demand;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
+import org.egov.migration.reader.model.WnsDemand;
+import org.egov.migration.reader.model.WnsMeterReading;
+import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.stereotype.Service;
 
@@ -51,12 +55,12 @@ public class ValidationService {
 			if(errMessages.isEmpty()) {
 				return true;
 			} else {
-				MigrationUtility.addErrorsForProperty(property.getPropertyId(), errMessages);
+				MigrationUtility.addErrors(property.getPropertyId(), errMessages);
 				return false;
 			}
 		} catch (Exception e) {
 			log.error(String.format("Exception generated while validationg property %s, message: ", property.getPropertyId(), e.getMessage()));
-			MigrationUtility.addErrorForProperty(property.getPropertyId(), e.getMessage());
+			MigrationUtility.addError(property.getPropertyId(), e.getMessage());
 			return false;
 		}
 		
@@ -68,9 +72,9 @@ public class ValidationService {
 			property.getAssessments().forEach(asmt -> {
 				if(asmt.getFinYear().matches(MigrationUtility.finyearRegex)) {
 					int firstYear = Integer.parseInt(asmt.getFinYear().split("-")[0]);
-					int lastYear = Integer.parseInt("20".concat(asmt.getFinYear().split("-")[1]));
-					if(firstYear+1 != lastYear) {
-						MigrationUtility.addErrorForProperty(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
+					int lastYear = Integer.parseInt(asmt.getFinYear().split("-")[1]);
+					if(((firstYear+1)%100) != lastYear) {
+						MigrationUtility.addError(property.getPropertyId(), String.format("%s is not a valid financial year", asmt.getFinYear()));
 					}
 				}
 			});
@@ -78,7 +82,7 @@ public class ValidationService {
 	}
 
 	private void validateDemandAmout(Property property, List<String> errMessages) {
-		if(property.getDemandDetails() == null)
+		if(property.getDemands() ==null || property.getDemandDetails() == null)
 			return;
 		Map<String, BigDecimal> finYearDemandAmtMap = new HashMap<>();
 		
@@ -109,7 +113,111 @@ public class ValidationService {
 	}
 
 	public boolean isValidConnection(WnsConnection connection) {
-		// TODO Auto-generated method stub
-		return true;
+		try {
+			if(connection == null || connection.getConnectionNo() == null) {
+				return false;
+			}
+			List<String> errMessages = new ArrayList<String>();
+			Set<ConstraintViolation<WnsConnection>> violations = new HashSet<>();
+			if (MigrationUtility.isActiveConnection(connection)) {
+
+				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+				Validator validator = factory.getValidator();
+
+				violations = validator.validate(connection);
+				if (!violations.isEmpty()) {
+					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
+				}
+				ValidateWaterConnection(connection, errMessages);
+				ValidateSewerageConnection(connection, errMessages);
+				validateMeterReading(connection, errMessages);
+				validateDemand(connection, errMessages);
+			} else {
+				log.error("Connection: "+ connection.getConnectionNo() +" is not a valid record");
+				errMessages.add("Connection not Approved and Active");
+			}
+			
+			if(errMessages.isEmpty()) {
+				return true;
+			} else {
+				MigrationUtility.addErrors(connection.getConnectionNo(), errMessages);
+				return false;
+			}
+		} catch (Exception e) {
+			log.error(String.format("Exception generated while validationg property %s, message: ", connection.getConnectionNo(), e.getMessage()));
+			MigrationUtility.addError(connection.getConnectionNo(), e.getMessage());
+			return false;
+		}
+	}
+
+	private void ValidateSewerageConnection(WnsConnection connection, List<String> errMessages) {
+		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(connection.getService().getNoOfClosets() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfClosets())) {
+				errMessages.add(String.format("value: %s, message: No of closets either missing or non numric", connection.getService().getNoOfClosets()));
+			}
+		}
+	}
+
+	private void ValidateWaterConnection(WnsConnection connection, List<String> errMessages) {
+		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(connection.getService().getNoOfTaps() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfTaps())) {
+				errMessages.add(String.format("value: %s, message: No of Taps either missing or non numric", connection.getService().getNoOfTaps()));
+			}
+		}
+	}
+
+	private void validateMeterReading(WnsConnection connection, List<String> errMessages) {
+		
+		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(connection.getMeterReading() == null) {
+			return;
+		}
+		
+		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& connection.getMeterReading() != null) {
+			errMessages.add(String.format("Connection %s is a Sewerage connection but have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() != null
+				&& connection.getMeterReading().stream().filter(conn -> MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(conn.getConnectionFacility())).count() > 0) {
+			errMessages.add(String.format("Connection %s have Sewerage metered connectionand have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null
+				&& connection.getMeterReading().stream().filter(conn -> MigrationConst.CONNECTION_WATER.equalsIgnoreCase(conn.getConnectionFacility())).count() == 0) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have water meter readings", connection.getConnectionNo()));
+		}
+	}
+
+	private void validateDemand(WnsConnection connection, List<String> errMessages) {
+		if(connection.getDemands() != null && !connection.getDemands().isEmpty()) {
+			WnsDemand demand = connection.getDemands().get(0);
+			if(demand.getConnectionFacility().equalsIgnoreCase("Water")
+					&& MigrationUtility.getAmount(demand.getSewerageFee()).compareTo(BigDecimal.ZERO) > 0) {
+				errMessages.add("Water facility have sewerage fee");
+			}
+			
+			if(demand.getConnectionFacility().equalsIgnoreCase("Sewerage")
+					&& MigrationUtility.getAmount(demand.getWaterCharges()).compareTo(BigDecimal.ZERO) > 0) {
+				errMessages.add("Water facility have sewerage fee");
+			}
+		}
 	}
 }

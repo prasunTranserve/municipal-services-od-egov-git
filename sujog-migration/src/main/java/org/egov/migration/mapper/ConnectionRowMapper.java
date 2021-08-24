@@ -21,6 +21,7 @@ public class ConnectionRowMapper {
 		connection.setConnectionNo(columnMap.get(MigrationConst.COL_CONNECTION_NO)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_NO)), false));
 		connection.setApplicationType(columnMap.get(MigrationConst.COL_APPLICATION_TYPE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_APPLICATION_TYPE)), false));
 		connection.setWard(columnMap.get(MigrationConst.COL_WARD)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_WARD)), false));
+		connection.setStatus(columnMap.get(MigrationConst.COL_CONNECTION_STATUS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_STATUS)), false));
 		
 		return connection;
 	}

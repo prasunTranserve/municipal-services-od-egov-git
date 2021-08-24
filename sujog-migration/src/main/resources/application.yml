@@ -27,7 +27,10 @@ file:
 remomte:
   api:
     auth:
-      token: 7a0f6d0c-6d6b-4b0d-814e-3cdb8f5ccefd
+      url: http://localhost:8083/user/oauth/token
+      username: admin
+      password: password
+      tenant: od
     pt:
       host: http://localhost:8083/property-services
       search: /property/_search
@@ -35,4 +38,24 @@ remomte:
       asmt:
         search: /assessment/_search
         migrate: /assessment/_migrateassessment
+    ws:
+      host: http://localhost:8083/ws-services/wc
+      search: /_search
+      connectionmigrate: /_migrate
+      calculator:
+        host: http://localhost:8083/ws-calculator
+        meterreadingmigeate: /meterConnection/_migrateMeterReading
+        meterreadingsearch: /meterConnection/_search
+        demandmigrate: /waterCalculator/_migrateDemand
+    sw:
+      host: http://localhost:8083/sw-services/swc
+      search: /_search
+      connectionmigrate: /_migrate
+      calculator:
+        host: http://localhost:8083/sw-calculator/sewerageCalculator
+        demandmigrate: /_migrateDemand
+    demand:
+      host: http://localhost:8083/billing-service
+      search: /demand/_search
+
       

@@ -14,6 +14,7 @@ import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.CalculationRes;
 import org.egov.wscalculation.web.models.Demand;
+import org.egov.wscalculation.web.models.DemandRequest;
 import org.egov.wscalculation.web.models.DemandResponse;
 import org.egov.wscalculation.web.models.GetBillCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
@@ -96,5 +97,15 @@ public class CalculatorController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
+	}
+	
+	@PostMapping("/_migrateDemand")
+	public ResponseEntity<DemandResponse> migrateDemand(@RequestBody @Valid DemandRequest demandRequest) {
+		List<Demand> demands = demandService.migrateDemand(demandRequest);
+		DemandResponse response = DemandResponse.builder().demands(demands)
+				.responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(demandRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

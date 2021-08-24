@@ -72,5 +72,16 @@ public class SewarageController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	@RequestMapping(value = "/_migrate", method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<SewerageConnectionResponse> migrateWaterConnection(
+			@RequestBody SewerageConnectionRequest sewerageConnectionRequest) {
+		List<SewerageConnection> sewerageConnection = sewarageService.migrateSewerageConnection(sewerageConnectionRequest);
+		SewerageConnectionResponse response = SewerageConnectionResponse.builder().sewerageConnections(sewerageConnection)
+				.responseInfo(responseInfoFactory
+						.createResponseInfoFromRequestInfo(sewerageConnectionRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }

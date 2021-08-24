@@ -17,8 +17,6 @@ public class MigrationConst {
 	public static final String SHEET_CONNECTION_SERVICE = "CONNECTION_SERVICE";
 	public static final String SHEET_CONNECTION_HOLDER = "HOLDER";
 	public static final String SHEET_METER_READING = "METER_READING";
-	public static final String SHEET_DEMAND_1 = "DEMAND_1";
-	public static final String SHEET_DEMAND_2 = "DEMAND_2";
 	
 	public static final String COL_PROPERTY_ID = "PROPERTY_ID";
 	public static final String COL_ULB = "ULB_NAME";
@@ -114,7 +112,7 @@ public class MigrationConst {
 	public static final String COL_SEWERAGE_FEE = "SEWERAGE_FEE";
 	public static final String COL_GUARDIAN_RELATION = "GUARDIAN_RELATION";
 	public static final String COL_CONSUMER_CATEGORY = "CONSUMER_CATEGORY";
-	
+	public static final String COL_METER_STATUS = "METER_STATUS";
 	
 	public static final String DEFAULT_OWNER_TYPE = "NONE";
 	
@@ -125,6 +123,7 @@ public class MigrationConst {
 	
 	public static final String CONNECTION_WATER = "Water";
 	public static final String CONNECTION_SEWERAGE = "Sewerage";
+	public static final String CONNECTION_WATER_SEWERAGE = "water_sewerage";
 	
 	public static final String CONNECTION_CATEGORY_PERMANENT = "PERMANENT";
 	public static final String CONNECTION_CATEGORY_TEMPORARY = "TEMPORARY";
@@ -135,6 +134,16 @@ public class MigrationConst {
 	
 	public static final String PROPERTY_ID = "PROPERTY_ID";
 	public static final String ASSESSMENT_NUMBER = "ASSESSMENT_NUMBER";
+	
+	public static final String WATER_CONNECTION_NO = "WATER_CONNECTION_NO";
+	public static final String METER_READING = "METER_READING";
+	public static final String DEMAND_WATER = "DEMAND_WATER";
+	public static final String DEMAND_SEWERAGE = "DEMAND_SEWERAGE";
+	public static final String SEWERAGE_CONNECTION_NO = "SEWERAGE_CONNECTION_NO";
+	
+	public static final String APPLICATION_APPROVED = "Application Approved";
+	public static final String STATUS_ACTIVE = "Active";
+	
 	
 	public static final String OWNER_NAME_PATTERN = "^[^\\\\$\\\"'<>?\\\\\\\\~`!@#$%^()+={}\\\\[\\\\]*,:;“”‘’]*$";
 

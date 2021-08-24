@@ -58,4 +58,15 @@ public class MeterReadingController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/_migrateMeterReading", method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<MeterReadingResponse> migrateMeterReading(
+			@Valid @RequestBody MeterConnectionRequest meterConnectionRequest) {
+		List<MeterReading> meterReadings = meterService.migrateMeterReading(meterConnectionRequest);
+		MeterReadingResponse response = MeterReadingResponse.builder().meterReadings(meterReadings).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(meterConnectionRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+	
 }

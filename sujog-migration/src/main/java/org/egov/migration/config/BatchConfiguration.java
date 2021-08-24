@@ -93,7 +93,7 @@ public class BatchConfiguration {
     
     @Bean(name = "stepWnsMigrate")
     protected Step stepWnsMigrate() throws EncryptedDocumentException, IOException, Exception {
-        return stepBuilderFactory.get("stepWnsMigrate").<WnsConnection, ConnectionDTO> chunk(5)
+        return stepBuilderFactory.get("stepWnsMigrate").<WnsConnection, ConnectionDTO> chunk(30)
           .reader(getWnsReader())
           .processor(getWnsProcessor())
           .writer(getWnsWriter()).build();

@@ -394,4 +394,30 @@ public class UserService {
 			});
 		}
 	}
+	
+	public void createUserForMigration(WaterConnectionRequest request) {
+		if (!CollectionUtils.isEmpty(request.getWaterConnection().getConnectionHolders())) {
+			Role role = getCitizenRole();
+			request.getWaterConnection().getConnectionHolders().forEach(holderInfo -> {
+				addUserDefaultFields(request.getWaterConnection().getTenantId(), role, holderInfo);
+				StringBuilder uri = new StringBuilder(configuration.getUserHost())
+						.append(configuration.getUserContextPath()).append(configuration.getUserMigrateEndPoint());
+				holderInfo.setUserName(UUID.randomUUID().toString());
+
+				ConnectionUserRequest userRequest = ConnectionUserRequest.builder()
+						.requestInfo(request.getRequestInfo()).user(holderInfo).build();
+
+				UserDetailResponse userDetailResponse = userCall(userRequest, uri);
+
+				if (ObjectUtils.isEmpty(userDetailResponse)) {
+					throw new CustomException("INVALID USER RESPONSE",
+							"The user create has failed for the Name : " + holderInfo.getName());
+				}
+
+				// Assigns value of fields from user got from userDetailResponse to owner object
+				setOwnerFields(holderInfo, userDetailResponse, request.getRequestInfo());
+			});
+		}
+	}
+	
 }

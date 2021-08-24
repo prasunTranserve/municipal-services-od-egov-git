@@ -24,7 +24,7 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 	private RecordStatistic recordStatistic;
 
 	@Override
-	public void write(List<? extends PropertyDetailDTO> items) throws Exception {
+	public void write(List<? extends PropertyDetailDTO> items) {
 		
 		items.forEach(propertyDetail -> {
 			boolean isPropertyMigrated = false;
@@ -32,15 +32,11 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 				isPropertyMigrated = propertyService.migrateProperty(propertyDetail);
 			} catch (Exception e) {
 				log.error(String.format("PropertyId: %s, error message: %s", propertyDetail.getProperty().getOldPropertyId(), e.getMessage()));
-				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), e.getMessage());
+				MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),String.format("Property Migration error: %s",  e.getMessage()));
 			}
 			
 			if(isPropertyMigrated) {
-//				PropertyDTO migratedProperty = propertyDetail.getProperty();
-//				recordStatistic.getSuccessRecords().put(migratedProperty.getOldPropertyId(), migratedProperty.getPropertyId());
 				MigrationUtility.addSuccessForProperty(propertyDetail.getProperty());
-			} else {
-				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), "Property Not migrated");
 			}
 		});
 		
@@ -55,20 +51,23 @@ public class PropertyItemWriter implements ItemWriter<PropertyDetailDTO> {
 			try {
 				isAssessmentMigrated = propertyService.migrateAssessment(propertyDetail);
 			} catch (Exception e) {
-				log.error(String.format("PropertyId: %s, error message: %s", propertyDetail.getProperty().getOldPropertyId(), e.getMessage()));
-				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), e.getMessage());
+				log.error(String.format("Assessment migration error for PropertyId: %s, error message: %s", propertyDetail.getProperty().getOldPropertyId(), e.getMessage()));
+				MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(), String.format("Assessment migration error: %s", e.getMessage()));
 			}
 			
 			if(!isAssessmentMigrated && propertyDetail.getProperty().getPropertyId() != null) {
-//				PropertyDTO migratedProperty = propertyDetail.getProperty();
-//				recordStatistic.getSuccessRecords().put(migratedProperty.getOldPropertyId(), migratedProperty.getPropertyId());
-				MigrationUtility.addErrorForProperty(propertyDetail.getProperty().getOldPropertyId(), "Assessment not migrated");
+				MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(), "Assessment not migrated");
 			} else if(isAssessmentMigrated) {
 				MigrationUtility.addSuccessForAssessment(propertyDetail.getProperty(), propertyDetail.getAssessment());
 			}
 		});
 		
-		generateReport();
+		try {
+			generateReport();
+		} catch (InvalidFormatException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 

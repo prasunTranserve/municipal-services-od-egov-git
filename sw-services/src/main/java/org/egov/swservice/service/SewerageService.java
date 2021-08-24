@@ -15,4 +15,6 @@ public interface SewerageService {
 
 	List<SewerageConnection> updateSewerageConnection(SewerageConnectionRequest sewarageConnectionRequest);
 
+	List<SewerageConnection> migrateSewerageConnection(SewerageConnectionRequest sewerageConnectionRequest);
+
 }

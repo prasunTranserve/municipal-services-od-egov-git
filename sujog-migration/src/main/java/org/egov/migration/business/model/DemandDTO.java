@@ -54,6 +54,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class DemandDTO {
+	
+	@JsonProperty("id")
+	private String id;
+	
+	@JsonProperty("tenantId")
+	private String tenantId;
+	
+	@JsonProperty("consumerCode")
+	private String consumerCode;
 
 	@JsonProperty("taxPeriodFrom")
 	private Long taxPeriodFrom;

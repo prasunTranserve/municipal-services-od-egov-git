@@ -1,6 +1,6 @@
 package org.egov.swservice.service;
 
-import static org.egov.swservice.util.SWConstants.APPROVE_CONNECTION;
+import static org.egov.swservice.util.SWConstants.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -401,6 +401,18 @@ public class SewerageServiceImpl implements SewerageService {
 		}
 		
 		return isApplicable;
+	}
+	
+	@Override
+	public List<SewerageConnection> migrateSewerageConnection(SewerageConnectionRequest sewerageConnectionRequest) {
+		int reqType = SWConstants.CREATE_APPLICATION;
+		mDMSValidator.validateMasterForCreateRequest(sewerageConnectionRequest);
+		enrichmentService.enrichSewerageConnectionForMigration(sewerageConnectionRequest, reqType);
+		sewerageConnectionRequest.getSewerageConnection().setApplicationStatus(APPLICATION_STATUS_ACTIVATED);
+		userService.createUserForMigration(sewerageConnectionRequest);
+		enrichmentService.postStatusEnrichment(sewerageConnectionRequest);
+		sewerageDao.saveSewerageConnection(sewerageConnectionRequest);
+		return Arrays.asList(sewerageConnectionRequest.getSewerageConnection());
 	}
 	
 }

@@ -3,7 +3,7 @@ package org.egov.migration.mapper;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Row;
-import org.egov.migration.reader.model.WnsService;
+import org.egov.migration.reader.model.WnsConnectionService;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.stereotype.Component;
@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConnectionServiceRowMapper {
 
-	public WnsService mapRow(String ulb, Row row, Map<String, Integer> columnMap) {
-		WnsService service = new WnsService();
+	public WnsConnectionService mapRow(String ulb, Row row, Map<String, Integer> columnMap) {
+		WnsConnectionService service = new WnsConnectionService();
 		
 		service.setUlb(ulb);
 		service.setConnectionNo(columnMap.get(MigrationConst.COL_CONNECTION_NO)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_NO)), false));
@@ -33,6 +33,7 @@ public class ConnectionServiceRowMapper {
 		service.setNoOfToilets(columnMap.get(MigrationConst.COL_NO_OF_TOILETS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_NO_OF_TOILETS)), false));
 		service.setProposedWaterClosets(columnMap.get(MigrationConst.COL_PROPOSED_WATER_CLOSETS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PROPOSED_WATER_CLOSETS)), false));
 		service.setProposedToilets(columnMap.get(MigrationConst.COL_PROPOSED_TOILETS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PROPOSED_TOILETS)), false));
+		service.setConnectionCategory(columnMap.get(MigrationConst.COL_CONNECTION_CATEGORY)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_CATEGORY)), false));
 		
 		return service;
 	}

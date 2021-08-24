@@ -162,6 +162,9 @@ public class SWConfiguration {
 
 	@Value("${egov.user.create.path}")
 	private String userCreateEndPoint;
+	
+	@Value("${egov.user.migrate.path}")
+	private String userMigrateEndPoint;
 
 	@Value("${egov.user.update.path}")
 	private String userUpdateEndPoint;

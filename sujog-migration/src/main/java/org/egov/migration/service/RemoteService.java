@@ -27,8 +27,9 @@ public class RemoteService {
 	 * 
 	 * @return Object
 	 * @author vishal
+	 * @throws Exception 
 	 */
-	public Map fetchResult(StringBuilder uri, Object request) {
+	public Map fetchResult(StringBuilder uri, Object request) throws Exception {
 
 		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 		Map response = null;
@@ -37,10 +38,10 @@ public class RemoteService {
 			log.info("Request: "+mapper.writeValueAsString(request));
 			response = restTemplate.postForObject(uri.toString(), request, Map.class);
 		} catch (HttpClientErrorException e) {
-			e.printStackTrace();
+			throw e;
 			//log.error("External Service threw an Exception: ", e);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 			//log.error("Exception while fetching from external service: ", e);
 		}
 		return response;
