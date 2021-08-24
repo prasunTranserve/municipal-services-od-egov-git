@@ -38,6 +38,7 @@ import org.egov.waterconnection.web.models.Idgen.IdResponse;
 import org.egov.waterconnection.web.models.users.User;
 import org.egov.waterconnection.web.models.users.UserDetailResponse;
 import org.egov.waterconnection.web.models.users.UserSearchRequest;
+import org.egov.waterconnection.web.models.workflow.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -285,7 +286,7 @@ public class EnrichmentService {
      * Enrich water connection request and set water connection no
      * @param request WaterConnectionRequest Object
      */
-	private void setConnectionNO(WaterConnectionRequest request) {
+	public void setConnectionNO(WaterConnectionRequest request) {
 		List<String> connectionNumbers = getIdList(request.getRequestInfo(), request.getWaterConnection().getTenantId(),
 				config.getWaterConnectionIdGenName(), config.getWaterConnectionIdGenFormat());
 		if (connectionNumbers.size() != 1) {
@@ -485,6 +486,44 @@ public class EnrichmentService {
 
 		}
 		return finalConnectionList;
+	}
+	
+	public void enrichWaterConnectionForMigration(WaterConnectionRequest waterConnectionRequest, int reqType) {
+		AuditDetails auditDetails = waterServicesUtil
+				.getAuditDetails(waterConnectionRequest.getRequestInfo().getUserInfo().getUuid(), true);
+		waterConnectionRequest.getWaterConnection().setAuditDetails(auditDetails);
+		waterConnectionRequest.getWaterConnection().setId(UUID.randomUUID().toString());
+		waterConnectionRequest.getWaterConnection().setStatus(StatusEnum.ACTIVE);
+		//Application creation date
+		HashMap<String, Object> additionalDetail = new HashMap<>();
+		if (waterConnectionRequest.getWaterConnection().getAdditionalDetails() == null) {
+			for (String constValue : WCConstants.ADDITIONAL_OBJ_CONSTANT) {
+				additionalDetail.put(constValue, null);
+			}
+		} else {
+			additionalDetail = mapper
+					.convertValue(waterConnectionRequest.getWaterConnection().getAdditionalDetails(), HashMap.class);
+		}
+		additionalDetail.put(WCConstants.APP_CREATED_DATE, BigDecimal.valueOf(System.currentTimeMillis()));
+		waterConnectionRequest.getWaterConnection().setAdditionalDetails(additionalDetail);
+	    //Setting ApplicationType
+		setApplicationType(waterConnectionRequest, reqType);
+		setApplicationIdGenIds(waterConnectionRequest);
+		waterConnectionRequest.getWaterConnection().setApplicationStatus(WCConstants.APPLICATION_STATUS_ACTIVATED);
+
+		WaterConnection connection = waterConnectionRequest.getWaterConnection();
+
+		if (!CollectionUtils.isEmpty(connection.getRoadCuttingInfo())) {
+			connection.getRoadCuttingInfo().forEach(roadCuttingInfo -> {
+				roadCuttingInfo.setId(UUID.randomUUID().toString());
+				roadCuttingInfo.setStatus(Status.ACTIVE);
+				roadCuttingInfo.setAuditDetails(auditDetails);
+			});
+		}
+		
+		// Enrich Process instance
+		waterConnectionRequest.getWaterConnection().setProcessInstance(ProcessInstance.builder().action(WCConstants.ACTIVATE_CONNECTION).build());
+		
 	}
 
 }

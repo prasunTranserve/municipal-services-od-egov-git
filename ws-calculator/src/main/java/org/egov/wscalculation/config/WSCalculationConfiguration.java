@@ -48,6 +48,9 @@ public class WSCalculationConfiguration {
 
 	@Value("${egov.demand.search.endpoint}")
 	private String demandSearchEndPoint;
+	
+	@Value("${egov.demand.migrate.endpoint}")
+	private String demandMigrateEndPoint;
 
 	@Value("${egov.bill.fetch.endpoint}")
 	private String fetchBillEndPoint;

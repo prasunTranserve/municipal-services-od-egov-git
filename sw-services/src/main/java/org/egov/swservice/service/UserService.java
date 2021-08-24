@@ -386,5 +386,30 @@ public class UserService {
 				.append(configuration.getUserSearchEndpoint());
 		return userCall(userSearchRequest, uri);
 	}
+	
+	public void createUserForMigration(SewerageConnectionRequest request) {
+		if (!CollectionUtils.isEmpty(request.getSewerageConnection().getConnectionHolders())) {
+			Role role = getCitizenRole();
+			request.getSewerageConnection().getConnectionHolders().forEach(holderInfo -> {
+				addUserDefaultFields(request.getSewerageConnection().getTenantId(), role, holderInfo);
+				StringBuilder uri = new StringBuilder(configuration.getUserHost())
+						.append(configuration.getUserContextPath()).append(configuration.getUserMigrateEndPoint());
+				holderInfo.setUserName(UUID.randomUUID().toString());
+
+				ConnectionUserRequest userRequest = ConnectionUserRequest.builder()
+						.requestInfo(request.getRequestInfo()).user(holderInfo).build();
+
+				UserDetailResponse userDetailResponse = userCall(userRequest, uri);
+
+				if (ObjectUtils.isEmpty(userDetailResponse)) {
+					throw new CustomException("INVALID USER RESPONSE",
+							"The user create has failed for the Name : " + holderInfo.getName());
+				}
+
+				// Assigns value of fields from user got from userDetailResponse to owner object
+				setOwnerFields(holderInfo, userDetailResponse, request.getRequestInfo());
+			});
+		}
+	}
 
 }

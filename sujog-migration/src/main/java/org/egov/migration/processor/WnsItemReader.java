@@ -53,7 +53,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	private Map<String, Integer> demandColMap;
 	
 	private Map<String, Integer> serviceRowMap;
-	private Map<String, Integer> meterReadingRowMap;
+	private Map<String, List<Integer>> meterReadingRowMap;
 	private Map<String, Integer> holderRowMap;
 	private Map<String, List<Integer>> demandRowMap;
 	
@@ -117,7 +117,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		
 		WnsConnectionService service = getConnectionService(connection.getConnectionNo());
 		WnsConnectionHolder holder = getConnectionHolder(connection.getConnectionNo());
-		WnsMeterReading meterReading = getMeterReading(connection.getConnectionNo());
+		List<WnsMeterReading> meterReading = getMeterReading(connection.getConnectionNo());
 		List<WnsDemand> demand = getDemand(connection.getConnectionNo());
 		
 		connection.setService(service);
@@ -145,11 +145,12 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		return this.demandRowMap.get(connectionNo).stream().map(rowIndex -> demandRowMapper.mapRow(this.ulb, demandSheet.getRow(rowIndex), this.demandColMap)).collect(Collectors.toList());
 	}
 
-	private WnsMeterReading getMeterReading(String connectionNo) {
+	private List<WnsMeterReading> getMeterReading(String connectionNo) {
 		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
 		if(this.meterReadingRowMap.get(connectionNo) == null)
 			return null;
-		return meterReadingRowMapper.mapRow(this.ulb, this.meterReadingSheet.getRow(this.meterReadingRowMap.get(connectionNo)), this.meterReadingColMap);
+		//return meterReadingRowMapper.mapRow(this.ulb, this.meterReadingSheet.getRow(this.meterReadingRowMap.get(connectionNo)), this.meterReadingColMap);
+		return this.meterReadingRowMap.get(connectionNo).stream().map(rowIndex -> meterReadingRowMapper.mapRow(this.ulb, meterReadingSheet.getRow(rowIndex), this.meterReadingColMap)).collect(Collectors.toList());
 	}
 
 	private WnsConnectionHolder getConnectionHolder(String connectionNo) {
@@ -217,7 +218,16 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 			if(row.getRowNum()==0) {
 				updateMeterReadingColumnMap(row);
 			} else {
-				this.meterReadingRowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.meterReadingColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), row.getRowNum());
+				//this.meterReadingRowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.meterReadingColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), row.getRowNum());
+
+				String propertyId = MigrationUtility.readCellValue(row.getCell(this.meterReadingColMap.get(MigrationConst.COL_CONNECTION_NO)), false);
+				List<Integer> list = this.meterReadingRowMap.get(propertyId);
+				if(list == null) {
+					list = new ArrayList<>();
+				}
+				list.add(row.getRowNum());
+				this.meterReadingRowMap.put(MigrationUtility.removeLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.meterReadingColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), list);
+			
 			}
 		});
 		

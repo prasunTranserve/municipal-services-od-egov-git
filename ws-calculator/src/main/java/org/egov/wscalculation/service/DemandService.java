@@ -10,8 +10,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -820,6 +823,22 @@ public class DemandService {
 		log.info("Updated Demand Details " + demands.toString());
 		demandRepository.updateDemand(requestInfo, demands);
 		return calculations;
+	}
+
+	public List<Demand> migrateDemand(@Valid DemandRequest demandRequest) {
+		enrichDemandForMigration(demandRequest);
+		List<Demand> demands = demandRepository.migrateDemand(demandRequest.getRequestInfo(), demandRequest.getDemands());
+		return demands;
+	}
+
+	private void enrichDemandForMigration(@Valid DemandRequest demandRequest) {
+		demandRequest.getDemands().forEach(demand -> {
+			demand.setId(UUID.randomUUID().toString());
+			demand.setBusinessService(configs.getBusinessService());
+			demand.setConsumerType("waterConnection");
+			demand.setBillExpiryTime(0L);
+		});
+		
 	}
 
 }

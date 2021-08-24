@@ -36,6 +36,7 @@ import org.egov.swservice.web.models.Idgen.IdResponse;
 import org.egov.swservice.web.models.users.User;
 import org.egov.swservice.web.models.users.UserDetailResponse;
 import org.egov.swservice.web.models.users.UserSearchRequest;
+import org.egov.swservice.web.models.workflow.ProcessInstance;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -463,5 +464,43 @@ public class EnrichmentService {
 
 		}
 		return finalConnectionList;
+	}
+
+	public void enrichSewerageConnectionForMigration(SewerageConnectionRequest sewerageConnectionRequest, int reqType) {
+		AuditDetails auditDetails = sewerageServicesUtil
+				.getAuditDetails(sewerageConnectionRequest.getRequestInfo().getUserInfo().getUuid(), true);
+		sewerageConnectionRequest.getSewerageConnection().setAuditDetails(auditDetails);
+		sewerageConnectionRequest.getSewerageConnection().setId(UUID.randomUUID().toString());
+		sewerageConnectionRequest.getSewerageConnection().setStatus(StatusEnum.ACTIVE);
+		HashMap<String, Object> additionalDetail = new HashMap<>();
+		if (sewerageConnectionRequest.getSewerageConnection().getAdditionalDetails() == null) {
+			for (String constValue : SWConstants.ADDITIONAL_OBJECT) {
+				additionalDetail.put(constValue, null);
+			}
+		} else {
+			additionalDetail = mapper.convertValue(
+					sewerageConnectionRequest.getSewerageConnection().getAdditionalDetails(), HashMap.class);
+		}
+		// Application created date
+		additionalDetail.put(SWConstants.APP_CREATED_DATE, BigDecimal.valueOf(System.currentTimeMillis()));
+		sewerageConnectionRequest.getSewerageConnection().setAdditionalDetails(additionalDetail);
+		// Setting ApplicationType
+		setApplicationType(sewerageConnectionRequest, reqType);
+		setSewarageApplicationIdgenIds(sewerageConnectionRequest);
+		sewerageConnectionRequest.getSewerageConnection().setApplicationStatus(SWConstants.APPLICATION_STATUS_ACTIVATED);
+
+		SewerageConnection connection = sewerageConnectionRequest.getSewerageConnection();
+
+		if (!CollectionUtils.isEmpty(connection.getRoadCuttingInfo())) {
+			connection.getRoadCuttingInfo().forEach(roadCuttingInfo -> {
+				roadCuttingInfo.setId(UUID.randomUUID().toString());
+				roadCuttingInfo.setStatus(Status.ACTIVE);
+				roadCuttingInfo.setAuditDetails(auditDetails);
+			});
+		}
+		
+		// Enrich ProcessInstance
+		sewerageConnectionRequest.getSewerageConnection().setProcessInstance(ProcessInstance.builder().action(SWConstants.ACTIVATE_CONNECTION).build());
+		
 	}
 }

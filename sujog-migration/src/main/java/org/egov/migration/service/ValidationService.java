@@ -18,6 +18,7 @@ import org.egov.migration.reader.model.Demand;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsDemand;
+import org.egov.migration.reader.model.WnsMeterReading;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.stereotype.Service;
@@ -153,7 +154,7 @@ public class ValidationService {
 		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
 				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
 			if(connection.getService().getNoOfClosets() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfClosets())) {
-				errMessages.add("No of closets either missing or non numric");
+				errMessages.add(String.format("value: %s, message: No of closets either missing or non numric", connection.getService().getNoOfClosets()));
 			}
 		}
 	}
@@ -162,14 +163,47 @@ public class ValidationService {
 		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
 				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
 			if(connection.getService().getNoOfTaps() == null || !MigrationUtility.isNumeric(connection.getService().getNoOfTaps())) {
-				errMessages.add("No of Taps either missing or non numric");
+				errMessages.add(String.format("value: %s, message: No of Taps either missing or non numric", connection.getService().getNoOfTaps()));
 			}
 		}
 	}
 
 	private void validateMeterReading(WnsConnection connection, List<String> errMessages) {
-		// TODO Auto-generated method stub
 		
+		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(connection.getMeterReading() == null) {
+			return;
+		}
+		
+		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& connection.getMeterReading() != null) {
+			errMessages.add(String.format("Connection %s is a Sewerage connection but have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() != null
+				&& connection.getMeterReading().stream().filter(conn -> MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(conn.getConnectionFacility())).count() > 0) {
+			errMessages.add(String.format("Connection %s have Sewerage metered connectionand have meter readings", connection.getConnectionNo()));
+		}
+		
+		if(MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionCategory())
+				&& connection.getMeterReading() == null
+				&& connection.getMeterReading().stream().filter(conn -> MigrationConst.CONNECTION_WATER.equalsIgnoreCase(conn.getConnectionFacility())).count() == 0) {
+			errMessages.add(String.format("Connection %s is a metered water connection but do not have water meter readings", connection.getConnectionNo()));
+		}
 	}
 
 	private void validateDemand(WnsConnection connection, List<String> errMessages) {

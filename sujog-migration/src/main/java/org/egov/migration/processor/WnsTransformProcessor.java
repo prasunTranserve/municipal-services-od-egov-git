@@ -15,9 +15,9 @@ import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
+import org.egov.migration.reader.model.WnsConnectionService;
 import org.egov.migration.reader.model.WnsDemand;
 import org.egov.migration.reader.model.WnsMeterReading;
-import org.egov.migration.reader.model.WnsConnectionService;
 import org.egov.migration.service.ValidationService;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
@@ -58,6 +58,45 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 
 	private void transformDemand(ConnectionDTO connectionDTO, WnsConnection connection) {
 		List<WnsDemand> demands = connection.getDemands();
+		if(demands == null)
+			return;
+		
+		if(connectionDTO.isSewerage()) {
+			List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
+			DemandDTO demandDTO = new DemandDTO();
+			demandDTO.setTenantId(connectionDTO.getSewerageConnection().getTenantId());
+			demandDTO.setTaxPeriodFrom(0L);
+			demandDTO.setTaxPeriodTo(0L);
+			
+			DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+			demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+			demandDetailDTO.setTaxAmount(BigDecimal.ZERO);
+			demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+			demands.forEach(demand -> {
+				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getSewerageFee())));
+				if(connectionDTO.isWater()) {
+					if(new BigDecimal(demand.getCollectedAmount()).compareTo(demandDetailDTO.getTaxAmount()) >= 0) {
+						demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(demandDetailDTO.getTaxAmount()));
+						demand.setCollectedAmount(new BigDecimal(demand.getCollectedAmount()).subtract(demandDetailDTO.getTaxAmount()).toString());
+					} else {
+						demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
+						demand.setCollectedAmount("0");
+					}
+				} else {
+					demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
+				}
+				long taxPeriodFrom = MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat);
+				long taxPeriodTo = MigrationUtility.getLongDate(demands.get(0).getBillingPeriodTo(), dateFormat);
+				if(demandDTO.getTaxPeriodFrom() < taxPeriodFrom )
+					demandDTO.setTaxPeriodFrom(taxPeriodFrom);
+				if(demandDTO.getTaxPeriodTo() < taxPeriodTo)
+					demandDTO.setTaxPeriodTo(taxPeriodTo);
+			});
+			
+			demandDTO.setDemandDetails(Arrays.asList(demandDetailDTO));
+			demandDTOs.add(demandDTO);
+			connectionDTO.setSewerageDemands(demandDTOs);
+		}
 		
 		if(connectionDTO.isWater()) {
 			List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
@@ -73,6 +112,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			demands.forEach(demand -> {
 				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getWaterCharges())));
 				demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
+				
 				long taxPeriodFrom = MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat);
 				long taxPeriodTo = MigrationUtility.getLongDate(demands.get(0).getBillingPeriodTo(), dateFormat);
 				if(demandDTO.getTaxPeriodFrom() < taxPeriodFrom )
@@ -84,27 +124,6 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			demandDTO.setDemandDetails(Arrays.asList(demandDetailDTO));
 			demandDTOs.add(demandDTO);
 			connectionDTO.setWaterDemands(demandDTOs);
-		}
-		
-		if(connectionDTO.isSewerage()) {
-			List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
-			DemandDTO demandDTO = new DemandDTO();
-			demandDTO.setTenantId(connectionDTO.getSewerageConnection().getTenantId());
-			demandDTO.setTaxPeriodFrom(MigrationUtility.getLongDate(demands.get(0).getBillingPeriodFrom(), dateFormat));
-			demandDTO.setTaxPeriodTo(MigrationUtility.getLongDate(demands.get(0).getBillingPeriodTo(), dateFormat));
-			
-			DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
-			demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
-			demandDetailDTO.setTaxAmount(BigDecimal.ZERO);
-			demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
-			demands.forEach(demand -> {
-				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getSewerageFee())));
-				demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
-			});
-			
-			demandDTO.setDemandDetails(Arrays.asList(demandDetailDTO));
-			demandDTOs.add(demandDTO);
-			connectionDTO.setSewerageDemands(demandDTOs);
 		}
 
 	}
@@ -151,7 +170,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	private List<ConnectionHolderDTO> transformConnectionHolder(WnsConnection connection) {
 		WnsConnectionHolder holder = connection.getConnectionHolder();
 		ConnectionHolderDTO connectionHolder = new ConnectionHolderDTO();
-		connectionHolder.setSalutation(holder.getSalutation());
+		connectionHolder.setSalutation(MigrationUtility.getSalutation(holder.getSalutation()));
 		connectionHolder.setName(holder.getHolderName().trim());
 		connectionHolder.setMobileNumber(MigrationUtility.processMobile(holder.getMobile()));
 		connectionHolder.setGender(MigrationUtility.getGender(holder.getGender()));
@@ -164,16 +183,19 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	}
 
 	private void transformMeterConnection(ConnectionDTO connectionDTO, WnsConnection connection) {
-		WnsMeterReading meterReading = connection.getMeterReading();
+		List<WnsMeterReading> meterReading = connection.getMeterReading();
+		
 		if(MigrationConst.CONNECTION_METERED.equals(connectionDTO.getWaterConnection().getConnectionType())) {
+			WnsMeterReading lastMeterReading = meterReading.stream().sorted((mr1, mr2) -> MigrationUtility.toDate(mr2.getBillingPeriod()).compareTo(MigrationUtility.toDate(mr1.getBillingPeriod())))
+					.findFirst().orElse(null);
 			MeterReadingDTO meterReadingDTO = new MeterReadingDTO();
 			meterReadingDTO.setTenantId(this.tenantId);
-			meterReadingDTO.setBillingPeriod(MigrationUtility.getConnectionBillingPeriod(meterReading.getBillingPeriod()));
-			meterReadingDTO.setMeterStatus(MigrationUtility.getMeterStatus(connection));
-			meterReadingDTO.setLastReading(MigrationUtility.getMeterLastReading(connection));
-			meterReadingDTO.setLastReadingDate(MigrationUtility.getMeterLastReadingDate(connection));
-			meterReadingDTO.setCurrentReading(MigrationUtility.getMeterCurrentReading(connection));
-			meterReadingDTO.setCurrentReadingDate(MigrationUtility.getMeterCurrentReadingDate(connection));
+			meterReadingDTO.setBillingPeriod(MigrationUtility.getConnectionBillingPeriod(lastMeterReading.getBillingPeriod()));
+			meterReadingDTO.setMeterStatus(MigrationUtility.getMeterStatus(lastMeterReading));
+			meterReadingDTO.setLastReading(MigrationUtility.getMeterLastReading(lastMeterReading));
+			meterReadingDTO.setLastReadingDate(MigrationUtility.getMeterLastReadingDate(lastMeterReading));
+			meterReadingDTO.setCurrentReading(MigrationUtility.getMeterCurrentReading(lastMeterReading));
+			meterReadingDTO.setCurrentReadingDate(MigrationUtility.getMeterCurrentReadingDate(lastMeterReading));
 			meterReadingDTO.setConsumption(meterReadingDTO.getCurrentReading() - meterReadingDTO.getLastReading());
 			meterReadingDTO.setConsumption(MigrationUtility.getConsumption(meterReadingDTO));
 			
@@ -192,7 +214,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		waterConnectionDTO.setNoOfTaps(Integer.parseInt(service.getNoOfTaps().trim()));
 		waterConnectionDTO.setConnectionExecutionDate(MigrationUtility.getLongDate(service.getConnectionExecutionDate(), dateFormat));
 		waterConnectionDTO.setProposedTaps(Integer.parseInt(service.getNoOfTaps().trim()));
-		waterConnectionDTO.setUsageCategory(service.getUsageCategory().trim().toUpperCase());
+		waterConnectionDTO.setUsageCategory(MigrationUtility.getConnectionUsageCategory(service.getUsageCategory()));
 		waterConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
 		
 	}
@@ -224,6 +246,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		sewerageConnectionDTO.setNoOfWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setNoOfToilets(MigrationUtility.getToilets(connection));
 		sewerageConnectionDTO.setPipeSize(connection.getService().getActualPipeSize()==null? 0 : Integer.parseInt(connection.getService().getActualPipeSize()));
+		sewerageConnectionDTO.setUsageCategory(dateFormat);
 		
 	}
 

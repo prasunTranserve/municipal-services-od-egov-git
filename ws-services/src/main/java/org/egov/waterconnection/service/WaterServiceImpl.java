@@ -1,6 +1,6 @@
 package org.egov.waterconnection.service;
 
-import static org.egov.waterconnection.constants.WCConstants.APPROVE_CONNECTION;
+import static org.egov.waterconnection.constants.WCConstants.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -436,5 +436,17 @@ public class WaterServiceImpl implements WaterService {
 				.equalsIgnoreCase(WCConstants.ACTION_CLOSE_CONNECTION)) {
 					waterConnectionRequest.getWaterConnection().setStatus(StatusEnum.INACTIVE);
 		}
+	}
+	
+	@Override
+	public List<WaterConnection> migrateWaterConnection(WaterConnectionRequest waterConnectionRequest) {
+		int reqType = WCConstants.CREATE_APPLICATION;
+		mDMSValidator.validateMasterForCreateRequest(waterConnectionRequest);
+		enrichmentService.enrichWaterConnectionForMigration(waterConnectionRequest, reqType);
+		waterConnectionRequest.getWaterConnection().setApplicationStatus(APPLICATION_STATUS_ACTIVATED);
+		userService.createUserForMigration(waterConnectionRequest);
+		enrichmentService.setConnectionNO(waterConnectionRequest);
+		waterDao.saveWaterConnection(waterConnectionRequest);
+		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 }

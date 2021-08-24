@@ -61,6 +61,7 @@ public class WnsService {
 					MigrationUtility.addSuccessForWaterConnection(conn.getWaterConnection());
 				}
 			} catch (Exception e) {
+				log.error(e.getLocalizedMessage());
 				MigrationUtility.addError(conn.getWaterConnection().getOldConnectionNo(), e.getMessage());
 			}
 		}
@@ -74,6 +75,7 @@ public class WnsService {
 					MigrationUtility.addSuccessForSewerageConnection(conn.getSewerageConnection());
 				}
 			} catch (Exception e) {
+				log.error(e.getLocalizedMessage());
 				MigrationUtility.addError(conn.getSewerageConnection().getOldConnectionNo(), e.getMessage());
 			}
 		}
@@ -121,7 +123,7 @@ public class WnsService {
 			return false;
 		} else {
 			ConnectionResponse connectionResponse = mapper.convertValue(response, ConnectionResponse.class);
-			conn.setWaterConnection(connectionResponse.getWaterConnection().get(0));
+			conn.setSewerageConnection(connectionResponse.getSewerageConnections().get(0));
 		}
 		return true;
 	}
@@ -138,7 +140,7 @@ public class WnsService {
 		WaterConnectionDTO waterConnection = null;
 		waterConnection = searchWaterConnection(conn);
 		if (waterConnection == null) {
-			log.info(String.format("Migrating Water: %s", conn.getSewerageConnection().getOldConnectionNo()));
+			log.info(String.format("Migrating Water: %s", conn.getWaterConnection().getOldConnectionNo()));
 			isWaterConnectionMigrated = doMigrateWaterConnection(conn);
 		} else {
 			log.info(String.format("Water connection: %s already migrated", conn.getWaterConnection().getOldConnectionNo()));
@@ -245,14 +247,14 @@ public class WnsService {
 	}
 
 	public void migrateDemands(ConnectionDTO conn) throws Exception {
-		if (conn.isWater() && conn.getWaterConnection().getConnectionNo() != null) {
+		if (conn.isWater() && conn.getWaterConnection().getConnectionNo() != null && conn.getWaterDemands() != null) {
 			boolean isDemandMigrated = migrateWaterDemand(conn);
 			if(isDemandMigrated) {
 				MigrationUtility.addSuccessForWaterDemand(conn);
 			}
 		}
 		
-		if (conn.isSewerage() && conn.getSewerageConnection().getConnectionNo() != null) {
+		if (conn.isSewerage() && conn.getSewerageConnection().getConnectionNo() != null && conn.getSewerageDemands() != null) {
 			boolean isDemandMigrated = migrateSewerageDemand(conn);
 			if(isDemandMigrated) {
 				MigrationUtility.addSuccessForSewerageDemand(conn);

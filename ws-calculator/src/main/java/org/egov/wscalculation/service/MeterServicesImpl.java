@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.validator.WSCalculationValidator;
@@ -93,5 +95,14 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> searchMeterReadings(MeterReadingSearchCriteria criteria, RequestInfo requestInfo) {
 		return wSCalculationDao.searchMeterReadings(criteria);
+	}
+	
+	@Override
+	public List<MeterReading> migrateMeterReading(@Valid MeterConnectionRequest meterConnectionRequest) {
+		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
+		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest);
+		meterReadingsList.add(meterConnectionRequest.getMeterReading());
+		wSCalculationDao.saveMeterReading(meterConnectionRequest);
+		return meterReadingsList;
 	}
 }

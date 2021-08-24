@@ -9,12 +9,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +33,7 @@ import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
+import org.egov.migration.reader.model.WnsMeterReading;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -415,12 +414,12 @@ public class MigrationUtility {
 		return false;
 	}
 
-	public static String getMeterStatus(WnsConnection connection) {
-		if (connection.getMeterReading().getMeterStatus() == null) {
+	public static String getMeterStatus(WnsMeterReading meterReading) {
+		if (meterReading.getMeterStatus() == null) {
 			return "Breakdown";
-		} else if (connection.getMeterReading().getMeterStatus().equalsIgnoreCase("NW")) {
+		} else if (meterReading.getMeterStatus().equalsIgnoreCase("NW")) {
 			return "Breakdown";
-		} else if (connection.getMeterReading().getMeterStatus().equalsIgnoreCase("W")) {
+		} else if (meterReading.getMeterStatus().equalsIgnoreCase("W")) {
 			return "Working";
 		}
 		return "Breakdown";
@@ -440,38 +439,38 @@ public class MigrationUtility {
 		return Integer.parseInt(connection.getService().getNoOfToilets());
 	}
 
-	public static Double getMeterLastReading(WnsConnection connection) {
-		if (connection.getMeterReading().getPreviousReading() == null) {
+	public static Double getMeterLastReading(WnsMeterReading meterReading) {
+		if (meterReading.getPreviousReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(connection.getMeterReading().getPreviousReading());
+			return Double.parseDouble(meterReading.getPreviousReading());
 		}
 	}
 
-	public static Long getMeterLastReadingDate(WnsConnection connection) {
-		if (connection.getMeterReading().getPreviousReadingDate() == null) {
-			LocalDate currentDate = LocalDate.parse(connection.getMeterReading().getCurrentReadingDate(),
+	public static Long getMeterLastReadingDate(WnsMeterReading meterReading) {
+		if (meterReading.getPreviousReadingDate() == null) {
+			LocalDate currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
 					DateTimeFormatter.ofPattern(dateFormat));
 			return currentDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
-		LocalDate previousDate = LocalDate.parse(connection.getMeterReading().getPreviousReadingDate(),
+		LocalDate previousDate = LocalDate.parse(meterReading.getPreviousReadingDate(),
 				DateTimeFormatter.ofPattern(dateFormat));
 		return previousDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
-	public static Double getMeterCurrentReading(WnsConnection connection) {
-		if (connection.getMeterReading().getCurrentReading() == null) {
+	public static Double getMeterCurrentReading(WnsMeterReading meterReading) {
+		if (meterReading.getCurrentReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(connection.getMeterReading().getCurrentReading());
+			return Double.parseDouble(meterReading.getCurrentReading());
 		}
 	}
 
-	public static Long getMeterCurrentReadingDate(WnsConnection connection) {
-		if (connection.getMeterReading().getCurrentReadingDate() == null) {
+	public static Long getMeterCurrentReadingDate(WnsMeterReading meterReading) {
+		if (meterReading.getCurrentReadingDate() == null) {
 			return LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
-		LocalDate currentDate = LocalDate.parse(connection.getMeterReading().getCurrentReadingDate(),
+		LocalDate currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
 				DateTimeFormatter.ofPattern(dateFormat));
 		return currentDate.atTime(01,00).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
@@ -546,6 +545,28 @@ public class MigrationUtility {
 		if(meterReadingDTO.getCurrentReading() != null && meterReadingDTO.getLastReading() != null)
 			return meterReadingDTO.getCurrentReading().doubleValue() - meterReadingDTO.getLastReading().doubleValue();
 		return Double.parseDouble("0");
+	}
+	
+	public static LocalDate toDate(String strDate) {
+		return LocalDate.parse(strDate, DateTimeFormatter.ofPattern(dateFormat));
+	}
+
+	public static String getConnectionUsageCategory(String usageCategory) {
+		usageCategory = usageCategory.trim();
+		if(usageCategory.equalsIgnoreCase("Apartment")) {
+			return "DOMESTIC";
+		}
+		return usageCategory.toUpperCase();
+	}
+
+	public static Integer getNoOfFlat(String usageCategory, String noOfFlats) {
+		if(noOfFlats == null) {
+			return Integer.parseInt("0");
+		}
+		if(usageCategory.equalsIgnoreCase("Apartment")) {
+			return Integer.parseInt(noOfFlats.trim());
+		}
+		return Integer.parseInt("0");
 	}
 
 }

@@ -45,7 +45,7 @@ public class WnsConnection {
 	@NotNull(message = "Connection owner/holder is missing")
 	private @Valid WnsConnectionHolder connectionHolder;
 	
-	private @Valid WnsMeterReading meterReading;
+	private List<WnsMeterReading> meterReading;
 	
 	private List<@Valid WnsDemand> demands;
 	
