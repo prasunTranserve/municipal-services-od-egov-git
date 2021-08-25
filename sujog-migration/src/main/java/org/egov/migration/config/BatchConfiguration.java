@@ -85,7 +85,7 @@ public class BatchConfiguration {
     
     @Bean(name = "stepPropertyMigrate")
     protected Step stepPropertyMigrate() throws EncryptedDocumentException, IOException, Exception {
-        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(20)
+        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(100)
           .reader(getPropertyReader())
           .processor(getPropertyProcessor())
           .writer(getPropertyWriter()).build();
@@ -93,7 +93,7 @@ public class BatchConfiguration {
     
     @Bean(name = "stepWnsMigrate")
     protected Step stepWnsMigrate() throws EncryptedDocumentException, IOException, Exception {
-        return stepBuilderFactory.get("stepWnsMigrate").<WnsConnection, ConnectionDTO> chunk(30)
+        return stepBuilderFactory.get("stepWnsMigrate").<WnsConnection, ConnectionDTO> chunk(100)
           .reader(getWnsReader())
           .processor(getWnsProcessor())
           .writer(getWnsWriter()).build();

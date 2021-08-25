@@ -19,6 +19,8 @@ public class RecordStatistic {
 	
 	private Map<String, Map<String, String>> successRecords = new HashMap<>();
 	
+	private Map<String, String> fileNotProcessed = new HashMap<>();
+	
 	private String successFile;
 	
 	private String errorFile;

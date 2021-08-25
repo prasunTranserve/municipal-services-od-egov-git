@@ -171,7 +171,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		WnsConnectionHolder holder = connection.getConnectionHolder();
 		ConnectionHolderDTO connectionHolder = new ConnectionHolderDTO();
 		connectionHolder.setSalutation(MigrationUtility.getSalutation(holder.getSalutation()));
-		connectionHolder.setName(holder.getHolderName().trim());
+		connectionHolder.setName(MigrationUtility.prepareName(connection.getConnectionNo(), holder.getHolderName()));
 		connectionHolder.setMobileNumber(MigrationUtility.processMobile(holder.getMobile()));
 		connectionHolder.setGender(MigrationUtility.getGender(holder.getGender()));
 		connectionHolder.setFatherOrHusbandName(holder.getGuardian());

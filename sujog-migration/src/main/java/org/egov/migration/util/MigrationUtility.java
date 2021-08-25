@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
+import org.egov.migration.reader.model.Owner;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsMeterReading;
@@ -63,7 +65,9 @@ public class MigrationUtility {
 	public static final String convertDateFormat = "dd/MM/yyyy";
 
 	public static final String finyearRegex = "^\\d{4}-\\d{2}$";
-
+	
+	public static String namePattern = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+	
 	@PostConstruct
 	public void fillInstance() {
 		instance = this;
@@ -136,7 +140,7 @@ public class MigrationUtility {
 
 	public static BigDecimal convertAreaToYard(String area) {
 		if (area == null)
-			return null;
+			return BigDecimal.ONE;
 		return BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
 	}
 
@@ -223,8 +227,9 @@ public class MigrationUtility {
 		if (dateString == null) {
 			return 0L;
 		}
-		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atStartOfDay()
+		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
 				.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		
 	}
 
 	public static BigDecimal getAmount(String taxAmt) {
@@ -243,7 +248,7 @@ public class MigrationUtility {
 	public static Long getTaxPeriodFrom(String finYear) {
 		if (finYear == null)
 			return null;
-
+		finYear = finYear.replaceAll("[^0-9-\\/Q]", "");
 		String year = finYear.split("-")[0];
 
 		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year), 4, 2, 1, 0, 0);
@@ -253,7 +258,8 @@ public class MigrationUtility {
 	public static Long getTaxPeriodTo(String finYear) {
 		if (finYear == null)
 			return null;
-
+		
+		finYear = finYear.replaceAll("[^0-9-\\/Q]", "");
 		String year = finYear.split("-")[0];
 		LocalDateTime finLastDate = LocalDateTime.of(Integer.parseInt(year), 3, 30, 13, 0, 0);
 		finLastDate = finLastDate.plusYears(1);
@@ -527,6 +533,9 @@ public class MigrationUtility {
 	}
 
 	public static boolean isActiveConnection(WnsConnection connection) {
+		if(connection.getApplicationStatus() == null) {
+			return false;
+		}
 		String applicationStatus = connection.getApplicationStatus().trim().replaceAll("  +", " ");
 		if(MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(applicationStatus)
 				&& MigrationConst.STATUS_ACTIVE.equalsIgnoreCase(connection.getStatus().trim())) {
@@ -569,4 +578,78 @@ public class MigrationUtility {
 		return Integer.parseInt("0");
 	}
 
+	public static void correctOwner(Property property) {
+		if(property.getOwners() == null) {
+			property.setOwners(Arrays.asList(Owner.builder().ownerName(property.getPropertyId()).build()));
+		} else {
+			property.getOwners().forEach(owner -> {
+				owner.setOwnerName(prepareName(property.getPropertyId(), owner.getOwnerName()));
+			});
+		}
+	}
+
+	public static String prepareName(String key, String ownerName) {
+		if(ownerName == null) {
+			return key;
+		}
+		
+		if(!ownerName.matches(MigrationConst.OWNER_NAME_PATTERN)) {
+			ownerName = ownerName.replaceAll("[^a-zA-Z0-9\\s\\.,]", "");
+			if(ownerName.contains(",")) {
+				ownerName = ownerName.substring(0, ownerName.indexOf(","));
+			}
+		}
+		
+		if(ownerName.length() > 50) {
+			ownerName = ownerName.substring(0, 50);
+		}
+		return ownerName;
+	}
+	
+	public static String getNearest(String amount, String divident) {
+		BigDecimal amt = new BigDecimal(amount);
+		BigDecimal di = new BigDecimal(divident);
+		amt = amt.divide(di).setScale(0, RoundingMode.CEILING).multiply(di);
+		return amt.toString();
+	}
+
+	public static String getFinYear() {
+		LocalDate today = LocalDate.now();
+		if(today.getMonthValue() > 3) {
+			return String.format("%s-%s", today.getYear(), String.valueOf(today.plusYears(1).getYear()).substring(2));
+		} else {
+			return String.format("%s-%s", today.minusYears(1).getYear(), String.valueOf(today.getYear()).substring(2));
+		}
+	}
+
+	public static Double getDoubleAmount(String amount) {
+		if (amount == null || !amount.matches(decimalRegex)) {
+			return Double.parseDouble("0");
+		}
+		return Double.parseDouble(amount);
+	}
+	
+	public static String getAssessmentFinYear(String finYear) {
+		finYear = finYear.replaceAll("[^0-9-]", "");
+		if(!finYear.matches(finyearRegex)) {
+			finYear = "1980-81";
+		}
+		return finYear;
+	}
+
+	public static String getCurrentDate() {
+		Date today = new Date();
+		DateFormat formatter = new SimpleDateFormat(dateFormat);
+		return formatter.format(today);
+	}
+
+	public static String getPaymentComplete(String paymentComplete) {
+		if(paymentComplete == null)
+			return "N";
+		if(!(paymentComplete.equalsIgnoreCase("N") || paymentComplete.equalsIgnoreCase("Y"))) {
+			return "N";
+		}
+		return paymentComplete;
+	}
+	
 }

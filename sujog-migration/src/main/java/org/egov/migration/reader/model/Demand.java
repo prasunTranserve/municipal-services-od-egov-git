@@ -18,30 +18,30 @@ public class Demand {
 
 	private String ulb;
 	
-	@NotEmpty(message = "Cannot be blank/empty")
+//	@NotEmpty(message = "Cannot be blank/empty")
 	private String propertyId;
 	
 	private String demandId;
 	
 	private String payerName;
 	
-	@NotEmpty(message = "Tax period cannot be blank/empty")
-	@Pattern(regexp = "\\d{4}-\\d{2}/Q\\d{1}", message = "Tax period should be in format YYYY-YY/QN")
+//	@NotEmpty(message = "Tax period cannot be blank/empty")
+//	@Pattern(regexp = "\\d{4}-\\d{2}/Q\\d{1}", message = "Tax period should be in format YYYY-YY/QN")
 	private String taxPeriodFrom;
 	
-	@NotEmpty(message = "Tax period cannot be blank/empty")
-	@Pattern(regexp = "\\d{4}-\\d{2}/Q\\d{1}", message = "Tax period should be in format YYYY-YY/QN")
+//	@NotEmpty(message = "Tax period cannot be blank/empty")
+//	@Pattern(regexp = "\\d{4}-\\d{2}/Q\\d{1}", message = "Tax period should be in format YYYY-YY/QN")
 	private String taxPeriodTo;
 	
 	private String createdDate;
 	
-	@NotEmpty(message = "minPayableAmt cannot be empty")
+//	@NotEmpty(message = "minPayableAmt cannot be empty")
 	private String minPayableAmt;
 	
 	private String status;
 	
 	private String additionalDetails;
 	
-	@NotEmpty(message = "paymentComplete cannot be empty")
+//	@NotEmpty(message = "paymentComplete cannot be empty")
 	private String paymentComplete;
 }

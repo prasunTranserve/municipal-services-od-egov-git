@@ -3,7 +3,6 @@ package org.egov.migration.business.controller;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 import javax.validation.Valid;
 
@@ -13,6 +12,7 @@ import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.PropertiesData;
 import org.egov.migration.processor.PropertyMigrationJobExecutionListner;
 import org.egov.migration.service.PropertyService;
+import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -65,36 +65,42 @@ public class PropertyBatchTriggerController {
 		for (File fileToProceed : scanFolder.listFiles()) {
 			if(fileToProceed.isFile() && fileToProceed.getName().endsWith(".xlsx")) {
 				// Scanning of folder
-				String fileName = fileToProceed.getName().toLowerCase();
-				String file = fileToProceed.getPath();
-				log.info(String.format("Processing %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
-		        try {
-		        	recordStatistic.getErrorRecords().clear();
-		        	recordStatistic.getSuccessRecords().clear();
-		        	
-		        	Job job = jobBuilderFactory.get("firstBatchJob")
-		        			.incrementer(new RunIdIncrementer())
-		        			.listener(propertyMigrationJobExecutionListner)
-		        			.flow(stepPropertyMigrate).end().build();
-		        	
-		        	JobParameters jobParameters = new JobParametersBuilder()
-		        			.addLong("time", System.currentTimeMillis())
-		        			.addString("filePath", file)
-		        			.addString("fileName", fileName)
-		        			.toJobParameters();
-		        	
-					jobLauncher.run(job, jobParameters);
-					log.info(String.format("Processing end %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
-					propertyService.writeExecutionTime();
-				} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
-						| JobParametersInvalidException e) {
-					e.printStackTrace();
-				} catch (InvalidFormatException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				if(MigrationUtility.getSystemProperties().getTenants().containsKey(fileToProceed.getName().split("\\.")[0].toLowerCase())) {
+					String fileName = fileToProceed.getName().toLowerCase();
+					String file = fileToProceed.getPath();
+					log.info(String.format("Processing %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
+			        try {
+			        	recordStatistic.getErrorRecords().clear();
+			        	recordStatistic.getSuccessRecords().clear();
+			        	
+			        	Job job = jobBuilderFactory.get("firstBatchJob")
+			        			.incrementer(new RunIdIncrementer())
+			        			.listener(propertyMigrationJobExecutionListner)
+			        			.flow(stepPropertyMigrate).end().build();
+			        	
+			        	JobParameters jobParameters = new JobParametersBuilder()
+			        			.addLong("time", System.currentTimeMillis())
+			        			.addString("filePath", file)
+			        			.addString("fileName", fileName)
+			        			.toJobParameters();
+			        	
+						jobLauncher.run(job, jobParameters);
+						log.info(String.format("Processing end %s, timestaamp: %s", fileName, LocalDateTime.now().toString()));
+						propertyService.writeExecutionTime();
+					} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
+							| JobParametersInvalidException e) {
+						e.printStackTrace();
+					} catch (InvalidFormatException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					log.error(String.format("File name %s is not matching with in tenants list", fileToProceed.getName()));
+//					recordStatistic.getFileNotProcessed().put(fileToProceed.getName(), "Tenant not match with digit listed tenants. File name should match with one of the tenants.");
+					propertyService.writeFileError(fileToProceed.getName());
 				}
 			}
 		}

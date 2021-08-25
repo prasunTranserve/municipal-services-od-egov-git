@@ -67,7 +67,7 @@ public class WnsBatchTriggerController {
 				// Scanning of folder
 				if(MigrationUtility.getSystemProperties().getTenants().containsKey(fileToProceed.getName().split("\\.")[0].toLowerCase())) {
 					String fileName =  fileToProceed.getName().toLowerCase();
-					String file = properties.getWnsDataFileDirectory().concat("\\").concat(fileName);
+					String file = fileToProceed.getPath();
 			        try {
 			        	recordStatistic.getErrorRecords().clear();
 			        	recordStatistic.getSuccessRecords().clear();
@@ -98,7 +98,8 @@ public class WnsBatchTriggerController {
 						e.printStackTrace();
 					}
 				} else {
-					log.warn(String.format("File name %s is not found in tenants list", fileToProceed.getName()));
+					log.error("File name %s is not matching with in tenants list", fileToProceed.getName());
+					wnsService.writeFileError(fileToProceed.getName());
 				}
 				
 			}
