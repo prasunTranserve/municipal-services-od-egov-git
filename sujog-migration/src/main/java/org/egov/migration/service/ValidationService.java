@@ -128,7 +128,7 @@ public class ValidationService {
 				if (!violations.isEmpty()) {
 					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
 				}
-				ValidateWaterConnection(connection, errMessages);
+//				ValidateWaterConnection(connection, errMessages);
 				ValidateSewerageConnection(connection, errMessages);
 				validateMeterReading(connection, errMessages);
 				validateDemand(connection, errMessages);

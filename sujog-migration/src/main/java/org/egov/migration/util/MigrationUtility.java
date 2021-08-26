@@ -85,7 +85,6 @@ public class MigrationUtility {
 			break;
 		case STRING:
 			value = cell.getStringCellValue().trim().replaceAll("  +", " ");
-			;
 			break;
 		case BOOLEAN:
 			value = String.valueOf(cell.getBooleanCellValue());
@@ -406,6 +405,9 @@ public class MigrationUtility {
 	}
 
 	public static String getSalutation(String salutation) {
+		if(salutation == null)
+			return null;
+		
 		salutation = salutation.trim();
 		if (salutation.length() > 5) {
 			return null;
@@ -420,12 +422,12 @@ public class MigrationUtility {
 		return false;
 	}
 
-	public static String getMeterStatus(WnsMeterReading meterReading) {
-		if (meterReading.getMeterStatus() == null) {
+	public static String getMeterStatus(String meterStatus) {
+		if (meterStatus == null) {
 			return "Breakdown";
-		} else if (meterReading.getMeterStatus().equalsIgnoreCase("NW")) {
+		} else if (meterStatus.equalsIgnoreCase("NW")) {
 			return "Breakdown";
-		} else if (meterReading.getMeterStatus().equalsIgnoreCase("W")) {
+		} else if (meterStatus.equalsIgnoreCase("W")) {
 			return "Working";
 		}
 		return "Breakdown";
@@ -455,13 +457,19 @@ public class MigrationUtility {
 
 	public static Long getMeterLastReadingDate(WnsMeterReading meterReading) {
 		if (meterReading.getPreviousReadingDate() == null) {
-			LocalDate currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
-					DateTimeFormatter.ofPattern(dateFormat));
-			return currentDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+			LocalDate currentDate = null;
+			if(meterReading.getCurrentReadingDate() == null) {
+				currentDate = LocalDate.parse(meterReading.getCreatedDate(),
+						DateTimeFormatter.ofPattern(dateFormat));
+			} else {
+				currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
+						DateTimeFormatter.ofPattern(dateFormat));
+			}
+			return currentDate.minusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
 		LocalDate previousDate = LocalDate.parse(meterReading.getPreviousReadingDate(),
 				DateTimeFormatter.ofPattern(dateFormat));
-		return previousDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		return previousDate.atTime(10,00).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
 	public static Double getMeterCurrentReading(WnsMeterReading meterReading) {
@@ -473,12 +481,16 @@ public class MigrationUtility {
 	}
 
 	public static Long getMeterCurrentReadingDate(WnsMeterReading meterReading) {
+		LocalDate currentDate = null;
 		if (meterReading.getCurrentReadingDate() == null) {
-			return LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+			currentDate = LocalDate.parse(meterReading.getCreatedDate(),
+					DateTimeFormatter.ofPattern(dateFormat));
+		} else {
+			currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
+					DateTimeFormatter.ofPattern(dateFormat));
 		}
-		LocalDate currentDate = LocalDate.parse(meterReading.getCurrentReadingDate(),
-				DateTimeFormatter.ofPattern(dateFormat));
-		return currentDate.atTime(01,00).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		
+		return currentDate.atTime(11,00).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
 
 	public static void addSuccessForWaterConnection(WaterConnectionDTO waterConnection) {
@@ -553,11 +565,20 @@ public class MigrationUtility {
 	public static Double getConsumption(MeterReadingDTO meterReadingDTO) {
 		if(meterReadingDTO.getCurrentReading() != null && meterReadingDTO.getLastReading() != null)
 			return meterReadingDTO.getCurrentReading().doubleValue() - meterReadingDTO.getLastReading().doubleValue();
+		if(meterReadingDTO.getCurrentReading() == null && meterReadingDTO.getLastReading() != null)
+			return Double.parseDouble("0");
+		if(meterReadingDTO.getCurrentReading() != null && meterReadingDTO.getLastReading() == null)
+			return meterReadingDTO.getCurrentReading().doubleValue();
 		return Double.parseDouble("0");
 	}
 	
 	public static LocalDate toDate(String strDate) {
-		return LocalDate.parse(strDate, DateTimeFormatter.ofPattern(dateFormat));
+		try {
+			return LocalDate.parse(strDate, DateTimeFormatter.ofPattern(dateFormat));
+		} catch (Exception e) {
+			return LocalDate.of(1980, 1, 1);
+		}
+		
 	}
 
 	public static String getConnectionUsageCategory(String usageCategory) {
@@ -650,6 +671,24 @@ public class MigrationUtility {
 			return "N";
 		}
 		return paymentComplete;
+	}
+
+	public static Integer getNoOfTaps(String noOfTaps) {
+		int taps = 2;
+		if(noOfTaps != null && noOfTaps.matches(digitRegex)) {
+			taps = Integer.parseInt(noOfTaps);
+		}
+		return taps;
+	}
+
+	public static String getDummyConnectionBillingPeriod() {
+		DateTimeFormatter toFormatter = DateTimeFormatter.ofPattern(convertDateFormat);
+
+		LocalDate billingMonth = LocalDate.now().minusMonths(1);
+		LocalDate firstDate = billingMonth.withDayOfMonth(1);
+		LocalDate lastDate = billingMonth.withDayOfMonth(billingMonth.lengthOfMonth());
+
+		return firstDate.format(toFormatter).concat("-").concat(lastDate.format(toFormatter));
 	}
 	
 }

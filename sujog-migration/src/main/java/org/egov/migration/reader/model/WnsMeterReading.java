@@ -35,4 +35,6 @@ public class WnsMeterReading {
 	
 	@NotEmpty(message = "Current Reading Date cannot be empty/blank")
 	private String currentReadingDate;
+	
+	private String createdDate;
 }
