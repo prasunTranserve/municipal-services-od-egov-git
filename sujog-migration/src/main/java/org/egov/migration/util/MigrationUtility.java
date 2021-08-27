@@ -226,9 +226,14 @@ public class MigrationUtility {
 		if (dateString == null) {
 			return 0L;
 		}
-		return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
-				.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-		
+		try {
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		} catch (Exception e) {
+			dateString = dateString.replaceAll("  +", " ").split(" ")[0];
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yy")).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
 	}
 
 	public static BigDecimal getAmount(String taxAmt) {
