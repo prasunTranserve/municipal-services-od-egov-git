@@ -437,6 +437,20 @@ public class PropertyService {
 
 	public void enrichDemandDetails(Property property) {
 		
+		if(property.getDemands() != null) {
+			property.getDemands().forEach(demand -> {
+				demand.setPaymentComplete(MigrationUtility.getPaymentComplete(demand.getPaymentComplete()));
+				if(demand.getTaxPeriodFrom() == null) {
+					if(demand.getTaxPeriodTo() != null && demand.getTaxPeriodTo().matches(MigrationConst.TAX_PERIOD_PATTERN)) {
+						demand.setTaxPeriodFrom(demand.getTaxPeriodTo().split("/")[0].concat("/Q1"));
+					} else {
+						demand.setTaxPeriodFrom("1980-81/Q1");
+						demand.setTaxPeriodTo("1980-81/Q4");
+					}
+				}
+			});
+		}
+		
 		if(property.getDemandDetails() != null) {
 			property.getDemandDetails().forEach(demandDtl -> {
 				if(demandDtl.getTaxHead() == null) {
@@ -482,12 +496,6 @@ public class PropertyService {
 					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
 					.minPayableAmt(totalDemandAmt.toString())
 					.paymentComplete("N").build()));
-		}
-		
-		if(property.getDemands() != null) {
-			property.getDemands().forEach(demand -> {
-				demand.setPaymentComplete(MigrationUtility.getPaymentComplete(demand.getPaymentComplete()));
-			});
 		}
 		
 	}
