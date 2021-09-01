@@ -1,0 +1,245 @@
+Third Party Noc configuration
+=============================
+
+MDMS CHANGES
+------------
+
+Add NocType in NOC/NocType.json
+
+		{
+            "code": "NMA_NOC",
+            "isActive": true,
+            "offlineWF": "NMA_NOC_OFFLINE",
+            "onlineWF": "NMA_NOC_SRV",
+            "thirdPartyWF": "NMA_NOC_SRV",
+            "mode": "thirdParty",
+            "NocUserRole": "NMA_NOC_APPROVER"
+        }
+
+Add All document required for noc in NOC/DocumentTypeMapping.json
+
+		{
+            "applicationType": "PROVISIONAL",
+            "nocType": "NMA_NOC",
+            "docTypes": [
+                {
+                    "documentType": "NOC.NMA",
+                    "required": false
+                },
+				{
+                    "documentType": "NOC.NMA.Elevation",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.InCaseOfRepairs",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Signature",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Other",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "applicationType": "NEW",
+            "nocType": "NMA_NOC",
+            "docTypes": [
+                {
+                    "documentType": "NOC.NMA",
+                    "required": false
+                },
+				{
+                    "documentType": "NOC.NMA.Elevation",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.InCaseOfRepairs",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Signature",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Other",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "applicationType": "RENEW",
+            "nocType": "NMA_NOC",
+            "docTypes": [
+                {
+                    "documentType": "NOC.NMA",
+                    "required": false
+                },
+				{
+                    "documentType": "NOC.NMA.Elevation",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.InCaseOfRepairs",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Signature",
+                    "required": true
+                },
+				{
+                    "documentType": "NOC.NMA.Other",
+                    "required": true
+                }
+            ]
+        }
+		
+
+Add Role for noc deprt in ACCESSCONTROL-ROLES/roles.json
+
+	{
+      "code": "NMA_NOC_APPROVER",
+      "name": "NMA Noc Department Approver",
+      "description": "NMA Noc application approver"
+    }  
+	
+Add Role action in ACCESSCONTROL-ROLEACTIONS/roleactions.json
+
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1766,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1930,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1990,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 2004,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 2005,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	 {
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1729,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1730,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1741,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1742,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 1743,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	 {
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 2002,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+	{
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 2003,
+      "actioncode": "",
+      "tenantId": "od"
+    },
+    {
+      "rolecode": "NMA_NOC_APPROVER",
+      "actionid": 4001,
+      "actioncode": "",
+      "tenantId": "od"
+    }
+	
+For any new url add in ACCESSCONTROL-ACTIONS-TEST/actions-test.json
+
+	 {
+         "id": 4001,
+         "name": "Third party NOC Update",
+         "url": "/noc-services/v1/noc/thirdparty/_update",
+         "displayName": "Update",
+         "orderNumber": 0,
+         "enabled": false,
+         "serviceCode": "NOC",
+         "code": "null",
+         "path": ""
+      }
+	  
+	  
+Note: add new action also in ACCESSCONTROL-ROLEACTIONS/roleactions.json
+
+Add Noc in BPA/NocTypeMapping.json in nocType
+
+		{
+          "type": "NMA_NOC",
+          "required": true,
+          "documentType": "NOC.NMA"
+        }
+
+
+SQL Quary for NMA_NOC_APPROVER user
+
+--Delete User roles
+--vo
+DELETE FROM public.EG_USERROLE_V1 WHERE user_id = (SELECT id FROM EG_USER WHERE username = '485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=') and user_tenantid='od.cuttack';
+
+--Delete eg users
+DELETE FROM EG_USER WHERE username = '485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=' and tenantId='od.cuttack';
+
+--Delete HRMS uers
+DELETE FROM public.EG_HRMS_EMPLOYEE WHERE code = '485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=' and tenantId='od.cuttack';
+
+
+-- User: NMA-NOC-APPROVER
+INSERT INTO EG_USER
+            (title,salutation,dob,locale,username,password,pwdexpirydate,mobilenumber,altcontactnumber,emailid,createddate,lastmodifieddate,createdby,lastmodifiedby,active,name,gender,pan,aadhaarnumber,type,version,guardian,guardianrelation,signature,accountlocked,bloodgroup,photo,identificationmark,tenantid,id,uuid,accountlockeddate)
+VALUES      (NULL,NULL,NULL,NULL,'485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=','$2a$10$xYd05pqy6b0001HoYnma3O8t4CbiZDfTaebtOr1WGs/4nUPk5eavC','2020-04-10 09:19:13.68',NULL,NULL,NULL,Now(),Now(),1,1,true,'485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=',2,NULL,NULL,'EMPLOYEE',0,NULL,NULL,NULL,false,NULL,NULL,NULL,'od.cuttack',Nextval('seq_eg_user'),'886ac6ae-c74d-441b-a8dc-1bab6903a32e',NULL);
+-- Insert User(Employee) Role Set 1
+INSERT INTO public.EG_USERROLE_V1
+            (role_code,role_tenantid,user_id,user_tenantid,lastmodifieddate)
+VALUES      ('NMA_NOC_APPROVER','od.cuttack',(SELECT id FROM EG_USER WHERE username = '485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=' ),'od.cuttack',Now()),
+            ('EMPLOYEE','od.cuttack',(SELECT id FROM EG_USER WHERE username = '485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=' ),'od.cuttack',Now());
+			
+-- Insert Employee(Employee) Set 1
+INSERT INTO public.EG_HRMS_EMPLOYEE
+            (id,uuid,code,dateofappointment,employeestatus,employeetype,active,tenantid,createdby,createddate,lastmodifiedby,lastmodifieddate)
+VALUES      (Nextval('seq_eg_hrms_emp_code'),'886ac6ae-c74d-441b-a8dc-1bab6903a32e','485643|oRHdZAghf8Q1dRalnBgW0+LOYokU3Nf7ZqVtch0cSXY=',1587076932,'Active','EMPLOYEE',true,'od.cuttack',1,1587076932,1,1587076932);
+
+
+

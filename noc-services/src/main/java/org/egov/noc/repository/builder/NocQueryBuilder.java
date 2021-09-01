@@ -92,6 +92,14 @@ public class NocQueryBuilder {
 			log.info(nocType);
 		}
 		
+		String applicationStatus=criteria.getApplicationStatus();
+		if(applicationStatus!=null) {
+			addClauseIfRequired(builder);
+			builder.append(" noc.applicationStatus = ?");
+			preparedStmtList.add(applicationStatus);
+			log.info(applicationStatus);
+		}
+		
 		log.info(criteria.toString());
 		log.info("Final Query");
 		log.info(builder.toString());

@@ -117,6 +117,8 @@ public class NOCValidator {
 		businessValues.put(NOCConstants.MODE, (String) jsonOutput.get(0).get(NOCConstants.MODE));
 		if (jsonOutput.get(0).get(NOCConstants.MODE).equals(NOCConstants.ONLINE_MODE))
 			businessValues.put(NOCConstants.WORKFLOWCODE, (String) jsonOutput.get(0).get(NOCConstants.ONLINE_WF));
+		else if(jsonOutput.get(0).get(NOCConstants.MODE).equals(NOCConstants.THIRD_PARTY_MODE))
+			businessValues.put(NOCConstants.WORKFLOWCODE, (String) jsonOutput.get(0).get(NOCConstants.THIRD_PARTY_WF));
 		else
 			businessValues.put(NOCConstants.WORKFLOWCODE, (String) jsonOutput.get(0).get(NOCConstants.OFFLINE_WF));
 
