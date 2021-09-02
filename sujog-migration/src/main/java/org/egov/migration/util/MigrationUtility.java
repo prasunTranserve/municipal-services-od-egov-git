@@ -429,13 +429,13 @@ public class MigrationUtility {
 
 	public static String getMeterStatus(String meterStatus) {
 		if (meterStatus == null) {
-			return "Breakdown";
+			return "Working";
 		} else if (meterStatus.equalsIgnoreCase("NW")) {
 			return "Breakdown";
 		} else if (meterStatus.equalsIgnoreCase("W")) {
 			return "Working";
 		}
-		return "Breakdown";
+		return "Working";
 	}
 
 	public static Integer getWaterClosets(WnsConnection connection) {
