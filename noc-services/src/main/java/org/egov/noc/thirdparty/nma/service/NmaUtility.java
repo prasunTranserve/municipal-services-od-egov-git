@@ -298,7 +298,7 @@ public class NmaUtility {
 			break;
 
 		}
-		return getServiceType(edcr);
+		return str;
 	}
 
 	private MaximumHeightOfExistingModernBuildingInCloseVicinityOf getMaximumHeightOfExistingModernBuildingInCloseVicinityOf(
@@ -348,18 +348,18 @@ public class NmaUtility {
 
 	}
 
-	private double getHeightInMetresIncludingMumtyParapetWaterStorageTankEtc(DocumentContext edcr) {
+	private String getHeightInMetresIncludingMumtyParapetWaterStorageTankEtc(DocumentContext edcr) {
 		List<String> list = edcr.read("edcrDetail.*.planDetail.planInformation.buildingHeightIncludingMumty");
 		if (list != null && list.size() > 0)
-			return Double.parseDouble(list.get(0));
-		return 0;
+			return list.get(0);
+		return "";
 	}
 
-	private double getHeightInMetresExcludingMumtyParapetWaterStorageTankEtc(DocumentContext edcr) {
+	private String getHeightInMetresExcludingMumtyParapetWaterStorageTankEtc(DocumentContext edcr) {
 		List<String> list = edcr.read("edcrDetail.*.planDetail.planInformation.buildingHeightExcludingMumty");
 		if (list != null && list.size() > 0)
-			return Double.parseDouble(list.get(0));
-		return 0;
+			return list.get(0);
+		return "";
 	}
 
 	private String getFloorAreaInSquareMetresStoreyWise(DocumentContext edcr) {// write code

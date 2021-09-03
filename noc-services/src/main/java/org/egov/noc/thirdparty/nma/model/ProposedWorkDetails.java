@@ -31,9 +31,9 @@ public class ProposedWorkDetails {
 	    @JsonProperty("FloorAreaInSquareMetresStoreyWise") 
 	    public String floorAreaInSquareMetresStoreyWise;
 	    @JsonProperty("HeightInMetresExcludingMumtyParapetWaterStorageTankEtc") 
-	    public double heightInMetresExcludingMumtyParapetWaterStorageTankEtc;
+	    public String heightInMetresExcludingMumtyParapetWaterStorageTankEtc;
 	    @JsonProperty("HeightInMetresIncludingMumtyParapetWaterStorageTankEtc") 
-	    public double heightInMetresIncludingMumtyParapetWaterStorageTankEtc;
+	    public String heightInMetresIncludingMumtyParapetWaterStorageTankEtc;
 	    @JsonProperty("BasementIfAnyProposedWithDetails") 
 	    public String basementIfAnyProposedWithDetails;
 	    @JsonProperty("NatureOfWorkProposedOther") 
