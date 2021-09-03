@@ -8,10 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.egov.noc.config.NOCConfiguration;
+import org.egov.noc.repository.NOCRepository;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.web.model.Document;
 import org.egov.noc.web.model.Noc;
 import org.egov.noc.web.model.NocRequest;
+import org.egov.noc.web.model.NocSearchCriteria;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,9 @@ public class NOCValidator {
 
 	@Autowired
 	private NOCConfiguration nocConfiguration;
+	
+	@Autowired
+	private NOCRepository nocRepository;
 
 	/**
 	 * validates the nocRequest for documents
@@ -38,10 +43,21 @@ public class NOCValidator {
 	 */
 	public void validateCreate(NocRequest nocRequest, Object mdmsData) {
 		mdmsValidator.validateMdmsData(nocRequest, mdmsData);
+		validateNoc(nocRequest);
 		if (!ObjectUtils.isEmpty(nocRequest.getNoc().getDocuments())) {
 			validateAttachedDocumentTypes(nocRequest.getNoc(), mdmsData);
 			validateDuplicateDocuments(nocRequest.getNoc());
 		}
+	}
+	
+	private void validateNoc(NocRequest nocRequest) {
+		NocSearchCriteria nocSearchCriteria=new NocSearchCriteria();
+		nocSearchCriteria.setSourceRefId(nocRequest.getNoc().getSourceRefId());
+		nocSearchCriteria.setNocType(nocRequest.getNoc().getNocType());
+		
+		List<Noc> list=nocRepository.getNocData(nocSearchCriteria);
+		if(list!=null && list.size()>0)
+			throw new CustomException("NOC_CREATE_ERROR", "Noc is already exits");
 	}
 
 	/**
