@@ -58,7 +58,7 @@ public class NOCConfiguration {
 
 	@Value("${egov.localization.statelevel}")
 	private Boolean isLocalizationStateLevel;
-	
+
 	@Value("${egov.idgen.host}")
 	private String idGenHost;
 
@@ -67,7 +67,7 @@ public class NOCConfiguration {
 
 	@Value("${egov.idgen.noc.application.id}")
 	private String applicationNoIdgenName;
-	
+
 	@Value("${workflow.context.path}")
 	private String wfHost;
 
@@ -79,22 +79,22 @@ public class NOCConfiguration {
 
 	@Value("${workflow.process.path}")
 	private String wfProcessPath;
-		
+
 	@Value("${egov.mdms.host}")
 	private String mdmsHost;
 
 	@Value("${egov.mdms.search.endpoint}")
 	private String mdmsEndPoint;
-	
+
 	@Value("${persister.save.noc.topic}")
 	private String saveTopic;
-	
+
 	@Value("${persister.update.noc.topic}")
 	private String updateTopic;
-	
+
 	@Value("${persister.update.noc.workflow.topic}")
 	private String updateWorkflowTopic;
-	
+
 	@Value("${egov.noc.pagination.default.limit}")
 	private Integer defaultLimit;
 
@@ -103,8 +103,53 @@ public class NOCConfiguration {
 
 	@Value("${egov.noc.pagination.max.limit}")
 	private Integer maxSearchLimit;
-	
+
 	@Value("${noc.offline.doc.required}")
 	private Boolean nocOfflineDocRequired;
 
+	// BPA Config
+	@Value("${egov.bpa.host}")
+	private String bpaHost;
+
+	@Value("${egov.bpa.context.path}")
+	private String bpaContextPath;
+
+	@Value("${egov.bpa.search.path}")
+	private String bpaSearchEndpoint;
+
+	// nma config
+	@Value("${nma.host}")
+	private String nmaHost;
+
+	@Value("${nma.context.path}")
+	private String nmaContextPath;
+
+	@Value("${nma.architect.registration}")
+	private String nmaArchitectRegistration;
+
+	@Value("${nma.application.create}")
+	private String nmaApplicationCreate;
+
+	// EDCR Service
+	@Value("${egov.edcr.host}")
+	private String edcrHost;
+
+	@Value("${egov.edcr.authtoken.endpoint}")
+	private String edcrAuthEndPoint;
+
+	@Value("${egov.edcr.getPlan.endpoint}")
+	private String getPlanEndPoint;
+	
+	//fileStore
+	@Value("${egov.filestore.host}")
+	private String filestoreHost;
+	
+	@Value("${egov.filestore.context.path}")
+	private String filestoreContext;
+
+	@Value("${egov.filestore.file.url.path}")
+	private String filestoreFileurlPath;
+
+	@Value("${egov.filestore.file.store.path}")
+	private String filestorefilestorepath;
 }

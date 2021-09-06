@@ -47,4 +47,20 @@ public class ServiceRequestRepository {
 
 		return response;
 	}
+	
+	public Object fetchResult(StringBuilder uri) {
+		Object response = null;
+		log.info("URI: " + uri.toString());
+		try {
+			log.info("Request: " + mapper.writeValueAsString(uri));
+			response = restTemplate.getForObject(uri.toString(), Map.class);
+		} catch (HttpClientErrorException e) {
+			log.error("External Service threw an Exception: ", e);
+			throw new ServiceCallException(e.getResponseBodyAsString());
+		} catch (Exception e) {
+			log.error("Exception while fetching from searcher: ", e);
+		}
+
+		return response;
+	}
 }
