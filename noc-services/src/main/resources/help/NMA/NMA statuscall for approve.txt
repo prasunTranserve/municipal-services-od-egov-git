@@ -1,0 +1,24 @@
+URL: localhost:8083/noc-services/v1/noc/thirdparty/_update
+Method: POST
+Body: 
+
+{
+    "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "action": "",
+        "did": "1",
+        "key": "",
+        "msgId": "20170310130900|en_IN",
+        "requesterId": "",
+        "authToken": "81d5381d-ff6a-4bec-90c9-6fad2fb48c74"
+    },
+	"Nma":{
+		"ApplicationUniqueNumebr":"OD-NOCSRV-2021-09-06-000166",
+		"Comment":"Approved Comment",
+		"Action":"APPROVE",
+		"Documents":[
+			{"file":"https://od-digit.s3-ap-south-1.amazonaws.com/od/undefined/September/6/1630930102749ZMDUkgiOXU.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA3CQUPMIX3BJDAIVF%2F20210906%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20210906T123716Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=f6121ff74af99b2293f1e1c87cc836ef72dce5aad49efc6837d034e4bfa517a0"}
+		]
+	}
+}

@@ -202,8 +202,11 @@ public class NocService {
 		BPA bpa = bpaRequest.getBPA();
 		log.debug(" auto approval of offline noc with bpa status " + bpa.getStatus() + " and "
 				+ bpa.getWorkflow().getAction());
-		if (bpa.getStatus().equalsIgnoreCase(BPAConstants.NOCVERIFICATION_STATUS)
-				&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_FORWORD)) {
+		if ((bpa.getStatus().equalsIgnoreCase(BPAConstants.NOCVERIFICATION_STATUS)
+				&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_FORWORD))
+				|| (bpa.getStatus().equalsIgnoreCase(BPAConstants.APPROVAL_INPROGRESS)
+						&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_APPROVE))
+				) {
 			List<String> statuses = Arrays.asList(config.getNocValidationCheckStatuses().split(","));
 			List<String> offlneNocs = (List<String>) JsonPath.read(mdmsData, BPAConstants.NOCTYPE_OFFLINE_MAP);
 			log.debug(" auto approval of offline noc with bpa status and no of nocs " + offlneNocs.size()

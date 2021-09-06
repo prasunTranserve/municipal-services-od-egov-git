@@ -232,6 +232,7 @@ public class BPAConstants {
 	public static final String APPROVED_STATE = "APPROVED";
 	public static final String DOCVERIFICATION_STATE = "DOC_VERIFICATION_PENDING";
 	public static final String NOCVERIFICATION_STATUS = "NOC_VERIFICATION_INPROGRESS";
+	public static final String APPROVAL_INPROGRESS = "APPROVAL_INPROGRESS";
 
 	public static final String PENDING_APPROVAL_STATE = "APPROVAL_PENDING";
 
