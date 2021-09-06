@@ -53,11 +53,15 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 
 	@Override
 	public PropertyDetailDTO process(Property property) throws Exception {
-//		if(validationService.isValidProperty(property)) {
-		enrichProperty(property);
-		return transformProperty(property);
-//		}
-//		return null;
+		if(validationService.isValidArea(property)) {
+			try {
+				enrichProperty(property);
+			} catch (Exception e) {
+				MigrationUtility.addError(property.getPropertyId(), e.getMessage());
+			}
+			return transformProperty(property);
+		}
+		return null;
 	}
 
 	private PropertyDetailDTO transformProperty(Property property) {
@@ -90,6 +94,9 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	}
 
 	private void transformUnit(PropertyDTO propertyDTO, Property property) {
+		if(property.getUnit() == null) {
+			return;
+		}
 		propertyDTO.setUnits(property.getUnit().stream().map(unit -> {
 			UnitDTO unitDTO = new UnitDTO();
 			unitDTO.setFloorNo(MigrationUtility.getFloorNo(unit.getFloorNo()));

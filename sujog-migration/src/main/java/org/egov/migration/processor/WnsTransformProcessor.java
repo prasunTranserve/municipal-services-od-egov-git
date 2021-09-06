@@ -91,6 +91,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 						demand.setCollectedAmount("0");
 					}
 				} else {
+					demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getWaterCharges())));
 					demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
 				}
 				long taxPeriodFrom = MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat);
@@ -119,6 +120,9 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 			demands.forEach(demand -> {
 				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getWaterCharges())));
+				if(!connectionDTO.isSewerage()) {
+					demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getSewerageFee())));
+				}
 				demandDetailDTO.setCollectionAmount(demandDetailDTO.getCollectionAmount().add(new BigDecimal(demand.getCollectedAmount())));
 				
 				long taxPeriodFrom = MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat);

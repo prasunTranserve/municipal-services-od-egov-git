@@ -51,6 +51,8 @@ public class MigrationUtility {
 	RecordStatistic recordStatistic;
 
 	public static final BigDecimal sqmtrToSqyard = BigDecimal.valueOf(1.196);
+	
+	public static final BigDecimal maxDigitSupportedArea = BigDecimal.valueOf(99999999);
 
 	public static final String decimalRegex = "((\\d+)(((\\.)(\\d+)){0,1}))";
 
@@ -84,13 +86,24 @@ public class MigrationUtility {
 			value = getNumericValue(cell, isDecimal);
 			break;
 		case STRING:
-			value = cell.getStringCellValue().trim().replaceAll("  +", " ");
+			//value = cell.getStringCellValue().trim().replaceAll("  +", " ");
+			value = getNumericIfCellTypeString(cell, isDecimal);
 			break;
 		case BOOLEAN:
 			value = String.valueOf(cell.getBooleanCellValue());
 			break;
 		}
 		return value;
+	}
+	
+	private static String getNumericIfCellTypeString(Cell cell, boolean isDecimal) {
+		// TODO Auto-generated method stub
+		if(isDecimal) {
+			return cell.getStringCellValue().trim().replaceAll(" +", "");
+		} else {
+			return cell.getStringCellValue().trim().replaceAll("  +", " ");
+		}
+		
 	}
 
 	private static String getNumericValue(Cell cell, boolean isDecimal) {
@@ -138,9 +151,14 @@ public class MigrationUtility {
 	}
 
 	public static BigDecimal convertAreaToYard(String area) {
+		BigDecimal convertedArea;
 		if (area == null)
 			return BigDecimal.ONE;
-		return BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
+		convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
+//		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
+//			convertedArea = maxDigitSupportedArea;
+//		}
+		return convertedArea;
 	}
 
 	public static LocalityDTO getLocality(String code) {
@@ -439,10 +457,11 @@ public class MigrationUtility {
 	}
 
 	public static Integer getWaterClosets(WnsConnection connection) {
-		if (connection.getService().getNoOfClosets() == null) {
-			return 0;
+		int waterClosets = 4;
+		if(connection.getService().getNoOfClosets() != null && connection.getService().getNoOfClosets().matches(digitRegex)) {
+			waterClosets = Integer.parseInt(connection.getService().getNoOfClosets());
 		}
-		return Integer.parseInt(connection.getService().getNoOfClosets());
+		return waterClosets;
 	}
 
 	public static Integer getToilets(WnsConnection connection) {
@@ -633,6 +652,8 @@ public class MigrationUtility {
 	}
 	
 	public static String getNearest(String amount, String divident) {
+		if(amount == null)
+			return "0";
 		BigDecimal amt = new BigDecimal(amount);
 		BigDecimal di = new BigDecimal(divident);
 		amt = amt.divide(di).setScale(0, RoundingMode.CEILING).multiply(di);
@@ -682,6 +703,9 @@ public class MigrationUtility {
 		int taps = 2;
 		if(noOfTaps != null && noOfTaps.matches(digitRegex)) {
 			taps = Integer.parseInt(noOfTaps);
+		}
+		if(taps > 100) {
+			taps = 2;
 		}
 		return taps;
 	}

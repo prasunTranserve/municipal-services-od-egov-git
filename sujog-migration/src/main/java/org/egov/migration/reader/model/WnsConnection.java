@@ -36,17 +36,17 @@ public class WnsConnection {
 	
 	private String applicationType;
 	
-	@Pattern(regexp = "\\d+", message = "Word can not be non numeric")
+//	@Pattern(regexp = "\\d+", message = "Word can not be non numeric")
 	private String ward;
 	
 	@NotNull(message = "Connection service is missing")
 	private @Valid WnsConnectionService service;
 	
-	@NotNull(message = "Connection owner/holder is missing")
-	private @Valid WnsConnectionHolder connectionHolder;
+//	@NotNull(message = "Connection owner/holder is missing")
+	private WnsConnectionHolder connectionHolder;
 	
 	private List<WnsMeterReading> meterReading;
 	
-	private List<@Valid WnsDemand> demands;
+	private List<WnsDemand> demands;
 	
 }
