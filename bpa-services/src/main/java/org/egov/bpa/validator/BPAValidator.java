@@ -578,8 +578,11 @@ public class BPAValidator {
 		BPA bpa = bpaRequest.getBPA();
 		log.debug("===========> valdiateNocApprove method called");
 		if (config.getValidateRequiredNoc()) {
-			if (bpa.getStatus().equalsIgnoreCase(BPAConstants.NOCVERIFICATION_STATUS)
-					&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_FORWORD)) {
+			if ((bpa.getStatus().equalsIgnoreCase(BPAConstants.NOCVERIFICATION_STATUS)
+					&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_FORWORD))
+					|| (bpa.getStatus().equalsIgnoreCase(BPAConstants.APPROVAL_INPROGRESS)
+					&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_APPROVE))
+					) {
 				Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
 						bpaRequest.getBPA());
 				log.debug("===========> valdiateNocApprove method called, application is in noc verification pending");
