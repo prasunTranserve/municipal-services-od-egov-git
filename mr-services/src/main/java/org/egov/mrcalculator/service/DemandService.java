@@ -47,8 +47,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class DemandService {
 
-    @Autowired
-    private CalculationService calculationService;
 
     @Autowired
     private CalculationUtils utils;

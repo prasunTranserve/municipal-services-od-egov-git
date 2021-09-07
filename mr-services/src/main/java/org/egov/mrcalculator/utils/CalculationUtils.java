@@ -1,17 +1,18 @@
 package org.egov.mrcalculator.utils;
 
+import static org.egov.mrcalculator.utils.MRCalculatorConstants.businessService_MR;
+
 import java.util.List;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.repository.ServiceRequestRepository;
-import org.egov.mr.service.MarriageRegistrationService;
+import org.egov.mr.service.MarriageRegistrationSearchService;
 import org.egov.mr.web.models.AuditDetails;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistrationSearchCriteria;
 import org.egov.mrcalculator.config.MRCalculatorConfigs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import static org.egov.mrcalculator.utils.MRCalculatorConstants.businessService_MR;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,7 +30,7 @@ public class CalculationUtils {
     private ObjectMapper mapper;
     
     @Autowired
-    private MarriageRegistrationService marriageRegistrationService;
+    private MarriageRegistrationSearchService marriageRegistrationSearchService;
 
 
 
@@ -103,7 +104,7 @@ public class CalculationUtils {
 		criteria.setApplicationNumber(applicationNumber);
 		criteria.setTenantId(tenantId);
 		
-		List<MarriageRegistration> marriageRegistrations = marriageRegistrationService.search(criteria, requestInfo, businessService_MR, null);
+		List<MarriageRegistration> marriageRegistrations = marriageRegistrationSearchService.search(criteria, requestInfo, businessService_MR, null);
 		
 		if(marriageRegistrations!=null)
 			marriageRegistrations.get(0);
