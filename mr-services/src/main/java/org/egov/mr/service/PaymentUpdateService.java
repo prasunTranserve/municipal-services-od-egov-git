@@ -95,7 +95,7 @@ public class PaymentUpdateService {
 					searchCriteria.setTenantId(tenantId);
 					searchCriteria.setApplicationNumber(paymentDetail.getBill().getConsumerCode());
 					searchCriteria.setBusinessService(paymentDetail.getBusinessService());
-					List<MarriageRegistration> licenses = marriageRegistrationPaymentService.getMarriageRegistrationsWithOwnerInfo(searchCriteria, requestInfo);
+					List<MarriageRegistration> marriageRegistrations = marriageRegistrationPaymentService.getMarriageRegistrationsWithOwnerInfo(searchCriteria, requestInfo);
 					String wfbusinessServiceName = null;
 					switch (paymentDetail.getBusinessService()) {
 						case businessService_MR:
@@ -104,23 +104,23 @@ public class PaymentUpdateService {
 
 
 					}
-				BusinessService businessService = workflowService.getBusinessService(licenses.get(0).getTenantId(), requestInfo,wfbusinessServiceName);
+				BusinessService businessService = workflowService.getBusinessService(marriageRegistrations.get(0).getTenantId(), requestInfo,wfbusinessServiceName);
 
 
-					if (CollectionUtils.isEmpty(licenses))
+					if (CollectionUtils.isEmpty(marriageRegistrations))
 						throw new CustomException("INVALID RECEIPT",
-								"No tradeLicense found for the comsumerCode " + searchCriteria.getApplicationNumber());
+								"No MarriageRegistrations found for the comsumerCode " + searchCriteria.getApplicationNumber());
 
-					licenses.forEach(license -> license.setAction(ACTION_PAY));
+					marriageRegistrations.forEach(marriageRegistration -> marriageRegistration.setAction(ACTION_PAY));
 
 					// FIXME check if the update call to repository can be avoided
 					// FIXME check why aniket is not using request info from consumer
 					// REMOVE SYSTEM HARDCODING AFTER ALTERING THE CONFIG IN WF FOR TL
 
-					Role role = Role.builder().code("SYSTEM_PAYMENT").tenantId(licenses.get(0).getTenantId()).build();
+					Role role = Role.builder().code("SYSTEM_PAYMENT").tenantId(marriageRegistrations.get(0).getTenantId()).build();
 					requestInfo.getUserInfo().getRoles().add(role);
 					MarriageRegistrationRequest updateRequest = MarriageRegistrationRequest.builder().requestInfo(requestInfo)
-							.MarriageRegistrations(licenses).build();
+							.MarriageRegistrations(marriageRegistrations).build();
 
 					/*
 					 * calling workflow to update status
@@ -137,7 +137,7 @@ public class PaymentUpdateService {
 					/*
 					 * calling repository to update the object in TL tables
 					 */
-					Map<String,Boolean> idToIsStateUpdatableMap = util.getIdToIsStateUpdatableMap(businessService,licenses);
+					Map<String,Boolean> idToIsStateUpdatableMap = util.getIdToIsStateUpdatableMap(businessService,marriageRegistrations);
 					repository.update(updateRequest,idToIsStateUpdatableMap);
 			}
 		 }
