@@ -1,0 +1,18 @@
+URL: localhost:8067/noc-services/v1/noc/_thirdparty
+Method: POST
+Body: 
+
+{
+    "RequestInfo": {
+        "apiId": "Rainmaker",
+        "ver": ".01",
+        "action": "",
+        "did": "1",
+        "key": "",
+        "msgId": "20170310130900|en_IN",
+        "requesterId": "",
+        "authToken": "556666a2-7382-4687-bf8c-1eb257d9005a"
+    }
+}
+
+Responce: Completed
