@@ -1,0 +1,260 @@
+{
+  "RequestInfo": {
+    "apiId": "Rainmaker",
+    "action": "",
+    "did": 1,
+    "key": "",
+    "msgId": "20170310130900|en_IN",
+    "requesterId": "",
+    "ts": 1513579888683,
+    "ver": ".01",
+    "authToken": "832c514f-70db-466a-92e2-040219214773"
+  },
+  "BusinessServices": [
+    {
+      "tenantId": "od",
+      "businessService": "MR",
+      "business": "mr-services",
+      "businessServiceSla": null,
+      "states": [
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "INITIATE",
+              "nextState": "INITIATED",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            }
+          ]
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "INITIATED",
+          "applicationStatus": "INITIATED",
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "INITIATE",
+              "nextState": "INITIATED",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "APPLY",
+              "nextState": "DOCVERIFICATION",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "DOCVERIFICATION",
+          "applicationStatus": "DOCVERIFICATION",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "PENDINGPAYMENT",
+              "roles": [
+                "MR_DOC_VERIFIER"
+              ]
+            },
+			{
+              "tenantId": "od",
+              "action": "SENDBACKTOCITIZEN",
+              "nextState": "BACKFROMDOCVERIFICATION",
+              "roles": [
+                "MR_DOC_VERIFIER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "REJECT",
+              "nextState": "REJECTED",
+              "roles": [
+                "MR_DOC_VERIFIER"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "PENDINGPAYMENT",
+          "applicationStatus": "PENDINGPAYMENT",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "PAY",
+              "nextState": "PENDINGAPPROVAL",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP",
+                "SYSTEM_PAYMENT"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "BACKFROMDOCVERIFICATION",
+          "applicationStatus": "CITIZENACTIONPENDINGATDOCVERIFICATION",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "DOCVERIFICATION",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            }
+          ]
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "REJECTED",
+          "applicationStatus": "REJECTED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "PENDINGAPPROVAL",
+          "applicationStatus": "PENDINGAPPROVAL",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "APPROVE",
+              "nextState": "APPROVED",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+			{
+              "tenantId": "od",
+              "action": "SENDBACKTOCITIZEN",
+              "nextState": "BACKFROMAPPROVER",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "SENDBACK",
+              "nextState": "DOCVERIFICATION",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "REJECT",
+              "nextState": "REJECTED",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "BACKFROMAPPROVER",
+          "applicationStatus": "CITIZENACTIONPENDINGATAPPROVER",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "PENDINGAPPROVAL",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            }
+          ]
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "APPROVED",
+          "applicationStatus": "APPROVED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "CANCEL",
+              "nextState": "CANCELLED",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            }
+          ]
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "CANCELLED",
+          "applicationStatus": "CANCELLED",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        }
+      ]
+    }
+  ]
+}
