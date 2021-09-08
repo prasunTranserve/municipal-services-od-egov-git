@@ -152,4 +152,8 @@ public class NOCConfiguration {
 
 	@Value("${egov.filestore.file.store.path}")
 	private String filestorefilestorepath;
+	
+	//FIRE NOC properties
+	@Value("${fire.host}")
+	private String fireNocHost;
 }
