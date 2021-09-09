@@ -145,6 +145,7 @@ masterdata:
     tusura: od.tusura
     udala: od.udala
     umerkote: od.umerkote
+    bhubaneswar: od.bhubaneswar
     
   localitycode:
     cuttack: VIL84
@@ -268,6 +269,7 @@ masterdata:
     tusura: VIL14
     udala: VIL13
     umerkote: VIL7
+    bhubaneswar: VIL66
     
   floorNo:
     ground_floor: 0
