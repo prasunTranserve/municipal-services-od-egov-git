@@ -13,8 +13,8 @@ import org.egov.noc.repository.ServiceRequestRepository;
 import org.egov.noc.service.FileStoreService;
 import org.egov.noc.thirdparty.fire.model.FetchRecommendationStatusContract;
 import org.egov.noc.thirdparty.fire.model.SubmitFireNocContract;
-import org.egov.noc.thirdparty.model.ThirdPartyNOCRequestInfoWrapper;
-import org.egov.noc.thirdparty.service.ThirdPartyNocService;
+import org.egov.noc.thirdparty.model.ThirdPartyNOCPushRequestWrapper;
+import org.egov.noc.thirdparty.service.ThirdPartyNocPushService;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.web.model.Document;
 import org.egov.tracer.model.CustomException;
@@ -33,7 +33,7 @@ import net.minidev.json.JSONArray;
 
 @Slf4j
 @Service(NOCConstants.FIRE_NOC_TYPE)
-public class FireNocService implements ThirdPartyNocService{
+public class FireNocService implements ThirdPartyNocPushService{
 	
 	@Autowired
 	private ObjectMapper mapper;
@@ -53,7 +53,7 @@ public class FireNocService implements ThirdPartyNocService{
 	private static final String FETCH_FIRE_NOC_STATUS_ENDPOINT = "/fire_safety/webservices/recommendationStatus";
 
 	@Override
-	public String process(ThirdPartyNOCRequestInfoWrapper infoWrapper) {
+	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
 		try {
 		//TODO--
 		//add in config of noc-services the new property fire.host,token
@@ -164,7 +164,7 @@ public class FireNocService implements ThirdPartyNocService{
 		return paramMap;
 	}
 	
-	private String getBinaryEncodedDocFromDocuments(ThirdPartyNOCRequestInfoWrapper infoWrapper, String typeOfDoc,
+	private String getBinaryEncodedDocFromDocuments(ThirdPartyNOCPushRequestWrapper infoWrapper, String typeOfDoc,
 			String docName) {
 		List<Document> documents = new ArrayList<>();
 		switch (typeOfDoc) {

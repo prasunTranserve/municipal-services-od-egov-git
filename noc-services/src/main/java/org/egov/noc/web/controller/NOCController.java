@@ -48,7 +48,7 @@ import javax.validation.Valid;
 
 import org.egov.noc.config.ResponseInfoFactory;
 import org.egov.noc.service.NOCService;
-import org.egov.noc.thirdparty.service.ThirdPartyNocServiceProcessor;
+import org.egov.noc.thirdparty.service.ThirdPartyNocService;
 import org.egov.noc.web.model.Noc;
 import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.NocResponse;
@@ -69,23 +69,23 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-	
+
 @RestController
 @RequestMapping("v1/noc")
 public class NOCController {
-	
+
 	@Autowired
 	private ResponseInfoFactory responseInfoFactory;
-	
+
 	@Autowired
 	private NOCService nocService;
-	
-	@Autowired ThirdPartyNocServiceProcessor thirdPartyNocServiceProcessor;
 
-
+	@Autowired
+	ThirdPartyNocService thirdPartyNocService;
 
 	@PostMapping(value = "/_create")
-	public ResponseEntity<NocResponse> create(@Valid @RequestBody NocRequest nocRequest) throws JsonProcessingException {
+	public ResponseEntity<NocResponse> create(@Valid @RequestBody NocRequest nocRequest)
+			throws JsonProcessingException {
 		List<Noc> nocList = nocService.create(nocRequest);
 		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
 		String json = ow.writeValueAsString(nocRequest);
@@ -95,7 +95,7 @@ public class NOCController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@PostMapping(value = "/_update")
 	public ResponseEntity<NocResponse> update(@Valid @RequestBody NocRequest nocRequest) {
 		List<Noc> nocList = nocService.update(nocRequest);
@@ -104,7 +104,7 @@ public class NOCController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@PostMapping(value = "/_search")
 	public ResponseEntity<NocResponse> search(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
 			@Valid @ModelAttribute NocSearchCriteria criteria) {
@@ -116,27 +116,28 @@ public class NOCController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
 	/*
-	 * For calling third party noc service for all noc application with status INPROGRESS
-	 * And it will update the wf from INPROGRESS to SUBMIT
+	 * For calling third party noc service for all noc application with status
+	 * INPROGRESS And it will update the wf from INPROGRESS to SUBMIT
 	 * 
 	 */
-	@PostMapping(value="/_thirdparty")
-	public ResponseEntity<String> thirdPartyNoc(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper){
-		thirdPartyNocServiceProcessor.process(requestInfoWrapper);
+	@PostMapping(value = "/_thirdparty")
+	public ResponseEntity<String> thirdPartyNoc(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
+		thirdPartyNocService.process(requestInfoWrapper);
 		return new ResponseEntity<String>("Completed", HttpStatus.OK);
 	}
-	
+
 	/*
-	 * For calling third party noc service for taking next action to update the system
+	 * For calling third party noc service for taking next action to update the
+	 * system
 	 * 
 	 */
 	@PostMapping(value = "/thirdparty/_update")
-	public ResponseEntity<NocResponse> thirdpartyUpdate(@Valid @RequestBody ThirdPartyNocRequest thirdPartyNocRequest
-			){
-		List<Noc> nocList=nocService.updateThirdPartyNoc(thirdPartyNocRequest);
-		NocResponse response = NocResponse.builder().noc(nocList)
-				.responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(thirdPartyNocRequest.getRequestInfo(), true))
+	public ResponseEntity<NocResponse> thirdpartyUpdate(@Valid @RequestBody ThirdPartyNocRequest thirdPartyNocRequest) {
+		List<Noc> nocList = nocService.updateThirdPartyNoc(thirdPartyNocRequest);
+		NocResponse response = NocResponse.builder().noc(nocList).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(thirdPartyNocRequest.getRequestInfo(), true))
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

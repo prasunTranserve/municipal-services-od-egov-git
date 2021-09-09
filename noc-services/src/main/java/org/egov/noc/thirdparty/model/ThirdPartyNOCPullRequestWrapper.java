@@ -23,16 +23,12 @@ import lombok.ToString;
 @NoArgsConstructor
 @Builder
 @ToString
-public class ThirdPartyNOCRequestInfoWrapper {
+public class ThirdPartyNOCPullRequestWrapper {
 	
 	private RequestInfo requestInfo;
-	
-	private BPA bpa;
 	
 	private Noc noc;
 	
 	private UserSearchResponse userResponse;
-	
-	private DocumentContext edcr;
 	
 }
