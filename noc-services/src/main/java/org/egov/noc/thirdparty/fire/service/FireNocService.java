@@ -51,13 +51,12 @@ public class FireNocService implements ThirdPartyNocService{
 	private static final String GET_FIRESTATIONS_ENDPOINT = "/fire_safety/webservices/getFirestations";
 	private static final String SUBMIT_FIRE_NOC_APPL_ENDPOINT =  "/fire_safety/webservices/recommendationApi";
 	private static final String FETCH_FIRE_NOC_STATUS_ENDPOINT = "/fire_safety/webservices/recommendationStatus";
-	private static final String TEMP_TOKEN = "lumisuyog-2021-1234560987654321";
 
 	@Override
 	public String process(ThirdPartyNOCRequestInfoWrapper infoWrapper) {
 		try {
 		//TODO--
-		//add in config of noc-services the new property fire.host
+		//add in config of noc-services the new property fire.host,token
 		
 		//submit fire noc application - 
 		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
@@ -65,7 +64,7 @@ public class FireNocService implements ThirdPartyNocService{
 		DocumentContext edcrDetail = infoWrapper.getEdcr();
 		Map<String, String> paramMap = getParamsFromEdcr(edcrDetail);
 		
-		String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "Site plan");
+		String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.REVSITEPLAN.REVSITEPLAN");
 		String plainApplicationDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.PlainApplication");
 		String applicantSignature = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.ApplicantSignature");
 		String applicantPhoto = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.ApplicantPhoto");
@@ -101,23 +100,9 @@ public class FireNocService implements ThirdPartyNocService{
 					.identyProofDocext("pdf")
 					.ownershipDoc(ownershipDoc)
 					.ownershipDocext("pdf")
-					.token(TEMP_TOKEN)
+					.token(config.getFireNocToken())
 					.build();
 		
-		//File file = new File("C:\\Users\\Prasun.Kumar\\Downloads\\submitFireNocAppl.json");
-		/*
-		JsonReader reader = null;
-		String filename="C:\\Users\\Prasun.Kumar\\Downloads\\submitFireNocAppl.json";
-		try {
-			reader = new JsonReader(new FileReader(filename));
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			log.error("File not found:"+filename, e1);
-			throw new CustomException("File not found:"+filename,"File not found:"+filename);
-		}
-		SubmitFireNocContract submitFireNocContract = new Gson().fromJson(reader, SubmitFireNocContract.class);
-		String uniqueEmail = submitFireNocContract.getEmail();
-		*/
 		Object submitFireNocResponse = serviceRequestRepository.fetchResult(submitFireNocUrl, sfnc);
 		if(submitFireNocResponse instanceof Map) {
 			Map<String,Object> fireNocResponse = (Map<String, Object>) submitFireNocResponse;
@@ -130,7 +115,7 @@ public class FireNocService implements ThirdPartyNocService{
 		StringBuilder fetchStatusUrl = new StringBuilder(config.getFireNocHost());
 		fetchStatusUrl.append(FETCH_FIRE_NOC_STATUS_ENDPOINT);
 		Object fetchStatusResponse = serviceRequestRepository.fetchResult(fetchStatusUrl,
-				new FetchRecommendationStatusContract(TEMP_TOKEN, null));
+				new FetchRecommendationStatusContract(config.getFireNocToken(), null));
 		if(fetchStatusResponse instanceof Map) {
 			Map<String,Object> statusResponse = (Map<String, Object>) fetchStatusResponse;
 			Map<String,Object> result = (Map<String, Object>) statusResponse.get("result");

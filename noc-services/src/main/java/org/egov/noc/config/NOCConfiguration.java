@@ -156,4 +156,7 @@ public class NOCConfiguration {
 	//FIRE NOC properties
 	@Value("${fire.host}")
 	private String fireNocHost;
+	
+	@Value("${fire.noc.token}")
+	private String fireNocToken;
 }
