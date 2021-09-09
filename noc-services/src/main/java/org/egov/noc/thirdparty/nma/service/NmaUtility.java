@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.egov.noc.service.FileStoreService;
-import org.egov.noc.thirdparty.model.ThirdPartyNOCRequestInfoWrapper;
+import org.egov.noc.thirdparty.model.ThirdPartyNOCPushRequestWrapper;
 import org.egov.noc.thirdparty.nma.model.ApplicantDetails;
 import org.egov.noc.thirdparty.nma.model.DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument;
 import org.egov.noc.thirdparty.nma.model.Document;
@@ -54,7 +54,7 @@ public class NmaUtility {
 	@Autowired
 	private FileStoreService fileStoreService;
 
-	public NmaApplicationRequest buildNmaApplicationRequest(ThirdPartyNOCRequestInfoWrapper infoWrapper,NmaArchitectRegistration nmaArchitectRegistration) {
+	public NmaApplicationRequest buildNmaApplicationRequest(ThirdPartyNOCPushRequestWrapper infoWrapper,NmaArchitectRegistration nmaArchitectRegistration) {
 //		Noc noc, BPA bpa, UserSearchResponse user,
 //		NmaArchitectRegistration nmaArchitectRegistration, NmaFormData nmaFormData;
 		Noc noc = infoWrapper.getNoc();
