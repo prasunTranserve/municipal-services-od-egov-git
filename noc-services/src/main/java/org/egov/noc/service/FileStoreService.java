@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,23 @@ public class FileStoreService {
 			}
 		}
 		return documents;
+	}
+	
+	public String getBinaryEncodedDocument(String tenantId, String fileStoreIds) {
+		try {
+			String downloadableLink=getFileStorePath(tenantId, fileStoreIds);
+			File file=new File("tempfile-update.pdf");
+			FileUtils.copyURLToFile(new URL(downloadableLink), file);
+			byte[] fileContent;
+			fileContent = Files.readAllBytes(file.toPath());
+			String binaryEncodedContent= Base64.getEncoder().encodeToString(fileContent);
+			FileUtils.forceDelete(file);
+			return binaryEncodedContent;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new CustomException(NOCConstants.FILE_STORE_ERROR, "error while binary encoding document");
+		}
 	}
 
 }
