@@ -149,7 +149,8 @@ public class PayService {
 		cal.set(year, month, day);
 		cal.set(Calendar.HOUR, 23);
 		cal.set(Calendar.MINUTE, 59);
-		cal.set(Calendar.SECOND, 59);		
+		cal.set(Calendar.SECOND, 59);
+		
 	}
 
 	/**
