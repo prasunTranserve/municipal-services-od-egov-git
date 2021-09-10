@@ -38,7 +38,25 @@ public class MRConstants {
     
 	public static final String CITIZEN_SENDBACK_ACTION = "SENDBACKTOCITIZEN";
 
+	
+	public static final String MDMS_MARRIAGE_REGISTRATION = "MarriageRegistration";
+	
+	public static final String MDMS_REGISTRATION_FEE = "RegistrationFee";
 
+	 
+	 public static final String MDMS_TREASURY_CHARGE = "treasuryCharge";
+	 
+	 public static final String MDMS_ESTABLISHMENT_COST = "establishmentCost";
+	 
+	 public static final String TENANT_ID = "tenantId";
+	 
+	 public static final String MDMS_COST = "cost";
+	 
+	 public static final String MDMS_WITHIN_ONE_MONTH_OF_MARRIAGE = "withinOneMonthOfMarriage"; 
+	 
+	 public static final String MDMS_AFTER_ONE_MONTH_OF_MARRIAGE = "afterOneMonthOfMarriage";  
+	 
+	 public static final String MDMS_MARRIAGE_REGISTRATION_REGISTRATION_FEE = "$.MdmsRes.MarriageRegistration.RegistrationFee";
 
 
 
