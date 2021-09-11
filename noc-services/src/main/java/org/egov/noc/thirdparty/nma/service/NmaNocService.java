@@ -1,34 +1,29 @@
 package org.egov.noc.thirdparty.nma.service;
 
 import java.util.List;
-import java.util.Map;
 
 import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.ServiceRequestRepository;
-import org.egov.noc.thirdparty.model.ThirdPartyNOCRequestInfoWrapper;
+import org.egov.noc.thirdparty.model.ThirdPartyNOCPushRequestWrapper;
 import org.egov.noc.thirdparty.nma.model.NmaApplicationRequest;
 import org.egov.noc.thirdparty.nma.model.NmaArchitectRegistration;
 import org.egov.noc.thirdparty.nma.model.NmaUser;
-import org.egov.noc.thirdparty.service.ThirdPartyNocService;
+import org.egov.noc.thirdparty.service.ThirdPartyNocPushService;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.web.model.UserSearchResponse;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
 
 @Slf4j
 @Service(NOCConstants.NMA_NOC_TYPE)
-public class NmaNocService implements ThirdPartyNocService {
+public class NmaNocService implements ThirdPartyNocPushService {
 
 	@Autowired
 	private NmaArchitectRegistrationService nmaService;
@@ -43,7 +38,7 @@ public class NmaNocService implements ThirdPartyNocService {
 	private ServiceRequestRepository serviceRequestRepository;
 
 	@Override
-	public String process(ThirdPartyNOCRequestInfoWrapper infoWrapper) {
+	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
 		String comments=null;
 		UserSearchResponse user = infoWrapper.getUserResponse();
 		NmaUser nmaUser = NmaUser.builder().architectEmailId(user.getEmailId())
