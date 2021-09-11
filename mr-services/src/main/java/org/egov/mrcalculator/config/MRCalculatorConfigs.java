@@ -45,6 +45,14 @@ public class MRCalculatorConfigs {
     //TaxHeads
     @Value("${egov.taxhead.basetax}")
     private String baseTaxHead;
+    
+    
+    @Value("${egov.taxhead.establishmentcost}")
+    private String establishmenCostTaxHead;
+    
+    @Value("${egov.taxhead.treasurycharge}")
+    private String treasuryChargeTaxHead;
+    
 
 
     //MDMS
