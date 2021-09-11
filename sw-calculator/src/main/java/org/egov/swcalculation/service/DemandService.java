@@ -511,12 +511,19 @@ public class DemandService {
 				.collect(Collectors.toMap(Demand::getId, Function.identity()));
 		List<Demand> demandsToBeUpdated = new LinkedList<>();
 		List<TaxPeriod> taxPeriods = masterDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), getBillCriteria.getTenantId(), SWCalculationConstant.SERVICE_FIELD_VALUE_SW);
+		long latestDemandPeriodFrom = res.getDemands().stream().filter(demand -> !(SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
+				.mapToLong(Demand::getTaxPeriodFrom).max().orElse(0);
+		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR,
 						SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR_MSG);
-			applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom) {
+				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			} else {
+				resetTimeBasedApplicablesForArear(demand);
+			}
 			addRoundOffTaxHead(getBillCriteria.getTenantId(), demand.getDemandDetails());
 			demandsToBeUpdated.add(demand);
 		});
@@ -524,6 +531,18 @@ public class DemandService {
 		repository.fetchResult(utils.getUpdateDemandUrl(), 
 				DemandRequest.builder().demands(demandsToBeUpdated).requestInfo(requestInfoWrapper.getRequestInfo()).build());
 		return res;
+	}
+	
+	private void resetTimeBasedApplicablesForArear(Demand demand) {
+		for (DemandDetail demandDetail : demand.getDemandDetails()) {
+			if(SWCalculationConstant.SW_TIME_REBATE.equals(demandDetail.getTaxHeadMasterCode())) {
+				demandDetail.setTaxAmount(BigDecimal.ZERO);
+			}
+
+			if(SWCalculationConstant.SW_TIME_PENALTY.equals(demandDetail.getTaxHeadMasterCode())) {
+				demandDetail.setTaxAmount(BigDecimal.ZERO);
+			}
+		}
 	}
 
 	
@@ -610,31 +629,25 @@ public class DemandService {
 
 		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
-		if (rebate.compareTo(BigDecimal.ZERO) != 0) {
-			latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_REBATE,
-					demand.getDemandDetails());
-			if (latestRebateDemandDetail != null) {
-				updateTaxAmount(rebate, latestRebateDemandDetail);
-				isRebateUpdated = true;
-			}
+		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_REBATE,
+				demand.getDemandDetails());
+		if (latestRebateDemandDetail != null) {
+			updateTaxAmount(rebate, latestRebateDemandDetail);
+			isRebateUpdated = true;
 		}
-		
-		if (interest.compareTo(BigDecimal.ZERO) != 0) {
-			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_INTEREST,
-					demand.getDemandDetails());
-			if (latestInterestDemandDetail != null) {
-				updateTaxAmount(interest, latestInterestDemandDetail);
-				isInterestUpdated = true;
-			}
+	
+		latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_INTEREST,
+				demand.getDemandDetails());
+		if (latestInterestDemandDetail != null) {
+			updateTaxAmount(interest, latestInterestDemandDetail);
+			isInterestUpdated = true;
 		}
 
-		if (penalty.compareTo(BigDecimal.ZERO) != 0) {
-			latestPenaltyDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_PENALTY,
-					demand.getDemandDetails());
-			if (latestPenaltyDemandDetail != null) {
-				updateTaxAmount(penalty, latestPenaltyDemandDetail);
-				isPenaltyUpdated = true;
-			}
+		latestPenaltyDemandDetail = utils.getLatestDemandDetailByTaxHead(SWCalculationConstant.SW_TIME_PENALTY,
+				demand.getDemandDetails());
+		if (latestPenaltyDemandDetail != null) {
+			updateTaxAmount(penalty, latestPenaltyDemandDetail);
+			isPenaltyUpdated = true;
 		}
 
 		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)

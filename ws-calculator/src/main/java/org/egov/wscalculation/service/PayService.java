@@ -147,6 +147,9 @@ public class PayService {
 		Integer year = Integer.valueOf(assessmentYear.split("-")[0]);
 		if (month < 3) year += 1;
 		cal.set(year, month, day);
+		cal.set(Calendar.HOUR, 23);
+		cal.set(Calendar.MINUTE, 59);
+		cal.set(Calendar.SECOND, 59);
 		
 	}
 

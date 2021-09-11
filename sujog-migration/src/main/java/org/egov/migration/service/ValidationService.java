@@ -128,10 +128,10 @@ public class ValidationService {
 				if (!violations.isEmpty()) {
 					errMessages = violations.stream().map(violation -> String.format("value: \"%s\" , Error: %s", violation.getInvalidValue(), violation.getMessage())).collect(Collectors.toList());
 				}
-				ValidateWaterConnection(connection, errMessages);
-				ValidateSewerageConnection(connection, errMessages);
-				validateMeterReading(connection, errMessages);
-				validateDemand(connection, errMessages);
+//				ValidateWaterConnection(connection, errMessages);
+//				ValidateSewerageConnection(connection, errMessages);
+//				validateMeterReading(connection, errMessages);
+//				validateDemand(connection, errMessages);
 			} else {
 				log.error("Connection: "+ connection.getConnectionNo() +" is not a valid record");
 				errMessages.add("Connection not Approved and Active");
@@ -218,6 +218,24 @@ public class ValidationService {
 					&& MigrationUtility.getAmount(demand.getWaterCharges()).compareTo(BigDecimal.ZERO) > 0) {
 				errMessages.add("Water facility have sewerage fee");
 			}
+		}
+	}
+
+	public boolean isValidArea(Property property) {
+		List<String> errors = new ArrayList<>();
+		if(property.getLandArea() != null && MigrationUtility.convertAreaToYard(property.getLandArea()).compareTo(new BigDecimal("83612735")) >= 0) {
+			errors.add(String.format("Value: %s, Land Area is too high we only accept till 83612735 Sq Mtr", property.getLandArea()));
+		}
+		
+		if(property.getBuildupArea() != null && MigrationUtility.convertAreaToYard(property.getBuildupArea()).compareTo(new BigDecimal("83612735")) >= 0) {
+			errors.add(String.format("Value: %s, Buildup Area is too high we only accept till 83612735 Sq Mtr", property.getBuildupArea()));
+		}
+		
+		if(errors.isEmpty()) {
+			return true;
+		} else {
+			MigrationUtility.addErrors(property.getPropertyId(), errors);
+			return false;
 		}
 	}
 }

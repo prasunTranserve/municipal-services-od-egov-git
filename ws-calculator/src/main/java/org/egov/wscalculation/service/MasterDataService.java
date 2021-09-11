@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,9 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
@@ -36,6 +34,9 @@ import org.egov.wscalculation.web.models.TaxPeriod;
 import org.egov.wscalculation.web.models.TaxPeriodResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -318,8 +319,10 @@ public class MasterDataService {
 			LocalDate today = LocalDate.now();
 			int month = today.getMonthValue();
 			int year = today.getYear();
-			date = new Date(year, month, Integer.parseInt(startDay));
-			return date.getTime();
+			Calendar cal = Calendar.getInstance();
+			cal.clear();
+			cal.set(year, month-1, Integer.parseInt(startDay));
+			return cal.getTimeInMillis();
 		}
 		return date.getTime();
 	}

@@ -17,15 +17,15 @@ import lombok.Setter;
 @Builder
 public class DemandDetail {
 	
-	@NotEmpty(message = "Cannot be blank/empty")
+//	@NotEmpty(message = "Cannot be blank/empty")
 	private String propertyId;
 	
 	private String ulb;
 	
-	@ValidTaxHead
+//	@ValidTaxHead
 	private String taxHead;
 	
-	@NotEmpty(message = "Cannot be blank/empty")
+//	@NotEmpty(message = "Cannot be blank/empty")
 	private String taxAmt;
 	
 	private String collectedAmt;

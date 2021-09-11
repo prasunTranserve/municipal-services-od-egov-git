@@ -3,7 +3,11 @@ package org.egov.migration.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +17,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xalan.xsltc.compiler.sym;
 import org.egov.migration.business.model.AssessmentDTO;
 import org.egov.migration.business.model.AssessmentResponse;
 import org.egov.migration.business.model.PropertyDTO;
@@ -21,6 +26,11 @@ import org.egov.migration.business.model.PropertyResponse;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.common.model.RequestInfo;
 import org.egov.migration.config.PropertiesData;
+import org.egov.migration.config.SystemProperties;
+import org.egov.migration.reader.model.Assessment;
+import org.egov.migration.reader.model.Demand;
+import org.egov.migration.reader.model.DemandDetail;
+import org.egov.migration.reader.model.Property;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +57,9 @@ public class PropertyService {
 
 	@Autowired
 	private PropertiesData properties;
+	
+	@Autowired
+	private SystemProperties mdProperties;
 
 	@Autowired
 	private RemoteService remoteService;
@@ -422,4 +435,104 @@ public class PropertyService {
 		
 	}
 
+	public void enrichDemandDetails(Property property) {
+		
+		if(property.getDemands() != null) {
+			property.getDemands().forEach(demand -> {
+				demand.setPaymentComplete(MigrationUtility.getPaymentComplete(demand.getPaymentComplete()));
+				if(demand.getTaxPeriodFrom() == null || !demand.getTaxPeriodFrom().matches(MigrationConst.TAX_PERIOD_PATTERN)) {
+					if(demand.getTaxPeriodTo() != null && demand.getTaxPeriodTo().matches(MigrationConst.TAX_PERIOD_PATTERN)) {
+						demand.setTaxPeriodFrom(demand.getTaxPeriodTo().split("/")[0].concat("/Q1"));
+					} else {
+						demand.setTaxPeriodFrom("1980-81/Q1");
+						demand.setTaxPeriodTo("1980-81/Q4");
+					}
+				}
+				
+				String startYear = demand.getTaxPeriodFrom().substring(0, 4);
+				if(Integer.parseInt(startYear) < 1980) {
+					demand.setTaxPeriodFrom("1980-81/Q1");
+					demand.setTaxPeriodTo("1980-81/Q4");
+				}
+			});
+		}
+		
+		if(property.getDemandDetails() != null) {
+			property.getDemandDetails().forEach(demandDtl -> {
+				if(demandDtl.getTaxHead() == null) {
+					demandDtl.setTaxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT);
+				}
+				
+				if(mdProperties.getTaxhead().get(demandDtl.getTaxHead()) == null) {
+					demandDtl.setTaxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT);
+				}
+				
+				demandDtl.setTaxAmt(MigrationUtility.getNearest(demandDtl.getTaxAmt(), "4"));
+			});
+		}
+		
+		if(property.getDemandDetails() == null && property.getDemands() == null) {
+			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
+					.propertyId(property.getPropertyId())
+					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
+					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.minPayableAmt("0")
+					.paymentComplete("N").build()));
+			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
+					.propertyId(property.getPropertyId())
+					.ulb(property.getUlb())
+					.taxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT)
+					.taxAmt("0").build()));
+		}
+		
+		if(property.getDemandDetails() == null && property.getDemands() != null) {
+			Double totalDemandAmt = property.getDemands().stream().mapToDouble(demand -> MigrationUtility.getDoubleAmount(demand.getMinPayableAmt())).sum();
+			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
+					.propertyId(property.getPropertyId())
+					.ulb(property.getUlb())
+					.taxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT)
+					.taxAmt(totalDemandAmt.toString()).build()));
+		}
+		
+		if(property.getDemandDetails() != null && property.getDemands() == null) {
+			Double totalDemandAmt = property.getDemandDetails().stream().mapToDouble(dtl -> MigrationUtility.getDoubleAmount(dtl.getTaxAmt())).sum();
+			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
+					.propertyId(property.getPropertyId())
+					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
+					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.minPayableAmt(totalDemandAmt.toString())
+					.paymentComplete("N").build()));
+		}
+		
+	}
+
+	public void enrichAssessment(Property property) {
+		if(property.getAssessments() == null) {
+			property.setAssessments(Arrays.asList(Assessment.builder()
+					.propertyId(property.getPropertyId())
+					.finYear(MigrationUtility.getFinYear())
+					.assessmentDate(MigrationUtility.getCurrentDate()).build()));
+		} else {
+			property.getAssessments().forEach(asmt -> {
+				asmt.setFinYear(MigrationUtility.getAssessmentFinYear(asmt.getFinYear()));
+			});
+		}
+	}
+
+	public void writeFileError(String filename) {
+		String filePath = properties.getPropertyErrorFileDirectory().concat(File.separator).concat("File_Not_Processed.txt");
+		try {
+			File file = new File(filePath);
+			if(!file.exists()) {
+				file.createNewFile();
+			}
+			
+			FileWriter fw = new FileWriter(filePath,true);
+		    fw.write(String.format("%s not processed. Tenant Id is not available for the file. Check the file name.\n", filename));
+		    fw.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
 }

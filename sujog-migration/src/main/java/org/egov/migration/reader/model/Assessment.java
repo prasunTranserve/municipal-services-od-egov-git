@@ -22,13 +22,13 @@ public class Assessment {
 	
 	private String assessmentNo;
 	
-	@NotEmpty(message = "Assessment financial year cannot be blank/empty")
-	@Pattern(regexp = "^\\d{4}-\\d{2}$", message = "Invalid assessment financial year ")
+	//@NotEmpty(message = "Assessment financial year cannot be blank/empty")
+	//@Pattern(regexp = "^\\d{4}-\\d{2}$", message = "Invalid assessment financial year ")
 	private String finYear;
 	
 	private String status;
 	
-	@NotEmpty(message = "Assessment date cannot be blank/empty")
+	//@NotEmpty(message = "Assessment date cannot be blank/empty")
 	private String assessmentDate;
 	
 	private String createdDate;

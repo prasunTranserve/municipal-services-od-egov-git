@@ -468,13 +468,19 @@ public class DemandService {
 		String tenantId = getBillCriteria.getTenantId();
 
 		List<TaxPeriod> taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), tenantId, WSCalculationConstant.SERVICE_FIELD_VALUE_WS);
+		long latestDemandPeriodFrom = res.getDemands().stream().filter(demand -> !(WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
+				.mapToLong(Demand::getTaxPeriodFrom).max().orElse(0);
 		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
 						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
-			applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom) {
+				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			} else {
+				resetTimeBasedApplicablesForArear(demand);
+			}
 			addRoundOffTaxHead(tenantId, demand.getDemandDetails());
 			demandsToBeUpdated.add(demand);
 		});
@@ -484,6 +490,18 @@ public class DemandService {
 		repository.fetchResult(utils.getUpdateDemandUrl(), request);
 		return res.getDemands();
 
+	}
+	
+	private void resetTimeBasedApplicablesForArear(Demand demand) {
+		for (DemandDetail demandDetail : demand.getDemandDetails()) {
+			if(WSCalculationConstant.WS_TIME_REBATE.equals(demandDetail.getTaxHeadMasterCode())) {
+				demandDetail.setTaxAmount(BigDecimal.ZERO);
+			}
+
+			if(WSCalculationConstant.WS_TIME_PENALTY.equals(demandDetail.getTaxHeadMasterCode())) {
+				demandDetail.setTaxAmount(BigDecimal.ZERO);
+			}
+		}
 	}
 
 	/**
@@ -617,31 +635,25 @@ public class DemandService {
 
 		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
-		if (rebate.compareTo(BigDecimal.ZERO) != 0) {
-			latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE,
-					demand.getDemandDetails());
-			if (latestRebateDemandDetail != null) {
-				updateTaxAmount(rebate, latestRebateDemandDetail);
-				isRebateUpdated = true;
-			}
+		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE,
+				demand.getDemandDetails());
+		if (latestRebateDemandDetail != null) {
+			updateTaxAmount(rebate, latestRebateDemandDetail);
+			isRebateUpdated = true;
 		}
-		
-		if (interest.compareTo(BigDecimal.ZERO) != 0) {
-			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_INTEREST,
-					details);
-			if (latestInterestDemandDetail != null) {
-				updateTaxAmount(interest, latestInterestDemandDetail);
-				isInterestUpdated = true;
-			}
+	
+		latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_INTEREST,
+				details);
+		if (latestInterestDemandDetail != null) {
+			updateTaxAmount(interest, latestInterestDemandDetail);
+			isInterestUpdated = true;
 		}
 
-		if (penalty.compareTo(BigDecimal.ZERO) != 0) {
-			latestPenaltyDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_PENALTY,
-					details);
-			if (latestPenaltyDemandDetail != null) {
-				updateTaxAmount(penalty, latestPenaltyDemandDetail);
-				isPenaltyUpdated = true;
-			}
+		latestPenaltyDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_PENALTY,
+				details);
+		if (latestPenaltyDemandDetail != null) {
+			updateTaxAmount(penalty, latestPenaltyDemandDetail);
+			isPenaltyUpdated = true;
 		}
 		
 		if (!isRebateUpdated && rebate.compareTo(BigDecimal.ZERO) > 0)

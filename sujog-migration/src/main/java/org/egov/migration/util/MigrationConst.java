@@ -144,8 +144,13 @@ public class MigrationConst {
 	public static final String APPLICATION_APPROVED = "Application Approved";
 	public static final String STATUS_ACTIVE = "Active";
 	
+	public static final String TAXHEAD_HOLDING_TAX_INPUT = "Holding Tax";
+	public static final String TAXHEAD_HOLDING_TAX = "PT_HOLDING_TAX";
 	
 	public static final String OWNER_NAME_PATTERN = "^[^\\\\$\\\"'<>?\\\\\\\\~`!@#$%^()+={}\\\\[\\\\]*,:;“”‘’]*$";
+	
+	public static final String TAX_PERIOD_PATTERN = "\\d{4}-\\d{2}/Q\\d{1}";
+	
 
 	
 }

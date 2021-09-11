@@ -22,7 +22,7 @@ import lombok.Setter;
 @Builder
 public class Property {
 	
-	@NotEmpty(message = "Property id cannot be blank/empty")
+//	@NotEmpty(message = "Property id cannot be blank/empty")
 	private String propertyId;
 	
 	@ValidTenant
@@ -32,31 +32,31 @@ public class Property {
 	
 	private String propertyType;
 	
-	@NotEmpty(message = "OwnershipCategory can not be blank/empty")
+//	@NotEmpty(message = "OwnershipCategory can not be blank/empty")
 	private String ownershipCategory;
 	
-	@NotEmpty(message = "UsageCategory can not be blank/empty")
+//	@NotEmpty(message = "UsageCategory can not be blank/empty")
 	private String usageCategory;
 	
 	private String floorNo;
 	
-	@NotEmpty
-	@Pattern(regexp = "((\\d+)(((\\.)(\\d+)){0,1}))", message = "Land area is either not a number or not in valid format")
+//	@NotEmpty
+//	@Pattern(regexp = "((\\d+)(((\\.)(\\d+)){0,1}))", message = "Land area is either not a number or not in valid format")
 	private String landArea;
 	
 	private String landAreaUnit;
 	
-	@Pattern(regexp = "((\\d+)(((\\.)(\\d+)){0,1}))", message = "Super buildup area is either not a number or not in valid format")
+//	@Pattern(regexp = "((\\d+)(((\\.)(\\d+)){0,1}))", message = "Super buildup area is either not a number or not in valid format")
 	private String buildupArea;
 	
 	private String buildupAreaUnit;
 	
-	@NotEmpty(message = "CreatedDate cannot be blank/empty")
+//	@NotEmpty(message = "CreatedDate cannot be blank/empty")
 	private String createdDate;
 	
 	private String additionalDetails;
 	
-	@NotEmpty(message = "Owner detail is missing")
+//	@NotEmpty(message = "Owner detail is missing")
 	private List<@Valid Owner> owners;
 	
 	@NotNull(message = "Address detail is missing")
@@ -65,13 +65,13 @@ public class Property {
 	
 	private List<@Valid PropertyUnit> unit;
 	
-	@NotEmpty(message = "Assessment detail missing")
+//	@NotEmpty(message = "Assessment detail missing")
 	private List<@Valid Assessment> assessments;
 	
-	@NotEmpty(message = "Demand is missing")
+//	@NotEmpty(message = "Demand is missing")
 	private List<@Valid Demand> demands;
 	
-	@NotEmpty(message = "Demand breakup missing")
+//	@NotEmpty(message = "Demand breakup missing")
 	private List<@Valid DemandDetail> demandDetails;
 	
 }

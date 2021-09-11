@@ -19,20 +19,22 @@ public class WnsMeterReading {
 	private String ulb;
 	private String connectionNo;
 	
-	@NotEmpty(message = "Connection Facility cannot be empty/blank")
+//	@NotEmpty(message = "Connection Facility cannot be empty/blank")
 	private String connectionFacility;
 	
-	@NotEmpty(message = "Billing period cannot be empty/blank")
+//	@NotEmpty(message = "Billing period cannot be empty/blank")
 	private String billingPeriod;
 	
 	private String meterStatus;
 	private String previousReading;
 	private String previousReadingDate;
 	
-	@NotEmpty(message = "Current Reading cannot be empty/blank")
-	@Pattern(regexp = "\\d+", message = "Current Reading not a numeric")
+//	@NotEmpty(message = "Current Reading cannot be empty/blank")
+//	@Pattern(regexp = "\\d+", message = "Current Reading not a numeric")
 	private String currentReading;
 	
-	@NotEmpty(message = "Current Reading Date cannot be empty/blank")
+//	@NotEmpty(message = "Current Reading Date cannot be empty/blank")
 	private String currentReadingDate;
+	
+	private String createdDate;
 }

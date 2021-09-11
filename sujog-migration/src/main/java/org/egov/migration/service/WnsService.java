@@ -3,6 +3,7 @@ package org.egov.migration.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -538,6 +539,23 @@ public class WnsService {
 			e.printStackTrace();
 		}
 
+	}
+	
+
+	public void writeFileError(String filename) {
+		String filePath = properties.getWnsErrorFileDirectory().concat(File.separator).concat("File_Not_Processed.txt");
+		try {
+			File file = new File(filePath);
+			if(!file.exists()) {
+				file.createNewFile();
+			}
+			
+			FileWriter fw = new FileWriter(filePath,true);
+		    fw.write(String.format("%s not processed. Tenant Id is not available for the file. Check the file name.\n", filename));
+		    fw.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 
 

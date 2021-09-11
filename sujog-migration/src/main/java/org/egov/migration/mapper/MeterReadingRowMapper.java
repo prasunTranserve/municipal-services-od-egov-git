@@ -24,6 +24,7 @@ public class MeterReadingRowMapper {
 		meterReading.setPreviousReadingDate(columnMap.get(MigrationConst.COL_PREVIOUS_READING_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PREVIOUS_READING_DATE)), false));
 		meterReading.setCurrentReading(columnMap.get(MigrationConst.COL_CURRENT_READING)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CURRENT_READING)), false));
 		meterReading.setCurrentReadingDate(columnMap.get(MigrationConst.COL_CURRENT_READING_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CURRENT_READING_DATE)), false));
+		meterReading.setCreatedDate(columnMap.get(MigrationConst.COL_CREATED_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CREATED_DATE)), false));
 
 		return meterReading;
 	}

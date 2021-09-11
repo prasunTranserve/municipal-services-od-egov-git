@@ -29,14 +29,14 @@ public class WnsMigrationJobExecutionListner implements JobExecutionListener {
 		String startTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd hh:mm:ss"));
 		recordStatistic.setStartTime(startTime);
 		
-		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddhhmmss"));
+		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_hh-mm-ss"));
 		
 		String errorDirectory = properties.getWnsErrorFileDirectory();
 		String successDirectory = properties.getWnsSuccessFileDirectory();
 		
 		String inputFile = jobExecution.getJobParameters().getString("fileName");
-		String errorFile = errorDirectory.concat(File.separator).concat(timestamp).concat(inputFile.replace(".", "_Error."));
-		String successFile = successDirectory.concat(File.separator).concat(timestamp).concat(inputFile.replace(".", "_success."));
+		String errorFile = errorDirectory.concat(File.separator).concat(inputFile.replace(".", "_error.")).replace(".", "_".concat(timestamp).concat("."));
+		String successFile = successDirectory.concat(File.separator).concat(inputFile.replace(".", "_success.")).replace(".", "_".concat(timestamp).concat("."));
 		
 		recordStatistic.setSuccessFile(successFile);
 		recordStatistic.setErrorFile(errorFile);

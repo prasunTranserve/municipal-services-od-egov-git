@@ -28,7 +28,7 @@ public class PropertyUnit {
 	private String unitType;
 
 	@JsonProperty("usageCategory")
-	@NotEmpty(message = "Unit usage Category should not be empty/blank")
+//	@NotEmpty(message = "Unit usage Category should not be empty/blank")
 	private String usageCategory;
 
 	@JsonProperty("occupancyType")
@@ -43,19 +43,19 @@ public class PropertyUnit {
 	@JsonProperty("carpetArea")
 	private String carpetArea;
 
-	@Digits(integer = 8, fraction = 2)
+//	@Digits(integer = 8, fraction = 2)
 	@JsonProperty("builtUpArea")
 	private String builtUpArea;
 
-	@Digits(integer = 8, fraction = 2)
+//	@Digits(integer = 8, fraction = 2)
 	@JsonProperty("plinthArea")
 	private String plinthArea;
 
-	@Digits(integer = 8, fraction = 2)
+//	@Digits(integer = 8, fraction = 2)
 	@JsonProperty("superBuiltUpArea")
 	private String superBuiltUpArea;
 
-	@Digits(integer = 8, fraction = 2)
+//	@Digits(integer = 8, fraction = 2)
 	@JsonProperty("arv")
 	private String arv;
 

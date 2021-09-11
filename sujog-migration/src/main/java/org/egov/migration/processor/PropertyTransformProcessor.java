@@ -2,6 +2,7 @@ package org.egov.migration.processor;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.egov.migration.reader.model.Address;
 import org.egov.migration.reader.model.Assessment;
 import org.egov.migration.reader.model.DemandDetail;
 import org.egov.migration.reader.model.Property;
+import org.egov.migration.service.PropertyService;
 import org.egov.migration.service.ValidationService;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
@@ -45,10 +47,18 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	
 	@Autowired
 	private ValidationService validationService;
+	
+	@Autowired
+	private PropertyService propertyService;
 
 	@Override
 	public PropertyDetailDTO process(Property property) throws Exception {
-		if(validationService.isValidProperty(property)) {
+		if(validationService.isValidArea(property)) {
+			try {
+				enrichProperty(property);
+			} catch (Exception e) {
+				MigrationUtility.addError(property.getPropertyId(), e.getMessage());
+			}
 			return transformProperty(property);
 		}
 		return null;
@@ -76,7 +86,17 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 		
 	}
 
+	private void enrichProperty(Property property) {
+		MigrationUtility.correctOwner(property);
+		propertyService.enrichAssessment(property);
+		propertyService.enrichDemandDetails(property);
+		
+	}
+
 	private void transformUnit(PropertyDTO propertyDTO, Property property) {
+		if(property.getUnit() == null) {
+			return;
+		}
 		propertyDTO.setUnits(property.getUnit().stream().map(unit -> {
 			UnitDTO unitDTO = new UnitDTO();
 			unitDTO.setFloorNo(MigrationUtility.getFloorNo(unit.getFloorNo()));
@@ -167,7 +187,6 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	}
 
 	private List<DemandDTO> transformDemand(Property property) {
-		
 		Map<String, Map<String, BigDecimal>> finYearConsolidateAmount = new HashMap<>();
 		
 		property.getDemands().stream().forEach(demand -> {
@@ -195,13 +214,21 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 			}
 		});
 		
+		BigDecimal totalDemandDtlAmt = BigDecimal.valueOf(property.getDemandDetails().stream().mapToDouble(dtl -> Double.parseDouble(dtl.getTaxAmt())).sum());
 		
 		return finYearConsolidateAmount.keySet().stream().map(finYear -> {
 			BigDecimal collectedAmt = finYearConsolidateAmount.get(finYear).get(MigrationConst.AMT_COLLECTED)==null?BigDecimal.ZERO:finYearConsolidateAmount.get(finYear).get(MigrationConst.AMT_COLLECTED);
+			BigDecimal dueAmt = finYearConsolidateAmount.get(finYear).get(MigrationConst.AMT_DUE)==null?BigDecimal.ZERO:finYearConsolidateAmount.get(finYear).get(MigrationConst.AMT_DUE);
+			
 			DemandDTO demandDTO = new DemandDTO();
 			demandDTO.setTaxPeriodFrom(MigrationUtility.getTaxPeriodFrom(finYear));
 			demandDTO.setTaxPeriodTo(MigrationUtility.getTaxPeriodTo(finYear));
-			demandDTO.setDemandDetails(transformDemandDetail(property.getDemandDetails(), collectedAmt));
+			if(collectedAmt.add(dueAmt).compareTo(totalDemandDtlAmt) != 0) {
+				demandDTO.setDemandDetails(Arrays.asList(DemandDetailDTO.builder().taxHeadMasterCode(MigrationConst.TAXHEAD_HOLDING_TAX)
+						.taxAmount(collectedAmt.add(dueAmt)).collectionAmount(collectedAmt).build()));
+			} else {
+				demandDTO.setDemandDetails(transformDemandDetail(property.getDemandDetails(), collectedAmt));
+			}
 			
 			return demandDTO;
 		}).collect(Collectors.toList());
