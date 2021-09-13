@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.ConnectionHolderDTO;
 import org.egov.migration.business.model.DemandDTO;
@@ -15,6 +17,7 @@ import org.egov.migration.business.model.MeterReadingDTO;
 import org.egov.migration.business.model.SewerageConnectionDTO;
 import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.config.SystemProperties;
+import org.egov.migration.reader.model.Owner;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
 import org.egov.migration.reader.model.WnsConnectionService;
@@ -162,7 +165,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	private Object transformAdditional(WnsConnection connection) {
 		ObjectNode additionalDetails = JsonNodeFactory.instance.objectNode();
 		additionalDetails.put("locality", this.localityCode);
-		additionalDetails.put("ward", connection.getWard());
+		additionalDetails.put("ward", MigrationUtility.getWard(connection.getWard()));
 		return additionalDetails;
 	}
 	
@@ -184,19 +187,38 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		ConnectionHolderDTO connectionHolder = new ConnectionHolderDTO();
 		if(holder == null) {
 			connectionHolder.setName(connection.getConnectionNo());
+			connectionHolder.setGender("MALE");
+			connectionHolder.setFatherOrHusbandName("Other");
+			connectionHolder.setRelationship("FATHER");
 			connectionHolder.setOwnerType("NONE");
+			connectionHolder.setCorrespondenceAddress("Other");
 		} else {
 			connectionHolder.setSalutation(MigrationUtility.getSalutation(holder.getSalutation()));
 			connectionHolder.setName(MigrationUtility.prepareName(connection.getConnectionNo(), holder.getHolderName()));
 			connectionHolder.setMobileNumber(MigrationUtility.processMobile(holder.getMobile()));
-			connectionHolder.setGender(MigrationUtility.getGender(holder.getGender()));
-			connectionHolder.setFatherOrHusbandName(holder.getGuardian());
-			connectionHolder.setRelationship(holder.getGuardianRelation());
-			connectionHolder.setCorrespondenceAddress(holder.getHolderAddress());
+			connectionHolder.setGender(prepareGender(holder));
+			connectionHolder.setFatherOrHusbandName(MigrationUtility.getGuardian(holder.getGuardian()));
+			connectionHolder.setRelationship(MigrationUtility.getRelationship(holder.getGuardianRelation()));
+			connectionHolder.setCorrespondenceAddress(MigrationUtility.getAddress(holder.getHolderAddress()));
 			connectionHolder.setOwnerType("NONE");
 		}
 		
 		return Arrays.asList(connectionHolder);
+	}
+	
+	private static String prepareGender(WnsConnectionHolder holder) {
+		String gender = "Male";
+		if(holder.getGender()==null) {
+			if(holder.getSalutation() != null && 
+					(holder.getSalutation().equalsIgnoreCase("M/S")
+							|| holder.getSalutation().equalsIgnoreCase("Miss")
+							|| holder.getSalutation().equalsIgnoreCase("Mrs"))) {
+				gender="Female";
+			}
+		} else {
+			gender = MigrationUtility.getGender(holder.getGender());
+		}
+		return gender;
 	}
 
 	private void transformMeterReading(ConnectionDTO connectionDTO, WnsConnection connection) {

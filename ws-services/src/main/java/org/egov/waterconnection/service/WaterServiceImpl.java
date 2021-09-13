@@ -107,10 +107,10 @@ public class WaterServiceImpl implements WaterService {
 		mDMSValidator.validateMasterForCreateRequest(waterConnectionRequest);
 		enrichmentService.enrichWaterConnection(waterConnectionRequest, reqType);
 		userService.createUser(waterConnectionRequest);
+		waterDao.saveWaterConnection(waterConnectionRequest);
 		// call work-flow
 		if (config.getIsExternalWorkFlowEnabled())
-			wfIntegrator.callWorkFlow(waterConnectionRequest, property);
-		waterDao.saveWaterConnection(waterConnectionRequest);
+			wfIntegrator.callWorkFlow(waterConnectionRequest, property);		
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
@@ -287,6 +287,10 @@ public class WaterServiceImpl implements WaterService {
 		Property property = Property.builder().tenantId(waterConnectionRequest.getWaterConnection().getTenantId())
 				.build();
 		String previousApplicationStatus = getApplicationStatus(waterConnectionRequest);
+		if(previousApplicationStatus==null) {
+			previousApplicationStatus = searchResult.getApplicationStatus();
+		}
+		
 		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
 		actionValidator.validateUpdateRequest(waterConnectionRequest, businessService, previousApplicationStatus);
 		userService.updateUser(waterConnectionRequest, searchResult);

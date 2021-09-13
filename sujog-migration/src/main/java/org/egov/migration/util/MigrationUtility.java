@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.validation.Valid;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -51,6 +52,7 @@ public class MigrationUtility {
 	RecordStatistic recordStatistic;
 
 	public static final BigDecimal sqmtrToSqyard = BigDecimal.valueOf(1.196);
+	public static final BigDecimal sqftToSqyard = BigDecimal.valueOf(9);
 	
 	public static final BigDecimal maxDigitSupportedArea = BigDecimal.valueOf(99999999);
 
@@ -155,9 +157,12 @@ public class MigrationUtility {
 		if (area == null)
 			return BigDecimal.ONE;
 		convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
-//		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
-//			convertedArea = maxDigitSupportedArea;
-//		}
+		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
+			convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).divide(sqftToSqyard, 2, RoundingMode.UP);
+			if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
+				convertedArea = maxDigitSupportedArea;
+			}
+		}
 		return convertedArea;
 	}
 
@@ -198,7 +203,7 @@ public class MigrationUtility {
 
 	public static String getGender(String gender) {
 		if (gender == null) {
-			return null;
+			return "Male";
 		}
 
 		if (gender.equalsIgnoreCase("MALE") || gender.equalsIgnoreCase("M")) {
@@ -206,7 +211,7 @@ public class MigrationUtility {
 		} else if (gender.equalsIgnoreCase("FEMALE") || gender.equalsIgnoreCase("F")) {
 			return "Female";
 		} else
-			return null;
+			return "Male";
 	}
 
 	public static String getCorrespondanceAddress(Address address) {
@@ -298,11 +303,11 @@ public class MigrationUtility {
 
 	public static Long getFloorNo(String floorNo) {
 		if (floorNo == null) {
-			return null;
+			return 1L;
 		} else if (floorNo.matches(digitRegex)) {
 			return Long.parseLong(floorNo);
 		} else {
-			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().replace(" ", "_"));
+			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().toLowerCase().replace(" ", "_"));
 		}
 	}
 
@@ -347,7 +352,7 @@ public class MigrationUtility {
 
 	public static String getConnectionCategory(String connectionCategory) {
 		if (connectionCategory == null)
-			return null;
+			return "PERMANENT";
 		return connectionCategory.trim().toUpperCase();
 	}
 
@@ -359,6 +364,8 @@ public class MigrationUtility {
 	}
 
 	public static String getWaterSource(String waterSource) {
+		if(waterSource == null)
+			return "GROUND.BOREWELL";
 		return waterSource;
 	}
 
@@ -606,6 +613,9 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionUsageCategory(String usageCategory) {
+		if(usageCategory == null) {
+			return "DOMESTIC";
+		}
 		usageCategory = usageCategory.trim();
 		if(usageCategory.equalsIgnoreCase("Apartment")) {
 			return "DOMESTIC";
@@ -625,12 +635,33 @@ public class MigrationUtility {
 
 	public static void correctOwner(Property property) {
 		if(property.getOwners() == null) {
-			property.setOwners(Arrays.asList(Owner.builder().ownerName(property.getPropertyId()).build()));
+			property.setOwners(Arrays.asList(Owner.builder().ownerName(property.getPropertyId())
+					.gurdianName("Other").relationship("FATHER")
+					.ownerType(MigrationConst.DEFAULT_OWNER_TYPE)
+					.gender("MALE").build()));
 		} else {
 			property.getOwners().forEach(owner -> {
 				owner.setOwnerName(prepareName(property.getPropertyId(), owner.getOwnerName()));
+				owner.setGender(prepareGender(owner));
+				owner.setRelationship(owner.getRelationship()==null? "FATHER" : owner.getRelationship());
+				owner.setGurdianName(prepareName("Other", owner.getGurdianName()));
 			});
 		}
+	}
+
+	private static String prepareGender(@Valid Owner owner) {
+		String gender = "MALE";
+		if(owner.getGender()==null) {
+			if(owner.getSalutation() != null && 
+					(owner.getSalutation().equalsIgnoreCase("M/S")
+							|| owner.getSalutation().equalsIgnoreCase("Miss")
+							|| owner.getSalutation().equalsIgnoreCase("Mrs"))) {
+				gender="FEMALE";
+			}
+		} else {
+			gender = owner.getGender();
+		}
+		return gender;
 	}
 
 	public static String prepareName(String key, String ownerName) {
@@ -718,6 +749,52 @@ public class MigrationUtility {
 		LocalDate lastDate = billingMonth.withDayOfMonth(billingMonth.lengthOfMonth());
 
 		return firstDate.format(toFormatter).concat("-").concat(lastDate.format(toFormatter));
+	}
+
+	public static String getGuardian(String guardian) {
+		if(guardian == null) {
+			return "Other";
+		}
+		return prepareName(guardian, guardian);
+	}
+
+	public static String getRelationship(String guardianRelation) {
+		if(guardianRelation == null) {
+			return "FATHER";
+		}
+		return guardianRelation;
+	}
+
+	public static String getAddress(String holderAddress) {
+		if(holderAddress == null) {
+			return "Other";
+		}
+		return holderAddress;
+	}
+
+	public static String getDoorNo(String doorNo) {
+		if(doorNo == null)
+			return "1";
+		return doorNo;
+	}
+
+	public static String getPIN(String pin) {
+		if(pin == null)
+			return "111111";
+		return pin;
+	}
+
+	public static String getWard(String ward) {
+		if(ward == null) {
+			return "01";
+		}
+		if(!ward.matches(digitRegex)) {
+			return "01";
+		}
+		if(Integer.parseInt(ward) > 69) {
+			return "01";
+		}
+		return ward;
 	}
 	
 }
