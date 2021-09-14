@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -147,7 +148,21 @@ public class PropertyService {
 		if (CreationReason.CREATE.equals(request.getProperty().getCreationReason())) {
 			userService.createUser(request);
 		} else {
-			request.getProperty().setOwners(util.getCopyOfOwners(propertyFromSearch.getOwners()));
+			//request.getProperty().setOwners(util.getCopyOfOwners(propertyFromSearch.getOwners()));
+			List<OwnerInfo> owners = util.getCopyOfOwners(propertyFromSearch.getOwners());
+			owners.forEach(owner -> {
+				Optional<OwnerInfo> ownerInfoOpt = request.getProperty().getOwners().stream().filter(reqOwner -> owner.getUuid().equals(reqOwner.getUuid())).findFirst();
+				if(ownerInfoOpt.isPresent()) {
+					owner.setGender(ownerInfoOpt.get().getGender());
+					owner.setFatherOrHusbandName(ownerInfoOpt.get().getFatherOrHusbandName());
+					owner.setRelationship(ownerInfoOpt.get().getRelationship());
+					owner.setOwnerType(ownerInfoOpt.get().getOwnerType());
+					owner.setPermanentAddress(ownerInfoOpt.get().getPermanentAddress());
+					owner.setEmailId(ownerInfoOpt.get().getEmailId());
+				}
+			});
+			request.getProperty().setOwners(owners);
+			userService.createUser(request);
 		}
 
 
