@@ -107,10 +107,10 @@ public class WaterServiceImpl implements WaterService {
 		mDMSValidator.validateMasterForCreateRequest(waterConnectionRequest);
 		enrichmentService.enrichWaterConnection(waterConnectionRequest, reqType);
 		userService.createUser(waterConnectionRequest);
-		waterDao.saveWaterConnection(waterConnectionRequest);
 		// call work-flow
 		if (config.getIsExternalWorkFlowEnabled())
-			wfIntegrator.callWorkFlow(waterConnectionRequest, property);		
+			wfIntegrator.callWorkFlow(waterConnectionRequest, property);
+		waterDao.saveWaterConnection(waterConnectionRequest);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
