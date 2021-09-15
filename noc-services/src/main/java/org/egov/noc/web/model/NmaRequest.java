@@ -23,17 +23,7 @@ import lombok.ToString;
 @ToString
 public class NmaRequest {
 	
-	@JsonProperty("ApplicationUniqueNumebr")
-	private String applicationUniqueNumebr;
-	
-	@JsonProperty("Comment")
-	private String comment;
-	
-	@JsonProperty("Action")
-	private String action;
-	
-	@JsonProperty("Documents")
-	private List<Document> documents;
-	
+	@JsonProperty("applicationStatus")
+	private List<NmaApplicationStatus> applicationStatus;
 
 }

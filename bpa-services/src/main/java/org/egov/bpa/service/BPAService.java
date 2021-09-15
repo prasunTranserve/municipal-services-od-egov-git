@@ -134,13 +134,14 @@ public class BPAService {
 		//enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
 		enrichmentService.enrichBPACreateRequestV2(bpaRequest, mdmsData, values, edcr);			
 		wfIntegrator.callWorkFlow(bpaRequest);
-		nocService.createNocRequest(bpaRequest, mdmsData);
+		nocService.createNocRequest(bpaRequest, mdmsData,edcrService.getEdcrSuggestedRequiredNocs(edcr));
 		// this.addCalculation(applicationType, bpaRequest);
 		calculationService.addCalculationV2(bpaRequest, BPAConstants.APPLICATION_FEE_KEY, applicationType, serviceType);
 		repository.save(bpaRequest);
 		return bpaRequest.getBPA();
 	}
 
+	
 	/**
 	 * applies the required vlaidation for OC on Create
 	 * 

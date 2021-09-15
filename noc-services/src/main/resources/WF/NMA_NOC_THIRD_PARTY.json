@@ -8,29 +8,26 @@
         "requesterId": "",
         "ts": 1513579888683,
         "ver": ".01",
-        "authToken": "80c8bcee-3442-4128-8a04-1f8ee40f7486"
+        "authToken": "bbd8f1a1-37b8-46ec-bd3d-cefc4d590d25"
     },
     "BusinessServices": [
-	{
-            
-            "businessService": "HBDA_NOC_OFFLINE",
+        {
+            "businessService": "NMA_NOC_THIRD_PARTY",
             "business": "noc-services",
-            "businessServiceSla": 5184000000,
             "tenantId": "od",
+            "businessServiceSla": 5184000000,
             "states": [
                 {
-                   
                     "sla": null,
                     "state": null,
-                    "tenantId": "od",
                     "applicationStatus": "INITIATED",
                     "docUploadRequired": false,
                     "isStartState": true,
+                    "tenantId": "od",
                     "isTerminateState": false,
                     "isStateUpdatable": true,
                     "actions": [
                         {
-                            
                             "currentState": "null",
                             "action": "INITIATE",
                             "tenantId": "od",
@@ -43,10 +40,31 @@
                     ]
                 },
                 {
-                    
                     "sla": null,
                     "state": "INITIATED",
                     "applicationStatus": "INPROGRESS",
+                    "docUploadRequired": false,
+                    "isStartState": true,
+                    "tenantId": "od",
+                    "isTerminateState": false,
+                    "isStateUpdatable": true,
+                    "actions": [
+                        {
+                            "currentState": "null",
+                            "action": "SUBMIT",
+                            "tenantId": "od",
+                            "nextState": "SUBMITED",
+                            "roles": [
+                                "CITIZEN",
+                                "BPA_ARCHITECT"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "sla": null,
+                    "state": "SUBMITED",
+                    "applicationStatus": "SUBMITED",
                     "docUploadRequired": false,
                     "tenantId": "od",
                     "isStartState": false,
@@ -54,21 +72,26 @@
                     "isStateUpdatable": false,
                     "actions": [
                         {
-                           
                             "currentState": "INITIATED",
-                            "action": "AUTO_APPROVE",
                             "tenantId": "od",
-                            "nextState": "AUTO_APPROVED",
+                            "action": "REJECT",
+                            "nextState": "REJECTED",
                             "roles": [
-                                "BPA_VERIFIER",
-                                "BPA_FIELD_INSPECTOR",
-                                "BPA_NOC_VERIFIER",
-                                "BPA_APPROVER",
-								"EMPLOYEE"
+                                "BPA_NMA_NOC_APPROVER",
+								"SYSTEM"
                             ]
                         },
                         {
-                            
+                            "currentState": "INITIATED",
+                            "tenantId": "od",
+                            "action": "APPROVE",
+                            "nextState": "APPROVED",
+                            "roles": [
+                                "BPA_NMA_NOC_APPROVER",
+								"SYSTEM"
+                            ]
+                        },
+                        {
                             "currentState": "INITIATED",
                             "action": "VOID",
                             "tenantId": "od",
@@ -77,31 +100,50 @@
                                 "BPA_VERIFIER",
                                 "BPA_FIELD_INSPECTOR",
                                 "BPA_NOC_VERIFIER",
-                                "BPA_APPROVER",
-								"EMPLOYEE"
+                                "BPA_NMA_NOC_APPROVER",
+								"SYSTEM"
+                            ]
+                        },
+						{
+                            "currentState": "null",
+                            "action": "SUBMIT",
+                            "tenantId": "od",
+                            "nextState": "SUBMITED",
+                            "roles": [
+                               "BPA_NMA_NOC_APPROVER",
+							   "SYSTEM"
                             ]
                         }
                     ]
                 },
                 {
-                   
                     "sla": null,
-                    "state": "VOIDED",
-                    "applicationStatus": "VOIDED",
-                    "docUploadRequired": false,
+                    "state": "REJECTED",
                     "tenantId": "od",
+                    "applicationStatus": "REJECTED",
+                    "docUploadRequired": false,
                     "isStartState": false,
                     "isTerminateState": true,
                     "isStateUpdatable": false,
                     "actions": null
                 },
                 {
-                    
                     "sla": null,
-                    "state": "AUTO_APPROVED",
-                    "applicationStatus": "AUTO_APPROVED",
-                    "docUploadRequired": false,
+                    "state": "APPROVED",
                     "tenantId": "od",
+                    "applicationStatus": "APPROVED",
+                    "docUploadRequired": false,
+                    "isStartState": false,
+                    "isTerminateState": true,
+                    "isStateUpdatable": false,
+                    "actions": null
+                },
+                {
+                    "sla": null,
+                    "state": "VOIDED",
+                    "tenantId": "od",
+                    "applicationStatus": "VOIDED",
+                    "docUploadRequired": false,
                     "isStartState": false,
                     "isTerminateState": true,
                     "isStateUpdatable": false,

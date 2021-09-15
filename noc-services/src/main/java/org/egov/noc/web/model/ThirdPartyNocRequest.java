@@ -20,7 +20,7 @@ public class ThirdPartyNocRequest   {
 	  @JsonProperty("RequestInfo")
 	  private RequestInfo requestInfo = null;
 
-	  @JsonProperty("Nma")
+	  @JsonProperty("NMA")
 	  private NmaRequest nmaRequest = null;
 
 	  public ThirdPartyNocRequest requestInfo(RequestInfo requestInfo) {
