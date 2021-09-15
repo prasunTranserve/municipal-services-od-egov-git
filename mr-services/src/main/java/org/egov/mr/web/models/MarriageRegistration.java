@@ -7,9 +7,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.egov.mr.util.MRConstants;
 import org.egov.mrcalculator.web.models.Calculation;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,6 +40,38 @@ public class MarriageRegistration {
     @Size(max=64)
     @JsonProperty("accountId")
     private String accountId = null;
+    
+    public enum ApplicationTypeEnum {
+        NEW(MRConstants.APPLICATION_TYPE_NEW),
+
+        CORRECTION(MRConstants.APPLICATION_TYPE_CORRECTION);
+
+        private String value;
+
+        ApplicationTypeEnum(String value) {
+            this.value = value;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return String.valueOf(value);
+        }
+
+        @JsonCreator
+        public static ApplicationTypeEnum fromValue(String text) {
+            for (ApplicationTypeEnum b : ApplicationTypeEnum.values()) {
+                if (String.valueOf(b.value).equals(text)) {
+                    return b;
+                }
+            }
+            return null;
+        }
+    }
+    
+  //  @NotNull(message = "applicationType is mandatory ")
+    @JsonProperty("applicationType")
+    private ApplicationTypeEnum applicationType = null;
     
     @JsonProperty("businessService")
     private String businessService = "MR";

@@ -36,6 +36,9 @@ public class MarriageRegistrationSearchCriteria {
 
     @JsonIgnore
     private String accountId;
+    
+    @JsonProperty("applicationType")
+    private String applicationType;
 
 
     @JsonProperty("fromDate")
@@ -57,15 +60,15 @@ public class MarriageRegistrationSearchCriteria {
 
 
     public boolean isEmpty() {
-        return (this.tenantId == null && this.status == null  && this.ids == null && this.applicationNumber == null
-                 && this.mobileNumber == null &&
+        return (this.tenantId == null && this.status == null  && this.applicationType == null && this.ids == null && this.applicationNumber == null
+        		&& this.mrNumbers == null &&  this.mobileNumber == null &&
                 this.fromDate == null && this.toDate == null 
         );
     }
 
     public boolean tenantIdOnly() {
-        return (this.tenantId != null && this.status == null && this.ids == null && this.applicationNumber == null
-                 && this.mobileNumber == null &&
+        return (this.tenantId != null && this.status == null && this.ids == null  && this.applicationType == null && this.applicationNumber == null
+        		&& this.mrNumbers == null && this.mobileNumber == null &&
                 this.fromDate == null && this.toDate == null 
         );
     }

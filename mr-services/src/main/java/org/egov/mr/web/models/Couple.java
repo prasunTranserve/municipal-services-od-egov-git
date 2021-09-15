@@ -2,9 +2,10 @@ package org.egov.mr.web.models;
 
 import java.util.List;
 
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-
+import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Validated
 @Getter
 @Setter
 @AllArgsConstructor
@@ -42,16 +44,7 @@ public class Couple {
     @Size(max=64)
     @JsonProperty("firstName")
     private String firstName;
-    
-    @Size(max=64)
-    @JsonProperty("middleName")
-    private String middleName;
-    
-    @Size(max=64)
-    @JsonProperty("lastName")
-    private String lastName;
-    
-    
+       
     @JsonProperty("dateOfBirth")
     private Long dateOfBirth;
     

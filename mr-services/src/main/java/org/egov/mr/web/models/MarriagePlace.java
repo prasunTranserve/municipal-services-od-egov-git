@@ -37,6 +37,10 @@ public class MarriagePlace {
     @JsonProperty("locality")
     private Boundary locality = null;
 	
+	@Size(max=64)
+    @JsonProperty("pinCode")
+    private String pinCode = null;
+	
 	
 	@JsonProperty("additionalDetail")
     private JsonNode additionalDetail = null;
