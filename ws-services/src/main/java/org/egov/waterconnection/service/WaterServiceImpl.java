@@ -287,6 +287,10 @@ public class WaterServiceImpl implements WaterService {
 		Property property = Property.builder().tenantId(waterConnectionRequest.getWaterConnection().getTenantId())
 				.build();
 		String previousApplicationStatus = getApplicationStatus(waterConnectionRequest);
+		if(previousApplicationStatus==null) {
+			previousApplicationStatus = searchResult.getApplicationStatus();
+		}
+		
 		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
 		actionValidator.validateUpdateRequest(waterConnectionRequest, businessService, previousApplicationStatus);
 		userService.updateUser(waterConnectionRequest, searchResult);

@@ -1,10 +1,12 @@
 package org.egov.pt.service;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,7 +27,6 @@ import org.egov.pt.repository.PropertyRepository;
 import org.egov.pt.util.CommonUtils;
 import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.PropertyUtil;
-import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.validator.PropertyValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
@@ -147,7 +148,21 @@ public class PropertyService {
 		if (CreationReason.CREATE.equals(request.getProperty().getCreationReason())) {
 			userService.createUser(request);
 		} else {
-			request.getProperty().setOwners(util.getCopyOfOwners(propertyFromSearch.getOwners()));
+			//request.getProperty().setOwners(util.getCopyOfOwners(propertyFromSearch.getOwners()));
+			List<OwnerInfo> owners = util.getCopyOfOwners(propertyFromSearch.getOwners());
+			owners.forEach(owner -> {
+				Optional<OwnerInfo> ownerInfoOpt = request.getProperty().getOwners().stream().filter(reqOwner -> owner.getUuid().equals(reqOwner.getUuid())).findFirst();
+				if(ownerInfoOpt.isPresent()) {
+					owner.setGender(ownerInfoOpt.get().getGender());
+					owner.setFatherOrHusbandName(ownerInfoOpt.get().getFatherOrHusbandName());
+					owner.setRelationship(ownerInfoOpt.get().getRelationship());
+					owner.setOwnerType(ownerInfoOpt.get().getOwnerType());
+					owner.setPermanentAddress(ownerInfoOpt.get().getPermanentAddress());
+					owner.setEmailId(ownerInfoOpt.get().getEmailId());
+				}
+			});
+			request.getProperty().setOwners(owners);
+			userService.createUser(request);
 		}
 
 

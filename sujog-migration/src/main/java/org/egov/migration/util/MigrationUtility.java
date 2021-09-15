@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.validation.Valid;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -51,6 +52,7 @@ public class MigrationUtility {
 	RecordStatistic recordStatistic;
 
 	public static final BigDecimal sqmtrToSqyard = BigDecimal.valueOf(1.196);
+	public static final BigDecimal sqftToSqyard = BigDecimal.valueOf(9);
 	
 	public static final BigDecimal maxDigitSupportedArea = BigDecimal.valueOf(99999999);
 
@@ -155,9 +157,12 @@ public class MigrationUtility {
 		if (area == null)
 			return BigDecimal.ONE;
 		convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
-//		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
-//			convertedArea = maxDigitSupportedArea;
-//		}
+		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
+			convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).divide(sqftToSqyard, 2, RoundingMode.UP);
+			if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
+				convertedArea = maxDigitSupportedArea;
+			}
+		}
 		return convertedArea;
 	}
 
@@ -198,7 +203,7 @@ public class MigrationUtility {
 
 	public static String getGender(String gender) {
 		if (gender == null) {
-			return null;
+			return "Male";
 		}
 
 		if (gender.equalsIgnoreCase("MALE") || gender.equalsIgnoreCase("M")) {
@@ -206,7 +211,7 @@ public class MigrationUtility {
 		} else if (gender.equalsIgnoreCase("FEMALE") || gender.equalsIgnoreCase("F")) {
 			return "Female";
 		} else
-			return null;
+			return "Male";
 	}
 
 	public static String getCorrespondanceAddress(Address address) {
@@ -243,6 +248,20 @@ public class MigrationUtility {
 	public static Long getLongDate(String dateString, String dateformat) {
 		if (dateString == null) {
 			return 0L;
+		}
+		try {
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		} catch (Exception e) {
+			dateString = dateString.replaceAll("  +", " ").split(" ")[0];
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yy")).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+	}
+	
+	public static Long getExecutionDate(String dateString, String dateformat) {
+		if (dateString == null) {
+			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
 		try {
 			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
@@ -298,11 +317,11 @@ public class MigrationUtility {
 
 	public static Long getFloorNo(String floorNo) {
 		if (floorNo == null) {
-			return null;
+			return 1L;
 		} else if (floorNo.matches(digitRegex)) {
 			return Long.parseLong(floorNo);
 		} else {
-			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().replace(" ", "_"));
+			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().toLowerCase().replace(" ", "_"));
 		}
 	}
 
@@ -347,18 +366,27 @@ public class MigrationUtility {
 
 	public static String getConnectionCategory(String connectionCategory) {
 		if (connectionCategory == null)
-			return null;
-		return connectionCategory.trim().toUpperCase();
+			return "PERMANENT";
+		if(connectionCategory.equalsIgnoreCase("Temporary")) {
+			return "TEMPORARY";
+		}
+		return "PERMANENT";
 	}
 
 	public static String getConnectionType(String connectionType) {
 		if (connectionType == null) {
-			return null;
+			return MigrationConst.CONNECTION_NON_METERED;
 		}
-		return connectionType.replace("-", " ");
+		
+		if(connectionType.equalsIgnoreCase(MigrationConst.CONNECTION_METERED)) {
+			return MigrationConst.CONNECTION_METERED;
+		}
+		return MigrationConst.CONNECTION_NON_METERED;
 	}
 
 	public static String getWaterSource(String waterSource) {
+		if(waterSource == null)
+			return "GROUND.BOREWELL";
 		return waterSource;
 	}
 
@@ -375,7 +403,7 @@ public class MigrationUtility {
 	public static Long getMeterInstallationDate(String meterInstallationDate, String connectionType) {
 		if (MigrationConst.CONNECTION_METERED.equals(connectionType)) {
 			if(meterInstallationDate == null)
-				return 0L;
+				return 1L;
 			return getLongDate(meterInstallationDate, dateFormat);
 		} else {
 			return 0L;
@@ -429,11 +457,11 @@ public class MigrationUtility {
 
 	public static String getSalutation(String salutation) {
 		if(salutation == null)
-			return null;
+			return "Mr";
 		
 		salutation = salutation.trim();
 		if (salutation.length() > 5) {
-			return null;
+			return "Mr";
 		}
 		return salutation;
 	}
@@ -468,6 +496,9 @@ public class MigrationUtility {
 		if (connection.getService().getNoOfToilets() == null) {
 			return 0;
 		}
+		if(!connection.getService().getNoOfToilets().matches(decimalRegex)) {
+			return 0;
+		}
 		return Integer.parseInt(connection.getService().getNoOfToilets());
 	}
 
@@ -475,7 +506,11 @@ public class MigrationUtility {
 		if (meterReading.getPreviousReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(meterReading.getPreviousReading());
+			try {
+				return Double.parseDouble(meterReading.getPreviousReading());
+			} catch (Exception e) {
+				return 0D;
+			}
 		}
 	}
 
@@ -500,7 +535,11 @@ public class MigrationUtility {
 		if (meterReading.getCurrentReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(meterReading.getCurrentReading());
+			try {
+				return Double.parseDouble(meterReading.getCurrentReading());
+			} catch (Exception e) {
+				return 0D;
+			}
 		}
 	}
 
@@ -606,6 +645,9 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionUsageCategory(String usageCategory) {
+		if(usageCategory == null) {
+			return "DOMESTIC";
+		}
 		usageCategory = usageCategory.trim();
 		if(usageCategory.equalsIgnoreCase("Apartment")) {
 			return "DOMESTIC";
@@ -625,12 +667,33 @@ public class MigrationUtility {
 
 	public static void correctOwner(Property property) {
 		if(property.getOwners() == null) {
-			property.setOwners(Arrays.asList(Owner.builder().ownerName(property.getPropertyId()).build()));
+			property.setOwners(Arrays.asList(Owner.builder().ownerName(property.getPropertyId())
+					.gurdianName("Other").relationship("FATHER")
+					.ownerType(MigrationConst.DEFAULT_OWNER_TYPE)
+					.gender("MALE").build()));
 		} else {
 			property.getOwners().forEach(owner -> {
 				owner.setOwnerName(prepareName(property.getPropertyId(), owner.getOwnerName()));
+				owner.setGender(prepareGender(owner));
+				owner.setRelationship(owner.getRelationship()==null? "FATHER" : owner.getRelationship());
+				owner.setGurdianName(prepareName("Other", owner.getGurdianName()));
 			});
 		}
+	}
+
+	private static String prepareGender(@Valid Owner owner) {
+		String gender = "MALE";
+		if(owner.getGender()==null) {
+			if(owner.getSalutation() != null && 
+					(owner.getSalutation().equalsIgnoreCase("M/S")
+							|| owner.getSalutation().equalsIgnoreCase("Miss")
+							|| owner.getSalutation().equalsIgnoreCase("Mrs"))) {
+				gender="FEMALE";
+			}
+		} else {
+			gender = owner.getGender();
+		}
+		return gender;
 	}
 
 	public static String prepareName(String key, String ownerName) {
@@ -718,6 +781,72 @@ public class MigrationUtility {
 		LocalDate lastDate = billingMonth.withDayOfMonth(billingMonth.lengthOfMonth());
 
 		return firstDate.format(toFormatter).concat("-").concat(lastDate.format(toFormatter));
+	}
+
+	public static String getGuardian(String guardian) {
+		if(guardian == null) {
+			return "Other";
+		}
+		return prepareName(guardian, guardian);
+	}
+
+	public static String getRelationship(String guardianRelation) {
+		if(guardianRelation == null)
+			return "FATHER";
+		if(guardianRelation.equalsIgnoreCase("husband"))
+			return "HUSBAND";
+		if(guardianRelation.equalsIgnoreCase("mother"))
+			return "MOTHER";
+		return "FATHER";
+	}
+
+	public static String getAddress(String holderAddress) {
+		if(holderAddress == null) {
+			return "Other";
+		}
+		return holderAddress;
+	}
+
+	public static String getDoorNo(String doorNo) {
+		if(doorNo == null)
+			return "1";
+		return doorNo;
+	}
+
+	public static String getPIN(String pin) {
+		if(pin == null)
+			return "111111";
+		return pin;
+	}
+
+	public static String getWard(String ward) {
+		if(ward == null) {
+			return "01";
+		}
+		if(!ward.matches(digitRegex)) {
+			return "01";
+		}
+		if(Integer.parseInt(ward) > 69) {
+			return "01";
+		}
+		return ward;
+	}
+
+	public static Integer getPipeSize(String actualPipeSize) {
+		if(actualPipeSize==null)
+			return 0;
+		if(actualPipeSize.matches(decimalRegex)) {
+			return Integer.parseInt(actualPipeSize);
+		}
+		return 0;
+	}
+
+	public static String getOwnerType(String connectionHolderType) {
+		if(connectionHolderType == null)
+			return "NONE";
+		if(connectionHolderType.equalsIgnoreCase("BPL"))
+			return "BPL";
+		return "NONE";
 	}
 	
 }

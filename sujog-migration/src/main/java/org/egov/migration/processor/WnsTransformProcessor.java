@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.ConnectionHolderDTO;
 import org.egov.migration.business.model.DemandDTO;
@@ -15,6 +17,7 @@ import org.egov.migration.business.model.MeterReadingDTO;
 import org.egov.migration.business.model.SewerageConnectionDTO;
 import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.config.SystemProperties;
+import org.egov.migration.reader.model.Owner;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
 import org.egov.migration.reader.model.WnsConnectionService;
@@ -119,6 +122,13 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			demandDetailDTO.setTaxAmount(BigDecimal.ZERO);
 			demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 			demands.forEach(demand -> {
+				if(demand.getCollectedAmount() == null)
+					demand.setCollectedAmount("0");
+				if(demand.getWaterCharges() == null)
+					demand.setWaterCharges("0");
+				if(demand.getSewerageFee() == null)
+					demand.setSewerageFee("0");
+				
 				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getWaterCharges())));
 				if(!connectionDTO.isSewerage()) {
 					demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getSewerageFee())));
@@ -162,7 +172,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	private Object transformAdditional(WnsConnection connection) {
 		ObjectNode additionalDetails = JsonNodeFactory.instance.objectNode();
 		additionalDetails.put("locality", this.localityCode);
-		additionalDetails.put("ward", connection.getWard());
+		additionalDetails.put("ward", MigrationUtility.getWard(connection.getWard()));
 		return additionalDetails;
 	}
 	
@@ -184,19 +194,38 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		ConnectionHolderDTO connectionHolder = new ConnectionHolderDTO();
 		if(holder == null) {
 			connectionHolder.setName(connection.getConnectionNo());
+			connectionHolder.setGender("MALE");
+			connectionHolder.setFatherOrHusbandName("Other");
+			connectionHolder.setRelationship("FATHER");
 			connectionHolder.setOwnerType("NONE");
+			connectionHolder.setCorrespondenceAddress("Other");
 		} else {
 			connectionHolder.setSalutation(MigrationUtility.getSalutation(holder.getSalutation()));
 			connectionHolder.setName(MigrationUtility.prepareName(connection.getConnectionNo(), holder.getHolderName()));
 			connectionHolder.setMobileNumber(MigrationUtility.processMobile(holder.getMobile()));
-			connectionHolder.setGender(MigrationUtility.getGender(holder.getGender()));
-			connectionHolder.setFatherOrHusbandName(holder.getGuardian());
-			connectionHolder.setRelationship(holder.getGuardianRelation());
-			connectionHolder.setCorrespondenceAddress(holder.getHolderAddress());
-			connectionHolder.setOwnerType("NONE");
+			connectionHolder.setGender(prepareGender(holder));
+			connectionHolder.setFatherOrHusbandName(MigrationUtility.getGuardian(holder.getGuardian()));
+			connectionHolder.setRelationship(MigrationUtility.getRelationship(holder.getGuardianRelation()));
+			connectionHolder.setCorrespondenceAddress(MigrationUtility.getAddress(holder.getHolderAddress()));
+			connectionHolder.setOwnerType(MigrationUtility.getOwnerType(holder.getConnectionHolderType()));
 		}
 		
 		return Arrays.asList(connectionHolder);
+	}
+	
+	private static String prepareGender(WnsConnectionHolder holder) {
+		String gender = "Male";
+		if(holder.getGender()==null) {
+			if(holder.getSalutation() != null && 
+					(holder.getSalutation().equalsIgnoreCase("M/S")
+							|| holder.getSalutation().equalsIgnoreCase("Miss")
+							|| holder.getSalutation().equalsIgnoreCase("Mrs"))) {
+				gender="Female";
+			}
+		} else {
+			gender = MigrationUtility.getGender(holder.getGender());
+		}
+		return gender;
 	}
 
 	private void transformMeterReading(ConnectionDTO connectionDTO, WnsConnection connection) {
@@ -212,6 +241,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			if(lastMeterReading !=null && !lastMeterReading.getCurrentReading().equalsIgnoreCase("0")) {
 				if(lastMeterReading.getCurrentReadingDate() == null && lastMeterReading.getCreatedDate() == null) {
 					connectionDTO.setMeterReading(createZeroMeterReading());
+					connectionDTO.getMeterReading().setCurrentReading(MigrationUtility.getMeterCurrentReading(lastMeterReading));
 				} else {
 					MeterReadingDTO meterReadingDTO = new MeterReadingDTO();
 					meterReadingDTO.setTenantId(this.tenantId);
@@ -255,7 +285,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		waterConnectionDTO.setMeterId(service.getMeterSerialNo());
 		waterConnectionDTO.setMeterInstallationDate(MigrationUtility.getMeterInstallationDate(service.getMeterInstallationDate(),waterConnectionDTO.getConnectionType()));
 		waterConnectionDTO.setNoOfTaps(MigrationUtility.getNoOfTaps(service.getNoOfTaps()));
-		waterConnectionDTO.setConnectionExecutionDate(MigrationUtility.getLongDate(service.getConnectionExecutionDate(), dateFormat));
+		waterConnectionDTO.setConnectionExecutionDate(MigrationUtility.getExecutionDate(service.getConnectionExecutionDate(), dateFormat));
 		waterConnectionDTO.setProposedTaps(MigrationUtility.getNoOfTaps(service.getNoOfTaps()));
 		waterConnectionDTO.setUsageCategory(MigrationUtility.getConnectionUsageCategory(service.getUsageCategory()));
 		waterConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
@@ -281,16 +311,14 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		WnsConnectionService service = connection.getService();
 		sewerageConnectionDTO.setConnectionCategory(MigrationUtility.getConnectionCategory(service.getConnectionCategory()));
 		sewerageConnectionDTO.setConnectionType(MigrationConst.CONNECTION_NON_METERED);
-		sewerageConnectionDTO.setConnectionExecutionDate(MigrationUtility.getLongDate(service.getConnectionExecutionDate(), dateFormat));
-		sewerageConnectionDTO.setUsageCategory(service.getUsageCategory().trim().toUpperCase());
+		sewerageConnectionDTO.setConnectionExecutionDate(MigrationUtility.getExecutionDate(service.getConnectionExecutionDate(), dateFormat));
+		sewerageConnectionDTO.setUsageCategory(MigrationUtility.getUsageCategory(service.getUsageCategory()));
 		sewerageConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
 		sewerageConnectionDTO.setProposedWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setProposedToilets(MigrationUtility.getToilets(connection));
 		sewerageConnectionDTO.setNoOfWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setNoOfToilets(MigrationUtility.getToilets(connection));
-		sewerageConnectionDTO.setPipeSize(connection.getService().getActualPipeSize()==null? 0 : Integer.parseInt(connection.getService().getActualPipeSize()));
-		sewerageConnectionDTO.setUsageCategory(dateFormat);
-		
+		sewerageConnectionDTO.setPipeSize(MigrationUtility.getPipeSize(connection.getService().getActualPipeSize()));
 	}
 
 	private void transformSewerageConnection(SewerageConnectionDTO sewerageConnectionDTO, WnsConnection connection) {

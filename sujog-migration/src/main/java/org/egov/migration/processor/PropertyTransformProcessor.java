@@ -56,10 +56,10 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 		if(validationService.isValidArea(property)) {
 			try {
 				enrichProperty(property);
+				return transformProperty(property);
 			} catch (Exception e) {
 				MigrationUtility.addError(property.getPropertyId(), e.getMessage());
 			}
-			return transformProperty(property);
 		}
 		return null;
 	}
@@ -131,7 +131,7 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 
 	private void transformAddress(PropertyDTO propertyDTO, Address address) {
 		AddressDTO addressDTO = new AddressDTO();
-		addressDTO.setDoorNo(address.getDoorNo());
+		addressDTO.setDoorNo(MigrationUtility.getDoorNo(address.getDoorNo()));
 		addressDTO.setPlotNo(address.getPlotNo());
 		addressDTO.setLandmark(address.getLandMark());
 		addressDTO.setCity(address.getCity());
@@ -139,12 +139,11 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 		addressDTO.setRegion(address.getRegion());
 		addressDTO.setState(address.getState());
 		addressDTO.setCountry(address.getCountry());
-		addressDTO.setPincode(address.getPin());
+		addressDTO.setPincode(MigrationUtility.getPIN(address.getPin()));
 		addressDTO.setBuildingName(address.getBuildingName());
 		addressDTO.setLocality(MigrationUtility.getLocality(this.localityCode));
-		addressDTO.setWard(address.getWard());
-		addressDTO.setWard(null);
-
+		addressDTO.setWard(MigrationUtility.getWard(address.getWard()));
+		addressDTO.setStreet("Street");
 		propertyDTO.setAddress(addressDTO);
 	}
 
