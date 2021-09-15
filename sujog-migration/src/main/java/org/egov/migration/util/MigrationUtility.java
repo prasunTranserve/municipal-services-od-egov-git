@@ -258,6 +258,20 @@ public class MigrationUtility {
 					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
 	}
+	
+	public static Long getExecutionDate(String dateString, String dateformat) {
+		if (dateString == null) {
+			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+		try {
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		} catch (Exception e) {
+			dateString = dateString.replaceAll("  +", " ").split(" ")[0];
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yy")).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+	}
 
 	public static BigDecimal getAmount(String taxAmt) {
 		if (taxAmt == null || !taxAmt.matches(decimalRegex)) {
@@ -353,14 +367,21 @@ public class MigrationUtility {
 	public static String getConnectionCategory(String connectionCategory) {
 		if (connectionCategory == null)
 			return "PERMANENT";
-		return connectionCategory.trim().toUpperCase();
+		if(connectionCategory.equalsIgnoreCase("Temporary")) {
+			return "TEMPORARY";
+		}
+		return "PERMANENT";
 	}
 
 	public static String getConnectionType(String connectionType) {
 		if (connectionType == null) {
-			return null;
+			return MigrationConst.CONNECTION_NON_METERED;
 		}
-		return connectionType.replace("-", " ");
+		
+		if(connectionType.equalsIgnoreCase(MigrationConst.CONNECTION_METERED)) {
+			return MigrationConst.CONNECTION_METERED;
+		}
+		return MigrationConst.CONNECTION_NON_METERED;
 	}
 
 	public static String getWaterSource(String waterSource) {
@@ -382,7 +403,7 @@ public class MigrationUtility {
 	public static Long getMeterInstallationDate(String meterInstallationDate, String connectionType) {
 		if (MigrationConst.CONNECTION_METERED.equals(connectionType)) {
 			if(meterInstallationDate == null)
-				return 0L;
+				return 1L;
 			return getLongDate(meterInstallationDate, dateFormat);
 		} else {
 			return 0L;
@@ -436,11 +457,11 @@ public class MigrationUtility {
 
 	public static String getSalutation(String salutation) {
 		if(salutation == null)
-			return null;
+			return "Mr";
 		
 		salutation = salutation.trim();
 		if (salutation.length() > 5) {
-			return null;
+			return "Mr";
 		}
 		return salutation;
 	}
@@ -475,6 +496,9 @@ public class MigrationUtility {
 		if (connection.getService().getNoOfToilets() == null) {
 			return 0;
 		}
+		if(!connection.getService().getNoOfToilets().matches(decimalRegex)) {
+			return 0;
+		}
 		return Integer.parseInt(connection.getService().getNoOfToilets());
 	}
 
@@ -482,7 +506,11 @@ public class MigrationUtility {
 		if (meterReading.getPreviousReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(meterReading.getPreviousReading());
+			try {
+				return Double.parseDouble(meterReading.getPreviousReading());
+			} catch (Exception e) {
+				return 0D;
+			}
 		}
 	}
 
@@ -507,7 +535,11 @@ public class MigrationUtility {
 		if (meterReading.getCurrentReading() == null) {
 			return 0D;
 		} else {
-			return Double.parseDouble(meterReading.getCurrentReading());
+			try {
+				return Double.parseDouble(meterReading.getCurrentReading());
+			} catch (Exception e) {
+				return 0D;
+			}
 		}
 	}
 
@@ -759,10 +791,13 @@ public class MigrationUtility {
 	}
 
 	public static String getRelationship(String guardianRelation) {
-		if(guardianRelation == null) {
+		if(guardianRelation == null)
 			return "FATHER";
-		}
-		return guardianRelation;
+		if(guardianRelation.equalsIgnoreCase("husband"))
+			return "HUSBAND";
+		if(guardianRelation.equalsIgnoreCase("mother"))
+			return "MOTHER";
+		return "FATHER";
 	}
 
 	public static String getAddress(String holderAddress) {
@@ -795,6 +830,23 @@ public class MigrationUtility {
 			return "01";
 		}
 		return ward;
+	}
+
+	public static Integer getPipeSize(String actualPipeSize) {
+		if(actualPipeSize==null)
+			return 0;
+		if(actualPipeSize.matches(decimalRegex)) {
+			return Integer.parseInt(actualPipeSize);
+		}
+		return 0;
+	}
+
+	public static String getOwnerType(String connectionHolderType) {
+		if(connectionHolderType == null)
+			return "NONE";
+		if(connectionHolderType.equalsIgnoreCase("BPL"))
+			return "BPL";
+		return "NONE";
 	}
 	
 }

@@ -122,6 +122,13 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			demandDetailDTO.setTaxAmount(BigDecimal.ZERO);
 			demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 			demands.forEach(demand -> {
+				if(demand.getCollectedAmount() == null)
+					demand.setCollectedAmount("0");
+				if(demand.getWaterCharges() == null)
+					demand.setWaterCharges("0");
+				if(demand.getSewerageFee() == null)
+					demand.setSewerageFee("0");
+				
 				demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getWaterCharges())));
 				if(!connectionDTO.isSewerage()) {
 					demandDetailDTO.setTaxAmount(demandDetailDTO.getTaxAmount().add(new BigDecimal(demand.getSewerageFee())));
@@ -200,7 +207,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			connectionHolder.setFatherOrHusbandName(MigrationUtility.getGuardian(holder.getGuardian()));
 			connectionHolder.setRelationship(MigrationUtility.getRelationship(holder.getGuardianRelation()));
 			connectionHolder.setCorrespondenceAddress(MigrationUtility.getAddress(holder.getHolderAddress()));
-			connectionHolder.setOwnerType("NONE");
+			connectionHolder.setOwnerType(MigrationUtility.getOwnerType(holder.getConnectionHolderType()));
 		}
 		
 		return Arrays.asList(connectionHolder);
@@ -234,6 +241,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			if(lastMeterReading !=null && !lastMeterReading.getCurrentReading().equalsIgnoreCase("0")) {
 				if(lastMeterReading.getCurrentReadingDate() == null && lastMeterReading.getCreatedDate() == null) {
 					connectionDTO.setMeterReading(createZeroMeterReading());
+					connectionDTO.getMeterReading().setCurrentReading(MigrationUtility.getMeterCurrentReading(lastMeterReading));
 				} else {
 					MeterReadingDTO meterReadingDTO = new MeterReadingDTO();
 					meterReadingDTO.setTenantId(this.tenantId);
@@ -277,7 +285,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		waterConnectionDTO.setMeterId(service.getMeterSerialNo());
 		waterConnectionDTO.setMeterInstallationDate(MigrationUtility.getMeterInstallationDate(service.getMeterInstallationDate(),waterConnectionDTO.getConnectionType()));
 		waterConnectionDTO.setNoOfTaps(MigrationUtility.getNoOfTaps(service.getNoOfTaps()));
-		waterConnectionDTO.setConnectionExecutionDate(MigrationUtility.getLongDate(service.getConnectionExecutionDate(), dateFormat));
+		waterConnectionDTO.setConnectionExecutionDate(MigrationUtility.getExecutionDate(service.getConnectionExecutionDate(), dateFormat));
 		waterConnectionDTO.setProposedTaps(MigrationUtility.getNoOfTaps(service.getNoOfTaps()));
 		waterConnectionDTO.setUsageCategory(MigrationUtility.getConnectionUsageCategory(service.getUsageCategory()));
 		waterConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
@@ -303,16 +311,14 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		WnsConnectionService service = connection.getService();
 		sewerageConnectionDTO.setConnectionCategory(MigrationUtility.getConnectionCategory(service.getConnectionCategory()));
 		sewerageConnectionDTO.setConnectionType(MigrationConst.CONNECTION_NON_METERED);
-		sewerageConnectionDTO.setConnectionExecutionDate(MigrationUtility.getLongDate(service.getConnectionExecutionDate(), dateFormat));
-		sewerageConnectionDTO.setUsageCategory(service.getUsageCategory().trim().toUpperCase());
+		sewerageConnectionDTO.setConnectionExecutionDate(MigrationUtility.getExecutionDate(service.getConnectionExecutionDate(), dateFormat));
+		sewerageConnectionDTO.setUsageCategory(MigrationUtility.getUsageCategory(service.getUsageCategory()));
 		sewerageConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
 		sewerageConnectionDTO.setProposedWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setProposedToilets(MigrationUtility.getToilets(connection));
 		sewerageConnectionDTO.setNoOfWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setNoOfToilets(MigrationUtility.getToilets(connection));
-		sewerageConnectionDTO.setPipeSize(connection.getService().getActualPipeSize()==null? 0 : Integer.parseInt(connection.getService().getActualPipeSize()));
-		sewerageConnectionDTO.setUsageCategory(dateFormat);
-		
+		sewerageConnectionDTO.setPipeSize(MigrationUtility.getPipeSize(connection.getService().getActualPipeSize()));
 	}
 
 	private void transformSewerageConnection(SewerageConnectionDTO sewerageConnectionDTO, WnsConnection connection) {
