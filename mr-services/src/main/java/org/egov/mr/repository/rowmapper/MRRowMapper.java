@@ -164,6 +164,7 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
             			.firstName(rs.getString("mrw_firstName"))
                         .country(rs.getString("mrw_country"))
         				.state(rs.getString("mrw_state"))
+        				.groomSideWitness(rs.getBoolean("isgroomsidewitness"))
         				.district(rs.getString("mrw_district"))
         				.pinCode(rs.getString("mrw_pincode"))
         				.contact(rs.getString("mrw_contact"))

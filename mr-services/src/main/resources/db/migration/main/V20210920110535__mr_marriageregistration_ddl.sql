@@ -115,6 +115,7 @@ CREATE TABLE eg_mr_gaurdiandetails(
   district character varying(256),
   pincode character varying(256),
   contact character varying(256),
+  isgroomsidewitness boolean,
   createdby character varying(64),
   createdtime bigint,
   lastmodifiedby character varying(64),

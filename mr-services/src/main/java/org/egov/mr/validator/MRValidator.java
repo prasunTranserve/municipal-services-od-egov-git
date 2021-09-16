@@ -149,8 +149,6 @@ public class MRValidator {
 					errorMap.put("COUPLE_DETAILS_ERROR", " IsDivyang is mandatory ");
 				if(couple.getIsGroom()==null)
 					errorMap.put("COUPLE_DETAILS_ERROR", " Is Groom is mandatory ");
-				if(StringUtils.isEmpty(couple.getTitle()))
-					errorMap.put("COUPLE_DETAILS_ERROR", " Title is mandatory ");
 				if(StringUtils.isEmpty(couple.getFirstName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", " Name is mandatory ");
 				if(couple.getDateOfBirth() == null )
@@ -219,8 +217,8 @@ public class MRValidator {
 			{
 				marriageRegistration.getWitness().forEach(witness -> {
 					
-					if(StringUtils.isEmpty(witness.getTitle()))
-						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Title is mandatory ");
+					if(witness.getGroomSideWitness() == null )
+						errorMap.put("WITNESS_DETAILS_ERROR", "Groom Side Witness field is mandatory ");
 					
 					if(StringUtils.isEmpty(witness.getAddress()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Address is mandatory ");

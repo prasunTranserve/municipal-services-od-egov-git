@@ -59,6 +59,9 @@ public class Witness {
     @JsonProperty("pinCode")
     private String pinCode = null;
     
+    @JsonProperty("groomSideWitness")
+	private Boolean groomSideWitness ;
+    
     @Pattern(regexp = "^[6-9][0-9]{9}$", message = "Invalid mobile number")
     @JsonProperty("contact")
     private String contact;
