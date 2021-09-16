@@ -66,6 +66,7 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
                         .workflowCode(rs.getString("workflowcode"))
                         .applicationDate(applicationDate)
                         .applicationNumber(rs.getString("applicationnumber"))
+                        .applicationType(MarriageRegistration.ApplicationTypeEnum.fromValue(rs.getString( "applicationType")))
                         .mrNumber(rs.getString("mrnumber"))
                         .marriageDate(commencementDate)
                         .issuedDate(issuedDate)
@@ -91,13 +92,12 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
             				.id(rs.getString("mrca_id"))
             				.tenantId(rs.getString("mr_tenantId"))
             				.addressLine1(rs.getString("mrca_addressLine1"))
-            				.addressLine2(rs.getString("mrca_addressLine2"))
-            				.addressLine3(rs.getString("mrca_addressLine3"))
             				.country(rs.getString("mrca_country"))
+            				.contact(rs.getString("mrca_contact"))
+            				.emailAddress(rs.getString("mrca_emailaddress"))
             				.state(rs.getString("mrca_state"))
             				.district(rs.getString("mrca_district"))
             				.pinCode(rs.getString("mrca_pincode"))
-            				.locality(rs.getString("mrca_locality"))
             				.build();
             	}
             	
@@ -109,8 +109,6 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
                         .isGroom(rs.getBoolean("isgroom"))
                         .title(rs.getString("mrc_title"))
                         .firstName(rs.getString("mrc_firstName"))
-                        .middleName(rs.getString("mrc_middleName"))
-                        .lastName(rs.getString("mrc_lastName"))
                         .dateOfBirth(rs.getLong("dateofbirth"))
                         .fatherName(rs.getString("fathername"))
                         .motherName(rs.getString("mothername"))
@@ -130,18 +128,15 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
             				.id(rs.getString("mrgd_id"))
             				.tenantId(rs.getString("mr_tenantId"))
             				.addressLine1(rs.getString("mrgd_addressLine1"))
-            				.addressLine2(rs.getString("mrgd_addressLine2"))
-            				.addressLine3(rs.getString("mrgd_addressLine3"))
             				.country(rs.getString("mrgd_country"))
             				.state(rs.getString("mrgd_state"))
             				.district(rs.getString("mrgd_district"))
             				.pinCode(rs.getString("mrgd_pincode"))
-            				.locality(rs.getString("mrgd_locality"))
             				.groomSideGuardian(rs.getBoolean("isgroomsideguardian"))
             				.relationship(rs.getString("relationship"))
             				.name(rs.getString("name"))
             				.contact(rs.getString("mrgd_contact"))
-            				.emailAddress(rs.getString("emailaddress"))
+            				.emailAddress(rs.getString("mrgd_emailaddress"))
             				.build();
             		
             	}
@@ -167,8 +162,6 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
             			.title(rs.getString("mrw_title"))
             			.address(rs.getString("address"))
             			.firstName(rs.getString("mrw_firstName"))
-                        .middleName(rs.getString("mrw_middleName"))
-                        .lastName(rs.getString("mrw_lastName"))
                         .country(rs.getString("mrw_country"))
         				.state(rs.getString("mrw_state"))
         				.district(rs.getString("mrw_district"))
@@ -249,6 +242,7 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
         			.id(marriagePlaceId)
         			.auditDetails(auditdetails)
         			.ward(rs.getString("ward"))
+        			.pinCode(rs.getString("mrp_pincode"))
         			.placeOfMarriage(rs.getString("placeofmarriage"))
         			.build();
 

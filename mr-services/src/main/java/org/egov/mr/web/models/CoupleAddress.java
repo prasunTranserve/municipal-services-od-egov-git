@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Builder;
 
-
+@Validated
 @Getter
 @Setter
 @AllArgsConstructor
@@ -34,14 +34,6 @@ public class CoupleAddress   {
         @JsonProperty("addressLine1")
         private String addressLine1 = null;
 
-
-        @JsonProperty("addressLine2")
-        private String addressLine2 = null;
-
-        @Size(max=256)
-        @JsonProperty("addressLine3")
-        private String addressLine3 = null;
-
         @Size(max=64)
         @JsonProperty("country")
         private String country = null;
@@ -58,11 +50,15 @@ public class CoupleAddress   {
         @JsonProperty("pinCode")
         private String pinCode = null;
 
-        
+        @Pattern(regexp = "^[6-9][0-9]{9}$", message = "Invalid mobile number")
+        @JsonProperty("contact")
+        private String contact;
 
-        @Size(max=64)
-        @JsonProperty("locality")
-        private String locality = null;
+        @Size(max=128)
+        @JsonProperty("emailAddress")
+        @Pattern(regexp = "^$|^(?=^.{1,64}$)((([^<>()\\[\\]\\\\.,;:\\s$*@'\"]+(\\.[^<>()\\[\\]\\\\.,;:\\s@'\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,})))$", message = "Invalid emailId")
+        private String emailAddress;
+
 
         @JsonProperty("auditDetails")
         private AuditDetails auditDetails = null;

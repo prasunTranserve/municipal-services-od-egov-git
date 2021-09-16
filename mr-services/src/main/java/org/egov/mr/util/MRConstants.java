@@ -58,7 +58,11 @@ public class MRConstants {
 	 
 	 public static final String MDMS_MARRIAGE_REGISTRATION_REGISTRATION_FEE = "$.MdmsRes.MarriageRegistration.RegistrationFee";
 
+	    //TL types
 
+	    public static final String APPLICATION_TYPE_CORRECTION = "CORRECTION";
+
+	    public static final String APPLICATION_TYPE_NEW = "NEW";
 
 
 }

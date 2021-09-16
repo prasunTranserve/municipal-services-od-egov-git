@@ -145,6 +145,13 @@ public class MRConfiguration {
     @Value("${workflow.businessservice.search.path}")
     private String wfBusinessServiceSearchPath;
 
+    
+    //Allowed Search Parameters
+    @Value("${citizen.allowed.search.params}")
+    private String allowedCitizenSearchParameters;
+
+    @Value("${employee.allowed.search.params}")
+    private String allowedEmployeeSearchParameters;
 
 
 }

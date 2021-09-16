@@ -42,15 +42,7 @@ public class Witness {
     @Size(max=64)
     @JsonProperty("firstName")
     private String firstName;
-    
-    @Size(max=64)
-    @JsonProperty("middleName")
-    private String middleName;
-    
-    @Size(max=64)
-    @JsonProperty("lastName")
-    private String lastName;
-    
+        
     @Size(max=64)
     @JsonProperty("country")
     private String country = null;
