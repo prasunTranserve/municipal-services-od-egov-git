@@ -26,7 +26,7 @@ public class WnsMigrationJobExecutionListner implements JobExecutionListener {
 	
 	@Override
 	public void beforeJob(JobExecution jobExecution) {
-		String startTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd hh:mm:ss"));
+		String startTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd hh:mm:ss a"));
 		recordStatistic.setStartTime(startTime);
 		
 		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_hh-mm-ss"));
@@ -45,9 +45,9 @@ public class WnsMigrationJobExecutionListner implements JobExecutionListener {
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
-		String endTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd hh:mm:ss"));
+		String endTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd hh:mm:ss a"));
 		recordStatistic.setEndTime(endTime);
 
 	}
-
+	
 }
