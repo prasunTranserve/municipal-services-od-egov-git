@@ -77,7 +77,7 @@
                             "action": "REJECT",
                             "nextState": "REJECTED",
                             "roles": [
-                                "BPA_NMA_NOC_APPROVER",
+                                "NMA_NOC_APPROVER",
 								"SYSTEM"
                             ]
                         },
@@ -87,7 +87,7 @@
                             "action": "APPROVE",
                             "nextState": "APPROVED",
                             "roles": [
-                                "BPA_NMA_NOC_APPROVER",
+                                "NMA_NOC_APPROVER",
 								"SYSTEM"
                             ]
                         },
@@ -100,7 +100,7 @@
                                 "BPA_VERIFIER",
                                 "BPA_FIELD_INSPECTOR",
                                 "BPA_NOC_VERIFIER",
-                                "BPA_NMA_NOC_APPROVER",
+                                "NMA_NOC_APPROVER",
 								"SYSTEM"
                             ]
                         },
@@ -110,7 +110,7 @@
                             "tenantId": "od",
                             "nextState": "SUBMITED",
                             "roles": [
-                               "BPA_NMA_NOC_APPROVER",
+                               "NMA_NOC_APPROVER",
 							   "SYSTEM"
                             ]
                         }
