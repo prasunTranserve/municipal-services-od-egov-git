@@ -233,6 +233,14 @@ public class EDCRService {
 
 		return additionalDetails;
 	}
+	
+	public List<String> getEdcrSuggestedRequiredNocs(LinkedHashMap<String, Object> edcr){
+		String jsonString = new JSONObject(edcr).toString();
+		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
+		List<String> nocsType = context.read(BPAConstants.EDCR_SUGGESTED_REQUIRED_NOCs_PATH);
+		
+		return nocsType;
+	}
 
 	/**
 	 * validate the ocEDCR values

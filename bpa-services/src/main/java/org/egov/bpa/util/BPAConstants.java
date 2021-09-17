@@ -566,5 +566,7 @@ public class BPAConstants {
 	public static final String BPA_DP_BP_MODULE_CODE = "BPA4";
 	
 	public static final String YES = "YES";
-
+	
+	public static final String EDCR_SUGGESTED_REQUIRED_NOCs_PATH="$.edcrDetail[0].planDetail.planInformation.requiredNOCs";
+	public static final String EDCR_REQUIRED_NOCs="requiredNOCs";
 }

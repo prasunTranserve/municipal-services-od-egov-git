@@ -46,7 +46,7 @@ public class NocService {
 	private ObjectMapper mapper;
 
 	@SuppressWarnings("unchecked")
-	public void createNocRequest(BPARequest bpaRequest, Object mdmsData) {
+	public void createNocRequest(BPARequest bpaRequest, Object mdmsData,List<String> edcrSuggestedNocs) {
 		BPA bpa = bpaRequest.getBPA();
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		log.debug("applicationType in NOC is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
@@ -82,15 +82,20 @@ public class NocService {
 //					createNoc(nocRequest);
 //
 //				}
-				NocRequest nocRequest = NocRequest.builder()
-						.noc(Noc.builder().tenantId(bpa.getTenantId())
-								.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
-								.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
-								.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
-								.build())
-						.requestInfo(bpaRequest.getRequestInfo()).build();
-				createNoc(nocRequest);
-
+				if(edcrSuggestedNocs.contains(nocType)) {
+					NocRequest nocRequest = NocRequest.builder()
+							.noc(Noc.builder().tenantId(bpa.getTenantId())
+									.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
+									.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
+									.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+									.build())
+							.requestInfo(bpaRequest.getRequestInfo()).build();
+					try {
+						createNoc(nocRequest);
+					}catch (Exception e) {
+						log.error(e.getMessage());
+					}
+				}
 			}
 		} else {
 			log.debug("NOC Mapping is not found!!");

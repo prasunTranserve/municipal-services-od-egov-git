@@ -1,5 +1,6 @@
 package org.egov.noc.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.egov.noc.repository.NOCRepository;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.util.NOCUtil;
 import org.egov.noc.validator.NOCValidator;
+import org.egov.noc.web.model.NmaApplicationStatus;
 import org.egov.noc.web.model.Noc;
 import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.NocSearchCriteria;
@@ -152,31 +154,68 @@ public class NOCService {
 	}
 
 	public List<Noc> updateThirdPartyNoc(ThirdPartyNocRequest nocRequest) {
-		NocSearchCriteria criteria = new NocSearchCriteria();
-		String applicationNumber = nocRequest.getNmaRequest().getApplicationUniqueNumebr();
-		criteria.setApplicationNo(applicationNumber);
-		List<Noc> nocList = search(criteria, nocRequest.getRequestInfo());
-		if (CollectionUtils.isEmpty(nocList)) {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Noc Application not found for: ").append(applicationNumber).append(" :ID");
-			throw new CustomException("INVALID_NOC_SEARCH", builder.toString());
-		} else {
-			Noc noc = nocList.get(0);
-			Workflow workflow = new Workflow();
-			workflow.setAction(nocRequest.getNmaRequest().getAction());
-			workflow.setComment(nocRequest.getNmaRequest().getComment());
-			String docType="NOC.NMA.CERTIFICATE";
-			if (nocRequest.getNmaRequest().getDocuments() != null
-					&& nocRequest.getNmaRequest().getDocuments().size() > 0)
-				workflow.setDocuments(fileStoreService.copyDocuments(noc.getTenantId(), "NOC", docType,
-						nocRequest.getNmaRequest().getDocuments().stream().map(d -> d.getFile())
-								.collect(Collectors.toList())));
-			noc.setWorkflow(workflow);
-			NocRequest nocRequest2=new NocRequest();
-			nocRequest2.setNoc(noc);
-			nocRequest2.setRequestInfo(nocRequest.getRequestInfo());
-			nocList=update(nocRequest2);
+		List<Noc> processedNoc = new ArrayList<>();
+		for (NmaApplicationStatus nmaApplicationStatus : nocRequest.getNmaRequest().getApplicationStatus()) {
+			NocSearchCriteria criteria = new NocSearchCriteria();
+			String applicationNumber = nmaApplicationStatus.getApplicationUniqueNumebr();
+			criteria.setApplicationNo(applicationNumber);
+			List<Noc> nocList = search(criteria, nocRequest.getRequestInfo());
+
+			if (CollectionUtils.isEmpty(nocList)) {
+				StringBuilder builder = new StringBuilder();
+				builder.append("Noc Application not found for: ").append(applicationNumber).append(" :ID");
+				throw new CustomException("INVALID_NOC_SEARCH", builder.toString());
+			} else {
+				Noc noc = nocList.get(0);
+				Workflow workflow = new Workflow();
+				String action = null;
+				if (nmaApplicationStatus.getStatus() != null)
+					action = getNmaValidAction(nmaApplicationStatus.getStatus().trim());
+				workflow.setAction(action);
+				workflow.setComment(getNmaValidComment(nmaApplicationStatus));
+
+				if (nmaApplicationStatus.getNocFileUrl() != null && !nmaApplicationStatus.getNocFileUrl().isEmpty()) {
+//					String docType="NOC.NMA.CERTIFICATE";
+					String docType = getNmaValidDocType(action);
+					workflow.setDocuments(fileStoreService.copyDocuments(nmaApplicationStatus.getDepartment(), "NOC",
+							docType, Arrays.asList(new String[] { nmaApplicationStatus.getNocFileUrl() })));
+				}
+
+				noc.setWorkflow(workflow);
+				NocRequest nocRequest2 = new NocRequest();
+				nocRequest2.setNoc(noc);
+				nocRequest2.setRequestInfo(nocRequest.getRequestInfo());
+				nocList = update(nocRequest2);
+				processedNoc.addAll(nocList);
+			}
 		}
-		return nocList;
+
+		return processedNoc;
+	}
+
+	private String getNmaValidAction(String status) {
+
+		if ("Approved".equalsIgnoreCase(status)) {
+			return NOCConstants.ACTION_APPROVE;
+		} else if ("Rejected".equalsIgnoreCase(status)) {
+			return NOCConstants.ACTION_REJECT;
+		} else if ("NOC not required from NMA".equalsIgnoreCase(status)) {
+			return NOCConstants.ACTION_VOID;
+		} else {
+			return NOCConstants.ACTION_SUBMIT;
+		}
+	}
+
+	private String getNmaValidComment(NmaApplicationStatus applicationStatus) {
+		StringBuilder comment = new StringBuilder();
+		comment.append(applicationStatus.getRemarks())
+				.append(applicationStatus.getUniqueId() != null ? ", UniqueId " + applicationStatus.getUniqueId() : " ")
+				.append(applicationStatus.getNocNumber() != null ? ", NocNumber " + applicationStatus.getNocNumber() : " ");
+		return comment.toString();
+	}
+
+	private String getNmaValidDocType(String action) {
+		StringBuilder doctype = new StringBuilder("Document - 1");
+		return doctype.toString();
 	}
 }

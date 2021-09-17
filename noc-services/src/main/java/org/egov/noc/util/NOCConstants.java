@@ -124,4 +124,6 @@ public class NOCConstants {
 	public static final String ALTERATION="ALTERATION";
 	
 	public static final String NMA_STATUS_CREATED="Application Received";
+	
+	public static final String FIRE_NOC_ERROR="FIRE_NOC_ERROR";
 }
