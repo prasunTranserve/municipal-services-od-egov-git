@@ -869,7 +869,7 @@ public class MigrationUtility {
 			street = street.concat(address.getAddressLine1());
 		}
 		if(!StringUtils.isEmpty(address.getAddressLine2())) {
-			street = comma.concat(street).concat(address.getAddressLine2());
+			street = street.concat(comma).concat(address.getAddressLine2());
 		}
 		if(street.startsWith(comma)) {
 			street = street.substring(1);

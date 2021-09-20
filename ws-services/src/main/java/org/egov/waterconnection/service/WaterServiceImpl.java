@@ -299,6 +299,7 @@ public class WaterServiceImpl implements WaterService {
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
 		// setting status as Inactive for closed connection
 		inactiveConnection(waterConnectionRequest);
+		markOldApplicationForReject(waterConnectionRequest);
 		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
 		calculateFeeAndGenerateDemand(waterConnectionRequest, property);
 		// setting oldApplication Flag
@@ -452,5 +453,12 @@ public class WaterServiceImpl implements WaterService {
 		enrichmentService.setConnectionNO(waterConnectionRequest);
 		waterDao.saveWaterConnection(waterConnectionRequest);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
+	}
+	
+	private void markOldApplicationForReject(WaterConnectionRequest waterConnectionRequest) {
+		if(REJECT_CONNECTION.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			waterConnectionRequest.getWaterConnection().setOldApplication(Boolean.TRUE);
+		}
+		
 	}
 }

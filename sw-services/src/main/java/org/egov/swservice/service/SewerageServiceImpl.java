@@ -291,6 +291,7 @@ public class SewerageServiceImpl implements SewerageService {
 		sewerageDaoImpl.pushForEditNotification(sewerageConnectionRequest);
 		// Call workflow
 		wfIntegrator.callWorkFlow(sewerageConnectionRequest, property);
+		markOldApplicationForReject(sewerageConnectionRequest);
 		sewerageDaoImpl.updateSewerageConnection(sewerageConnectionRequest,
 				sewerageServicesUtil.getStatusForUpdate(businessService, previousApplicationStatus));
 		// setting oldApplication Flag
@@ -415,4 +416,9 @@ public class SewerageServiceImpl implements SewerageService {
 		return Arrays.asList(sewerageConnectionRequest.getSewerageConnection());
 	}
 	
+	private void markOldApplicationForReject(SewerageConnectionRequest sewerageConnectionRequest) {
+		if(REJECT_CONNECTION.equalsIgnoreCase(sewerageConnectionRequest.getSewerageConnection().getProcessInstance().getAction())) {
+			sewerageConnectionRequest.getSewerageConnection().setOldApplication(Boolean.TRUE);
+		}
+	}
 }
