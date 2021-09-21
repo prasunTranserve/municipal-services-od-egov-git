@@ -167,7 +167,7 @@ public class MarriageRegistrationService {
 			enrichmentService.enrichMRUpdateRequest(marriageRegistartionRequest, businessService);
 			mrValidator.validateUpdate(marriageRegistartionRequest, searchResult);
 
-
+			mrValidator.validateNonUpdatableFileds(marriageRegistartionRequest, searchResult);
 
 			Map<String, Boolean> idToIsStateUpdatableMap = util.getIdToIsStateUpdatableMap(businessService, searchResult);
 

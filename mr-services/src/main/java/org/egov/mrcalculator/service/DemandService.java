@@ -18,7 +18,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.mr.model.user.Citizen;
+import org.egov.mr.model.user.UserResponse;
+import org.egov.mr.model.user.UserSearchRequest;
 import org.egov.mr.repository.ServiceRequestRepository;
+import org.egov.mr.util.MRConstants;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.calculation.TaxHeadEstimate;
 import org.egov.mrcalculator.config.MRCalculatorConfigs;
@@ -172,8 +176,7 @@ public class DemandService {
             String consumerCode = calculation.getMarriageRegistration().getApplicationNumber();
 
             
-            //Need to implement after the conter employee 
-            User owner = requestInfo.getUserInfo();
+            User owner = getUser(calculation.getMarriageRegistration().getAccountId(), requestInfo, tenantId);
 
             List<DemandDetail> demandDetails = new LinkedList<>();
 
@@ -443,7 +446,18 @@ public class DemandService {
 
 
 
-
+    private User getUser(String uuid, RequestInfo requestInfo, String tenantId) {
+    	List<String> uuidList = new ArrayList<>();
+    	uuidList.add(uuid);
+		UserSearchRequest searchRequest = UserSearchRequest.builder().uuid(uuidList)
+				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+		if(CollectionUtils.isEmpty(res.getUser())) {
+			return null;
+		}
+		return res.getUser().get(0).toCommonUser();
+	}
 
 
 

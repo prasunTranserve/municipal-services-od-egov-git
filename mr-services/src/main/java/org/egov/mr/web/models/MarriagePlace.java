@@ -1,6 +1,7 @@
 package org.egov.mr.web.models;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,6 +40,7 @@ public class MarriagePlace {
 	
 	@Size(max=64)
     @JsonProperty("pinCode")
+	@Pattern(regexp="(^$|[0-9]{6})", message = "Pincode should be 6 digit number")
     private String pinCode = null;
 	
 	

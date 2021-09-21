@@ -64,6 +64,7 @@ public class MRConstants {
 
 	    public static final String APPLICATION_TYPE_NEW = "NEW";
 
+	    public static final String ROLE_CITIZEN = "CITIZEN";
 
 }
 

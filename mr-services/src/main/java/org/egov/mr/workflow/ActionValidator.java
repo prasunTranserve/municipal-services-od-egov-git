@@ -122,9 +122,6 @@ public class ActionValidator {
 				if(marriageRegistration.getCoupleDetails()==null)
 					errorMap.put("INVALID UPDATE","Couple Details are mandatory");
 				
-				if(marriageRegistration.getWitness()==null)
-					errorMap.put("INVALID UPDATE","Witness Details are mandatory");
-				
 				
 			}
 		});
@@ -157,23 +154,34 @@ public class ActionValidator {
 					if(marriageRegistration.getMarriagePlace().getId()==null)
 						errorMap.put("INVALID UPDATE", "Id of Marriage Place cannot be null");
 					marriageRegistration.getCoupleDetails().forEach(couple -> {
-						if(couple.getId()==null)
-							errorMap.put("INVALID UPDATE", "Id of Couple cannot be null");
+						if(couple.getBride().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Bride cannot be null");
 
-						if(couple.getCoupleAddress().getId()==null)
+						if(couple.getBride().getAddress().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Bride Address cannot be null");
+						
+						if(couple.getBride().getGuardianDetails().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Bride Guardian Details cannot be null");
+						
+						if(couple.getBride().getWitness().getId()==null)
 							errorMap.put("INVALID UPDATE", "Id of Couple Address cannot be null");
 
+						if(couple.getGroom().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Groom cannot be null");
+
+						if(couple.getGroom().getAddress().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Groom Address cannot be null");
+						
+						if(couple.getGroom().getGuardianDetails().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Groom Guardian Details cannot be null");
+						
+						if(couple.getGroom().getWitness().getId()==null)
+							errorMap.put("INVALID UPDATE", "Id of Groom Witness cannot be null");
+						
 					});
 
 
-					if(!CollectionUtils.isEmpty(marriageRegistration.getWitness())){
-						marriageRegistration.getWitness().forEach( marriageWitness -> {
-							if(marriageWitness.getId() == null)
-							{
-								errorMap.put("INVALID UPDATE", "Id of Marriage Witness cannot be null");
-							}
-						});
-					}
+					
 
 					if(!CollectionUtils.isEmpty(marriageRegistration.getApplicationDocuments())){
 						marriageRegistration.getApplicationDocuments().forEach(document -> {

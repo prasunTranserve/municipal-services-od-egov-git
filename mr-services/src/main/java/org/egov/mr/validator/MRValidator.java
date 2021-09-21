@@ -1,11 +1,13 @@
 package org.egov.mr.validator;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.validation.Valid;
 
@@ -15,6 +17,7 @@ import org.egov.mr.config.MRConfiguration;
 import org.egov.mr.repository.MRRepository;
 import org.egov.mr.util.MRConstants;
 import org.egov.mr.web.models.MarriageRegistration;
+import org.egov.mr.web.models.MarriageRegistration.ApplicationTypeEnum;
 import org.egov.mr.web.models.MarriageRegistrationRequest;
 import org.egov.mr.web.models.MarriageRegistrationSearchCriteria;
 import org.egov.tracer.model.CustomException;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import static org.egov.mr.util.MRConstants.ACTION_APPLY;
 import static org.egov.mr.util.MRConstants.businessService_MR;
 
 @Component
@@ -110,9 +114,15 @@ public class MRValidator {
 	
 	private void validateMRSpecificNotNullFields(MarriageRegistrationRequest marriageRegistrationRequest) {
 		
+		List<String>  userRoles = new ArrayList<>();
+		
+		marriageRegistrationRequest.getRequestInfo().getUserInfo().getRoles().forEach(role -> {
+			userRoles.add(role.getCode());
+		});
 		marriageRegistrationRequest.getMarriageRegistrations().forEach(marriageRegistration -> {
 			
 			 Map<String, String> errorMap = new HashMap<>();
+			 List<Boolean> isPrimaryOwnerTrueCounter = new ArrayList<>();
 			
 			if(marriageRegistration.getMarriageDate() == null)
 				errorMap.put("NULL_MARRIAGEDATE", " Marriage Date cannot be null");
@@ -137,114 +147,264 @@ public class MRValidator {
 			if(StringUtils.isEmpty(marriageRegistration.getTenantId()))
 				errorMap.put("NULL_TENANTID", " Tenant id cannot be null");
 			
+			
 			if(marriageRegistration.getCoupleDetails()==null)
 				errorMap.put("COUPLE_DETAILS_ERROR", " Couple Details are mandatory  ");
 			else
 			{
-			if(marriageRegistration.getCoupleDetails().size()!=2)
-				errorMap.put("COUPLE_DETAILS_ERROR", " Both the Bride and Groom details should be provided .");
+			if(marriageRegistration.getCoupleDetails().get(0).getBride()==null)
+				errorMap.put("COUPLE_DETAILS_ERROR", " Bride Details are mandatory ");
+			
+			if(marriageRegistration.getCoupleDetails().get(0).getGroom()==null)
+				errorMap.put("COUPLE_DETAILS_ERROR", " Groom are mandatory ");
 			
 			marriageRegistration.getCoupleDetails().forEach(couple -> {
-				if(couple.getIsDivyang()==null)
+				
+				//===================================Bride Details=========================================
+				
+				if(couple.getBride().getIsDivyang()==null)
 					errorMap.put("COUPLE_DETAILS_ERROR", " IsDivyang is mandatory ");
-				if(couple.getIsGroom()==null)
+				
+				
+				
+				if(userRoles.contains("MR_CEMP"))
+				{
+						if(couple.getBride().getIsPrimaryOwner()==null )
+						{
+							errorMap.put("COUPLE_DETAILS_ERROR", " Is Primary Owner is mandatory when application is created by counter employee ");
+						}else if(couple.getBride().getIsPrimaryOwner())
+						{
+							isPrimaryOwnerTrueCounter.add(couple.getBride().getIsPrimaryOwner());
+						}
+						
+				}
+				
+				if(couple.getBride().getIsGroom()==null)
 					errorMap.put("COUPLE_DETAILS_ERROR", " Is Groom is mandatory ");
-				if(StringUtils.isEmpty(couple.getFirstName()))
+				
+				if(couple.getBride().getIsGroom()==null)
+					errorMap.put("COUPLE_DETAILS_ERROR", " Is Groom should be false in Bride json ");
+					
+				if(StringUtils.isEmpty(couple.getBride().getFirstName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", " Name is mandatory ");
-				if(couple.getDateOfBirth() == null )
+				if(couple.getBride().getDateOfBirth() == null )
 					errorMap.put("COUPLE_DETAILS_ERROR", " Date Of Birth is mandatory ");
-				if(StringUtils.isEmpty(couple.getFatherName()))
+				if(StringUtils.isEmpty(couple.getBride().getFatherName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", "Father Name is mandatory ");
-				if(StringUtils.isEmpty(couple.getMotherName()))
+				if(StringUtils.isEmpty(couple.getBride().getMotherName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", "Mother Name is mandatory ");
 				
 				
-				if(couple.getCoupleAddress()!=null)
+				if(couple.getBride().getAddress()!=null)
 				{
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getAddressLine1()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getAddressLine1()))
 						errorMap.put("COUPLE_ADDRESS_ERROR", " Address is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getCountry()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getCountry()))
 						errorMap.put("COUPLE_ADDRESS_ERROR", " Country is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getState()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getState()))
 						errorMap.put("COUPLE_ADDRESS_ERROR", " State is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getPinCode()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getPinCode()))
 						errorMap.put("COUPLE_ADDRESS_ERROR", " Pin Code is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getContact()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getContact()))
 						errorMap.put("COUPLE_DETAILS_ERROR", "Contact is mandatory ");
-					if(StringUtils.isEmpty(couple.getCoupleAddress().getEmailAddress()))
+					if(StringUtils.isEmpty(couple.getBride().getAddress().getEmailAddress()))
 						errorMap.put("COUPLE_DETAILS_ERROR", "Email Address is mandatory ");
 				}
 				
-				if(couple.getGuardianDetails()!=null)
+				if(couple.getBride().getGuardianDetails()!=null)
 				{
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getAddressLine1()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getAddressLine1()))
 						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Address is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getCountry()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getCountry()))
 						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Country is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getState()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getState()))
 						errorMap.put("GUARDIAN_ADDRESS_ERROR", " State is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getPinCode()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getPinCode()))
 						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Pin Code is mandatory ");
 					
-					if(couple.getGuardianDetails().getGroomSideGuardian()==null)
-						errorMap.put("GUARDIAN_DETAILS_ERROR", "Is Groom Side Guardian details are mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getRelationship()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getRelationship()))
 						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Relationship is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getName()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getName()))
 						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Name is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getContact()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getContact()))
 						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Contact is mandatory ");
 					
-					if(StringUtils.isEmpty(couple.getGuardianDetails().getEmailAddress()))
+					if(StringUtils.isEmpty(couple.getBride().getGuardianDetails().getEmailAddress()))
 						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Email Address is mandatory ");
 				}
 				
-			});
-			
-			}
-			
-			if(marriageRegistration.getWitness() != null)
-			{
-				marriageRegistration.getWitness().forEach(witness -> {
+				if(couple.getBride().getWitness() != null)
+				{
+
 					
-					if(witness.getGroomSideWitness() == null )
-						errorMap.put("WITNESS_DETAILS_ERROR", "Groom Side Witness field is mandatory ");
-					
-					if(StringUtils.isEmpty(witness.getAddress()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getAddress()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Address is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getFirstName()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getFirstName()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Name is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getCountry()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getCountry()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Country is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getState()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getState()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness State is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getDistrict()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getDistrict()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness District is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getPinCode()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getPinCode()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness PinCode is mandatory ");
 					
-					if(StringUtils.isEmpty(witness.getContact()))
+					if(StringUtils.isEmpty(couple.getBride().getWitness().getContact()))
 						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Contact is mandatory ");
+				}
+				
+				
+				//===================================Groom Details=========================================
+				
+
+				if(couple.getGroom().getIsDivyang()==null)
+					errorMap.put("COUPLE_DETAILS_ERROR", " IsDivyang is mandatory ");
+				
+				
+				
+				if(userRoles.contains("MR_CEMP"))
+				{
+						if(couple.getGroom().getIsPrimaryOwner()==null )
+						{
+							errorMap.put("COUPLE_DETAILS_ERROR", " Is Primary Owner is mandatory when application is created by counter employee ");
+						}else if(couple.getGroom().getIsPrimaryOwner())
+						{
+							isPrimaryOwnerTrueCounter.add(couple.getGroom().getIsPrimaryOwner());
+						}
+						
+				}
+				
+				if(couple.getGroom().getIsGroom()==null)
+					errorMap.put("COUPLE_DETAILS_ERROR", " Is Groom is mandatory ");
+				
+				if(!couple.getGroom().getIsGroom())
+					errorMap.put("COUPLE_DETAILS_ERROR", " Is Groom Should be true in Groom Details ");
+				
+				if(StringUtils.isEmpty(couple.getGroom().getFirstName()))
+					errorMap.put("COUPLE_DETAILS_ERROR", " Name is mandatory ");
+				if(couple.getGroom().getDateOfBirth() == null )
+					errorMap.put("COUPLE_DETAILS_ERROR", " Date Of Birth is mandatory ");
+				if(StringUtils.isEmpty(couple.getGroom().getFatherName()))
+					errorMap.put("COUPLE_DETAILS_ERROR", "Father Name is mandatory ");
+				if(StringUtils.isEmpty(couple.getGroom().getMotherName()))
+					errorMap.put("COUPLE_DETAILS_ERROR", "Mother Name is mandatory ");
+				
+				
+				if(couple.getGroom().getAddress()!=null)
+				{
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getAddressLine1()))
+						errorMap.put("COUPLE_ADDRESS_ERROR", " Address is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getCountry()))
+						errorMap.put("COUPLE_ADDRESS_ERROR", " Country is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getState()))
+						errorMap.put("COUPLE_ADDRESS_ERROR", " State is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getPinCode()))
+						errorMap.put("COUPLE_ADDRESS_ERROR", " Pin Code is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getContact()))
+						errorMap.put("COUPLE_DETAILS_ERROR", "Contact is mandatory ");
+					if(StringUtils.isEmpty(couple.getGroom().getAddress().getEmailAddress()))
+						errorMap.put("COUPLE_DETAILS_ERROR", "Email Address is mandatory ");
+				}
+				
+				if(couple.getGroom().getGuardianDetails()!=null)
+				{
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getAddressLine1()))
+						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Address is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getCountry()))
+						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Country is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getState()))
+						errorMap.put("GUARDIAN_ADDRESS_ERROR", " State is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getPinCode()))
+						errorMap.put("GUARDIAN_ADDRESS_ERROR", " Pin Code is mandatory ");
 					
 					
-				});
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getRelationship()))
+						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Relationship is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getName()))
+						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Name is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getContact()))
+						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Contact is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getGuardianDetails().getEmailAddress()))
+						errorMap.put("GUARDIAN_DETAILS_ERROR", "Guardian Email Address is mandatory ");
+				}
+				
+				
+				if(couple.getGroom().getWitness() != null)
+				{
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getAddress()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Address is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getFirstName()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Name is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getCountry()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Country is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getState()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness State is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getDistrict()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness District is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getPinCode()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness PinCode is mandatory ");
+					
+					if(StringUtils.isEmpty(couple.getGroom().getWitness().getContact()))
+						errorMap.put("WITNESS_DETAILS_ERROR", "Witness Contact is mandatory ");
+				}
+			
+				
+				
+			});
+			
+			
+				if(userRoles.contains("MR_CEMP"))
+				{
+					int trueCounter = 0 ;
+					for (Boolean isPrimary : isPrimaryOwnerTrueCounter) {
+						if(isPrimary)
+							trueCounter++;
+					}
+					if(trueCounter==0)
+						errorMap.put("COUPLE_DETAILS_ERROR", " Either one of the Bride or Groom should be the primary owner if the application is created by counter employee ");
+					if(trueCounter==2)
+						errorMap.put("COUPLE_DETAILS_ERROR", " Both Bride and Groom cannot be the primary owner if the application is created by counter employee ");
+				}
+			
+			
 			}
 			
+			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_APPLY)) {
+                if(marriageRegistration.getApplicationDocuments()==null)
+                	errorMap.put("APPLICATION_DOCUMENTS_ERROR", " Application Documents are mandatory if the action is Apply ");
+            }
 			
 			
 			if (!errorMap.isEmpty())
@@ -334,8 +494,9 @@ public class MRValidator {
                     equalsIgnoreCase(marriageRegistrationObj.getMarriagePlace().getId()))
                 errorMap.put("INVALID UPDATE","The id "+marriageRegistrationObj.getMarriagePlace().getId()+" does not exist");
 
+            compareIdList(getAccountId(searchedMarriageRegistration),getAccountId(marriageRegistrationObj),errorMap);
             compareIdList(getCouple(searchedMarriageRegistration),getCouple(marriageRegistrationObj),errorMap);
-            compareIdList(getCoupleAddress(searchedMarriageRegistration),getCoupleAddress(marriageRegistrationObj),errorMap);
+            compareIdList(getAddress(searchedMarriageRegistration),getAddress(marriageRegistrationObj),errorMap);
             compareIdList(getGuardianDetails(searchedMarriageRegistration),getGuardianDetails(marriageRegistrationObj),errorMap);
             compareIdList(getWitness(searchedMarriageRegistration),getWitness(marriageRegistrationObj),errorMap);
             compareIdList(getApplicationDocIds(searchedMarriageRegistration),getApplicationDocIds(marriageRegistrationObj),errorMap);
@@ -347,48 +508,65 @@ public class MRValidator {
     }
     
     
-
+    private List<String> getAccountId(MarriageRegistration marriageRegistration)
+    {
+    	List<String> accountIds = new LinkedList<>();
+    	accountIds.add(marriageRegistration.getAccountId());
+    	
+    	return accountIds;
+    }
+    
+    
     private List<String> getCouple(MarriageRegistration marriageRegistration){
         List<String> coupleIds = new LinkedList<>();
         if(!CollectionUtils.isEmpty(marriageRegistration.getCoupleDetails())){
         	marriageRegistration.getCoupleDetails().forEach(couple -> {
-                coupleIds.add(couple.getId());
+                coupleIds.add(couple.getBride().getId());
+                coupleIds.add(couple.getGroom().getId());
             });
         }
         return coupleIds;
     }
     
-    private List<String> getCoupleAddress(MarriageRegistration marriageRegistration){
+   
+    
+    private List<String> getAddress(MarriageRegistration marriageRegistration){
         List<String> coupleAddressIds = new LinkedList<>();
         if(!CollectionUtils.isEmpty(marriageRegistration.getCoupleDetails())){
         	marriageRegistration.getCoupleDetails().forEach(couple -> {
-        		if(couple.getCoupleAddress()!=null)
-                coupleAddressIds.add(couple.getCoupleAddress().getId());
+        		if(couple.getBride().getAddress()!=null)
+                coupleAddressIds.add(couple.getBride().getAddress().getId());
+        		if(couple.getGroom().getAddress()!=null)
+                    coupleAddressIds.add(couple.getGroom().getAddress().getId());
             });
         }
         return coupleAddressIds;
     }
     
     private List<String> getGuardianDetails(MarriageRegistration marriageRegistration){
-        List<String> coupleAddressIds = new LinkedList<>();
+        List<String> coupleGuardianIds = new LinkedList<>();
         if(!CollectionUtils.isEmpty(marriageRegistration.getCoupleDetails())){
         	marriageRegistration.getCoupleDetails().forEach(couple -> {
-        		if(couple.getGuardianDetails()!=null)
-                coupleAddressIds.add(couple.getGuardianDetails().getId());
+        		if(couple.getBride().getGuardianDetails()!=null)
+                coupleGuardianIds.add(couple.getBride().getGuardianDetails().getId());
+        		if(couple.getGroom().getGuardianDetails()!=null)
+                    coupleGuardianIds.add(couple.getGroom().getGuardianDetails().getId());
             });
         }
-        return coupleAddressIds;
+        return coupleGuardianIds;
     }
     
     private List<String> getWitness(MarriageRegistration marriageRegistration){
-        List<String> coupleIds = new LinkedList<>();
-        if(!CollectionUtils.isEmpty(marriageRegistration.getWitness())){
-        	if(marriageRegistration.getWitness()!=null)
-        	marriageRegistration.getWitness().forEach(witness -> {
-                coupleIds.add(witness.getId());
+        List<String> coupleWitnessIds = new LinkedList<>();
+        if(!CollectionUtils.isEmpty(marriageRegistration.getCoupleDetails())){
+        	marriageRegistration.getCoupleDetails().forEach(couple -> {
+        		if(couple.getBride().getWitness()!=null)
+        			coupleWitnessIds.add(couple.getBride().getWitness().getId());
+        		if(couple.getGroom().getWitness()!=null)
+        			coupleWitnessIds.add(couple.getGroom().getWitness().getId());
             });
         }
-        return coupleIds;
+        return coupleWitnessIds;
     }
     
 
@@ -506,6 +684,30 @@ public class MRValidator {
             throw new CustomException("INVALID SEARCH","Search on limit is not allowed");
 
     }
+
+	public void validateNonUpdatableFileds(MarriageRegistrationRequest marriageRegistartionRequest,List<MarriageRegistration> searchResult) {
+		
+		Map<String,MarriageRegistration> idToMarriageRegistrationFromSearch = new HashMap<>();
+    	searchResult.forEach(marriageRegistration -> {
+    		idToMarriageRegistrationFromSearch.put(marriageRegistration.getId(),marriageRegistration);
+    	});
+    	
+    	marriageRegistartionRequest.getMarriageRegistrations().forEach(marriageRegistration -> {
+    		if(!marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE))
+    		{
+    			if(!marriageRegistration.getTenantId().equalsIgnoreCase(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getTenantId()))
+    			{
+    				throw new CustomException("TENANT ID ERROR","The Tenant Id cannot be modified .");
+    			}
+    			
+    			if(!marriageRegistration.getAccountId().equalsIgnoreCase(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getAccountId()))
+    			{
+    				throw new CustomException("ACCOUNT ID ERROR","The Account Id cannot be modified .");
+    			}
+    		}
+    	});    	
+    	
+	}
 
 
 }
