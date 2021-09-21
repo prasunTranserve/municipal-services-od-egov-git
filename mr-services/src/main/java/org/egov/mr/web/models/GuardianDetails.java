@@ -48,16 +48,13 @@ public class GuardianDetails {
 
     @Size(max=64)
     @JsonProperty("pinCode")
+    @Pattern(regexp="(^$|[0-9]{6})", message = "Pincode should be 6 digit number")
     private String pinCode = null;
 
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails = null;
 
-	
-
-    @JsonProperty("groomSideGuardian")
-	private Boolean groomSideGuardian ;
 	
 	@Size(max=64)
     @JsonProperty("relationship")

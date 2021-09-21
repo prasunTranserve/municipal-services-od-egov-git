@@ -1,11 +1,20 @@
 package org.egov.mr.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.config.MRConfiguration;
+import org.egov.mr.model.user.Citizen;
+import org.egov.mr.model.user.CreateUserRequest;
+import org.egov.mr.model.user.UserResponse;
+import org.egov.mr.model.user.UserSearchRequest;
+import org.egov.mr.model.user.UserType;
 import org.egov.mr.repository.IdGenRepository;
+import org.egov.mr.repository.ServiceRequestRepository;
 import org.egov.mr.util.MRConstants;
 import org.egov.mr.util.MarriageRegistrationUtil;
 import org.egov.mr.web.models.AuditDetails;
+import org.egov.mr.web.models.Couple;
+import org.egov.mr.web.models.CoupleDetails;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistrationRequest;
 import org.egov.mr.web.models.MarriageRegistrationSearchCriteria;
@@ -16,6 +25,8 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 
 import java.util.*;
@@ -31,15 +42,20 @@ public class EnrichmentService {
 	private MarriageRegistrationUtil marriageRegistrationUtil;
 	private BoundaryService boundaryService;
 	private WorkflowService workflowService;
-
+    private ObjectMapper mapper;
+    private ServiceRequestRepository serviceRequestRepository;
+    
+    
 	@Autowired
 	public EnrichmentService(IdGenRepository idGenRepository, MRConfiguration config,
-			BoundaryService boundaryService,WorkflowService workflowService,MarriageRegistrationUtil marriageRegistrationUtil) {
+			BoundaryService boundaryService,WorkflowService workflowService,MarriageRegistrationUtil marriageRegistrationUtil,ObjectMapper mapper,ServiceRequestRepository serviceRequestRepository) {
 		this.idGenRepository = idGenRepository;
 		this.config = config;
 		this.marriageRegistrationUtil=marriageRegistrationUtil;
 		this.boundaryService = boundaryService;
 		this.workflowService = workflowService;
+		this.mapper = mapper;
+		this.serviceRequestRepository =serviceRequestRepository ;
 	}
 
 
@@ -76,8 +92,10 @@ public class EnrichmentService {
         }
 
 			marriageRegistration.getCoupleDetails().forEach(couple -> {
-				couple.setTenantId(marriageRegistration.getTenantId());
-				couple.setId(UUID.randomUUID().toString());
+				couple.getBride().setTenantId(marriageRegistration.getTenantId());
+				couple.getBride().setId(UUID.randomUUID().toString());
+				couple.getGroom().setTenantId(marriageRegistration.getTenantId());
+				couple.getGroom().setId(UUID.randomUUID().toString());
 			});
 
 			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_APPLY)) {
@@ -89,24 +107,32 @@ public class EnrichmentService {
 			
 			
 			marriageRegistration.getCoupleDetails().forEach(couple -> {
+				
+				if(couple.getId() ==null )
+					couple.setId(UUID.randomUUID().toString());
 
-				if(couple.getCoupleAddress()!=null )
-					couple.getCoupleAddress().setId(UUID.randomUUID().toString());
+				if(couple.getBride().getAddress()!=null )
+					couple.getBride().getAddress().setId(UUID.randomUUID().toString());
 
-				if(couple.getGuardianDetails()!=null )
-					couple.getGuardianDetails().setId(UUID.randomUUID().toString());
+				if(couple.getBride().getGuardianDetails()!=null )
+					couple.getBride().getGuardianDetails().setId(UUID.randomUUID().toString());
+				
+				if(couple.getBride().getWitness()!=null )
+					couple.getBride().getWitness().setId(UUID.randomUUID().toString());
+				
+				if(couple.getGroom().getAddress()!=null )
+					couple.getGroom().getAddress().setId(UUID.randomUUID().toString());
+
+				if(couple.getGroom().getGuardianDetails()!=null )
+					couple.getGroom().getGuardianDetails().setId(UUID.randomUUID().toString());
+				
+				if(couple.getGroom().getWitness()!=null )
+					couple.getGroom().getWitness().setId(UUID.randomUUID().toString());
 
 			});
 
 
-			if(marriageRegistration.getWitness()!=null)
-			{
-				marriageRegistration.getWitness().forEach(  witness -> {
-
-						witness.setId(UUID.randomUUID().toString());
-
-				});
-			}
+			
 			
 			
 			if(marriageRegistration.getApplicationType() !=null && marriageRegistration.getApplicationType().toString().equals(MRConstants.APPLICATION_TYPE_CORRECTION)){
@@ -122,6 +148,36 @@ public class EnrichmentService {
 
 			if (requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN"))
 				marriageRegistration.setAccountId(requestInfo.getUserInfo().getUuid());
+			else
+			{
+				marriageRegistration.getCoupleDetails().forEach(couple -> {
+					if(couple.getBride().getIsPrimaryOwner())
+					{
+						String mobileNumber = couple.getBride().getAddress().getContact();
+						
+						String accId = null ;
+						
+						accId = isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
+						if (StringUtils.isEmpty(accId)) {
+							accId = createUser(couple.getBride() , requestInfo,marriageRegistration.getTenantId());
+						}
+						marriageRegistration.setAccountId(accId);
+					}
+					if(couple.getGroom().getIsPrimaryOwner())
+					{
+						String mobileNumber = couple.getGroom().getAddress().getContact();
+						
+						String accId = null ;
+						
+						accId = isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
+						if (StringUtils.isEmpty(accId)) {
+							accId = createUser(couple.getGroom() , requestInfo,marriageRegistration.getTenantId());
+						}
+						marriageRegistration.setAccountId(accId);
+					}
+					
+				});
+			}
 
 		});
 
@@ -137,6 +193,35 @@ public class EnrichmentService {
 			boundaryService.getAreaType(marriageRegistrationRequest, config.getHierarchyTypeCode());
 			break;
 		}
+	}
+
+
+	
+	private String isUserPresent(String mobileNumber, RequestInfo requestInfo, String tenantId) {
+		UserSearchRequest searchRequest = UserSearchRequest.builder().userName(mobileNumber)
+				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+		if(CollectionUtils.isEmpty(res.getUser())) {
+			return null;
+		}
+		return res.getUser().get(0).getUuid().toString();
+	}
+	
+	
+	private String createUser(CoupleDetails couple ,RequestInfo requestInfo, String tenantId) {
+		Citizen citizen = new Citizen();
+		citizen.setUserName(couple.getAddress().getContact());
+		citizen.setName(couple.getFirstName());
+		citizen.setActive(true);
+		citizen.setMobileNumber(couple.getAddress().getContact());
+		citizen.setTenantId(tenantId);
+		citizen.setType(UserType.CITIZEN);
+		citizen.setRoles(Arrays.asList(org.egov.common.contract.request.Role.builder().code(ROLE_CITIZEN).build()));
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserCreateEndpoint()); 
+		CreateUserRequest req = CreateUserRequest.builder().citizen(citizen).requestInfo(requestInfo).build();
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, req), UserResponse.class);
+		return res.getUser().get(0).getUuid().toString();
 	}
 
 
@@ -306,34 +391,55 @@ public class EnrichmentService {
 				}
 
 				marriageRegistration.getCoupleDetails().forEach(couple -> {
+					
 					if(couple.getId()==null)
 					{
 						couple.setId(UUID.randomUUID().toString());
 					}
-
-					if(couple.getTenantId()==null)
+					
+					
+					if(couple.getBride().getId()==null)
 					{
-						couple.setTenantId(marriageRegistration.getTenantId());
+						couple.getBride().setId(UUID.randomUUID().toString());
 					}
 
-					if(couple.getCoupleAddress()!=null &&  couple.getCoupleAddress().getId()==null)
-						couple.getCoupleAddress().setId(UUID.randomUUID().toString());
+					if(couple.getBride().getTenantId()==null)
+					{
+						couple.getBride().setTenantId(marriageRegistration.getTenantId());
+					}
 
-					if(couple.getGuardianDetails()!=null && couple.getGuardianDetails().getId()==null)
-						couple.getGuardianDetails().setId(UUID.randomUUID().toString());
+					if(couple.getBride().getAddress()!=null &&  couple.getBride().getAddress().getId()==null)
+						couple.getBride().getAddress().setId(UUID.randomUUID().toString());
+
+					if(couple.getBride().getGuardianDetails()!=null && couple.getBride().getGuardianDetails().getId()==null)
+						couple.getBride().getGuardianDetails().setId(UUID.randomUUID().toString());
+					
+					if(couple.getBride().getWitness()!=null && couple.getBride().getWitness().getId()==null)
+						couple.getBride().getWitness().setId(UUID.randomUUID().toString());
+					
+					if(couple.getGroom().getId()==null)
+					{
+						couple.getGroom().setId(UUID.randomUUID().toString());
+					}
+
+					if(couple.getGroom().getTenantId()==null)
+					{
+						couple.getGroom().setTenantId(marriageRegistration.getTenantId());
+					}
+
+					if(couple.getGroom().getAddress()!=null &&  couple.getGroom().getAddress().getId()==null)
+						couple.getGroom().getAddress().setId(UUID.randomUUID().toString());
+
+					if(couple.getGroom().getGuardianDetails()!=null && couple.getGroom().getGuardianDetails().getId()==null)
+						couple.getGroom().getGuardianDetails().setId(UUID.randomUUID().toString());
+					
+					if(couple.getGroom().getWitness()!=null && couple.getGroom().getWitness().getId()==null)
+						couple.getGroom().getWitness().setId(UUID.randomUUID().toString());
 
 				});
 
 
-				if(marriageRegistration.getWitness()!=null)
-				{
-					marriageRegistration.getWitness().forEach(  witness -> {
-
-						if(  witness.getId() ==  null)
-							witness.setId(UUID.randomUUID().toString());
-
-					});
-				}
+			
 
 
 

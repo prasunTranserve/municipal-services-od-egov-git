@@ -20,7 +20,7 @@ import lombok.Builder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CoupleAddress   {
+public class Address   {
 
         @Size(max=64)
         @JsonProperty("id")
@@ -48,6 +48,7 @@ public class CoupleAddress   {
 
         @Size(max=64)
         @JsonProperty("pinCode")
+        @Pattern(regexp="(^$|[0-9]{6})", message = "Pincode should be 6 digit number")
         private String pinCode = null;
 
         @Pattern(regexp = "^[6-9][0-9]{9}$", message = "Invalid mobile number")

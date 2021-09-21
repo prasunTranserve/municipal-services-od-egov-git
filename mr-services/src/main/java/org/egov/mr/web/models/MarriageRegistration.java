@@ -90,6 +90,9 @@ public class MarriageRegistration {
     
     @JsonProperty("applicationDate")
     private Long applicationDate = null;
+    
+    @JsonProperty("appointmentDate")
+    private Long appointmentDate = null;
 
     @JsonProperty("marriageDate")
     private Long marriageDate = null;
@@ -132,9 +135,7 @@ public class MarriageRegistration {
       @Valid
       private List<Couple> coupleDetails = null;
 	  
-	  @JsonProperty("witness")
-      @Valid
-	  private List<Witness> witness = null ;
+	
 	  
 	  @JsonProperty("assignee")
       private List<String> assignee = null;
@@ -146,21 +147,42 @@ public class MarriageRegistration {
       @JsonProperty("calculation")
       private Calculation calculation;
 	  
-	  public MarriageRegistration addWitnessItem(Witness witnessItem) {
-          if (this.witness == null) {
-          this.witness = new ArrayList<>();
-          }
-          if(!this.witness.contains(witnessItem))
-              this.witness.add(witnessItem);
-          return this;
-      }
 	  
-	  public MarriageRegistration addCoupleDetailsItem(Couple coupleItem) {
+	  public MarriageRegistration addCoupleDetailsItem(CoupleDetails coupleDetailItem) {
           if (this.coupleDetails == null) {
           this.coupleDetails = new ArrayList<>();
           }
-          if(!this.coupleDetails.contains(coupleItem))
-              this.coupleDetails.add(coupleItem);
+          if(!coupleDetailItem.getIsGroom())
+          {
+        	  if(this.coupleDetails.size()>0)
+        	  {
+              if(this.coupleDetails.get(0).getBride() != null &&   !this.coupleDetails.get(0).getBride().equals(coupleDetailItem))
+              this.coupleDetails.get(0).setBride(coupleDetailItem);
+              else if(this.coupleDetails.get(0).getBride() == null)
+            	  this.coupleDetails.get(0).setBride(coupleDetailItem);
+        	  }else
+        	  {
+        		  Couple  couple = new Couple();
+        		  couple.setBride(coupleDetailItem);
+        		  this.coupleDetails.add(couple);
+        	  }
+          }
+          if(coupleDetailItem.getIsGroom())
+          {
+        	  if(this.coupleDetails.size()>0)
+        	  {
+        	  if(this.coupleDetails.get(0).getGroom()!= null &&  !this.coupleDetails.get(0).getGroom().equals(coupleDetailItem))
+                  this.coupleDetails.get(0).setGroom(coupleDetailItem); 
+        	  else if(this.coupleDetails.get(0).getGroom()  == null)
+        		  this.coupleDetails.get(0).setGroom(coupleDetailItem); 
+        	  }else
+        	  {
+        		  Couple  couple = new Couple();
+        		  couple.setGroom(coupleDetailItem);
+        		  this.coupleDetails.add(couple);
+        	  }
+          }
+          
           return this;
       }
 	  

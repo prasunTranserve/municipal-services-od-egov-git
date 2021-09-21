@@ -52,11 +52,11 @@ public class MRQueryBuilder {
             +INNER_JOIN_STRING
             +"eg_mr_couple mrc ON mrc.mr_id = mr.id"
             +LEFT_OUTER_JOIN_STRING
-            +"eg_mr_coupleaddress mrca ON mrca.mr_couple_id = mrc.id"
+            +"eg_mr_address mrca ON mrca.mr_couple_id = mrc.id"
             +LEFT_OUTER_JOIN_STRING
             +"eg_mr_gaurdiandetails mrgd ON mrgd.mr_couple_id = mrc.id"
             +LEFT_OUTER_JOIN_STRING
-            +"eg_mr_witness mrw ON mrw.mr_id = mr.id"
+            +"eg_mr_witness mrw ON mrw.mr_couple_id = mrc.id"
             +LEFT_OUTER_JOIN_STRING
             +"eg_mr_verificationdocument mrverdoc ON mrverdoc.mr_id = mr.id"
             +LEFT_OUTER_JOIN_STRING

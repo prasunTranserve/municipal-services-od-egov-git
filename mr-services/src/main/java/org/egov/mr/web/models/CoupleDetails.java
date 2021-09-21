@@ -1,5 +1,8 @@
 package org.egov.mr.web.models;
 
+import java.util.List;
+
+import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -19,54 +22,61 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Witness {
-
+public class CoupleDetails {
 	
 	@Size(max=64)
     @JsonProperty("id")
     private String id;
 
+    @JsonProperty("isDivyang")
+    private Boolean isDivyang;
 
     @Size(max=64)
     @JsonProperty("tenantId")
     private String tenantId = null;
     
+    @JsonProperty("isGroom")
+    private Boolean isGroom;
+    
     @Size(max=64)
     @JsonProperty("title")
     private String title;
     
-    @Size(max=256)
-    @JsonProperty("address")
-    private String address;
-	
     @Size(max=64)
     @JsonProperty("firstName")
     private String firstName;
-        
+       
+    @JsonProperty("dateOfBirth")
+    private Long dateOfBirth;
+    
+    
     @Size(max=64)
-    @JsonProperty("country")
-    private String country = null;
+    @JsonProperty("fatherName")
+    private String fatherName;
+    @Size(max=64)
 
-    @Size(max=64)
-    @JsonProperty("state")
-    private String state = null;
     
     @Size(max=64)
-    @JsonProperty("district")
-    private String district = null;
+    @JsonProperty("motherName")
+    private String motherName;
+    
+    @JsonProperty("isPrimaryOwner")
+    private Boolean isPrimaryOwner ;
 
-    @Size(max=64)
-    @JsonProperty("pinCode")
-    @Pattern(regexp="(^$|[0-9]{6})", message = "Pincode should be 6 digit number")
-    private String pinCode = null;
-    
-    
-    @Pattern(regexp = "^[6-9][0-9]{9}$", message = "Invalid mobile number")
-    @JsonProperty("contact")
-    private String contact;
     
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails = null;
+    
+    @JsonProperty("address")
+    @Valid
+    private Address address = null ;
+    
+    @JsonProperty("guardianDetails")
+    @Valid
+    private GuardianDetails guardianDetails = null ;
+
+    @JsonProperty("witness")
+    @Valid
+	private Witness witness = null ;
+    
 }
-
-
