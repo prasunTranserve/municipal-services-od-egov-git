@@ -39,6 +39,7 @@ import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsMeterReading;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class MigrationUtility {
@@ -155,6 +156,8 @@ public class MigrationUtility {
 	public static BigDecimal convertAreaToYard(String area) {
 		BigDecimal convertedArea;
 		if (area == null)
+			return BigDecimal.ONE;
+		if(!area.matches(decimalRegex))
 			return BigDecimal.ONE;
 		convertedArea = BigDecimal.valueOf(Double.parseDouble(area)).multiply(sqmtrToSqyard).setScale(2, RoundingMode.UP);
 		if(convertedArea.compareTo(maxDigitSupportedArea) > 0) {
@@ -320,8 +323,10 @@ public class MigrationUtility {
 			return 1L;
 		} else if (floorNo.matches(digitRegex)) {
 			return Long.parseLong(floorNo);
-		} else {
+		} else if(MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().toLowerCase().replace(" ", "_")) != null) {
 			return MigrationUtility.instance.getSystemProperties().getFloorNo().get(floorNo.trim().toLowerCase().replace(" ", "_"));
+		} else {
+			return 1L;
 		}
 	}
 
@@ -740,6 +745,9 @@ public class MigrationUtility {
 	}
 	
 	public static String getAssessmentFinYear(String finYear) {
+		if(StringUtils.isEmpty(finYear)) {
+			return "1980-81";
+		}
 		finYear = finYear.replaceAll("[^0-9-]", "");
 		if(!finYear.matches(finyearRegex)) {
 			finYear = "1980-81";
@@ -808,13 +816,13 @@ public class MigrationUtility {
 	}
 
 	public static String getDoorNo(String doorNo) {
-		if(doorNo == null)
+		if(StringUtils.isEmpty(doorNo))
 			return "1";
 		return doorNo;
 	}
 
 	public static String getPIN(String pin) {
-		if(pin == null)
+		if(StringUtils.isEmpty(pin))
 			return "111111";
 		return pin;
 	}
@@ -828,6 +836,9 @@ public class MigrationUtility {
 		}
 		if(Integer.parseInt(ward) > 69) {
 			return "01";
+		}
+		if(Integer.parseInt(ward) < 10) {
+			return "0".concat(ward);
 		}
 		return ward;
 	}
@@ -847,6 +858,30 @@ public class MigrationUtility {
 		if(connectionHolderType.equalsIgnoreCase("BPL"))
 			return "BPL";
 		return "NONE";
+	}
+
+	public static String getStreet(Address address) {
+		String street = "";
+		if(StringUtils.isEmpty(address.getAddressLine1()) && StringUtils.isEmpty(address.getAddressLine2())) {
+			return "Other";
+		}
+		if(!StringUtils.isEmpty(address.getAddressLine1())) {
+			street = street.concat(address.getAddressLine1());
+		}
+		if(!StringUtils.isEmpty(address.getAddressLine2())) {
+			street = street.concat(comma).concat(address.getAddressLine2());
+		}
+		if(street.startsWith(comma)) {
+			street = street.substring(1);
+		}
+		return StringUtils.isEmpty(street)?"Other":street;
+	}
+
+	public static String getDefaultOther(String value) {
+		if(StringUtils.isEmpty(value)) {
+			return "Other";
+		}
+		return value;
 	}
 	
 }

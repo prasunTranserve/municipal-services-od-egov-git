@@ -41,7 +41,7 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 		recordStatistic.setSuccessFile(successFile);
 		recordStatistic.setErrorFile(errorFile);
 		
-		String startTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+		String startTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a"));
 		recordStatistic.setStartTime(startTime);
 		
 		//propertyService.refreshAuthToken();
@@ -49,7 +49,7 @@ public class PropertyMigrationJobExecutionListner implements JobExecutionListene
 
 	@Override
 	public void afterJob(JobExecution jobExecution) {
-		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+		String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a"));
 		recordStatistic.setEndTime(timestamp);
 	}
 }

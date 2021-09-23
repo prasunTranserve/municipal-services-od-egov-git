@@ -21,6 +21,7 @@ import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
 import org.egov.migration.reader.model.Assessment;
 import org.egov.migration.reader.model.DemandDetail;
+import org.egov.migration.reader.model.Owner;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.service.PropertyService;
 import org.egov.migration.service.ValidationService;
@@ -132,18 +133,18 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 	private void transformAddress(PropertyDTO propertyDTO, Address address) {
 		AddressDTO addressDTO = new AddressDTO();
 		addressDTO.setDoorNo(MigrationUtility.getDoorNo(address.getDoorNo()));
-		addressDTO.setPlotNo(address.getPlotNo());
-		addressDTO.setLandmark(address.getLandMark());
-		addressDTO.setCity(address.getCity());
-		addressDTO.setDistrict(address.getDistrict());
-		addressDTO.setRegion(address.getRegion());
-		addressDTO.setState(address.getState());
-		addressDTO.setCountry(address.getCountry());
+		addressDTO.setPlotNo(MigrationUtility.getDefaultOther(address.getPlotNo()));
+		addressDTO.setLandmark(MigrationUtility.getDefaultOther(address.getLandMark()));
+		addressDTO.setCity(MigrationUtility.getDefaultOther(address.getCity()));
+		addressDTO.setDistrict(MigrationUtility.getDefaultOther(address.getDistrict()));
+		addressDTO.setRegion(MigrationUtility.getDefaultOther(address.getRegion()));
+		addressDTO.setState(MigrationUtility.getDefaultOther(address.getState()));
+		addressDTO.setCountry(MigrationUtility.getDefaultOther(address.getCountry()));
 		addressDTO.setPincode(MigrationUtility.getPIN(address.getPin()));
-		addressDTO.setBuildingName(address.getBuildingName());
+		addressDTO.setBuildingName(MigrationUtility.getDefaultOther(address.getBuildingName()));
 		addressDTO.setLocality(MigrationUtility.getLocality(this.localityCode));
 		addressDTO.setWard(MigrationUtility.getWard(address.getWard()));
-		addressDTO.setStreet("Street");
+		addressDTO.setStreet(MigrationUtility.getStreet(address));
 		propertyDTO.setAddress(addressDTO);
 	}
 
@@ -151,18 +152,17 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 		propertyDTO.setOwners(property.getOwners().stream().map(owner -> {
 			OwnerInfoDTO ownerInfoDTO = new OwnerInfoDTO();
 			ownerInfoDTO.setSalutation(MigrationUtility.getSalutation(owner.getSalutation()));
-			ownerInfoDTO.setName(owner.getOwnerName().trim());
+			ownerInfoDTO.setName(MigrationUtility.prepareName(property.getPropertyId(),  owner.getOwnerName()));
 			ownerInfoDTO.setMobileNumber(MigrationUtility.processMobile(owner.getMobileNumber()));
 			ownerInfoDTO.setEmailId(null);
 			ownerInfoDTO.setAltContactNumber(null);
-			ownerInfoDTO.setGender(MigrationUtility.getGender(owner.getGender()));
-			ownerInfoDTO.setFatherOrHusbandName(owner.getGurdianName());
+			ownerInfoDTO.setGender(prepareGender(owner));
+			ownerInfoDTO.setFatherOrHusbandName(MigrationUtility.prepareName("Other",  owner.getGurdianName()));
 			ownerInfoDTO.setCorrespondenceAddress(MigrationUtility.getCorrespondanceAddress(property.getAddress()));
-			ownerInfoDTO.setOwnerShipPercentage(
-					owner.getOwnerPercentage() == null ? null : Double.parseDouble(owner.getOwnerPercentage()));
+//			ownerInfoDTO.setOwnerShipPercentage(
+//					owner.getOwnerPercentage() == null ? null : Double.parseDouble(owner.getOwnerPercentage()));
 			ownerInfoDTO.setOwnerType(MigrationConst.DEFAULT_OWNER_TYPE);
-			ownerInfoDTO
-					.setRelationship(owner.getRelationship() == null ? null : owner.getRelationship().toUpperCase());
+			ownerInfoDTO.setRelationship(MigrationUtility.getRelationship(owner.getRelationship()));
 
 			return ownerInfoDTO;
 		}).collect(Collectors.toList()));
@@ -194,7 +194,7 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 				finYearConsolidateAmount.put(demand.getTaxPeriodFrom(), new HashMap<>());
 			}
 			
-			if(demand.getPaymentComplete().equalsIgnoreCase("N")) {
+			if(demand.getPaymentComplete()==null || demand.getPaymentComplete().equalsIgnoreCase("N")) {
 				BigDecimal dueAmount = finYearConsolidateAmount.get(demand.getTaxPeriodFrom()).get(MigrationConst.AMT_DUE);
 				if (dueAmount == null) {
 					dueAmount = new BigDecimal(demand.getMinPayableAmt());
@@ -249,6 +249,21 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 		}
 		
 		return demandDetailDTOs;
+	}
+	
+	private static String prepareGender(Owner holder) {
+		String gender = "Male";
+		if(holder.getGender()==null) {
+			if(holder.getSalutation() != null && 
+					(holder.getSalutation().equalsIgnoreCase("M/S")
+							|| holder.getSalutation().equalsIgnoreCase("Miss")
+							|| holder.getSalutation().equalsIgnoreCase("Mrs"))) {
+				gender="Female";
+			}
+		} else {
+			gender = MigrationUtility.getGender(holder.getGender());
+		}
+		return gender;
 	}
 
 }
