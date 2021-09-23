@@ -220,6 +220,8 @@ public class WCConstants {
 	public static final String MONTHLY_BILLING_CONST = "monthly";
 
 	public static final String BILLING_CYCLE_STRING = "billingCycle";
+	
+	public static final String REJECT_CONNECTION = "REJECT";
 
 	public static final String APPROVE_CONNECTION = "APPROVE_CONNECTION";
 

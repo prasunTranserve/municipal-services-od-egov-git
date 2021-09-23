@@ -210,6 +210,8 @@ public class SWConstants {
 	public static final int RECONNECTION =  5;
 	
 	public static final int OWNERSHIP_CHANGE_CONNECTION =  6;
+	
+	public static final String REJECT_CONNECTION = "REJECT";
 
 	public static final String APPROVE_CONNECTION = "APPROVE_CONNECTION";
 

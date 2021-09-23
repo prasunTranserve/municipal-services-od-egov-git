@@ -1,6 +1,6 @@
 package org.egov.waterconnection.service;
 
-import static org.egov.waterconnection.constants.WCConstants.APPROVE_CONNECTION;
+import static org.egov.waterconnection.constants.WCConstants.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -299,6 +299,7 @@ public class WaterServiceImpl implements WaterService {
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
 		// setting status as Inactive for closed connection
 		inactiveConnection(waterConnectionRequest);
+		markOldApplicationForReject(waterConnectionRequest);
 		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
 		calculateFeeAndGenerateDemand(waterConnectionRequest, property);
 		// setting oldApplication Flag
@@ -440,5 +441,12 @@ public class WaterServiceImpl implements WaterService {
 				.equalsIgnoreCase(WCConstants.ACTION_CLOSE_CONNECTION)) {
 					waterConnectionRequest.getWaterConnection().setStatus(StatusEnum.INACTIVE);
 		}
+	}
+	
+	private void markOldApplicationForReject(WaterConnectionRequest waterConnectionRequest) {
+		if(REJECT_CONNECTION.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			waterConnectionRequest.getWaterConnection().setOldApplication(Boolean.TRUE);
+		}
+
 	}
 }
