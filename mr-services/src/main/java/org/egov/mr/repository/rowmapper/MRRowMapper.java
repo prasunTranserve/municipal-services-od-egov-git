@@ -13,6 +13,7 @@ import org.egov.mr.web.models.Boundary;
 import org.egov.mr.web.models.Couple;
 import org.egov.mr.web.models.CoupleDetails;
 import org.egov.mr.web.models.Address;
+import org.egov.mr.web.models.AppointmentDetails;
 import org.egov.mr.web.models.Document;
 import org.egov.mr.web.models.GuardianDetails;
 import org.egov.mr.web.models.MarriagePlace;
@@ -25,6 +26,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -66,7 +69,6 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
 						.workflowCode(rs.getString("workflowcode"))
 						.applicationDate(applicationDate)
 						.applicationNumber(rs.getString("applicationnumber"))
-						.appointmentDate(rs.getLong("appointmentdate"))
 						.applicationType(MarriageRegistration.ApplicationTypeEnum.fromValue(rs.getString( "applicationType")))
 						.mrNumber(rs.getString("mrnumber"))
 						.marriageDate(commencementDate)
@@ -153,7 +155,6 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
 						.title(rs.getString("mrc_title"))
 						.firstName(rs.getString("mrc_firstName"))
 						.dateOfBirth(rs.getLong("dateofbirth"))
-						.isPrimaryOwner(rs.getBoolean("isPrimaryOwner"))
 						.fatherName(rs.getString("fathername"))
 						.motherName(rs.getString("mothername"))
 						.build();
@@ -251,7 +252,6 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
 						.title(rs.getString("mrc_title"))
 						.firstName(rs.getString("mrc_firstName"))
 						.dateOfBirth(rs.getLong("dateofbirth"))
-						.isPrimaryOwner(rs.getBoolean("isPrimaryOwner"))
 						.fatherName(rs.getString("fathername"))
 						.motherName(rs.getString("mothername"))
 						.build();
@@ -292,6 +292,36 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
 						.build();
 				currentMarriageRegistration.addApplicationDocumentsItem(applicationDocument);
 			}
+			
+			if(rs.getString("mr_apt_dtl_id")!=null && rs.getBoolean("mr_apt_dtl_active")) {
+				
+				try {
+					Long startTime = (Long) rs.getObject("mr_apt_dtl_startTime");
+					Long endTime = (Long) rs.getObject("mr_apt_dtl_endTime");
+					
+					PGobject pgObj = (PGobject) rs.getObject("mr_apt_dtl_additionalDetail");
+
+					
+					
+					AppointmentDetails applicationDocument = AppointmentDetails.builder()
+							.startTime(startTime)
+							.endTime(endTime)
+							.id(rs.getString("mr_apt_dtl_id"))
+							.description(rs.getString("mr_apt_dtl_description"))
+							.tenantId(tenantId)
+							.active(rs.getBoolean("mr_apt_dtl_active"))
+							.build();
+					
+					if(pgObj!=null){
+						JsonNode additionalDetail = mapper.readTree(pgObj.getValue());
+						applicationDocument.setAdditionalDetail(additionalDetail);
+					}
+					
+					currentMarriageRegistration.addAppointmentDetailsItem(applicationDocument);
+				} catch (JsonProcessingException e) {
+					throw new CustomException("PARSING ERROR","The additionalDetail json cannot be parsed");
+				} 
+			}
 
 			if(rs.getString("mr_ver_doc_id")!=null && rs.getBoolean("mr_ver_doc_active")) {
 				Document verificationDocument = Document.builder()
@@ -329,7 +359,7 @@ public class MRRowMapper  implements ResultSetExtractor<List<MarriageRegistratio
 			Boundary locality = Boundary.builder().code(rs.getString("mrp_locality"))
 					.build();
 
-			PGobject pgObj = (PGobject) rs.getObject("additionaldetail");
+			PGobject pgObj = (PGobject) rs.getObject("mrp_additionalDetail");
 
 			AuditDetails auditdetails = AuditDetails.builder()
 					.createdBy(rs.getString("mr_createdBy"))

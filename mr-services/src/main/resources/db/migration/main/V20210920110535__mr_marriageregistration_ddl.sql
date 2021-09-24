@@ -7,7 +7,6 @@ CREATE TABLE eg_mr_application
     applicationnumber character varying(64) ,
     applicationType character varying(64) ,
     applicationdate bigint,
-    appointmentdate bigint,
     marriagedate bigint,
     issueddate bigint,
     action character varying(64) ,
@@ -49,7 +48,6 @@ CREATE TABLE eg_mr_couple(
   mr_id character varying(64),
   isdivyang boolean,
   isgroom boolean,
-  isprimaryowner boolean,
   title character varying(64),
   firstname character varying(256),
   dateofbirth bigint,
@@ -138,6 +136,24 @@ CREATE TABLE eg_mr_gaurdiandetails(
 
     CONSTRAINT pk_eg_mr_applicationdocument PRIMARY KEY (id),
     CONSTRAINT fk_eg_mr_applicationdocument FOREIGN KEY (mr_id) REFERENCES eg_mr_application (id)
+);
+
+  CREATE TABLE eg_mr_appointmentdetails(
+    id character varying(64),
+    tenantId character varying(64),
+    startTime bigint,
+    endTime bigint,
+    description character varying(256),
+    mr_id character varying(64),
+    active boolean,
+    additionalDetail JSONB,
+    createdBy character varying(64),
+    lastModifiedBy character varying(64),
+    createdTime bigint,
+    lastModifiedTime bigint,
+
+    CONSTRAINT pk_eg_mr_appointmentdetails PRIMARY KEY (id),
+    CONSTRAINT fk_eg_mr_appointmentdetails FOREIGN KEY (mr_id) REFERENCES eg_mr_application (id)
 );
 
 CREATE TABLE eg_mr_verificationDocument(

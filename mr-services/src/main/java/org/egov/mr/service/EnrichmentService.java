@@ -379,6 +379,8 @@ public class EnrichmentService {
 					});
 
 				}
+				
+				
 
 				if(!CollectionUtils.isEmpty(marriageRegistration.getVerificationDocuments())){
 					marriageRegistration.getVerificationDocuments().forEach(document -> {
@@ -443,6 +445,17 @@ public class EnrichmentService {
 
 
 
+			}
+			
+			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_SCHEDULE) || marriageRegistration.getAction().equalsIgnoreCase(ACTION_RESCHEDULE)) {
+				if(!CollectionUtils.isEmpty(marriageRegistration.getAppointmentDetails())){
+					marriageRegistration.getAppointmentDetails().forEach(appointment -> {
+						if(appointment.getId()==null){
+							appointment.setId(UUID.randomUUID().toString());
+							appointment.setActive(true);
+						}
+					});
+				}
 			}
 
 		});
