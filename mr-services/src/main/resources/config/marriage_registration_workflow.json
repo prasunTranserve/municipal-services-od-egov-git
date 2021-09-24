@@ -117,7 +117,7 @@
             {
               "tenantId": "od",
               "action": "PAY",
-              "nextState": "PENDINGAPPROVAL",
+              "nextState": "PENDINGSCHEDULE",
               "roles": [
                 "CITIZEN",
                 "MR_CEMP",
@@ -158,11 +158,11 @@
           "isStateUpdatable": false,
           "actions": null
         },
-        {
+		{
           "tenantId": "od",
           "sla": null,
-          "state": "PENDINGAPPROVAL",
-          "applicationStatus": "PENDINGAPPROVAL",
+          "state": "PENDINGSCHEDULE",
+          "applicationStatus": "PENDINGSCHEDULE",
           "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
@@ -170,8 +170,8 @@
           "actions": [
             {
               "tenantId": "od",
-              "action": "APPROVE",
-              "nextState": "APPROVED",
+              "action": "SCHEDULE",
+              "nextState": "PENDINGAPPROVAL",
               "roles": [
                 "MR_APPROVER"
               ]
@@ -179,7 +179,7 @@
 			{
               "tenantId": "od",
               "action": "SENDBACKTOCITIZEN",
-              "nextState": "BACKFROMAPPROVER",
+              "nextState": "BACKFROMSCHEDULETOCITIZEN",
               "roles": [
                 "MR_APPROVER"
               ]
@@ -187,7 +187,7 @@
             {
               "tenantId": "od",
               "action": "SENDBACK",
-              "nextState": "DOCVERIFICATION",
+              "nextState": "BACKFROMSHEDULE",
               "roles": [
                 "MR_APPROVER"
               ]
@@ -205,7 +205,120 @@
 		{
           "tenantId": "od",
           "sla": null,
-          "state": "BACKFROMAPPROVER",
+          "state": "BACKFROMSHEDULE",
+          "applicationStatus": "BACKFROMSHEDULETODOCVERIFIER",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "PENDINGSCHEDULE",
+              "roles": [
+                "MR_DOC_VERIFIER"
+              ]
+            }
+          ]
+        },
+        {
+          "tenantId": "od",
+          "sla": null,
+          "state": "PENDINGAPPROVAL",
+          "applicationStatus": "PENDINGAPPROVAL",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+		    {
+              "tenantId": "od",
+              "action": "RESCHEDULE",
+              "nextState": "PENDINGAPPROVAL",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "APPROVE",
+              "nextState": "APPROVED",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+			{
+              "tenantId": "od",
+              "action": "SENDBACKTOCITIZEN",
+              "nextState": "BACKFROMAPPROVALTOCITIZEN",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "SENDBACK",
+              "nextState": "BACKFROMAPPROVAL",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            },
+            {
+              "tenantId": "od",
+              "action": "REJECT",
+              "nextState": "REJECTED",
+              "roles": [
+                "MR_APPROVER"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "BACKFROMAPPROVAL",
+          "applicationStatus": "BACKFROMAPPROVALTODOCVERIFIER",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "PENDINGAPPROVAL",
+              "roles": [
+                "MR_DOC_VERIFIER"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "BACKFROMSCHEDULETOCITIZEN",
+          "applicationStatus": "CITIZENACTIONPENDINGATSCHEDULE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "tenantId": "od",
+              "action": "FORWARD",
+              "nextState": "PENDINGSCHEDULE",
+              "roles": [
+                "CITIZEN",
+                "MR_CEMP"
+              ]
+            }
+          ]
+        },
+		{
+          "tenantId": "od",
+          "sla": null,
+          "state": "BACKFROMAPPROVALTOCITIZEN",
           "applicationStatus": "CITIZENACTIONPENDINGATAPPROVER",
           "docUploadRequired": false,
           "isStartState": false,

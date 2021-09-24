@@ -8,6 +8,11 @@ public class MRConstants {
     public static final String ACTION_INITIATE = "INITIATE";
 
     public static final String ACTION_APPLY  = "APPLY";
+    
+    
+    public static final String ACTION_SCHEDULE  = "SCHEDULE";
+    
+    public static final String ACTION_RESCHEDULE  = "RESCHEDULE";
 
     public static final String ACTION_APPROVE  = "APPROVE";
 

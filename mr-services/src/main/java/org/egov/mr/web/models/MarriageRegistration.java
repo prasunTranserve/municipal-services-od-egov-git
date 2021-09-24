@@ -90,9 +90,6 @@ public class MarriageRegistration {
     
     @JsonProperty("applicationDate")
     private Long applicationDate = null;
-    
-    @JsonProperty("appointmentDate")
-    private Long appointmentDate = null;
 
     @JsonProperty("marriageDate")
     private Long marriageDate = null;
@@ -126,6 +123,10 @@ public class MarriageRegistration {
 	  @JsonProperty("applicationDocuments")
       @Valid
       private List<Document> applicationDocuments = null;
+	  
+	  @JsonProperty("appointmentDetails")
+      @Valid
+      private List<AppointmentDetails> appointmentDetails = null;
 	  
       @JsonProperty("verificationDocuments")
       @Valid
@@ -192,6 +193,15 @@ public class MarriageRegistration {
           }
           if(!this.applicationDocuments.contains(applicationDocumentsItem))
               this.applicationDocuments.add(applicationDocumentsItem);
+          return this;
+      }
+	  
+	  public MarriageRegistration addAppointmentDetailsItem(AppointmentDetails appointmentDetailsItem) {
+          if (this.appointmentDetails == null) {
+          this.appointmentDetails = new ArrayList<>();
+          }
+          if(!this.appointmentDetails.contains(appointmentDetailsItem))
+              this.appointmentDetails.add(appointmentDetailsItem);
           return this;
       }
 

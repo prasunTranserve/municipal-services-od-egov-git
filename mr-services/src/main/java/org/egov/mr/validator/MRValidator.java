@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -16,6 +18,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.config.MRConfiguration;
 import org.egov.mr.repository.MRRepository;
 import org.egov.mr.util.MRConstants;
+import org.egov.mr.web.models.AppointmentDetails;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistration.ApplicationTypeEnum;
 import org.egov.mr.web.models.MarriageRegistrationRequest;
@@ -28,6 +31,8 @@ import org.springframework.util.CollectionUtils;
 
 import static org.egov.mr.util.MRConstants.ACTION_APPLY;
 import static org.egov.mr.util.MRConstants.businessService_MR;
+import static org.egov.mr.util.MRConstants.ACTION_SCHEDULE;
+import static org.egov.mr.util.MRConstants.ACTION_RESCHEDULE;
 
 @Component
 public class MRValidator {
@@ -397,13 +402,37 @@ public class MRValidator {
 					if(trueCounter==2)
 						errorMap.put("COUPLE_DETAILS_ERROR", " Both Bride and Groom cannot be the primary owner if the application is created by counter employee ");
 				}
-			
-			
 			}
 			
 			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_APPLY)) {
                 if(marriageRegistration.getApplicationDocuments()==null)
                 	errorMap.put("APPLICATION_DOCUMENTS_ERROR", " Application Documents are mandatory if the action is Apply ");
+            }
+			
+			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_SCHEDULE) || marriageRegistration.getAction().equalsIgnoreCase(ACTION_RESCHEDULE)) {
+                if(marriageRegistration.getAppointmentDetails()==null)
+                	errorMap.put("APPOINTMENT_DETAILS_ERROR", " Appointment Details are mandatory if the action is SCHEDULE or RESCHEDULE ");
+                
+                if(marriageRegistration.getAppointmentDetails()!=null)
+                {
+                	marriageRegistration.getAppointmentDetails().forEach(appointment -> {
+                		if(appointment.getStartTime()  == null)
+                			errorMap.put("APPOINTMENT_DEATILS_ERROR", " Appointment Start time is mandatory if the action is SCHEDULE or RESCHEDULE ");
+                		if(appointment.getEndTime() == null)
+                			errorMap.put("APPOINTMENT_TIME_ERROR", " Appointment End Time is mandatory if the action is SCHEDULE or RESCHEDULE ");
+                	});
+                	
+                	List<AppointmentDetails> apointmentDetailsActive  = marriageRegistration.getAppointmentDetails().stream().filter(appointment -> {return appointment.getActive();}).collect(Collectors.toList());
+                	if(apointmentDetailsActive!= null)
+                	{
+                	if(apointmentDetailsActive.size() == 0)
+                		errorMap.put("APPOINTMENT_DEATILS_ERROR", " Atleast One Appointment Start and End time should be active if the action is SCHEDULE or RESCHEDULE ");
+                	if(apointmentDetailsActive.size() != 1)
+                		errorMap.put("APPOINTMENT_DEATILS_ERROR", " Only One Appointment Start and End time should be active if the action is SCHEDULE or RESCHEDULE ");
+                	}else
+                		errorMap.put("APPOINTMENT_DEATILS_ERROR", " Atleast One Appointment Start and End time should be active if the action is SCHEDULE or RESCHEDULE ");
+                }
+                
             }
 			
 			
@@ -450,6 +479,10 @@ public class MRValidator {
             marriageRegistration.getAuditDetails().setCreatedTime(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getAuditDetails().getCreatedTime());
             marriageRegistration.setStatus(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getStatus());
             marriageRegistration.setMrNumber(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getMrNumber());
+            
+            if ( !(marriageRegistration.getAction().equalsIgnoreCase(ACTION_SCHEDULE) || marriageRegistration.getAction().equalsIgnoreCase(ACTION_RESCHEDULE))) {
+            	marriageRegistration.setAppointmentDetails(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getAppointmentDetails());
+            }
 
         });
     }
@@ -500,6 +533,7 @@ public class MRValidator {
             compareIdList(getGuardianDetails(searchedMarriageRegistration),getGuardianDetails(marriageRegistrationObj),errorMap);
             compareIdList(getWitness(searchedMarriageRegistration),getWitness(marriageRegistrationObj),errorMap);
             compareIdList(getApplicationDocIds(searchedMarriageRegistration),getApplicationDocIds(marriageRegistrationObj),errorMap);
+            compareIdList(getAppointmentDetailIds(searchedMarriageRegistration),getAppointmentDetailIds(marriageRegistrationObj),errorMap);
             compareIdList(getVerficationDocIds(searchedMarriageRegistration),getVerficationDocIds(marriageRegistrationObj),errorMap);
         });
 
@@ -578,6 +612,16 @@ public class MRValidator {
             });
         }
         return applicationDocIds;
+    }
+    
+    private List<String> getAppointmentDetailIds(MarriageRegistration marriageRegistration){
+        List<String> appointmentDetailIds = new LinkedList<>();
+        if(!CollectionUtils.isEmpty(marriageRegistration.getAppointmentDetails())){
+            marriageRegistration.getAppointmentDetails().forEach(appointment -> {
+                appointmentDetailIds.add(appointment.getId());
+            });
+        }
+        return appointmentDetailIds;
     }
 
 
@@ -704,6 +748,8 @@ public class MRValidator {
     			{
     				throw new CustomException("ACCOUNT ID ERROR","The Account Id cannot be modified .");
     			}
+    			
+    			
     		}
     	});    	
     	
