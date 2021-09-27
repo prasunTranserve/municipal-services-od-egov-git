@@ -24,12 +24,13 @@ public class WnsConnection {
 	
 	private String connectionApplicationNo;
 	
-	@NotEmpty(message = "Connection facility cannot be empty/blank")
+//	@NotEmpty(message = "Connection facility cannot be empty/blank")
 	private String connectionFacility;
 	
 	@NotEmpty(message = "Application Status cannot be empty/blank")
 	private String applicationStatus;
 	
+	@NotEmpty(message = "Status cannot be empty/blank")
 	private String status;
 	
 	private String connectionNo;

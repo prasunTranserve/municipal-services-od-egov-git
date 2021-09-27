@@ -19,10 +19,10 @@ public class WnsConnectionService {
 	private String connectionNo;
 	private String connectionFacility;
 	
-	@NotNull(message = "Connection Category is missing")
+//	@NotNull(message = "Connection Category is missing")
 	private String connectionCategory;
 	
-	@NotNull(message = "Connection type is missing")
+//	@NotNull(message = "Connection type is missing")
 	private String connectionType;
 	private String waterSource;
 	private String meterSerialNo;

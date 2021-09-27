@@ -46,4 +46,6 @@ public class WnsDemand {
 //	@NotEmpty(message = "Sewerage fee cannot be empty/blank")
 	private String sewerageFee;
 
+	private String arrear;
+
 }

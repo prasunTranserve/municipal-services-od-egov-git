@@ -1,5 +1,8 @@
 package org.egov.migration.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class MigrationConst {
 	
 	public static final String SOURCE_MUNICIPAL_RECORDS = "MUNICIPAL_RECORDS";
@@ -151,6 +154,14 @@ public class MigrationConst {
 	
 	public static final String TAX_PERIOD_PATTERN = "\\d{4}-\\d{2}/Q\\d{1}";
 	
+	public static final String COL_LATEST_BILLING_PERIOD_FROM = "LATEST_BILLING_PERIOD_FROM";
+	public static final String COL_LATEST_BILLING_PERIOD_TO = "LATEST_BILLING_PERIOD_TO";
+	public static final String COL_LATEST_BILLING_WATER_CHARGES = "LATEST_BILLING_WATER_CHARGES";
+	public static final String COL_LATEST_BILLING_SEWERAGE_FEE = "LATEST_BILLING_SEWERAGE_FEE";
+	public static final String COL_ARREAR = "ARREAR";
+	public static final String COL_COLLECTION_AMOUNT_AGAINST_LATEST_BILL = "COLLECTION_AMOUNT_AGAINST_LATEST_BILL";
+	
+	public static final List<String> METERED_VOLUMETRIC_CONNECTION = Arrays.asList("commercial", "industrial", "institutional", "apartment");
 
 	
 }
