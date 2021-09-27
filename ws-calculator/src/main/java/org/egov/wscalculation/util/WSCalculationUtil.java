@@ -242,4 +242,17 @@ public class WSCalculationUtil {
 	public StringBuilder getPropertyURL() {
 		return new StringBuilder().append(propertyHost).append(searchPropertyEndPoint);
 	}
+	
+	public int getApplicableMonthForRebate(Calendar calender) {
+		calender.setTimeInMillis(System.currentTimeMillis());
+		int currentMonth = calender.get(Calendar.MONTH);
+		return currentMonth - 1 > 0 ? --currentMonth : 11;
+	}
+	
+	public boolean checkIfDemandMonthApplicableForRebate(Calendar calender, int applicableMonthForRebate,
+			long taxPeriodTo) {
+		calender.setTimeInMillis(taxPeriodTo);
+		int monthOfLatestDemandPeriod = calender.get(Calendar.MONTH);
+		return (Integer.compare(monthOfLatestDemandPeriod, applicableMonthForRebate) == 0);
+	}
 }

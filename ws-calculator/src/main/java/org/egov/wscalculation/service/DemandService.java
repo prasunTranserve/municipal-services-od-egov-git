@@ -466,20 +466,18 @@ public class DemandService {
 		String tenantId = getBillCriteria.getTenantId();
 
 		List<TaxPeriod> taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), tenantId, WSCalculationConstant.SERVICE_FIELD_VALUE_WS);
-		long latestDemandPeriodFrom = res.getDemands().stream().filter(demand -> !(WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
-				.mapToLong(Demand::getTaxPeriodFrom).max().orElse(0);
+		long latestDemandPeriodTo = res.getDemands().stream().filter(demand -> !(WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
+				.mapToLong(Demand::getTaxPeriodTo).max().orElse(0);
+		Calendar calender = Calendar.getInstance();
+		int applicableMonthForRebate = utils.getApplicableMonthForRebate(calender);
 		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
 						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
-			Calendar calender = Calendar.getInstance();
-			calender.setTimeInMillis(latestDemandPeriodFrom);
-			int monthOfLatestDemandPeriodFrom = calender.get(Calendar.MONTH);
-			calender.setTimeInMillis(System.currentTimeMillis());
-			int currentMonth = calender.get(Calendar.MONTH);
-			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom && Integer.compare(monthOfLatestDemandPeriodFrom, --currentMonth)== 0) {
+			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.checkIfDemandMonthApplicableForRebate(
+					calender, applicableMonthForRebate, demand.getTaxPeriodTo())) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);
