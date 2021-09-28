@@ -242,4 +242,21 @@ public class WSCalculationUtil {
 	public StringBuilder getPropertyURL() {
 		return new StringBuilder().append(propertyHost).append(searchPropertyEndPoint);
 	}
+	
+	public boolean isDemandEligibleForRebateAndPenalty(long taxPeriodTo) {
+		Calendar specificDate = Calendar.getInstance();
+		specificDate.setTimeInMillis(taxPeriodTo);
+
+		Calendar firstDay = Calendar.getInstance();
+		firstDay.add(Calendar.MONTH, -1);
+		firstDay.set(Calendar.DAY_OF_MONTH, 1);
+		firstDay.set(Calendar.SECOND, 0);
+		firstDay.set(Calendar.MINUTE, 0);
+		firstDay.set(Calendar.HOUR, 0);
+
+		if (firstDay.compareTo(specificDate) <= 0)
+			return true;
+		else
+			return false;
+	}
 }
