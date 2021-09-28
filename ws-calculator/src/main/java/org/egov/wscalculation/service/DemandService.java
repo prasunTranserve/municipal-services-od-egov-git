@@ -468,15 +468,13 @@ public class DemandService {
 		List<TaxPeriod> taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), tenantId, WSCalculationConstant.SERVICE_FIELD_VALUE_WS);
 		long latestDemandPeriodTo = res.getDemands().stream().filter(demand -> !(WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
 				.mapToLong(Demand::getTaxPeriodTo).max().orElse(0);
-		int applicableMonthForRebate = utils.getApplicableMonthForRebateAndPenalty();
 		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
 						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
-			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils
-					.isDemandEligibleForTimeBasedApplicables(applicableMonthForRebate, demand.getTaxPeriodTo())) {
+			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.isDemandEligibleForRebateAndPenalty(latestDemandPeriodTo)) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);

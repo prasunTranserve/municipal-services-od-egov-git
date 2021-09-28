@@ -414,23 +414,21 @@ public class SWCalculationUtil {
 		return new StringBuilder().append(propertyHost).append(searchPropertyEndPoint);
 	}
 	
-	public int getApplicableMonthForRebateAndPenalty() {
-		Calendar calender = Calendar.getInstance();
-		calender.setTimeInMillis(System.currentTimeMillis());
-		int currentMonth = calender.get(Calendar.MONTH);
-		return currentMonth - 1 > 0 ? --currentMonth : 11;
-	}
-	
-	public boolean isDemandEligibleForTimeBasedApplicables(int applicableMonthForRebate, long taxPeriodTo) {
-		Calendar calender = Calendar.getInstance();
-		calender.setTimeInMillis(taxPeriodTo);
-		int monthOfLatestDemandPeriod = calender.get(Calendar.MONTH);
-		int yearOfLatestDemandPeriod =  calender.get(Calendar.YEAR);
-		calender.setTimeInMillis(System.currentTimeMillis());
-		int currentYear = applicableMonthForRebate == 11 ? calender.get(Calendar.YEAR) - 1
-				: calender.get(Calendar.YEAR);
-		return (Integer.compare(monthOfLatestDemandPeriod, applicableMonthForRebate) == 0
-				&& Integer.compare(yearOfLatestDemandPeriod, currentYear) == 0);
+	public boolean isDemandEligibleForRebateAndPenalty(long taxPeriodTo) {
+		Calendar specificDate = Calendar.getInstance();
+		specificDate.setTimeInMillis(taxPeriodTo);
+
+		Calendar firstDay = Calendar.getInstance();
+		firstDay.add(Calendar.MONTH, -1);
+		firstDay.set(Calendar.DAY_OF_MONTH, 1);
+		firstDay.set(Calendar.SECOND, 0);
+		firstDay.set(Calendar.MINUTE, 0);
+		firstDay.set(Calendar.HOUR, 0);
+
+		if (firstDay.compareTo(specificDate) <= 0)
+			return true;
+		else
+			return false;
 	}
 	
 }
