@@ -152,6 +152,62 @@ public class MRConfiguration {
 
     @Value("${employee.allowed.search.params}")
     private String allowedEmployeeSearchParameters;
+    
+    // url shortner
 
+    @Value("${egov.url.shortner.host}")
+    private String urlShortnerHost;
+
+    @Value("${mr.url.shortner.endpoint}")
+    private String urlShortnerEndpoint;
+
+    @Value("${egov.usr.events.view.application.triggers}")
+    private String viewApplicationTriggers;
+
+    @Value("${egov.usr.events.view.application.link}")
+    private String viewApplicationLink;
+
+    @Value("${egov.usr.events.view.application.code}")
+    private String viewApplicationCode;
+    
+    //USER EVENTS
+	@Value("${egov.ui.app.host}")
+	private String uiAppHost;
+    
+	@Value("${egov.usr.events.create.topic}")
+	private String saveUserEventsTopic;
+		
+	@Value("${egov.usr.events.pay.link}")
+	private String payLink;
+
+    @Value("${egov.msg.pay.link}")
+    private String payLinkSMS;
+	
+	@Value("${egov.usr.events.pay.code}")
+	private String payCode;
+	
+	@Value("${egov.user.event.notification.enabledForMR}")
+	private Boolean isUserEventsNotificationEnabledForMR;
+
+    @Value("${egov.user.event.notification.enabledForMRCorrection}")
+    private Boolean isUserEventsNotificationEnabledForMRCorrection;
+
+	@Value("${egov.usr.events.pay.triggers}")
+	private String payTriggers;
+
+	
+    //SMS
+    @Value("${kafka.topics.notification.sms}")
+    private String smsNotifTopic;
+
+    @Value("${notification.sms.enabled.forMR}")
+    private Boolean isMRSMSEnabled;
+
+    @Value("${notification.sms.enabled.forMRCORRECTION}")
+    private Boolean isMRCORRECTIONSMSEnabled;
+    
+    
+    @Value("${egov.receipt.businessserviceMR}")
+    private String businessServiceMR;
 
 }

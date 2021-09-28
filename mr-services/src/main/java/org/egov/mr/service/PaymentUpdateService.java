@@ -115,7 +115,7 @@ public class PaymentUpdateService {
 
 					// FIXME check if the update call to repository can be avoided
 					// FIXME check why aniket is not using request info from consumer
-					// REMOVE SYSTEM HARDCODING AFTER ALTERING THE CONFIG IN WF FOR TL
+					// REMOVE SYSTEM HARDCODING AFTER ALTERING THE CONFIG IN WF FOR MR
 
 					Role role = Role.builder().code("SYSTEM_PAYMENT").tenantId(marriageRegistrations.get(0).getTenantId()).build();
 					requestInfo.getUserInfo().getRoles().add(role);
@@ -135,7 +135,7 @@ public class PaymentUpdateService {
 					enrichmentService.postStatusEnrichment(updateRequest,endStates);
 
 					/*
-					 * calling repository to update the object in TL tables
+					 * calling repository to update the object in MR tables
 					 */
 					Map<String,Boolean> idToIsStateUpdatableMap = util.getIdToIsStateUpdatableMap(businessService,marriageRegistrations);
 					repository.update(updateRequest,idToIsStateUpdatableMap);
@@ -156,8 +156,8 @@ public class PaymentUpdateService {
 	private Map<String, String> enrichValMap(DocumentContext context) {
 		Map<String, String> valMap = new HashMap<>();
 		try {
-			valMap.put(businessService, context.read("$.Payments.*.paymentDetails[?(@.businessService=='TL')].businessService"));
-			valMap.put(consumerCode, context.read("$.Payments.*.paymentDetails[?(@.businessService=='TL')].bill.consumerCode"));
+			valMap.put(businessService, context.read("$.Payments.*.paymentDetails[?(@.businessService=='MR')].businessService"));
+			valMap.put(consumerCode, context.read("$.Payments.*.paymentDetails[?(@.businessService=='MR')].bill.consumerCode"));
 			valMap.put(tenantId, context.read("$.Payments[0].tenantId"));
 		} catch (Exception e) {
 			throw new CustomException("PAYMENT ERROR", "Unable to fetch values from payment");

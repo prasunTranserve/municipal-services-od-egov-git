@@ -15,6 +15,9 @@ import org.egov.mdms.model.MdmsCriteria;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.mdms.model.ModuleDetail;
 import org.egov.mr.config.MRConfiguration;
+import org.egov.mr.model.user.Citizen;
+import org.egov.mr.model.user.UserResponse;
+import org.egov.mr.model.user.UserSearchRequest;
 import org.egov.mr.repository.ServiceRequestRepository;
 import org.egov.mr.web.models.AuditDetails;
 import org.egov.mr.web.models.MarriageRegistration;
@@ -24,6 +27,9 @@ import org.egov.mr.workflow.WorkflowService;
 import org.egov.mr.util.MRConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,16 +43,17 @@ public class MarriageRegistrationUtil {
 
 	private WorkflowService workflowService;
 
-
+	private ObjectMapper mapper;
 
 
 	@Autowired
 	public MarriageRegistrationUtil(MRConfiguration config, ServiceRequestRepository serviceRequestRepository,
-			WorkflowService workflowService) {
+			WorkflowService workflowService,ObjectMapper mapper) {
 		super();
 		this.config = config;
 		this.serviceRequestRepository = serviceRequestRepository;
 		this.workflowService = workflowService;
+		this.mapper = mapper;
 	}
 
 
@@ -136,5 +143,23 @@ public class MarriageRegistrationUtil {
         return mrModuleDtls;
     }
 
+    
+    public Citizen getMobileNumberWithUuid(String uuid, RequestInfo requestInfo, String tenantId) {
+    	try {
+			List<String>  uuidList = new ArrayList<String>();
+			uuidList.add(uuid);
+			UserSearchRequest searchRequest = UserSearchRequest.builder().uuid(uuidList)
+					.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+			StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+			UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+			if(CollectionUtils.isEmpty(res.getUser())) {
+				return null;
+			}
+			return res.getUser().get(0);
+		} catch (Exception e) {
+			log.error(" User not found with this uuid "+uuid);
+			return null;
+		}
+	}
 
 }

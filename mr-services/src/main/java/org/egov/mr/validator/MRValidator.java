@@ -33,6 +33,7 @@ import static org.egov.mr.util.MRConstants.ACTION_APPLY;
 import static org.egov.mr.util.MRConstants.businessService_MR;
 import static org.egov.mr.util.MRConstants.ACTION_SCHEDULE;
 import static org.egov.mr.util.MRConstants.ACTION_RESCHEDULE;
+import static org.egov.mr.util.MRConstants.businessService_MR_CORRECTION;
 
 @Component
 public class MRValidator {
@@ -105,9 +106,9 @@ public class MRValidator {
             marriageRegistrationMap.put(marriageRegistration.getMrNumber() , marriageRegistration);
         });
         
-        request.getMarriageRegistrations().forEach(license -> {
-            if(license.getApplicationType() != null && license.getApplicationType().toString().equals(MRConstants.APPLICATION_TYPE_CORRECTION)){
-                if(marriageRegistrationMap.containsKey(license.getMrNumber())){
+        request.getMarriageRegistrations().forEach(marriageRegistration -> {
+            if(marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equals(MRConstants.APPLICATION_TYPE_CORRECTION)){
+                if(marriageRegistrationMap.containsKey(marriageRegistration.getMrNumber())){
         
                    
                 }else{
@@ -128,6 +129,15 @@ public class MRValidator {
 			
 			 Map<String, String> errorMap = new HashMap<>();
 			 List<Boolean> isPrimaryOwnerTrueCounter = new ArrayList<>();
+			 
+			 if(marriageRegistration.getApplicationType() == null )
+				 errorMap.put("NULL_APPLICATIONTYPE", " Application Type cannot be null");
+			 
+			 if(marriageRegistration.getApplicationType() != null )
+			 {
+				 if(marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.CORRECTION.toString()) && !marriageRegistration.getWorkflowCode().equalsIgnoreCase(businessService_MR_CORRECTION))
+				 errorMap.put("APPLICATIONTYPE_ERROR", "When Application Type is correction then workflowcode should be MRCORRECTION");
+			 }
 			
 			if(marriageRegistration.getMarriageDate() == null)
 				errorMap.put("NULL_MARRIAGEDATE", " Marriage Date cannot be null");
@@ -737,6 +747,11 @@ public class MRValidator {
     	});
     	
     	marriageRegistartionRequest.getMarriageRegistrations().forEach(marriageRegistration -> {
+    		if(!marriageRegistration.getApplicationType().toString().equalsIgnoreCase(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getApplicationType().toString()))
+			{
+				throw new CustomException("APPLICATION TYPE ERROR","The Application type cannot be modified .");
+			}
+    		
     		if(!marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE))
     		{
     			if(!marriageRegistration.getTenantId().equalsIgnoreCase(idToMarriageRegistrationFromSearch.get(marriageRegistration.getId()).getTenantId()))
