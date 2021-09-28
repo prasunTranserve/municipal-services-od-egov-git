@@ -512,16 +512,15 @@ public class DemandService {
 		List<TaxPeriod> taxPeriods = masterDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), getBillCriteria.getTenantId(), SWCalculationConstant.SERVICE_FIELD_VALUE_SW);
 		long latestDemandPeriodTo = res.getDemands().stream().filter(demand -> !(SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
 				.mapToLong(Demand::getTaxPeriodTo).max().orElse(0);
-		Calendar calender = Calendar.getInstance();
-		int applicableMonthForRebate = utils.getApplicableMonthForRebate(calender);
+		int applicableMonthForRebate = utils.getApplicableMonthForRebateAndPenalty();
 		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR,
 						SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR_MSG);
-			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.checkIfDemandMonthApplicableForRebate(calender,
-					applicableMonthForRebate, demand.getTaxPeriodTo())) {
+			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils
+					.isDemandEligibleForTimeBasedApplicables(applicableMonthForRebate, demand.getTaxPeriodTo())) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);

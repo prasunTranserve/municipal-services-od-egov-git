@@ -414,17 +414,23 @@ public class SWCalculationUtil {
 		return new StringBuilder().append(propertyHost).append(searchPropertyEndPoint);
 	}
 	
-	public int getApplicableMonthForRebate(Calendar calender) {
+	public int getApplicableMonthForRebateAndPenalty() {
+		Calendar calender = Calendar.getInstance();
 		calender.setTimeInMillis(System.currentTimeMillis());
 		int currentMonth = calender.get(Calendar.MONTH);
 		return currentMonth - 1 > 0 ? --currentMonth : 11;
 	}
 	
-	public boolean checkIfDemandMonthApplicableForRebate(Calendar calender, int applicableMonthForRebate,
-			long taxPeriodTo) {
+	public boolean isDemandEligibleForTimeBasedApplicables(int applicableMonthForRebate, long taxPeriodTo) {
+		Calendar calender = Calendar.getInstance();
 		calender.setTimeInMillis(taxPeriodTo);
 		int monthOfLatestDemandPeriod = calender.get(Calendar.MONTH);
-		return (Integer.compare(monthOfLatestDemandPeriod, applicableMonthForRebate) == 0);
+		int yearOfLatestDemandPeriod =  calender.get(Calendar.YEAR);
+		calender.setTimeInMillis(System.currentTimeMillis());
+		int currentYear = applicableMonthForRebate == 11 ? calender.get(Calendar.YEAR) - 1
+				: calender.get(Calendar.YEAR);
+		return (Integer.compare(monthOfLatestDemandPeriod, applicableMonthForRebate) == 0
+				&& Integer.compare(yearOfLatestDemandPeriod, currentYear) == 0);
 	}
 	
 }
