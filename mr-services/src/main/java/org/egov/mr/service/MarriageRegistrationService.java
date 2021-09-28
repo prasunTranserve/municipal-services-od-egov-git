@@ -14,9 +14,11 @@ import javax.validation.Valid;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.config.MRConfiguration;
 import org.egov.mr.repository.MRRepository;
+import org.egov.mr.service.notification.EditNotificationService;
 import org.egov.mr.util.MRConstants;
 import org.egov.mr.util.MarriageRegistrationUtil;
 import org.egov.mr.validator.MRValidator;
+import org.egov.mr.web.models.Difference;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistrationRequest;
 import org.egov.mr.web.models.MarriageRegistrationSearchCriteria;
@@ -48,14 +50,18 @@ public class MarriageRegistrationService {
 	private WorkflowService workflowService;
 
 	private ActionValidator actionValidator;
+	
+    private DiffService diffService;
 
 	private MarriageRegistrationUtil util;
 
 	private WorkflowIntegrator wfIntegrator;
+	
+	private EditNotificationService  editNotificationService;
 
 	@Autowired
 	public MarriageRegistrationService(MRValidator mrValidator,EnrichmentService enrichmentService , MRRepository repository ,MRConfiguration config ,WorkflowService workflowService ,
-			ActionValidator actionValidator,MarriageRegistrationUtil util ,WorkflowIntegrator wfIntegrator,CalculatorService calculatorService) {
+			ActionValidator actionValidator,MarriageRegistrationUtil util ,WorkflowIntegrator wfIntegrator,CalculatorService calculatorService,EditNotificationService  editNotificationService,DiffService diffService) {
 		this.mrValidator = mrValidator;
 		this.enrichmentService = enrichmentService;
 		this.repository = repository;
@@ -64,7 +70,9 @@ public class MarriageRegistrationService {
 		this.actionValidator=actionValidator;
 		this.util = util;
 		this.wfIntegrator =wfIntegrator ;
+		this.editNotificationService =editNotificationService ;
 		this.calculatorService =calculatorService;
+		this.diffService =diffService;
 	}
 
 	public List<MarriageRegistration> create(@Valid MarriageRegistrationRequest marriageRegistrationRequest,String businessServicefromPath) {
@@ -169,6 +177,7 @@ public class MarriageRegistrationService {
 
 			mrValidator.validateNonUpdatableFileds(marriageRegistartionRequest, searchResult);
 
+			Map<String, Difference> diffMap = diffService.getDifference(marriageRegistartionRequest, searchResult);
 			Map<String, Boolean> idToIsStateUpdatableMap = util.getIdToIsStateUpdatableMap(businessService, searchResult);
 
 			/*
@@ -191,7 +200,11 @@ public class MarriageRegistrationService {
 					 {
 				 calculatorService.addCalculation(marriageRegistartionRequest);
 					 }
-
+			 switch (businessServicefromPath) {
+             case businessService_MR:
+                 editNotificationService.sendEditNotification(marriageRegistartionRequest, diffMap);
+                 break;
+         }
 
 			 repository.update(marriageRegistartionRequest, idToIsStateUpdatableMap);
 			 marriageRegistrationResponse=  marriageRegistartionRequest.getMarriageRegistrations();
@@ -201,6 +214,8 @@ public class MarriageRegistrationService {
 	}
 
 
+	
+    
 
 
 }
