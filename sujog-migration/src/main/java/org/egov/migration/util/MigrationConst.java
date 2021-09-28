@@ -150,7 +150,7 @@ public class MigrationConst {
 	public static final String TAXHEAD_HOLDING_TAX_INPUT = "Holding Tax";
 	public static final String TAXHEAD_HOLDING_TAX = "PT_HOLDING_TAX";
 	
-	public static final String OWNER_NAME_PATTERN = "^[^\\\\$\\\"'<>?\\\\\\\\~`!@#$%^()+={}\\\\[\\\\]*,:;“”‘’]*$";
+	public static final String OWNER_NAME_PATTERN = "^[a-zA-Z0-9 \\-'`\\.]*$";
 	
 	public static final String TAX_PERIOD_PATTERN = "\\d{4}-\\d{2}/Q\\d{1}";
 	

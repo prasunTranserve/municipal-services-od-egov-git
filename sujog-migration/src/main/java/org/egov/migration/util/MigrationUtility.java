@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -723,7 +724,7 @@ public class MigrationUtility {
 		}
 		
 		if(!ownerName.matches(MigrationConst.OWNER_NAME_PATTERN)) {
-			ownerName = ownerName.replaceAll("[^a-zA-Z0-9\\s\\.,]", "");
+			ownerName = ownerName.replaceAll("[^a-zA-Z0-9,\\s\\.]", "");
 			if(ownerName.contains(",")) {
 				ownerName = ownerName.substring(0, ownerName.indexOf(","));
 			}

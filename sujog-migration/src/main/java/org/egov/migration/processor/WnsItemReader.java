@@ -46,6 +46,8 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	private Iterator<Row> connectionRowIterator;
 	private int skipRecord;
 	
+	private Map<String, Integer> activeConnectionCountMap;
+	
 	private Map<String, Integer> connectionColMap;
 	private Map<String, Integer> serviceColMap;
 	private Map<String, Integer> meterReadingColMap;
@@ -103,12 +105,25 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 			skipRecord();
 		}
 		
-		if(this.connectionRowIterator.hasNext()) {
-			this.connectionRowIndex++;
-			return getConnection(this.connectionRowIterator.next());
-		}
+//		if(this.connectionRowIterator.hasNext()) {
+//			this.connectionRowIndex++;
+//			return getConnection(this.connectionRowIterator.next());
+//		}
 		
-		return null;
+		WnsConnection connection = null;
+		do {
+			connection = null;
+			if(this.connectionRowIterator.hasNext()) {
+				this.connectionRowIndex++;
+				connection = getConnection(this.connectionRowIterator.next());
+			}
+			if(connection != null && activeConnectionCountMap.get(connection.getConnectionNo())>1) {
+				MigrationUtility.addError(connection.getConnectionNo(), String.format("%s Approved and Active connection present", activeConnectionCountMap.get(connection.getConnectionNo())));
+			}
+		} while(connection != null && activeConnectionCountMap.get(connection.getConnectionNo())>1
+				&& this.connectionRowIterator.hasNext());
+		
+		return connection;
 	}
 
 	private WnsConnection getConnection(Row connectionRow) {
@@ -174,13 +189,30 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		Workbook workbook = WorkbookFactory.create(inputFile);
 		Sheet connectionSheet = workbook.getSheet(MigrationConst.SHEET_CONNECTION);
 		
+		updateConnectionColumnMap(connectionSheet.getRow(0));
+		searchDupplicateActiveConnection(connectionSheet);
+		
 		this.connectionRowIterator = connectionSheet.iterator();
 		updatConnectionServiceRowMap(workbook);
 		updateHolderRowMap(workbook);
 		updateMeterReadingRowMap(workbook);
 		updateDemandRowMap(workbook);
-	
-		updateConnectionColumnMap(connectionSheet.getRow(0));
+	}
+
+	private void searchDupplicateActiveConnection(Sheet connectionSheet) {
+		activeConnectionCountMap = new HashMap<>();
+		Iterator<Row> connections = connectionSheet.iterator();
+		while(connections.hasNext()) {
+			WnsConnection connection = connectionRowMapper.mapRow(this.ulb, connections.next(), this.connectionColMap);
+			if(MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(connection.getApplicationStatus())
+					&& MigrationConst.STATUS_ACTIVE.equalsIgnoreCase(connection.getStatus())) {
+				if(activeConnectionCountMap.get(connection.getConnectionNo())==null) {
+					activeConnectionCountMap.put(connection.getConnectionNo(), 1);
+				} else {
+					activeConnectionCountMap.put(connection.getConnectionNo(), activeConnectionCountMap.get(connection.getConnectionNo())+1);
+				}
+			}
+		}
 	}
 
 	private void updateDemandRowMap(Workbook workbook) {

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.ConnectionHolderDTO;
 import org.egov.migration.business.model.DemandDTO;
@@ -391,6 +390,8 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			isArrearDemandRequired = true;
 		} else if(totalOutStanding.compareTo(BigDecimal.ZERO)==0) {
 			isDemandRequired = false;
+		} else if(connectionDTO.isWater() && connectionDTO.isSewerage() && totalOutStanding.compareTo(waterCharge)>0) {
+			isArrearDemandRequired = true;
 		}
 		
 		if(isDemandRequired) {
@@ -411,18 +412,6 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 					arrearDemandDTO.setDemandDetails(Arrays.asList(arrearDemandDetailDTO));
 					demandDTOs.add(arrearDemandDTO);
 				}
-//				BigDecimal sewerageOutStanding = totalOutStanding;
-//				if(totalOutStanding.compareTo(waterCharge)>0) {
-//					sewerageOutStanding = totalOutStanding.subtract(waterCharge);
-//					totalOutStanding = waterCharge;
-				BigDecimal sewerageOutStanding = totalOutStanding;
-				if(connectionDTO.isWater()) {
-					if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && waterCharge.add(sewerageFee).compareTo(totalOutStanding)>=0) {
-						sewerageOutStanding = waterCharge.add(sewerageFee).subtract(totalOutStanding);
-						totalOutStanding = totalOutStanding.subtract(sewerageOutStanding);
-					}
-				}
-				
 				
 				List<DemandDetailDTO> currentDemandDetails = new ArrayList<>();
 				if(totalOutStanding.compareTo(BigDecimal.ZERO)<0 && !connectionDTO.isWater()) {
@@ -437,11 +426,11 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 					AdDemandDetailDTO.setTaxAmount(totalOutStanding);
 					AdDemandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 					currentDemandDetails.add(AdDemandDetailDTO);
-				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !isArrearDemandRequired) {
+				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !isArrearDemandRequired && !connectionDTO.isWater()) {
 					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
 					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
 					demandDetailDTO.setTaxAmount(sewerageFee);
-					demandDetailDTO.setCollectionAmount(sewerageFee.subtract(sewerageOutStanding));
+					demandDetailDTO.setCollectionAmount(sewerageFee.subtract(totalOutStanding));
 					currentDemandDetails.add(demandDetailDTO);
 				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !connectionDTO.isWater()) {
 					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
@@ -449,13 +438,14 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 					demandDetailDTO.setTaxAmount(sewerageFee);
 					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 					currentDemandDetails.add(demandDetailDTO);
-				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && totalOutStanding.compareTo(waterCharge.add(sewerageFee))>0 && connectionDTO.isWater()) {
-					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
-					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
-					demandDetailDTO.setTaxAmount(sewerageFee);
-					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
-					currentDemandDetails.add(demandDetailDTO);
 				}
+//				else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && totalOutStanding.compareTo(waterCharge.add(sewerageFee))>0 && connectionDTO.isWater()) {
+//					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+//					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+//					demandDetailDTO.setTaxAmount(sewerageFee);
+//					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+//					currentDemandDetails.add(demandDetailDTO);
+//				}
 				
 				if(!currentDemandDetails.isEmpty()) {
 					DemandDTO demandDTO = new DemandDTO();
@@ -481,7 +471,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 					
 					DemandDetailDTO arrearDemandDetailDTO = new DemandDetailDTO();
 					arrearDemandDetailDTO.setTaxHeadMasterCode("WS_CHARGE");
-					arrearDemandDetailDTO.setTaxAmount(arrearAmount);
+					arrearDemandDetailDTO.setTaxAmount(arrearAmount.add(sewerageFee));
 					arrearDemandDetailDTO.setCollectionAmount(collectedAmount.add(waterCharge.add(sewerageFee).add(arrearAmount).subtract(withRebatePayable)));
 					
 					arrearDemandDTO.setDemandDetails(Arrays.asList(arrearDemandDetailDTO));
