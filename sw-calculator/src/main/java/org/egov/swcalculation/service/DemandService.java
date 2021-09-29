@@ -511,15 +511,15 @@ public class DemandService {
 				.collect(Collectors.toMap(Demand::getId, Function.identity()));
 		List<Demand> demandsToBeUpdated = new LinkedList<>();
 		List<TaxPeriod> taxPeriods = masterDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), getBillCriteria.getTenantId(), SWCalculationConstant.SERVICE_FIELD_VALUE_SW);
-		long latestDemandPeriodFrom = res.getDemands().stream().filter(demand -> !(SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
-				.mapToLong(Demand::getTaxPeriodFrom).max().orElse(0);
+		long latestDemandPeriodTo = res.getDemands().stream().filter(demand -> !(SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString())))
+				.mapToLong(Demand::getTaxPeriodTo).max().orElse(0);
 		
 		consumerCodeToDemandMap.forEach((id, demand) ->{
 			if (demand.getStatus() != null
 					&& SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR,
 						SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR_MSG);
-			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom) {
+			if(demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.isDemandEligibleForRebateAndPenalty(latestDemandPeriodTo)) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);

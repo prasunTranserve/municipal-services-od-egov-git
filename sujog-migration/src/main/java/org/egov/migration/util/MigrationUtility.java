@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -58,6 +59,8 @@ public class MigrationUtility {
 	public static final BigDecimal maxDigitSupportedArea = BigDecimal.valueOf(99999999);
 
 	public static final String decimalRegex = "((\\d+)(((\\.)(\\d+)){0,1}))";
+	
+	public static final String negativeDecimalRegex = "^-?[0-9]\\d*(\\.\\d+)?$";
 
 	public static final String digitRegex = "\\d+";
 
@@ -262,6 +265,20 @@ public class MigrationUtility {
 		}
 	}
 	
+	public static Long getPreviousMonthLongDate(String dateString, String dateformat) {
+		if (dateString == null) {
+			return 0L;
+		}
+		try {
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).minusMonths(1).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		} catch (Exception e) {
+			dateString = dateString.replaceAll("  +", " ").split(" ")[0];
+			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yy")).minusMonths(1).atTime(11, 0)
+					.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+		}
+	}
+	
 	public static Long getExecutionDate(String dateString, String dateformat) {
 		if (dateString == null) {
 			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -391,7 +408,7 @@ public class MigrationUtility {
 
 	public static String getWaterSource(String waterSource) {
 		if(waterSource == null)
-			return "GROUND.BOREWELL";
+			return "SURFACE.CANAL";
 		return waterSource;
 	}
 
@@ -707,7 +724,7 @@ public class MigrationUtility {
 		}
 		
 		if(!ownerName.matches(MigrationConst.OWNER_NAME_PATTERN)) {
-			ownerName = ownerName.replaceAll("[^a-zA-Z0-9\\s\\.,]", "");
+			ownerName = ownerName.replaceAll("[^a-zA-Z0-9,\\s\\.]", "");
 			if(ownerName.contains(",")) {
 				ownerName = ownerName.substring(0, ownerName.indexOf(","));
 			}
@@ -883,5 +900,14 @@ public class MigrationUtility {
 		}
 		return value;
 	}
-	
+
+	public static BigDecimal convertToBigDecimal(String amt) {
+		if(StringUtils.isEmpty(amt)) {
+			return BigDecimal.ZERO;
+		}
+		if(!amt.matches(negativeDecimalRegex)) {
+			return BigDecimal.ZERO;
+		}
+		return new BigDecimal(amt);
+	}
 }
