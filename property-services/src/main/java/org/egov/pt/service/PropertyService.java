@@ -77,6 +77,8 @@ public class PropertyService {
 	@Lazy
 	private AssessmentService assessmentService;
 	
+	private static String allowedNameRegex = "^[a-zA-Z0-9 \\-'`\\.]*$";
+	
 	/**
 	 * Enriches the Request and pushes to the Queue
 	 *
@@ -153,6 +155,7 @@ public class PropertyService {
 			owners.forEach(owner -> {
 				Optional<OwnerInfo> ownerInfoOpt = request.getProperty().getOwners().stream().filter(reqOwner -> owner.getUuid().equals(reqOwner.getUuid())).findFirst();
 				if(ownerInfoOpt.isPresent()) {
+					owner.setName(removeSpecialIfPresent(owner.getName()));
 					owner.setGender(ownerInfoOpt.get().getGender());
 					owner.setFatherOrHusbandName(ownerInfoOpt.get().getFatherOrHusbandName());
 					owner.setRelationship(ownerInfoOpt.get().getRelationship());
@@ -358,6 +361,7 @@ public class PropertyService {
 
 		properties.forEach(property -> {
 			enrichmentService.enrichBoundary(property, requestInfo);
+			enrichmentService.enrichOwnerInfo(property);
 		});
 
 		return properties;
@@ -403,5 +407,12 @@ public class PropertyService {
 		UserDetailResponse userDetailResponse = userService.getUser(userSearchRequest);
 		util.enrichOwner(userDetailResponse, properties, false);
 		return properties;
+	}
+	
+	private String removeSpecialIfPresent(String name) {
+		if(!name.matches(allowedNameRegex)) {
+			return name.replaceAll("[^a-zA-Z0-9 \\-'`\\.]", "");
+		}
+		return name;
 	}
 }
