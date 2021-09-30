@@ -13,6 +13,7 @@ import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.config.MRConfiguration;
+import org.egov.mr.model.user.Citizen;
 import org.egov.mr.repository.MRRepository;
 import org.egov.mr.service.notification.EditNotificationService;
 import org.egov.mr.util.MRConstants;
@@ -115,11 +116,40 @@ public class MarriageRegistrationService {
 		criteria.setBusinessService(serviceFromPath);
 		enrichmentService.enrichSearchCriteriaWithAccountId(requestInfo,criteria);
 
-		marriageRegistrations = getMarriageRegistrationsWithOwnerInfo(criteria,requestInfo);
+		if(criteria.getMobileNumber()!=null){
+			marriageRegistrations = getMarriageRegistrationsFromMobileNumber(criteria, requestInfo);
+        }
+        else 
+        {
+        	marriageRegistrations = getMarriageRegistrationsWithOwnerInfo(criteria,requestInfo);
+        }
+		
+		
 
 		return marriageRegistrations;
 	}
 
+	
+	public List<MarriageRegistration> getMarriageRegistrationsFromMobileNumber(MarriageRegistrationSearchCriteria criteria, RequestInfo requestInfo){
+        List<MarriageRegistration> marriageRegistrations = new LinkedList<>();
+        
+        
+        Citizen user = util.getUserFromMobileNumber(criteria.getMobileNumber(), requestInfo, criteria.getTenantId()) ;
+       
+        // If user not found with given user fields return empty list
+        if(user==null){
+            return Collections.emptyList();
+        }
+       
+        criteria.setOwnerId(user.getUuid());
+        marriageRegistrations = repository.getMarriageRegistartions(criteria);
+
+        if(marriageRegistrations.size()==0){
+            return Collections.emptyList();
+        }
+
+        return marriageRegistrations;
+    }
 
 	public List<MarriageRegistration> getMarriageRegistrationsWithOwnerInfo(MarriageRegistrationSearchCriteria criteria,RequestInfo requestInfo){
 		List<MarriageRegistration> marriageRegistrations = repository.getMarriageRegistartions(criteria);

@@ -19,6 +19,7 @@ import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistrationRequest;
 import org.egov.mr.web.models.MarriageRegistrationSearchCriteria;
 import org.egov.mr.web.models.Idgen.IdResponse;
+import org.egov.mr.web.models.MarriageRegistration.ApplicationTypeEnum;
 import org.egov.mr.web.models.workflow.BusinessService;
 import org.egov.mr.workflow.WorkflowService;
 import org.egov.tracer.model.CustomException;
@@ -150,33 +151,44 @@ public class EnrichmentService {
 				marriageRegistration.setAccountId(requestInfo.getUserInfo().getUuid());
 			else
 			{
-				marriageRegistration.getCoupleDetails().forEach(couple -> {
-					if(couple.getBride().getIsPrimaryOwner())
-					{
-						String mobileNumber = couple.getBride().getAddress().getContact();
-						
-						String accId = null ;
-						
-						accId = isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
-						if (StringUtils.isEmpty(accId)) {
-							accId = createUser(couple.getBride() , requestInfo,marriageRegistration.getTenantId());
-						}
-						marriageRegistration.setAccountId(accId);
-					}
-					if(couple.getGroom().getIsPrimaryOwner())
-					{
-						String mobileNumber = couple.getGroom().getAddress().getContact();
-						
-						String accId = null ;
-						
-						accId = isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
-						if (StringUtils.isEmpty(accId)) {
-							accId = createUser(couple.getGroom() , requestInfo,marriageRegistration.getTenantId());
-						}
-						marriageRegistration.setAccountId(accId);
-					}
-					
+				List<String>  userRoles = new ArrayList<>();
+				
+				marriageRegistrationRequest.getRequestInfo().getUserInfo().getRoles().forEach(role -> {
+					userRoles.add(role.getCode());
 				});
+				
+				if(userRoles.contains(ROLE_CODE_COUNTER_EMPLOYEE) && marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE)
+						&&  marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.NEW.toString()) )
+				{
+					marriageRegistration.getCoupleDetails().forEach(couple -> {
+						if(couple.getBride().getIsPrimaryOwner())
+						{
+							String mobileNumber = couple.getBride().getAddress().getContact();
+							
+							String accId = null ;
+							
+							accId = marriageRegistrationUtil.isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
+							if (StringUtils.isEmpty(accId)) {
+								accId = createUser(couple.getBride() , requestInfo,marriageRegistration.getTenantId());
+							}
+							marriageRegistration.setAccountId(accId);
+						}
+						if(couple.getGroom().getIsPrimaryOwner())
+						{
+							String mobileNumber = couple.getGroom().getAddress().getContact();
+							
+							String accId = null ;
+							
+							accId = marriageRegistrationUtil.isUserPresent(mobileNumber,requestInfo,marriageRegistration.getTenantId());
+							if (StringUtils.isEmpty(accId)) {
+								accId = createUser(couple.getGroom() , requestInfo,marriageRegistration.getTenantId());
+							}
+							marriageRegistration.setAccountId(accId);
+						}
+						
+					});
+				}
+				
 			}
 
 		});
@@ -197,17 +209,9 @@ public class EnrichmentService {
 
 
 	
-	private String isUserPresent(String mobileNumber, RequestInfo requestInfo, String tenantId) {
-		UserSearchRequest searchRequest = UserSearchRequest.builder().userName(mobileNumber)
-				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
-		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
-		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
-		if(CollectionUtils.isEmpty(res.getUser())) {
-			return null;
-		}
-		return res.getUser().get(0).getUuid().toString();
-	}
 	
+	
+
 	
 	private String createUser(CoupleDetails couple ,RequestInfo requestInfo, String tenantId) {
 		Citizen citizen = new Citizen();
@@ -559,6 +563,7 @@ public class EnrichmentService {
 		}
 	}
 
+	
 
 
 

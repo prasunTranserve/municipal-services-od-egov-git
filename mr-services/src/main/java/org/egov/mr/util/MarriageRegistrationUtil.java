@@ -161,5 +161,53 @@ public class MarriageRegistrationUtil {
 			return null;
 		}
 	}
+    
+    public boolean checkUserPresentWithUuid(String uuid, RequestInfo requestInfo, String tenantId) {
+		List<String>  uuidList = new ArrayList<>();
+		uuidList.add(uuid);
+		UserSearchRequest searchRequest = UserSearchRequest.builder().uuid(uuidList).active(true)
+				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+		if(CollectionUtils.isEmpty(res.getUser())) {
+			return false;
+		}
+		return true;
+	}
+    /**
+     * 
+     * @param mobileNumber
+     * @param requestInfo
+     * @param tenantId
+     * @return
+     */
+    public String isUserPresent(String mobileNumber, RequestInfo requestInfo, String tenantId) {
+		UserSearchRequest searchRequest = UserSearchRequest.builder().userName(mobileNumber)
+				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+		if(CollectionUtils.isEmpty(res.getUser())) {
+			return null;
+		}
+		return res.getUser().get(0).getUuid().toString();
+	}
+    
+    /**
+     * 
+     * @param mobileNumber
+     * @param requestInfo
+     * @param tenantId
+     * @retur
+     */
+    public Citizen getUserFromMobileNumber(String mobileNumber, RequestInfo requestInfo, String tenantId) {
+		UserSearchRequest searchRequest = UserSearchRequest.builder().userName(mobileNumber).active(true)
+				.tenantId(tenantId).userType(MRConstants.ROLE_CITIZEN).requestInfo(requestInfo).build();
+		StringBuilder url = new StringBuilder(config.getUserHost()+config.getUserSearchEndpoint()); 
+		UserResponse res = mapper.convertValue(serviceRequestRepository.fetchResult(url, searchRequest), UserResponse.class);
+		if(CollectionUtils.isEmpty(res.getUser())) {
+			return null;
+		}
+		return res.getUser().get(0);
+	}
 
 }
