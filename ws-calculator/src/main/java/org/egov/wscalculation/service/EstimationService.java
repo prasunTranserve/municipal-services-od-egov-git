@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 
@@ -58,8 +60,14 @@ public class EstimationService {
 	@Autowired
 	private WSCalculationUtil wSCalculationUtil;
 	
+	@Autowired
+	private MasterDataService mDataService;
+	
+	@Autowired
+	private PayService payService;
+	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
-	private static BigDecimal RECONNECTION_CHANGE_CHARGE = BigDecimal.valueOf(300);
+	private static BigDecimal TenPercent = BigDecimal.valueOf(0.1);
 
 	/**
 	 * Generates a List of Tax head estimates with tax head code, tax head
@@ -96,6 +104,9 @@ public class EstimationService {
 				(JSONArray) masterData.get(WSCalculationConstant.CALCULATION_ATTRIBUTE_CONST));
 		timeBasedExemptionMasterMap.put(WSCalculationConstant.WC_WATER_CESS_MASTER,
 				(JSONArray) (masterData.getOrDefault(WSCalculationConstant.WC_WATER_CESS_MASTER, null)));
+		
+		mDataService.setWaterConnectionMasterValues(requestInfo, criteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
 		// mDataService.setWaterConnectionMasterValues(requestInfo, tenantId,
 		// billingSlabMaster,
 		// timeBasedExemptionMasterMap);
@@ -120,39 +131,56 @@ public class EstimationService {
 		
 		BigDecimal waterCharges = BigDecimal.ZERO;
 		if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.meteredConnectionType)) {
+			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
+			long ratio = 1;
+			if(additionalDetails.containsKey("meterReadingRatio")) {
+				String meterReadingRatio = additionalDetails.get("meterReadingRatio").toString();
+				if(!StringUtils.isEmpty(meterReadingRatio)) {
+					ratio = Long.parseLong(meterReadingRatio.split(":")[1]);
+				}
+			}
 			Double totalUnit = criteria.getCurrentReading() - criteria.getLastReading();
 			BigDecimal rate = BigDecimal.ZERO;
-			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
+			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("PERMANENT")) {
 				if(usageType.equalsIgnoreCase("Domestic")) {
-					rate = BigDecimal.valueOf(5.04);
-				} else if(usageType.equalsIgnoreCase("Commercial")
-						|| usageType.equalsIgnoreCase("Industrial")) {
-					rate = BigDecimal.valueOf(16.62);
-				} else if(usageType.equalsIgnoreCase("Institutional")) {
-					rate = BigDecimal.valueOf(17.62);
+					rate = BigDecimal.valueOf(5.29);
+				} else if(WSCalculationConstant.WS_UC_COMMERCIAL.equalsIgnoreCase(usageType)
+						|| WSCalculationConstant.WS_UC_INDUSTRIAL.equalsIgnoreCase(usageType)
+						|| WSCalculationConstant.WS_UC_INSTITUTIONAL.equalsIgnoreCase(usageType)) {
+					rate = BigDecimal.valueOf(17.45);
+				} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
+					rate = BigDecimal.valueOf(5.29);
+				} else if(WSCalculationConstant.WS_UC_ASSOCIATION.equalsIgnoreCase(usageType)) {
+					rate = BigDecimal.valueOf(17.45);
 				}
 				
-			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-				rate = BigDecimal.valueOf(31.21);
+			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("TEMPORARY")) {
+				if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
+					rate = BigDecimal.valueOf(5.29);
+				} else if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageType)) {
+					rate = BigDecimal.valueOf(32.77);
+				}
 			}
-			waterCharges = rate.multiply(BigDecimal.valueOf(totalUnit));
+			waterCharges = rate.multiply(BigDecimal.valueOf(totalUnit)).multiply(BigDecimal.valueOf(ratio));
 		} else if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.nonMeterdConnection)) {
 			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
-				if(usageType.equalsIgnoreCase("Domestic")) {
-					waterCharges = BigDecimal.valueOf(101);
+				if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(106);
 					if(criteria.getWaterConnection().getNoOfTaps() > 2) {
-						waterCharges.add(BigDecimal.valueOf(101).multiply(BigDecimal.valueOf(criteria.getWaterConnection().getNoOfTaps() - 2)));
+						waterCharges.add(BigDecimal.valueOf(35.18).multiply(BigDecimal.valueOf(criteria.getWaterConnection().getNoOfTaps() - 2)));
 					}
-				} else if(usageType.equalsIgnoreCase("BPL")) {
-					waterCharges = BigDecimal.valueOf(53);
-				} else if(usageType.equalsIgnoreCase("RoadSideEaters")) {
-					waterCharges = BigDecimal.valueOf(343);
-				} else if(usageType.equalsIgnoreCase("SPMA")) {
-					waterCharges = BigDecimal.valueOf(208);
+				} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(56);
 				}
 			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-				if(usageType.equalsIgnoreCase("Domestic")) {
-					waterCharges = BigDecimal.valueOf(208);
+				if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(218);
+				} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(53);
+				} else if(WSCalculationConstant.WS_UC_ROADSIDEEATERS.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(360);
+				} else if(WSCalculationConstant.WS_UC_STAND_POST_MUNICIPALITY.equalsIgnoreCase(usageType)) {
+					waterCharges = BigDecimal.valueOf(218);
 				}
 			}
 		}
@@ -174,6 +202,13 @@ public class EstimationService {
 		// water_charge
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_CHARGE)
 				.estimateAmount(waterCharge.setScale(2, 2)).build());
+		
+		// water timebase Rebate
+		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(waterCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
+					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
+		}
 
 		// Water_cess
 		if (timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_WATER_CESS_MASTER) != null) {
@@ -421,22 +456,31 @@ public class EstimationService {
 		// Property property = wSCalculationUtil.getProperty(WaterConnectionRequest.builder()
 		// 		.waterConnection(criteria.getWaterConnection()).requestInfo(requestInfo).build());
 		
+		String usageCategory = criteria.getWaterConnection().getUsageCategory();
 		BigDecimal scrutinyFee = BigDecimal.ZERO;
 		BigDecimal securityCharge  = BigDecimal.ZERO;
 		if(criteria.getWaterConnection().getConnectionType().equalsIgnoreCase(WSCalculationConstant.meteredConnectionType)) {
 			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
 				securityCharge = BigDecimal.valueOf(60);
 				switch(criteria.getWaterConnection().getUsageCategory().toUpperCase()) {
-				case "COMMERCIAL":
+				case WSCalculationConstant.WS_UC_COMMERCIAL:
+					if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(20000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(30000);
+					} else {
+						scrutinyFee = BigDecimal.valueOf(6000);
+					}
+					break;
+				case WSCalculationConstant.WS_UC_INDUSTRIAL:
 					scrutinyFee = BigDecimal.valueOf(6000);
 					break;
-				case "INDUSTRIAL":
-					scrutinyFee = BigDecimal.valueOf(6000);
-					break;
-				case "INSTITUTIONAL":
+				case WSCalculationConstant.WS_UC_INSTITUTIONAL:
 					scrutinyFee = BigDecimal.valueOf(5000);
 					break;
-				case "DOMESTIC":
+				case WSCalculationConstant.WS_UC_DOMESTIC:
 					if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
 						scrutinyFee = BigDecimal.valueOf(10000);
 					} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
@@ -447,27 +491,42 @@ public class EstimationService {
 						scrutinyFee = BigDecimal.valueOf(3000);
 					}
 					break;
+				case WSCalculationConstant.WS_UC_ASSOCIATION:
+					scrutinyFee = BigDecimal.valueOf(6000);
+					break;
+				case WSCalculationConstant.WS_UC_BPL:
+					securityCharge = BigDecimal.ZERO;
+					break;
 				}
 			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-				scrutinyFee = BigDecimal.valueOf(6000);
+				if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
+					scrutinyFee = BigDecimal.valueOf(10000);
+				} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
+					scrutinyFee = BigDecimal.valueOf(20000);
+				} else if(criteria.getWaterConnection().getNoOfFlats() > 50) {
+					scrutinyFee = BigDecimal.valueOf(30000);
+				} else if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageCategory)) {
+					scrutinyFee = BigDecimal.valueOf(500);
+					securityCharge = BigDecimal.ZERO;
+				} else {
+					scrutinyFee = BigDecimal.valueOf(3000);
+				}
 			}
 		} else if(criteria.getWaterConnection().getConnectionType().equalsIgnoreCase(WSCalculationConstant.nonMeterdConnection)) {
 			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
-				securityCharge = BigDecimal.valueOf(60);
+				securityCharge = BigDecimal.ZERO;
 				switch(criteria.getWaterConnection().getUsageCategory().toUpperCase()) {
-				case "DOMESTIC":
+				case WSCalculationConstant.WS_UC_DOMESTIC:
 					scrutinyFee = BigDecimal.valueOf(3000);
-					break;
-				case "BPL":
-					securityCharge = BigDecimal.valueOf(0);
-					break;
-				case "ROADSIDEEATERS":
-					scrutinyFee = BigDecimal.valueOf(500);
+					securityCharge = BigDecimal.valueOf(60);
 					break;
 				}
 			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-				if(criteria.getWaterConnection().getUsageCategory().equalsIgnoreCase("Domestic")) {
+				if(WSCalculationConstant.WS_UC_DOMESTIC.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
 					scrutinyFee = BigDecimal.valueOf(3000);
+					securityCharge = BigDecimal.valueOf(60);
+				} else if(WSCalculationConstant.WS_UC_BPL.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
+					scrutinyFee = BigDecimal.valueOf(500);
 					securityCharge = BigDecimal.valueOf(60);
 				}
 			}
@@ -715,15 +774,80 @@ public class EstimationService {
 
 	private List<TaxHeadEstimate> getTaxHeadForReconnectionFeeEstimationV2(CalculationCriteria criteria,
 			RequestInfo requestInfo) {
-		BigDecimal reconnectionCharge = RECONNECTION_CHANGE_CHARGE;
-		
+		BigDecimal reconnectionCharge = BigDecimal.ZERO;
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(reconnectionCharge.compareTo(BigDecimal.ZERO) != 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_RECONNECTION_CHARGE)
-					.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
+		
+		String usageCategory = criteria.getWaterConnection().getUsageCategory();
+		BigDecimal scrutinyFee = BigDecimal.ZERO;
+		if(criteria.getWaterConnection().getConnectionType().equalsIgnoreCase(WSCalculationConstant.meteredConnectionType)) {
+			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
+				switch(criteria.getWaterConnection().getUsageCategory().toUpperCase()) {
+				case WSCalculationConstant.WS_UC_COMMERCIAL:
+					if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(20000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(30000);
+					} else {
+						scrutinyFee = BigDecimal.valueOf(6000);
+					}
+					break;
+				case WSCalculationConstant.WS_UC_INDUSTRIAL:
+					scrutinyFee = BigDecimal.valueOf(6000);
+					break;
+				case WSCalculationConstant.WS_UC_INSTITUTIONAL:
+					scrutinyFee = BigDecimal.valueOf(5000);
+					break;
+				case WSCalculationConstant.WS_UC_DOMESTIC:
+					if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(20000);
+					} else if(criteria.getWaterConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(30000);
+					} else {
+						scrutinyFee = BigDecimal.valueOf(3000);
+					}
+					break;
+				case WSCalculationConstant.WS_UC_ASSOCIATION:
+					scrutinyFee = BigDecimal.valueOf(6000);
+				}
+			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
+				if(criteria.getWaterConnection().getNoOfFlats() > 0 && criteria.getWaterConnection().getNoOfFlats() <= 25) {
+					scrutinyFee = BigDecimal.valueOf(10000);
+				} else if(criteria.getWaterConnection().getNoOfFlats() > 25 && criteria.getWaterConnection().getNoOfFlats() <= 50) {
+					scrutinyFee = BigDecimal.valueOf(20000);
+				} else if(criteria.getWaterConnection().getNoOfFlats() > 50) {
+					scrutinyFee = BigDecimal.valueOf(30000);
+				} else if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageCategory)) {
+					scrutinyFee = BigDecimal.valueOf(500);
+				} else {
+					scrutinyFee = BigDecimal.valueOf(3000);
+				}
+			}
+		} else if(criteria.getWaterConnection().getConnectionType().equalsIgnoreCase(WSCalculationConstant.nonMeterdConnection)) {
+			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
+				switch(criteria.getWaterConnection().getUsageCategory().toUpperCase()) {
+				case WSCalculationConstant.WS_UC_DOMESTIC:
+					scrutinyFee = BigDecimal.valueOf(3000);
+					break;
+				}
+			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
+				if(WSCalculationConstant.WS_UC_DOMESTIC.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
+					scrutinyFee = BigDecimal.valueOf(3000);
+				} else if(WSCalculationConstant.WS_UC_BPL.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
+					scrutinyFee = BigDecimal.valueOf(500);
+				}
+			}
 		}
+		reconnectionCharge = scrutinyFee.multiply(TenPercent).setScale(2, RoundingMode.UP);
+		
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_RECONNECTION_CHARGE)
+				.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
 		
 		return estimates;
+	
 	}
 
 	public Map<String, List> getOwnershipChangeFeeEstimation(CalculationCriteria criteria, RequestInfo requestInfo) {
@@ -746,14 +870,15 @@ public class EstimationService {
 
 	private List<TaxHeadEstimate> getTaxHeadForOwhershipChangeFeeEstimationV2(CalculationCriteria criteria,
 			RequestInfo requestInfo) {
-		BigDecimal reconnectionCharge = OWNERSHIP_CHANGE_FEE;
+		BigDecimal ownershipChangeFee = OWNERSHIP_CHANGE_FEE;
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(reconnectionCharge.compareTo(BigDecimal.ZERO) != 0) {
+		if(ownershipChangeFee.compareTo(BigDecimal.ZERO) != 0) {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_OWNERSHIP_CHANGE_FEE)
-					.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
+					.estimateAmount(ownershipChangeFee.setScale(2, RoundingMode.UP)).build());
 		}
 		
 		return estimates;
+
 	}
 }

@@ -268,7 +268,11 @@ public class WnsService {
 				.append(properties.getSwMigrateDemandEndpoint());
 		
 		if(!conn.getSewerageDemands().isEmpty()) {
-			conn.getSewerageDemands().forEach(demand -> demand.setConsumerCode(conn.getSewerageConnection().getConnectionNo()));
+			conn.getSewerageDemands().forEach(demand -> {
+					demand.setConsumerCode(conn.getSewerageConnection().getConnectionNo());
+					demand.setPayer(conn.getSewerageConnection().getConnectionHolders().get(0));
+					demand.setBillExpiryTime(1296000000L);
+				});
 		}
 		
 		boolean isSewerageDemandMigrated = false;
@@ -289,7 +293,11 @@ public class WnsService {
 		StringBuilder uri = new StringBuilder(properties.getWsCalculatorHost())
 				.append(properties.getWsMigrateDemandEndpoint());
 		if(!conn.getWaterDemands().isEmpty()) {
-			conn.getWaterDemands().stream().forEach(demand -> demand.setConsumerCode(conn.getWaterConnection().getConnectionNo()));
+			conn.getWaterDemands().stream().forEach(demand -> {
+				demand.setConsumerCode(conn.getWaterConnection().getConnectionNo());
+				demand.setPayer(conn.getWaterConnection().getConnectionHolders().get(0));
+				demand.setBillExpiryTime(1296000000L);
+				});
 		}
 
 		boolean isWaterDemandMigrated = false;

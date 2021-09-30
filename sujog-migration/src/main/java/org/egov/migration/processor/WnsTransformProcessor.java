@@ -383,7 +383,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		BigDecimal arrearAmount =  MigrationUtility.convertToBigDecimal(demand.getArrear());
 		BigDecimal collectedAmount = MigrationUtility.convertToBigDecimal(demand.getCollectedAmount());
 		
-		BigDecimal withRebatePayable = arrearAmount.add(waterCharge.add(sewerageFee).multiply(appplyRebate).setScale(2, RoundingMode.HALF_UP));
+		BigDecimal withRebatePayable = arrearAmount.add(waterCharge.add(sewerageFee).multiply(appplyRebate).setScale(0, RoundingMode.HALF_UP));
 		totalOutStanding = withRebatePayable.subtract(collectedAmount);
 		
 		if(totalOutStanding.compareTo(waterCharge.add(sewerageFee))>0) {
@@ -541,6 +541,37 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		ObjectNode additionalDetails = JsonNodeFactory.instance.objectNode();
 		additionalDetails.put("locality", this.localityCode);
 		additionalDetails.put("ward", MigrationUtility.getWard(connection.getWard()));
+		if((MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility()))
+				&& MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionType())) {
+			String meterRatio = "1:1";
+			String meterMake = "Other";
+			if(connection.getMeterReading() != null && !connection.getMeterReading().isEmpty()) {
+				meterRatio = connection.getMeterReading().get(0).getMeterReadingRatio().replaceAll(" ", "");
+				meterMake = connection.getMeterReading().get(0).getMeterMake();
+			}
+			additionalDetails.put("meterReadingRatio", meterRatio);
+			additionalDetails.put("meterMake", meterMake);
+		}
+		
+		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
+				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(MigrationConst.CONNECTION_CATEGORY_PERMANENT.equalsIgnoreCase(connection.getService().getConnectionCategory())
+					&& (connection.getService().getUsageCategory().equalsIgnoreCase("Industrial")
+							|| connection.getService().getUsageCategory().equalsIgnoreCase("Commertial")
+							|| connection.getService().getUsageCategory().equalsIgnoreCase("Apartment"))) {
+				BigDecimal sewerageAmt = MigrationUtility.convertToBigDecimal(connection.getDemands().get(0).getSewerageFee());
+				String dia = "2";
+				if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) < 0) {
+					dia = "2";
+				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) >= 0 && sewerageAmt.compareTo(BigDecimal.valueOf(800)) < 0) {
+					dia = "4";
+				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(800)) >= 0) {
+					dia = "6";
+				}
+				additionalDetails.put("diameter", dia);
+			}
+		}
 		return additionalDetails;
 	}
 	
@@ -693,5 +724,4 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		sewerageConnectionDTO.setTenantId(this.tenantId);
 		sewerageConnectionDTO.setOldConnectionNo(MigrationUtility.addLeadingZeros(connection.getConnectionNo()));
 	}
-
 }

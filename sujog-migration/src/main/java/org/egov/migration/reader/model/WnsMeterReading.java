@@ -37,4 +37,8 @@ public class WnsMeterReading {
 	private String currentReadingDate;
 	
 	private String createdDate;
+	
+	private String meterMake;
+	
+	private String meterReadingRatio;
 }

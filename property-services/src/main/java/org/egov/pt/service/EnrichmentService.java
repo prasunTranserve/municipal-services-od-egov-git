@@ -37,6 +37,7 @@ public class EnrichmentService {
     @Autowired
     private PropertyConfiguration config;
 
+    private static String allowedNameRegex = "^[a-zA-Z0-9 \\-'`\\.]*$";
 
 
     /**
@@ -334,6 +335,18 @@ public class EnrichmentService {
 		Property property = request.getProperty();
 		if (property.getAddress().getGeoLocation() == null)
 			property.getAddress().setGeoLocation(new GeoLocation());
+		
+	}
+
+	public void enrichOwnerInfo(Property property) {
+		property.getOwners().forEach(owner -> {
+			if(!owner.getName().matches(allowedNameRegex)) {
+				owner.setName(owner.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+			}
+			if(!owner.getFatherOrHusbandName().matches(allowedNameRegex)) {
+				owner.setFatherOrHusbandName(owner.getFatherOrHusbandName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+			}
+		});
 		
 	}
 
