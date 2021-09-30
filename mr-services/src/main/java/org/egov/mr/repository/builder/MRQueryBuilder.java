@@ -103,6 +103,12 @@ public class MRQueryBuilder {
                 addToPreparedStatement(preparedStmtList, ids);
             }
 
+            if(criteria.getOwnerId()!=null){
+                addClauseIfRequired(preparedStmtList,builder);
+                builder.append(" mr.accountid = ? ");
+                preparedStmtList.add(criteria.getOwnerId());
+       
+            }
 
 
             if (criteria.getApplicationNumber() != null) {

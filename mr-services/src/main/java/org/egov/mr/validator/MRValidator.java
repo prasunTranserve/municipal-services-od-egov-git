@@ -1,8 +1,14 @@
 package org.egov.mr.validator;
 
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +24,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.mr.config.MRConfiguration;
 import org.egov.mr.repository.MRRepository;
 import org.egov.mr.util.MRConstants;
+import org.egov.mr.util.MarriageRegistrationUtil;
 import org.egov.mr.web.models.AppointmentDetails;
 import org.egov.mr.web.models.MarriageRegistration;
 import org.egov.mr.web.models.MarriageRegistration.ApplicationTypeEnum;
@@ -34,6 +41,7 @@ import static org.egov.mr.util.MRConstants.businessService_MR;
 import static org.egov.mr.util.MRConstants.ACTION_SCHEDULE;
 import static org.egov.mr.util.MRConstants.ACTION_RESCHEDULE;
 import static org.egov.mr.util.MRConstants.businessService_MR_CORRECTION;
+import static org.egov.mr.util.MRConstants.ROLE_CODE_COUNTER_EMPLOYEE;
 
 @Component
 public class MRValidator {
@@ -46,6 +54,9 @@ public class MRValidator {
 	 
 	@Autowired
 	 private MRConfiguration config;
+	
+	@Autowired
+	private MarriageRegistrationUtil marriageRegistrationUtil;
 
 	public void validateBusinessService(@Valid MarriageRegistrationRequest marriageRegistrationRequest,String businessServicefromPath) {
 	
@@ -137,10 +148,17 @@ public class MRValidator {
 			 {
 				 if(marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.CORRECTION.toString()) && !marriageRegistration.getWorkflowCode().equalsIgnoreCase(businessService_MR_CORRECTION))
 				 errorMap.put("APPLICATIONTYPE_ERROR", "When Application Type is correction then workflowcode should be MRCORRECTION");
+				 
+				 if(marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.NEW.toString()) && !marriageRegistration.getWorkflowCode().equalsIgnoreCase(businessService_MR))
+					 errorMap.put("APPLICATIONTYPE_ERROR", "When Application Type is New then workflowcode should be MR");
 			 }
 			
 			if(marriageRegistration.getMarriageDate() == null)
 				errorMap.put("NULL_MARRIAGEDATE", " Marriage Date cannot be null");
+			else {
+				if(CheckIsFutureDate(marriageRegistration.getMarriageDate()))
+					errorMap.put("MARRIAGEDATE_ERROR", " Marriage Date cannot be Future Date");
+			}
 			
 			if(marriageRegistration.getMarriagePlace() == null)
 				errorMap.put("NULL_MARRIAGEPLACE", " Marriage Details cannot be null");
@@ -149,8 +167,6 @@ public class MRValidator {
 			if(StringUtils.isEmpty(marriageRegistration.getMarriagePlace().getWard()))
 				errorMap.put("NULL_WARD", " Ward cannot be null");
 			
-			if(StringUtils.isEmpty(marriageRegistration.getMarriagePlace().getPinCode()))
-				errorMap.put("NULL_PIN_CODE", " Pin code cannot be null");
 		
 			if(StringUtils.isEmpty(marriageRegistration.getMarriagePlace().getPlaceOfMarriage()))
 				errorMap.put("NULL_MARRIAGEPLACE", " Marriage Place  cannot be null");
@@ -181,8 +197,25 @@ public class MRValidator {
 					errorMap.put("COUPLE_DETAILS_ERROR", " IsDivyang is mandatory ");
 				
 				
+				// In case of correction the account id will be the account id of the previous application
+				if(userRoles.contains(ROLE_CODE_COUNTER_EMPLOYEE) && marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE)
+						&&  marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.CORRECTION.toString()) )
+				{
+					if(StringUtils.isEmpty(marriageRegistration.getAccountId()))
+					{
+						errorMap.put("ACCOUNT_ID_ERROR", " Account id is mandatory when the application is created by counter employee and the application type is Correction  ");
+					}else
+					{
+						boolean userpresent = marriageRegistrationUtil.checkUserPresentWithUuid(marriageRegistration.getAccountId(), marriageRegistrationRequest.getRequestInfo(), marriageRegistration.getTenantId());
+							if(!userpresent)
+								errorMap.put("ACCOUNT_ID_ERROR", " Account id does not exists   ");
+					
+					}
+				}
 				
-				if(userRoles.contains("MR_CEMP"))
+				
+				if(( userRoles.contains(ROLE_CODE_COUNTER_EMPLOYEE) && marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE)
+						&&  marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.NEW.toString()) ) && StringUtils.isEmpty(marriageRegistration.getAccountId()) )
 				{
 						if(couple.getBride().getIsPrimaryOwner()==null )
 						{
@@ -204,6 +237,18 @@ public class MRValidator {
 					errorMap.put("COUPLE_DETAILS_ERROR", " Name is mandatory ");
 				if(couple.getBride().getDateOfBirth() == null )
 					errorMap.put("COUPLE_DETAILS_ERROR", " Date Of Birth is mandatory ");
+				
+				if(couple.getBride().getDateOfBirth() != null )
+				{
+					boolean futureDate = CheckIsFutureDate(couple.getBride().getDateOfBirth());
+					if(futureDate)
+						errorMap.put("AGE_ERROR", " Bride Date of Birth Cannot be future date ");
+					
+					boolean ageCheck = AgeCheck(  18 ,couple.getBride().getDateOfBirth() , marriageRegistration.getMarriageDate());
+					if(!ageCheck)
+						errorMap.put("AGE_ERROR", " Bride should be alteast 18 years of age at the time of marriage ");
+				}
+				
 				if(StringUtils.isEmpty(couple.getBride().getFatherName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", "Father Name is mandatory ");
 				if(StringUtils.isEmpty(couple.getBride().getMotherName()))
@@ -293,7 +338,8 @@ public class MRValidator {
 				
 				
 				
-				if(userRoles.contains("MR_CEMP"))
+				if( (userRoles.contains(ROLE_CODE_COUNTER_EMPLOYEE) && marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE) && 
+						marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.NEW.toString()) ) && StringUtils.isEmpty(marriageRegistration.getAccountId()) )
 				{
 						if(couple.getGroom().getIsPrimaryOwner()==null )
 						{
@@ -315,6 +361,18 @@ public class MRValidator {
 					errorMap.put("COUPLE_DETAILS_ERROR", " Name is mandatory ");
 				if(couple.getGroom().getDateOfBirth() == null )
 					errorMap.put("COUPLE_DETAILS_ERROR", " Date Of Birth is mandatory ");
+				
+				if(couple.getGroom().getDateOfBirth() != null )
+				{
+					boolean futureDate = CheckIsFutureDate(couple.getGroom().getDateOfBirth());
+					if(futureDate)
+						errorMap.put("AGE_ERROR", " Groom Date of Birth Cannot be future date ");
+					
+					boolean ageCheck = AgeCheck( 21 , couple.getGroom().getDateOfBirth() , marriageRegistration.getMarriageDate());
+					if(!ageCheck)
+						errorMap.put("AGE_ERROR", " Groom should be alteast 21 years of age at the time of marriage ");
+				}
+				
 				if(StringUtils.isEmpty(couple.getGroom().getFatherName()))
 					errorMap.put("COUPLE_DETAILS_ERROR", "Father Name is mandatory ");
 				if(StringUtils.isEmpty(couple.getGroom().getMotherName()))
@@ -400,7 +458,8 @@ public class MRValidator {
 			});
 			
 			
-				if(userRoles.contains("MR_CEMP"))
+				if( ( userRoles.contains(ROLE_CODE_COUNTER_EMPLOYEE) && marriageRegistration.getAction().equalsIgnoreCase(MRConstants.ACTION_INITIATE) &&
+						marriageRegistration.getApplicationType() != null && marriageRegistration.getApplicationType().toString().equalsIgnoreCase(ApplicationTypeEnum.NEW.toString()) ) && StringUtils.isEmpty(marriageRegistration.getAccountId()) )
 				{
 					int trueCounter = 0 ;
 					for (Boolean isPrimary : isPrimaryOwnerTrueCounter) {
@@ -417,7 +476,12 @@ public class MRValidator {
 			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_APPLY)) {
                 if(marriageRegistration.getApplicationDocuments()==null)
                 	errorMap.put("APPLICATION_DOCUMENTS_ERROR", " Application Documents are mandatory if the action is Apply ");
+                
+                if(CollectionUtils.isEmpty(marriageRegistration.getApplicationDocuments()))
+						errorMap.put("APPLICATION_DOCUMENTS_ERROR", " ApplicationDocuments should have atleast 1 document ");
+                
             }
+			
 			
 			if (marriageRegistration.getAction().equalsIgnoreCase(ACTION_SCHEDULE) || marriageRegistration.getAction().equalsIgnoreCase(ACTION_RESCHEDULE)) {
                 if(marriageRegistration.getAppointmentDetails()==null)
@@ -433,8 +497,13 @@ public class MRValidator {
                 	});
                 	
                 	List<AppointmentDetails> apointmentDetailsActive  = marriageRegistration.getAppointmentDetails().stream().filter(appointment -> {return appointment.getActive();}).collect(Collectors.toList());
-                	if(apointmentDetailsActive!= null)
+                	if(!CollectionUtils.isEmpty(apointmentDetailsActive))
                 	{
+                		apointmentDetailsActive.forEach(appoinment -> {
+                			if(CheckIsPreviousDate(appoinment.getStartTime()))
+                				errorMap.put("APPOINTMENT_DEATILS_ERROR", " Appointment Date and Time Cannot be Less than Present time ");
+                		});
+                		
                 	if(apointmentDetailsActive.size() == 0)
                 		errorMap.put("APPOINTMENT_DEATILS_ERROR", " Atleast One Appointment Start and End time should be active if the action is SCHEDULE or RESCHEDULE ");
                 	if(apointmentDetailsActive.size() != 1)
@@ -769,6 +838,53 @@ public class MRValidator {
     	});    	
     	
 	}
+	
+	
+	private boolean AgeCheck(int age  , Long dateOfBirth , Long marriageDate)
+	{
+		Calendar birthDate = new GregorianCalendar(); 
+		birthDate.setTimeInMillis(dateOfBirth);
+    	
+		birthDate.add(Calendar.YEAR, age);
+    	
+    	Long marriageEligibleDate = birthDate.getTimeInMillis();
+    	
+    	if(marriageDate>=marriageEligibleDate)
+    		return true ;
+    	else 
+    		return false;
+    	
+	}
+	
+	private boolean CheckIsFutureDate(Long dateInMillisec)
+	{
+		Calendar presentDate = new GregorianCalendar(); 
+		presentDate.set(Calendar.HOUR_OF_DAY, 23);
+		presentDate.set(Calendar.MINUTE, 59);
+		presentDate.set(Calendar.SECOND, 59);
+		presentDate.set(Calendar.MILLISECOND, 0);
+		
+		Long presentDateMilliSec = presentDate.getTimeInMillis();
+		
+		if(dateInMillisec>presentDateMilliSec)
+		return true;
+		else
+			return false;
+	}
+	
+	private boolean CheckIsPreviousDate(Long dateInMillisec)
+	{
+		Calendar presentDate = new GregorianCalendar(); 
+
+		Long presentDateMilliSec = presentDate.getTimeInMillis();
+
+		if(dateInMillisec<presentDateMilliSec)
+			return true;
+		else
+			return false;
+	}
+	
+	
 
 
 }

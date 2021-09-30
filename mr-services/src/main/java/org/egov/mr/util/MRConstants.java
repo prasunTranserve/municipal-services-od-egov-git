@@ -10,6 +10,8 @@ public class MRConstants {
 	
 	public static  final String businessService_MR_CORRECTION = "MRCORRECTION";
 	
+	public static final String ROLE_CODE_COUNTER_EMPLOYEE = "MR_CEMP";
+	
 
     public static final String ACTION_INITIATE = "INITIATE";
 

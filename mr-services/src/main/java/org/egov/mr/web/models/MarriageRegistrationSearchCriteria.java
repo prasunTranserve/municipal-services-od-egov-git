@@ -37,6 +37,9 @@ public class MarriageRegistrationSearchCriteria {
     @JsonIgnore
     private String accountId;
     
+    @JsonIgnore
+    private String ownerId;
+    
     @JsonProperty("applicationType")
     private String applicationType;
 
