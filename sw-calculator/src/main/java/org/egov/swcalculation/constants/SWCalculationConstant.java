@@ -294,4 +294,14 @@ public class SWCalculationConstant {
 
 	public static final String PROPERTY_MASTER_MODULE = "PropertyTax";
 
+	public static final String SW_UC_COMMERCIAL = "COMMERCIAL";
+	public static final String SW_UC_DOMESTIC = "DOMESTIC";
+	public static final String SW_UC_INDUSTRIAL = "INDUSTRIAL";
+	public static final String SW_UC_INSTITUTIONAL = "INSTITUTIONAL";
+	public static final String SW_UC_BPL = "BPL";
+	public static final String SW_UC_ROADSIDEEATERS = "ROADSIDEEATERS";
+	public static final String SW_UC_STAND_POST_MUNICIPALITY = "SPMA";
+	public static final String SW_UC_TWSFC = "TWSFC";
+	public static final String SW_UC_ASSOCIATION = "ASSOCIATION";
+
 }

@@ -116,6 +116,8 @@ public class MigrationConst {
 	public static final String COL_GUARDIAN_RELATION = "GUARDIAN_RELATION";
 	public static final String COL_CONSUMER_CATEGORY = "CONSUMER_CATEGORY";
 	public static final String COL_METER_STATUS = "METER_STATUS";
+	public static final String COL_METER_MAKE = "METER_MAKE";
+	public static final String COL_METER_READING_RATIO = "METER_READING_RATIO";
 	
 	public static final String DEFAULT_OWNER_TYPE = "NONE";
 	

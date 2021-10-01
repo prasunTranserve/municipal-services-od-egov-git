@@ -55,6 +55,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DemandDTO {
 	
+	private String uuid;
+	
 	@JsonProperty("id")
 	private String id;
 	
@@ -70,6 +72,12 @@ public class DemandDTO {
 	@JsonProperty("taxPeriodTo")
 	private Long taxPeriodTo;
 
+	@JsonProperty("billExpiryTime")
+	private Long billExpiryTime;
+	
+	@JsonProperty("payer")
+	private ConnectionHolderDTO payer;
+	
 	@Builder.Default
 	@JsonProperty("demandDetails")
 	private List<DemandDetailDTO> demandDetails = new ArrayList<>();

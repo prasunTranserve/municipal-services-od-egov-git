@@ -9,12 +9,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.swcalculation.constants.SWCalculationConstant;
@@ -36,6 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -56,8 +57,14 @@ public class EstimationService {
 	@Autowired
 	private SWCalculationUtil sWCalculationUtil;
 	
+	@Autowired
+	private MasterDataService mDataService;
+	
+	@Autowired
+	private PayService payService;
+	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
-	private static BigDecimal RECONNECTION_CHANGE_CHARGE = BigDecimal.valueOf(300);
+	private static BigDecimal TenPercentage = BigDecimal.valueOf(0.1);
 
 	/**
 	 * Generates a List of Tax head estimates with tax head code, tax head category
@@ -94,6 +101,10 @@ public class EstimationService {
 				(JSONArray) masterData.get(SWCalculationConstant.CALCULATION_ATTRIBUTE_CONST));
 		timeBasedExemptionMasterMap.put(SWCalculationConstant.SW_SEWERAGE_CESS_MASTER,
 				(JSONArray) (masterData.getOrDefault(SWCalculationConstant.SW_SEWERAGE_CESS_MASTER, null)));
+		
+		mDataService.setSewerageConnectionMasterValues(requestInfo, criteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
+		
 		// BigDecimal sewerageCharge =
 		// getSewerageEstimationCharge(criteria.getSewerageConnection(), criteria,
 		// billingSlabMaster, billingSlabIds, requestInfo);
@@ -114,29 +125,43 @@ public class EstimationService {
 		
 		BigDecimal sewerageCharge = BigDecimal.ZERO;
 		if (criteria.getSewerageConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
-			if (usageCategory.equalsIgnoreCase("Industrial") || usageCategory.equalsIgnoreCase("Commercial")
-					|| usageCategory.equalsIgnoreCase("Institutional")) {
+			if (SWCalculationConstant.SW_UC_INSTITUTIONAL.equalsIgnoreCase(usageCategory)) {
 				if (criteria.getSewerageConnection().getNoOfWaterClosets().compareTo(4) <= 0) {
 					sewerageCharge = BigDecimal.valueOf(100);
 				} else {
 					sewerageCharge = BigDecimal.valueOf(200);
 				}
-			} else if (usageCategory.equalsIgnoreCase("Domestic")) {
-				if (criteria.getSewerageConnection().getNoOfFlats() > 0
-						&& criteria.getSewerageConnection().getNoOfFlats() <= 25) {
-					sewerageCharge = BigDecimal.valueOf(200);
-				} else if (criteria.getSewerageConnection().getNoOfFlats() > 25
-						&& criteria.getSewerageConnection().getNoOfFlats() <= 50) {
-					sewerageCharge = BigDecimal.valueOf(500);
-				} else if (criteria.getSewerageConnection().getNoOfFlats() > 50) {
-					sewerageCharge = BigDecimal.valueOf(800);
+			} else if (SWCalculationConstant.SW_UC_DOMESTIC.equalsIgnoreCase(usageCategory)) {
+				if (criteria.getSewerageConnection().getNoOfFlats() > 0) {
+					sewerageCharge = calculateDiameterFixedCharge(criteria.getSewerageConnection().getAdditionalDetails());
 				} else {
 					sewerageCharge = BigDecimal.valueOf(50);
 				}
-			}
-		} else if (criteria.getSewerageConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-			if (usageCategory.equalsIgnoreCase("Domestic")) {
+			} else if (SWCalculationConstant.SW_UC_BPL.equalsIgnoreCase(usageCategory)) {
 				sewerageCharge = BigDecimal.valueOf(50);
+			} else if (SWCalculationConstant.SW_UC_COMMERCIAL.equalsIgnoreCase(usageCategory)
+							|| SWCalculationConstant.SW_UC_INDUSTRIAL.equalsIgnoreCase(usageCategory)) {
+				sewerageCharge = calculateDiameterFixedCharge(criteria.getSewerageConnection().getAdditionalDetails());
+			}
+		}
+		return sewerageCharge;
+	}
+
+	private BigDecimal calculateDiameterFixedCharge(Object additionalDetails) {
+		BigDecimal sewerageCharge = BigDecimal.ZERO;
+		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)additionalDetails;
+		String diameter = null;
+		if(additionalDetailJsonNode.containsKey("diameter")) {
+			diameter = additionalDetailJsonNode.get("diameter").toString();
+		}
+		if(!StringUtils.isEmpty(diameter) && diameter.matches("")) {
+			int dia = Integer.parseInt(diameter);
+			if(dia == 4 ) {
+				sewerageCharge = BigDecimal.valueOf(200);
+			} else if(dia == 6 ) {
+				sewerageCharge = BigDecimal.valueOf(500);
+			} else if(dia == 8 ) {
+				sewerageCharge = BigDecimal.valueOf(800);
 			}
 		}
 		return sewerageCharge;
@@ -149,7 +174,14 @@ public class EstimationService {
 		// sewerage_charge
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_CHARGE)
 				.estimateAmount(sewerageCharge.setScale(2, 2)).build());
-
+		
+		// Sewerage timebase Rebate
+		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(sewerageCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_REBATE_MASTER));
+		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_TIME_REBATE)
+					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
+		}
+		
 		// sewerage cess
 		if (timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_SEWERAGE_CESS_MASTER) != null) {
 			List<Object> sewerageCessMasterList = timeBasedExemptionMasterMap
@@ -358,8 +390,21 @@ public class EstimationService {
 			securityCharge = BigDecimal.ZERO;
 			switch (criteria.getSewerageConnection().getUsageCategory().toUpperCase()) {
 				case "COMMERCIAL":
-					scrutinyFee = BigDecimal.valueOf(3500);
 					securityCharge = BigDecimal.valueOf(60);
+					if (criteria.getSewerageConnection().getNoOfFlats() > 0
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(5000);
+						securityCharge = BigDecimal.valueOf(60);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 25
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+						securityCharge = BigDecimal.valueOf(60);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(15000);
+						securityCharge = BigDecimal.valueOf(60);
+					} else {
+						scrutinyFee = BigDecimal.valueOf(3500);
+					}
 					break;
 				case "INDUSTRIAL":
 					scrutinyFee = BigDecimal.valueOf(3500);
@@ -381,15 +426,7 @@ public class EstimationService {
 					} else if (criteria.getSewerageConnection().getNoOfFlats() > 50) {
 						scrutinyFee = BigDecimal.valueOf(15000);
 						securityCharge = BigDecimal.valueOf(60);
-					} else {
-						scrutinyFee = BigDecimal.valueOf(1500);
 					}
-					break;
-			}
-		} else if (criteria.getSewerageConnection().getConnectionCategory().equalsIgnoreCase("Temporary")) {
-			switch (criteria.getSewerageConnection().getUsageCategory().toUpperCase()) {
-				case "DOMESTIC":
-					scrutinyFee = BigDecimal.valueOf(1500);
 					break;
 			}
 		}
@@ -665,12 +702,12 @@ public class EstimationService {
 
 	private List<TaxHeadEstimate> getTaxHeadForOwhershipChangeFeeEstimationV2(CalculationCriteria criteria,
 			RequestInfo requestInfo) {
-		BigDecimal reconnectionCharge = OWNERSHIP_CHANGE_FEE;
+		BigDecimal ownershipChangeFee = OWNERSHIP_CHANGE_FEE;
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(reconnectionCharge.compareTo(BigDecimal.ZERO) != 0) {
+		if(ownershipChangeFee.compareTo(BigDecimal.ZERO) != 0) {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_OWNERSHIP_CHANGE_FEE)
-					.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
+					.estimateAmount(ownershipChangeFee.setScale(2, RoundingMode.UP)).build());
 		}
 		
 		return estimates;
@@ -696,14 +733,50 @@ public class EstimationService {
 
 	private List<TaxHeadEstimate> getTaxHeadForReconnectionFeeEstimationV2(CalculationCriteria criteria,
 			RequestInfo requestInfo) {
-		BigDecimal reconnectionCharge = RECONNECTION_CHANGE_CHARGE;
-		
-		List<TaxHeadEstimate> estimates = new ArrayList<>();
-		if(reconnectionCharge.compareTo(BigDecimal.ZERO) != 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_RECONNECTION_CHARGE)
-					.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
+		BigDecimal reconnectionCharge = BigDecimal.ZERO;
+
+		BigDecimal scrutinyFee = BigDecimal.ZERO;
+		if (criteria.getSewerageConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
+			switch (criteria.getSewerageConnection().getUsageCategory().toUpperCase()) {
+				case "COMMERCIAL":
+					if (criteria.getSewerageConnection().getNoOfFlats() > 0
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(5000);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 25
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(15000);
+					} else {
+						scrutinyFee = BigDecimal.valueOf(3500);
+					}
+					break;
+				case "INDUSTRIAL":
+					scrutinyFee = BigDecimal.valueOf(3500);
+					break;
+				case "INSTITUTIONAL":
+					scrutinyFee = BigDecimal.valueOf(2500);
+					break;
+				case "DOMESTIC":
+					if (criteria.getSewerageConnection().getNoOfFlats() > 0
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 25) {
+						scrutinyFee = BigDecimal.valueOf(5000);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 25
+							&& criteria.getSewerageConnection().getNoOfFlats() <= 50) {
+						scrutinyFee = BigDecimal.valueOf(10000);
+					} else if (criteria.getSewerageConnection().getNoOfFlats() > 50) {
+						scrutinyFee = BigDecimal.valueOf(15000);
+					}
+					break;
+			}
 		}
-		
+		reconnectionCharge = scrutinyFee.multiply(TenPercentage).setScale(2, RoundingMode.UP);
+
+		List<TaxHeadEstimate> estimates = new ArrayList<>();
+		estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_RECONNECTION_CHARGE)
+				.estimateAmount(reconnectionCharge.setScale(2, RoundingMode.UP)).build());
+
 		return estimates;
+	
 	}
 }

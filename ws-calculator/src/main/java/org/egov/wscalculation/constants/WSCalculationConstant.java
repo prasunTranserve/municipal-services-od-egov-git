@@ -262,5 +262,14 @@ public class WSCalculationConstant {
 	public static final String WS_TIME_ADHOC_REBATE = "WS_TIME_ADHOC_REBATE";
 
 
-	
+	public static final String WS_UC_COMMERCIAL = "COMMERCIAL";
+	public static final String WS_UC_DOMESTIC = "DOMESTIC";
+	public static final String WS_UC_INDUSTRIAL = "INDUSTRIAL";
+	public static final String WS_UC_INSTITUTIONAL = "INSTITUTIONAL";
+	public static final String WS_UC_BPL = "BPL";
+	public static final String WS_UC_ROADSIDEEATERS = "ROADSIDEEATERS";
+	public static final String WS_UC_STAND_POST_MUNICIPALITY = "SPMA";
+	public static final String WS_UC_TWSFC = "TWSFC";
+	public static final String WS_UC_ASSOCIATION = "ASSOCIATION";
+
 }

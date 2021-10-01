@@ -18,6 +18,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConnectionHolderDTO {
+	
+	private String uuid;
 
 	@JsonProperty("ownerInfoUuid")
 	private String ownerInfoUuid;

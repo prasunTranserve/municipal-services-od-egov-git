@@ -846,7 +846,7 @@ public class DemandService {
 				demand.setId(UUID.randomUUID().toString());
 				demand.setBusinessService(configs.getBusinessService());
 				demand.setConsumerType("sewerageConnection");
-				demand.setBillExpiryTime(0L);
+//				demand.setBillExpiryTime(0L);
 			});
 		}
 

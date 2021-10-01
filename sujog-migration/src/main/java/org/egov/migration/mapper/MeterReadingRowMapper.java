@@ -25,6 +25,8 @@ public class MeterReadingRowMapper {
 		meterReading.setCurrentReading(columnMap.get(MigrationConst.COL_CURRENT_READING)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CURRENT_READING)), false));
 		meterReading.setCurrentReadingDate(columnMap.get(MigrationConst.COL_CURRENT_READING_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CURRENT_READING_DATE)), false));
 		meterReading.setCreatedDate(columnMap.get(MigrationConst.COL_CREATED_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CREATED_DATE)), false));
+		meterReading.setMeterMake(columnMap.get(MigrationConst.COL_METER_MAKE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_METER_MAKE)), false));
+		meterReading.setMeterReadingRatio(columnMap.get(MigrationConst.COL_METER_READING_RATIO)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_METER_READING_RATIO)), false));
 
 		return meterReading;
 	}
