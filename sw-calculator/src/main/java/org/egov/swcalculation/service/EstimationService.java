@@ -154,7 +154,7 @@ public class EstimationService {
 		if(additionalDetailJsonNode.containsKey("diameter")) {
 			diameter = additionalDetailJsonNode.get("diameter").toString();
 		}
-		if(!StringUtils.isEmpty(diameter) && diameter.matches("")) {
+		if(!StringUtils.isEmpty(diameter) && diameter.matches("\\d+")) {
 			int dia = Integer.parseInt(diameter);
 			if(dia == 4 ) {
 				sewerageCharge = BigDecimal.valueOf(200);
