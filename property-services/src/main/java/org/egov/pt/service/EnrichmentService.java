@@ -36,7 +36,7 @@ public class EnrichmentService {
     @Autowired
     private PropertyConfiguration config;
 
-
+    private static String allowedNameRegex = "^[a-zA-Z0-9 \\-'`\\.]*$";
 
     /**
      * Assigns UUIDs to all id fields and also assigns acknowledgement-number and assessment-number generated from id-gen
@@ -328,6 +328,18 @@ public class EnrichmentService {
                     property.getWorkflow().setAssignes(assignes);
             }
     }
+    
+    public void enrichOwnerInfo(Property property) {
+		property.getOwners().forEach(owner -> {
+			if(!owner.getName().matches(allowedNameRegex)) {
+				owner.setName(owner.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+			}
+			if(!owner.getFatherOrHusbandName().matches(allowedNameRegex)) {
+				owner.setFatherOrHusbandName(owner.getFatherOrHusbandName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+			}
+		});
+
+	}
 
 
 }

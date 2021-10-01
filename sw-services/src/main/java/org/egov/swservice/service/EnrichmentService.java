@@ -68,6 +68,8 @@ public class EnrichmentService {
 
 	@Autowired
 	private ServiceRequestRepository serviceRequestRepository;
+	
+	private static String allowedNameRegex = "^[a-zA-Z0-9 \\-'`\\.]*$";
 
 	/**
 	 * 
@@ -463,5 +465,19 @@ public class EnrichmentService {
 
 		}
 		return finalConnectionList;
+	}
+	
+	public void enrichConnectionHolderInfo(List<SewerageConnection> sewerageConnectionList) {
+		for (SewerageConnection sewerageConnection : sewerageConnectionList) {
+			sewerageConnection.getConnectionHolders().forEach(holder -> {
+				if(!holder.getName().matches(allowedNameRegex)) {
+					holder.setName(holder.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+				}
+				if(!holder.getFatherOrHusbandName().matches(allowedNameRegex)) {
+					holder.setFatherOrHusbandName(holder.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
+				}
+			});
+		}
+
 	}
 }

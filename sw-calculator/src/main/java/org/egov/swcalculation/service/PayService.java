@@ -228,4 +228,15 @@ public class PayService {
 		//applicableInterest.multiply(noOfDays.divide(BigDecimal.valueOf(365), 6, 5));
 		return applicableInterest;
 	}
+	
+	public BigDecimal getApplicableRebateForInitialDemand(BigDecimal sewerageCharge, String assessmentYear, JSONArray rebateMasterList) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+
+		if (null == rebate) return rebateAmt;
+
+		rebateAmt = calculateApplicables(sewerageCharge, rebate);
+
+		return rebateAmt;
+	}
 }
