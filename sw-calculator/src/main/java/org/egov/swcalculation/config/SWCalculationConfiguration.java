@@ -230,4 +230,10 @@ public class SWCalculationConfiguration {
 
 	@Value("${workflow.process.search.path}")
 	private String searchWorkflowProcessEndPoint;
+	
+	@Value("${egov.demand.manualstartenddate.enabled}")
+	private boolean isDemandStartEndDateManuallyConfigurable;
+
+	@Value("${egov.demand.manualmonthnumber}")
+	private int demandManualMonthNo;
 }
