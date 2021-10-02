@@ -21,6 +21,7 @@ import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
@@ -65,6 +66,9 @@ public class EstimationService {
 	
 	@Autowired
 	private PayService payService;
+	
+	@Autowired
+	private WSCalculationConfiguration configs;
 	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
 	private static BigDecimal TenPercent = BigDecimal.valueOf(0.1);
@@ -393,11 +397,17 @@ public class EstimationService {
 		Date date = new Date();
 		Calendar monthStartDate = Calendar.getInstance();
 		monthStartDate.setTime(date);
+		if (configs.isDemandStartEndDateManuallyConfigurable()) {
+			monthStartDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+		}
 		monthStartDate.set(Calendar.DAY_OF_MONTH, monthStartDate.getActualMinimum(Calendar.DAY_OF_MONTH));
 		setTimeToBeginningOfDay(monthStartDate);
 	    
 		Calendar monthEndDate = Calendar.getInstance();
 		monthEndDate.setTime(date);
+		if (configs.isDemandStartEndDateManuallyConfigurable()) {
+			monthEndDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+		}
 		monthEndDate.set(Calendar.DAY_OF_MONTH, monthEndDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 		setTimeToEndofDay(monthEndDate);
 		billingPeriod.put(WSCalculationConstant.STARTING_DATE_APPLICABLES, monthStartDate.getTimeInMillis());
