@@ -576,13 +576,13 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 								|| connection.getService().getUsageCategory().equalsIgnoreCase("Commertial")
 								|| connection.getService().getUsageCategory().equalsIgnoreCase("Apartment"))))) {
 				BigDecimal sewerageAmt = MigrationUtility.convertToBigDecimal(connection.getDemands().get(0).getSewerageFee());
-				String dia = "2";
+				String dia = "4";
 				if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) < 0) {
-					dia = "2";
-				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) >= 0 && sewerageAmt.compareTo(BigDecimal.valueOf(800)) < 0) {
 					dia = "4";
-				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(800)) >= 0) {
+				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) >= 0 && sewerageAmt.compareTo(BigDecimal.valueOf(800)) < 0) {
 					dia = "6";
+				} else if(sewerageAmt.compareTo(BigDecimal.valueOf(800)) >= 0) {
+					dia = "8";
 				}
 				additionalDetails.put("diameter", dia);
 			}
