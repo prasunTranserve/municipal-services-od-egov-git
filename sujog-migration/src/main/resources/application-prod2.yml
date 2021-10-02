@@ -1,0 +1,61 @@
+server:
+  port: 8084
+  
+spring:
+  application:
+    name: sujog-migration
+  profiles:
+    include:
+    - lookup
+app:
+  timezone: UTC
+
+file:
+  path:
+    input:
+      directory: 
+        property: /home/obpsdev/Documents/Migrate_Data/Property/Instance2/File
+        wns: /home/obpsdev/Documents/Migrate_Data/Wns/Instance2/File
+    output:
+      property:
+        success: /home/obpsdev/Documents/Migrate_Data/Property/Instance2/Success
+        error: /home/obpsdev/Documents/Migrate_Data/Property/Instance2/Error
+      wns:
+        success: /home/obpsdev/Documents/Migrate_Data/Wns/Instance2/Success
+        error: /home/obpsdev/Documents/Migrate_Data/Wns/Instance2/Error
+    
+remomte:
+  api:
+    auth:
+      url: https://sujog.odisha.gov.in/user/oauth/token
+      username: admin
+      password: password
+      tenant: od
+    pt:
+      host: https://sujog.odisha.gov.in/property-services
+      search: /property/_search
+      migrate: /property/_migrateproperty
+      asmt:
+        search: /assessment/_search
+        migrate: /assessment/_migrateassessment
+    ws:
+      host: https://sujog.odisha.gov.in/ws-services/wc
+      search: /_search
+      connectionmigrate: /_migrate
+      calculator:
+        host: https://sujog.odisha.gov.in/ws-calculator
+        meterreadingmigeate: /meterConnection/_migrateMeterReading
+        meterreadingsearch: /meterConnection/_search
+        demandmigrate: /waterCalculator/_migrateDemand
+    sw:
+      host: https://sujog.odisha.gov.in/sw-services/swc
+      search: /_search
+      connectionmigrate: /_migrate
+      calculator:
+        host: https://sujog.odisha.gov.in/sw-calculator/sewerageCalculator
+        demandmigrate: /_migrateDemand
+    demand:
+      host: https://sujog.odisha.gov.in/billing-service
+      search: /demand/_search
+
+      

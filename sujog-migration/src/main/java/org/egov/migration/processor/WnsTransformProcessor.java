@@ -26,6 +26,7 @@ import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -373,7 +374,15 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		if(demands==null || demands.isEmpty())
 			return;
 		
-		WnsDemand demand = demands.get(0);
+		// get the latest demand
+		WnsDemand demand = demands.stream()
+				.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+				.findFirst().orElse(null);
+		
+		if(demand == null) {
+			return;
+		}
+		
 		boolean isDemandRequired = true;
 		boolean isArrearDemandRequired = false;
 		
@@ -547,7 +556,11 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 			String meterRatio = "1:1";
 			String meterMake = "Other";
 			if(connection.getMeterReading() != null && !connection.getMeterReading().isEmpty()) {
-				meterRatio = connection.getMeterReading().get(0).getMeterReadingRatio().replaceAll(" ", "");
+				WnsMeterReading wmr = connection.getMeterReading().stream().filter(mr -> StringUtils.hasText(mr.getMeterReadingRatio()))
+											.findFirst().orElse(null);
+				if(wmr != null) {
+					meterRatio = connection.getMeterReading().get(0).getMeterReadingRatio().replaceAll(" ", "");
+				}
 				meterMake = connection.getMeterReading().get(0).getMeterMake();
 			}
 			additionalDetails.put("meterReadingRatio", meterRatio);
@@ -557,9 +570,11 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())
 				|| MigrationConst.CONNECTION_WATER_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
 			if(MigrationConst.CONNECTION_CATEGORY_PERMANENT.equalsIgnoreCase(connection.getService().getConnectionCategory())
-					&& (connection.getService().getUsageCategory().equalsIgnoreCase("Industrial")
-							|| connection.getService().getUsageCategory().equalsIgnoreCase("Commertial")
-							|| connection.getService().getUsageCategory().equalsIgnoreCase("Apartment"))) {
+					&& ((StringUtils.isEmpty(connection.getService().getUsageCategory()) && MigrationUtility.getNoOfFlat(connection.getService().getUsageCategory(), connection.getService().getNoOfFlats())>0) 
+							|| (StringUtils.hasText(connection.getService().getUsageCategory())
+								&& (connection.getService().getUsageCategory().equalsIgnoreCase("Industrial")
+								|| connection.getService().getUsageCategory().equalsIgnoreCase("Commertial")
+								|| connection.getService().getUsageCategory().equalsIgnoreCase("Apartment"))))) {
 				BigDecimal sewerageAmt = MigrationUtility.convertToBigDecimal(connection.getDemands().get(0).getSewerageFee());
 				String dia = "2";
 				if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) < 0) {
