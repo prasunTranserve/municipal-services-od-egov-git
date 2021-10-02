@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 @Service
 public class EnrichmentService {
@@ -331,10 +332,10 @@ public class EnrichmentService {
     
     public void enrichOwnerInfo(Property property) {
 		property.getOwners().forEach(owner -> {
-			if(!owner.getName().matches(allowedNameRegex)) {
+			if(StringUtils.hasText(owner.getName()) && !owner.getName().matches(allowedNameRegex)) {
 				owner.setName(owner.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
 			}
-			if(!owner.getFatherOrHusbandName().matches(allowedNameRegex)) {
+			if(StringUtils.hasText(owner.getFatherOrHusbandName()) && !owner.getFatherOrHusbandName().matches(allowedNameRegex)) {
 				owner.setFatherOrHusbandName(owner.getFatherOrHusbandName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
 			}
 		});
