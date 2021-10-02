@@ -711,7 +711,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		sewerageConnectionDTO.setConnectionCategory(MigrationUtility.getConnectionCategory(service.getConnectionCategory()));
 		sewerageConnectionDTO.setConnectionType(MigrationConst.CONNECTION_NON_METERED);
 		sewerageConnectionDTO.setConnectionExecutionDate(MigrationUtility.getExecutionDate(service.getConnectionExecutionDate(), dateFormat));
-		sewerageConnectionDTO.setUsageCategory(MigrationUtility.getUsageCategory(service.getUsageCategory()));
+		sewerageConnectionDTO.setUsageCategory(MigrationUtility.getConnectionUsageCategory(service.getUsageCategory()));
 		sewerageConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
 		sewerageConnectionDTO.setProposedWaterClosets(MigrationUtility.getWaterClosets(connection));
 		sewerageConnectionDTO.setProposedToilets(MigrationUtility.getToilets(connection));

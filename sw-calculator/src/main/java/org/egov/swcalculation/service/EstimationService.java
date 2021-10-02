@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.swcalculation.config.SWCalculationConfiguration;
 import org.egov.swcalculation.constants.SWCalculationConstant;
 import org.egov.swcalculation.util.CalculatorUtils;
 import org.egov.swcalculation.util.SWCalculationUtil;
@@ -62,6 +63,9 @@ public class EstimationService {
 	
 	@Autowired
 	private PayService payService;
+	
+	@Autowired
+	private SWCalculationConfiguration configs;
 	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
 	private static BigDecimal TenPercentage = BigDecimal.valueOf(0.1);
@@ -154,7 +158,7 @@ public class EstimationService {
 		if(additionalDetailJsonNode.containsKey("diameter")) {
 			diameter = additionalDetailJsonNode.get("diameter").toString();
 		}
-		if(!StringUtils.isEmpty(diameter) && diameter.matches("")) {
+		if(!StringUtils.isEmpty(diameter) && diameter.matches("\\d+")) {
 			int dia = Integer.parseInt(diameter);
 			if(dia == 4 ) {
 				sewerageCharge = BigDecimal.valueOf(200);
@@ -656,11 +660,17 @@ public class EstimationService {
 		Date date = new Date();
 		Calendar monthStartDate = Calendar.getInstance();
 		monthStartDate.setTime(date);
+		if (configs.isDemandStartEndDateManuallyConfigurable()) {
+			monthStartDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+		}
 		monthStartDate.set(Calendar.DAY_OF_MONTH, monthStartDate.getActualMinimum(Calendar.DAY_OF_MONTH));
 		setTimeToBeginningOfDay(monthStartDate);
 
 		Calendar monthEndDate = Calendar.getInstance();
 		monthEndDate.setTime(date);
+		if (configs.isDemandStartEndDateManuallyConfigurable()) {
+			monthEndDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+		}
 		monthEndDate.set(Calendar.DAY_OF_MONTH, monthEndDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 		setTimeToEndOfDay(monthEndDate);
 		billingPeriod.put(SWCalculationConstant.STARTING_DATE_APPLICABLES, monthStartDate.getTimeInMillis());
