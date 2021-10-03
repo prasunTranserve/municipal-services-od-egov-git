@@ -130,7 +130,7 @@ public class MigrationUtility {
 	}
 
 	public static String getOwnershioCategory(String ownershipCategory) {
-		if (ownershipCategory == null) {
+		if (StringUtils.isEmpty(ownershipCategory)) {
 			return "INDIVIDUAL.SINGLEOWNER";
 		} else if ("Single Owner".equalsIgnoreCase(ownershipCategory)) {
 			return "INDIVIDUAL.SINGLEOWNER";
@@ -142,7 +142,7 @@ public class MigrationUtility {
 	}
 
 	public static String getUsageCategory(String usageCategory) {
-		if (usageCategory == null) {
+		if (StringUtils.isEmpty(usageCategory)) {
 			return "RESIDENTIAL";
 		} else if ("Residential".equalsIgnoreCase(usageCategory)) {
 			return "RESIDENTIAL";
@@ -158,7 +158,7 @@ public class MigrationUtility {
 
 	public static BigDecimal convertAreaToYard(String area) {
 		BigDecimal convertedArea;
-		if (area == null)
+		if (StringUtils.isEmpty(area))
 			return BigDecimal.ONE;
 		if(!area.matches(decimalRegex))
 			return BigDecimal.ONE;
@@ -177,7 +177,7 @@ public class MigrationUtility {
 	}
 
 	public static String processMobile(String mobileNumber) {
-		if (mobileNumber == null)
+		if (StringUtils.isEmpty(mobileNumber))
 			return null;
 
 //		String specialCharRegex = "[\\D]";
@@ -208,7 +208,7 @@ public class MigrationUtility {
 	}
 
 	public static String getGender(String gender) {
-		if (gender == null) {
+		if (StringUtils.isEmpty(gender)) {
 			return "Male";
 		}
 
@@ -222,28 +222,28 @@ public class MigrationUtility {
 
 	public static String getCorrespondanceAddress(Address address) {
 		String correspondenceAddress = null;
-		if (address == null) {
+		if (StringUtils.isEmpty(address)) {
 			return null;
 		}
 
-		if (address.getAddressLine1() != null) {
+		if (!StringUtils.isEmpty(address.getAddressLine1())) {
 			correspondenceAddress = address.getAddressLine1();
 		}
 
-		if (address.getAddressLine2() != null) {
-			correspondenceAddress = correspondenceAddress != null
+		if (!StringUtils.isEmpty(address.getAddressLine2())) {
+			correspondenceAddress = StringUtils.isEmpty(correspondenceAddress)
 					? correspondenceAddress.concat(comma).concat(address.getAddressLine2())
 					: address.getAddressLine2();
 		}
 
-		if (address.getCity() != null) {
-			correspondenceAddress = correspondenceAddress != null
+		if (StringUtils.isEmpty(address.getCity())) {
+			correspondenceAddress = StringUtils.isEmpty(correspondenceAddress)
 					? correspondenceAddress.concat(comma).concat(address.getCity())
 					: address.getCity();
 		}
 
-		if (address.getPin() != null) {
-			correspondenceAddress = correspondenceAddress != null
+		if (StringUtils.isEmpty(address.getPin())) {
+			correspondenceAddress = StringUtils.isEmpty(correspondenceAddress)
 					? correspondenceAddress.concat(comma).concat(address.getPin())
 					: address.getPin();
 		}
@@ -252,7 +252,7 @@ public class MigrationUtility {
 	}
 
 	public static Long getLongDate(String dateString, String dateformat) {
-		if (dateString == null) {
+		if (StringUtils.isEmpty(dateString)) {
 			return 0L;
 		}
 		try {
@@ -266,7 +266,7 @@ public class MigrationUtility {
 	}
 	
 	public static Long getPreviousMonthLongDate(String dateString, String dateformat) {
-		if (dateString == null) {
+		if (StringUtils.isEmpty(dateString)) {
 			return 0L;
 		}
 		try {
@@ -280,7 +280,7 @@ public class MigrationUtility {
 	}
 	
 	public static Long getExecutionDate(String dateString, String dateformat) {
-		if (dateString == null) {
+		if (StringUtils.isEmpty(dateString)) {
 			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
 		try {
@@ -294,7 +294,7 @@ public class MigrationUtility {
 	}
 
 	public static BigDecimal getAmount(String taxAmt) {
-		if (taxAmt == null || !taxAmt.matches(decimalRegex)) {
+		if (StringUtils.isEmpty(taxAmt) || !taxAmt.matches(decimalRegex)) {
 			return BigDecimal.ZERO;
 		}
 		return new BigDecimal(taxAmt).setScale(2, RoundingMode.UP);
@@ -307,7 +307,7 @@ public class MigrationUtility {
 	}
 
 	public static Long getTaxPeriodFrom(String finYear) {
-		if (finYear == null)
+		if (StringUtils.isEmpty(finYear))
 			return null;
 		finYear = finYear.replaceAll("[^0-9-\\/Q]", "");
 		String year = finYear.split("-")[0];
@@ -317,7 +317,7 @@ public class MigrationUtility {
 	}
 
 	public static Long getTaxPeriodTo(String finYear) {
-		if (finYear == null)
+		if (StringUtils.isEmpty(finYear))
 			return null;
 		
 		finYear = finYear.replaceAll("[^0-9-\\/Q]", "");
@@ -336,7 +336,7 @@ public class MigrationUtility {
 	}
 
 	public static Long getFloorNo(String floorNo) {
-		if (floorNo == null) {
+		if (StringUtils.isEmpty(floorNo)) {
 			return 1L;
 		} else if (floorNo.matches(digitRegex)) {
 			return Long.parseLong(floorNo);
@@ -349,14 +349,14 @@ public class MigrationUtility {
 
 	public static String getOccupancyType(String occupancyType, BigDecimal arv) {
 		String ocType = MigrationConst.OCCUPANCY_TYPE_SELFOCCUPIED;
-		if (arv != null) {
+		if (!StringUtils.isEmpty(arv)) {
 			ocType = MigrationConst.OCCUPANCY_TYPE_RENTED;
 		}
 		return ocType;
 	}
 
 	public static BigDecimal getAnnualRentValue(String arv) {
-		if (arv == null)
+		if (StringUtils.isEmpty(arv))
 			return null;
 
 		if (arv.matches(decimalRegex)) {
@@ -387,7 +387,7 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionCategory(String connectionCategory) {
-		if (connectionCategory == null)
+		if (StringUtils.isEmpty(connectionCategory))
 			return "PERMANENT";
 		if(connectionCategory.equalsIgnoreCase("Temporary")) {
 			return "TEMPORARY";
@@ -396,7 +396,7 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionType(String connectionType) {
-		if (connectionType == null) {
+		if (StringUtils.isEmpty(connectionType)) {
 			return MigrationConst.CONNECTION_NON_METERED;
 		}
 		
@@ -407,13 +407,13 @@ public class MigrationUtility {
 	}
 
 	public static String getWaterSource(String waterSource) {
-		if(waterSource == null)
+		if(StringUtils.isEmpty(waterSource))
 			return "SURFACE.CANAL";
 		return waterSource;
 	}
 
 	public static Integer getDefaultZero(String noOfFlats) {
-		if(noOfFlats == null)
+		if(StringUtils.isEmpty(noOfFlats))
 			return 0;
 		
 		if (noOfFlats.trim().matches(digitRegex)) {
@@ -424,7 +424,7 @@ public class MigrationUtility {
 
 	public static Long getMeterInstallationDate(String meterInstallationDate, String connectionType) {
 		if (MigrationConst.CONNECTION_METERED.equals(connectionType)) {
-			if(meterInstallationDate == null)
+			if(StringUtils.isEmpty(meterInstallationDate))
 				return 1L;
 			return getLongDate(meterInstallationDate, dateFormat);
 		} else {
@@ -478,7 +478,7 @@ public class MigrationUtility {
 	}
 
 	public static String getSalutation(String salutation) {
-		if(salutation == null)
+		if(StringUtils.isEmpty(salutation))
 			return "Mr";
 		
 		salutation = salutation.trim();
@@ -489,14 +489,14 @@ public class MigrationUtility {
 	}
 
 	public static boolean isPropertyEmpty(Property property) {
-		if (property.getPropertyId() == null && property.getStatus() == null) {
+		if (property.getPropertyId() == null && StringUtils.isEmpty(property.getStatus())) {
 			return true;
 		}
 		return false;
 	}
 
 	public static String getMeterStatus(String meterStatus) {
-		if (meterStatus == null) {
+		if (StringUtils.isEmpty(meterStatus)) {
 			return "Working";
 		} else if (meterStatus.equalsIgnoreCase("NW")) {
 			return "Breakdown";
@@ -515,7 +515,7 @@ public class MigrationUtility {
 	}
 
 	public static Integer getToilets(WnsConnection connection) {
-		if (connection.getService().getNoOfToilets() == null) {
+		if (StringUtils.isEmpty(connection.getService().getNoOfToilets())) {
 			return 0;
 		}
 		if(!connection.getService().getNoOfToilets().matches(decimalRegex)) {
@@ -525,7 +525,7 @@ public class MigrationUtility {
 	}
 
 	public static Double getMeterLastReading(WnsMeterReading meterReading) {
-		if (meterReading.getPreviousReading() == null) {
+		if (StringUtils.isEmpty(meterReading.getPreviousReading())) {
 			return 0D;
 		} else {
 			try {
@@ -537,9 +537,9 @@ public class MigrationUtility {
 	}
 
 	public static Long getMeterLastReadingDate(WnsMeterReading meterReading) {
-		if (meterReading.getPreviousReadingDate() == null) {
+		if (StringUtils.isEmpty(meterReading.getPreviousReadingDate())) {
 			LocalDate currentDate = null;
-			if(meterReading.getCurrentReadingDate() == null) {
+			if(StringUtils.isEmpty(meterReading.getCurrentReadingDate())) {
 				currentDate = LocalDate.parse(meterReading.getCreatedDate(),
 						DateTimeFormatter.ofPattern(dateFormat));
 			} else {
@@ -554,7 +554,7 @@ public class MigrationUtility {
 	}
 
 	public static Double getMeterCurrentReading(WnsMeterReading meterReading) {
-		if (meterReading.getCurrentReading() == null) {
+		if (StringUtils.isEmpty(meterReading.getCurrentReading())) {
 			return 0D;
 		} else {
 			try {
@@ -567,7 +567,7 @@ public class MigrationUtility {
 
 	public static Long getMeterCurrentReadingDate(WnsMeterReading meterReading) {
 		LocalDate currentDate = null;
-		if (meterReading.getCurrentReadingDate() == null) {
+		if (StringUtils.isEmpty(meterReading.getCurrentReadingDate())) {
 			currentDate = LocalDate.parse(meterReading.getCreatedDate(),
 					DateTimeFormatter.ofPattern(dateFormat));
 		} else {
@@ -630,7 +630,7 @@ public class MigrationUtility {
 	}
 
 	public static boolean isActiveConnection(WnsConnection connection) {
-		if(connection.getApplicationStatus() == null) {
+		if(StringUtils.isEmpty(connection.getApplicationStatus())) {
 			return false;
 		}
 		String applicationStatus = connection.getApplicationStatus().trim().replaceAll("  +", " ");
@@ -667,7 +667,7 @@ public class MigrationUtility {
 	}
 
 	public static String getConnectionUsageCategory(String usageCategory) {
-		if(usageCategory == null) {
+		if(StringUtils.isEmpty(usageCategory)) {
 			return "DOMESTIC";
 		}
 		usageCategory = usageCategory.trim();
@@ -678,10 +678,10 @@ public class MigrationUtility {
 	}
 
 	public static Integer getNoOfFlat(String usageCategory, String noOfFlats) {
-		if(noOfFlats == null) {
+		if(StringUtils.isEmpty(noOfFlats)) {
 			return Integer.parseInt("0");
 		}
-		if(usageCategory.equalsIgnoreCase("Apartment")) {
+		if(StringUtils.hasText(usageCategory) && usageCategory.equalsIgnoreCase("Apartment")) {
 			return Integer.parseInt(noOfFlats.trim());
 		}
 		return Integer.parseInt("0");
@@ -705,7 +705,7 @@ public class MigrationUtility {
 
 	private static String prepareGender(@Valid Owner owner) {
 		String gender = "MALE";
-		if(owner.getGender()==null) {
+		if(StringUtils.isEmpty(owner.getGender())) {
 			if(owner.getSalutation() != null && 
 					(owner.getSalutation().equalsIgnoreCase("M/S")
 							|| owner.getSalutation().equalsIgnoreCase("Miss")
@@ -719,7 +719,7 @@ public class MigrationUtility {
 	}
 
 	public static String prepareName(String key, String ownerName) {
-		if(ownerName == null) {
+		if(StringUtils.isEmpty(ownerName)) {
 			return key;
 		}
 		
@@ -737,7 +737,7 @@ public class MigrationUtility {
 	}
 	
 	public static String getNearest(String amount, String divident) {
-		if(amount == null)
+		if(StringUtils.isEmpty(amount))
 			return "0";
 		BigDecimal amt = new BigDecimal(amount);
 		BigDecimal di = new BigDecimal(divident);
@@ -755,7 +755,7 @@ public class MigrationUtility {
 	}
 
 	public static Double getDoubleAmount(String amount) {
-		if (amount == null || !amount.matches(decimalRegex)) {
+		if (StringUtils.isEmpty(amount) || !amount.matches(decimalRegex)) {
 			return Double.parseDouble("0");
 		}
 		return Double.parseDouble(amount);
@@ -779,7 +779,7 @@ public class MigrationUtility {
 	}
 
 	public static String getPaymentComplete(String paymentComplete) {
-		if(paymentComplete == null)
+		if(StringUtils.isEmpty(paymentComplete))
 			return "N";
 		if(!(paymentComplete.equalsIgnoreCase("N") || paymentComplete.equalsIgnoreCase("Y"))) {
 			return "N";
@@ -789,7 +789,7 @@ public class MigrationUtility {
 
 	public static Integer getNoOfTaps(String noOfTaps) {
 		int taps = 2;
-		if(noOfTaps != null && noOfTaps.matches(digitRegex)) {
+		if(StringUtils.hasText(noOfTaps) && noOfTaps.matches(digitRegex)) {
 			taps = Integer.parseInt(noOfTaps);
 		}
 		if(taps > 100) {
@@ -809,14 +809,14 @@ public class MigrationUtility {
 	}
 
 	public static String getGuardian(String guardian) {
-		if(guardian == null) {
+		if(StringUtils.isEmpty(guardian)) {
 			return "Other";
 		}
 		return prepareName(guardian, guardian);
 	}
 
 	public static String getRelationship(String guardianRelation) {
-		if(guardianRelation == null)
+		if(StringUtils.isEmpty(guardianRelation))
 			return "FATHER";
 		if(guardianRelation.equalsIgnoreCase("husband"))
 			return "HUSBAND";
@@ -826,7 +826,7 @@ public class MigrationUtility {
 	}
 
 	public static String getAddress(String holderAddress) {
-		if(holderAddress == null) {
+		if(StringUtils.isEmpty(holderAddress)) {
 			return "Other";
 		}
 		return holderAddress;
@@ -845,7 +845,7 @@ public class MigrationUtility {
 	}
 
 	public static String getWard(String ward) {
-		if(ward == null) {
+		if(StringUtils.isEmpty(ward)) {
 			return "01";
 		}
 		if(!ward.matches(digitRegex)) {
@@ -861,7 +861,7 @@ public class MigrationUtility {
 	}
 
 	public static Integer getPipeSize(String actualPipeSize) {
-		if(actualPipeSize==null)
+		if(StringUtils.isEmpty(actualPipeSize))
 			return 0;
 		if(actualPipeSize.matches(decimalRegex)) {
 			return Integer.parseInt(actualPipeSize);
@@ -870,7 +870,7 @@ public class MigrationUtility {
 	}
 
 	public static String getOwnerType(String connectionHolderType) {
-		if(connectionHolderType == null)
+		if(StringUtils.isEmpty(connectionHolderType))
 			return "NONE";
 		if(connectionHolderType.equalsIgnoreCase("BPL"))
 			return "BPL";

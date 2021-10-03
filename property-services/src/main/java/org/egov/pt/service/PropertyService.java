@@ -226,7 +226,7 @@ public class PropertyService {
 	}
 
 	private String removeSpecialIfPresent(String name) {
-		if(!name.matches(allowedNameRegex)) {
+		if(StringUtils.hasText(name) && !name.matches(allowedNameRegex)) {
 			return name.replaceAll("[^a-zA-Z0-9 \\-'`\\.]", "");
 		}
 		return name;

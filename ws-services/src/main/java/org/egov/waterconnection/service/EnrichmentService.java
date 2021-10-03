@@ -530,10 +530,10 @@ public class EnrichmentService {
 	public void enrichConnectionHolderInfo(List<WaterConnection> waterConnectionList) {
 		for (WaterConnection waterConnection : waterConnectionList) {
 			waterConnection.getConnectionHolders().forEach(holder -> {
-				if(!holder.getName().matches(allowedNameRegex)) {
+				if(StringUtils.hasText(holder.getName()) && !holder.getName().matches(allowedNameRegex)) {
 					holder.setName(holder.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
 				}
-				if(!holder.getFatherOrHusbandName().matches(allowedNameRegex)) {
+				if(StringUtils.hasText(holder.getFatherOrHusbandName()) && !holder.getFatherOrHusbandName().matches(allowedNameRegex)) {
 					holder.setFatherOrHusbandName(holder.getName().replaceAll("[^a-zA-Z0-9 \\-'`\\.]", ""));
 				}
 			});
