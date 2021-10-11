@@ -327,8 +327,52 @@ public class TLValidator {
         validateDuplicateDocuments(request);
         setFieldsFromSearch(request, searchResult, mdmsData);
         validateOwnerActiveStatus(request);
+        validateUserAuthorization(request, searchResult);
     }
 
+    
+    /**
+     * Validates the Users Authorization for particular license
+     * This method first validates the accountid if both the citizen account id is same and license account id is same it further proceeds and if the account id
+     * are different then checks the mobile number whether already created owners having the mobile number of the citizen logged in 
+     * 
+     * @param request The tradeLciense create or update request
+     * 
+     * 
+     * 
+     */
+    private void validateUserAuthorization(TradeLicenseRequest request , List<TradeLicense> searchResult){
+    	Map<String,String> errorMap = new HashMap<>();
+
+    	if(request.getRequestInfo().getUserInfo().getType().equalsIgnoreCase("CITIZEN" )){
+
+    		String userUUID = request.getRequestInfo().getUserInfo().getUuid();
+    		
+    		searchResult.forEach(license -> {
+    			
+    			if(!(userUUID.equalsIgnoreCase(license.getAccountId())))
+    			{
+    			List<String> ownerMobilenumbers = new LinkedList<>();
+    	        if(!CollectionUtils.isEmpty(license.getTradeLicenseDetail().getOwners())){
+    	            license.getTradeLicenseDetail().getOwners().forEach(owner -> {
+    	                if(owner != null && owner.getUserActive()!=null && owner.getUserActive() && !StringUtils.isEmpty(owner.getUuid()) && !StringUtils.isEmpty(owner.getMobileNumber()) )
+    	                    ownerMobilenumbers.add(owner.getMobileNumber());
+    	            });
+    	        }
+    	        
+    	        
+    	        if(!ownerMobilenumbers.contains(request.getRequestInfo().getUserInfo().getUserName()))
+    	        	errorMap.put("USER NOT AUTHORIZED", "Not authorized to perform this operation");
+    			}
+    	        
+    		});
+    	}
+
+    	if(!errorMap.isEmpty())
+    		throw new CustomException(errorMap);
+    }
+    
+ 
 
     /**
      * Validates that atleast one tradeUnit is active equal true or new tradeUnit
