@@ -271,7 +271,7 @@ public class WnsService {
 			conn.getSewerageDemands().forEach(demand -> {
 					demand.setConsumerCode(conn.getSewerageConnection().getConnectionNo());
 					demand.setPayer(conn.getSewerageConnection().getConnectionHolders().get(0));
-					demand.setBillExpiryTime(1296000000L);
+					demand.setBillExpiryTime(0L);
 				});
 		}
 		
@@ -296,7 +296,7 @@ public class WnsService {
 			conn.getWaterDemands().stream().forEach(demand -> {
 				demand.setConsumerCode(conn.getWaterConnection().getConnectionNo());
 				demand.setPayer(conn.getWaterConnection().getConnectionHolders().get(0));
-				demand.setBillExpiryTime(1296000000L);
+				demand.setBillExpiryTime(0L);
 				});
 		}
 
