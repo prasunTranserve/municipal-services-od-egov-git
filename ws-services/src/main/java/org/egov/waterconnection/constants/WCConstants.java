@@ -37,6 +37,8 @@ public class WCConstants {
 	public static final String INVALID_CONNECTION_TYPE = "Invalid Connection Type";
 
 	public static final String METERED_CONNECTION = "Metered";
+	
+	public static final String NON_METERED_CONNECTION = "Non Metered";
 
 	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
 
@@ -272,5 +274,19 @@ public class WCConstants {
 	public static final String SEARCH_TYPE_CONNECTION = "CONNECTION";
 	
 	public static final String ROLE_EMPLOYEE = "EMPLOYEE";
+	
+	public static final String IS_LABOUR_FEE_APPLICABLE = "isLabourFeeApplicable";
+
+	public static final String YES = "Y";
+
+	public static final String NO = "N";
+
+	public static final String CONNECTION_PERMANENT = "Permanent";
+
+	public static final String CONNECTION_TEMPORARY = "Temporary";
+
+	public static final String CONNECTION_DOMESTIC = "Domestic";
+
+	public static final String CONNECTION_BPL = "BPL";
 
 }
