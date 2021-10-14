@@ -454,7 +454,7 @@ public class EstimationService {
 		ArrayList<String> billingSlabIds = new ArrayList<>();
 		billingSlabIds.add("");
 		// List<TaxHeadEstimate> taxHeadEstimates = getTaxHeadForFeeEstimation(criteria, masterData, requestInfo);
-		List<TaxHeadEstimate> taxHeadEstimates = getTaxHeadForFeeEstimationV2(criteria, requestInfo);
+		List<TaxHeadEstimate> taxHeadEstimates = getTaxHeadForFeeEstimationV2(criteria, requestInfo, masterData);
 		Map<String, List> estimatesAndBillingSlabs = new HashMap<>();
 		estimatesAndBillingSlabs.put("estimates", taxHeadEstimates);
 		// //Billing slab id
@@ -462,7 +462,7 @@ public class EstimationService {
 		return estimatesAndBillingSlabs;
 	}
 
-	private List<TaxHeadEstimate> getTaxHeadForFeeEstimationV2(CalculationCriteria criteria, RequestInfo requestInfo) {
+	private List<TaxHeadEstimate> getTaxHeadForFeeEstimationV2(CalculationCriteria criteria, RequestInfo requestInfo, Map<String, Object> masterData) {
 		// Property property = wSCalculationUtil.getProperty(WaterConnectionRequest.builder()
 		// 		.waterConnection(criteria.getWaterConnection()).requestInfo(requestInfo).build());
 		
@@ -542,16 +542,59 @@ public class EstimationService {
 			}
 		}
 		
+		BigDecimal labourFee = calculateLabourFee(criteria.getWaterConnection().getAdditionalDetails(), masterData);
+		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SCRUTINY_FEE)
 				.estimateAmount(scrutinyFee.setScale(2, 2)).build());
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SECURITY_CHARGE)
 				.estimateAmount(securityCharge.setScale(2, 2)).build());
 		
+		if(labourFee.compareTo(BigDecimal.ZERO) > 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_LABOUR_FEE)
+					.estimateAmount(labourFee.setScale(2, 2)).build());
+		}
+		
 		return estimates;
 	}
 	
 	
+	private BigDecimal calculateLabourFee(Object additionalDetails, Map<String, Object> masterData) {
+		BigDecimal labourFee = BigDecimal.ZERO;
+		boolean isLabourFeeApplicable = Boolean.FALSE;
+		boolean isInstallmentApplicable = Boolean.FALSE;
+		if(additionalDetails == null) {
+			return labourFee;
+		}
+		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)additionalDetails;
+		if(additionalDetailJsonNode.containsKey(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE)) {
+			isLabourFeeApplicable = additionalDetailJsonNode.get(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE).toString().equalsIgnoreCase("Y") 
+					? Boolean.TRUE:Boolean.FALSE;
+		}
+		
+		if(additionalDetailJsonNode.containsKey(WSCalculationConstant.IS_INSTALLMENT_APPLICABLE)) {
+			isInstallmentApplicable = additionalDetailJsonNode.get(WSCalculationConstant.IS_INSTALLMENT_APPLICABLE).toString().equalsIgnoreCase("Y") 
+					? Boolean.TRUE:Boolean.FALSE;
+		}
+		
+		JSONArray labourFeeMaster = (JSONArray) masterData.getOrDefault(WSCalculationConstant.WC_LABOURFEE_MASTER, null);
+		if (labourFeeMaster == null)
+			throw new CustomException("LABOUR_FEE_NOT_FOUND", "labour fee master data not found!!");
+		
+		JSONObject labourFeeObj = mapper.convertValue(labourFeeMaster.get(0), JSONObject.class);
+		
+		if(isLabourFeeApplicable && isInstallmentApplicable) {
+			//TODO: installment Calculation
+			
+		} else if(isLabourFeeApplicable && !isInstallmentApplicable) {
+			if (labourFeeObj.get(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
+				labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
+			}
+		}
+		
+		return labourFee;
+	}
+
 	/**
 	 * 
 	 * @param criteria Calculation Search Criteria

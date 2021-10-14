@@ -559,7 +559,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 				WnsMeterReading wmr = connection.getMeterReading().stream().filter(mr -> StringUtils.hasText(mr.getMeterReadingRatio()))
 											.findFirst().orElse(null);
 				if(wmr != null) {
-					meterRatio = connection.getMeterReading().get(0).getMeterReadingRatio().replaceAll(" ", "");
+					meterRatio = wmr.getMeterReadingRatio().replaceAll(" ", "");
 				}
 				meterMake = connection.getMeterReading().get(0).getMeterMake();
 			}
@@ -575,7 +575,16 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 								&& (connection.getService().getUsageCategory().equalsIgnoreCase("Industrial")
 								|| connection.getService().getUsageCategory().equalsIgnoreCase("Commertial")
 								|| connection.getService().getUsageCategory().equalsIgnoreCase("Apartment"))))) {
-				BigDecimal sewerageAmt = MigrationUtility.convertToBigDecimal(connection.getDemands().get(0).getSewerageFee());
+				BigDecimal sewerageAmt = BigDecimal.ZERO;
+				if(connection.getDemands() != null && !connection.getDemands().isEmpty()) {
+					WnsDemand demand = connection.getDemands().stream()
+							.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+							.findFirst().orElse(null);
+					if(demand != null) {
+						sewerageAmt = MigrationUtility.convertToBigDecimal(demand.getSewerageFee());
+					}
+				}
+				
 				String dia = "4";
 				if(sewerageAmt.compareTo(BigDecimal.valueOf(500)) < 0) {
 					dia = "4";

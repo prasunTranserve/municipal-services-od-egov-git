@@ -14,11 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Component
 public class ActionValidator {
 	
 	@Autowired
 	private WorkflowService workflowService;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	/**
 	 * Validate update request
@@ -27,8 +32,38 @@ public class ActionValidator {
 	 * @param businessService BusinessService
 	 */
 	public void validateUpdateRequest(WaterConnectionRequest request, BusinessService businessService, String applicationStatus) {
+		validateLabourFeeForUpdate(request);
 		validateDocumentsForUpdate(request);
 		validateIds(request, businessService, applicationStatus);
+	}
+	
+	/**
+	 * Validate Labour Fee for water connection
+	 * 
+	 * @param request water connection request
+	 */
+
+	private void validateLabourFeeForUpdate(WaterConnectionRequest request) {
+		if(request.getWaterConnection().getAdditionalDetails() != null) {
+			HashMap<String, Object> addDetail = mapper.convertValue(request.getWaterConnection().getAdditionalDetails(), HashMap.class);
+			
+			if(addDetail.containsKey(WCConstants.IS_LABOUR_FEE_APPLICABLE) 
+					&& WCConstants.YES.equalsIgnoreCase(addDetail.get(WCConstants.IS_LABOUR_FEE_APPLICABLE).toString())) {
+				if(WCConstants.CONNECTION_TEMPORARY.equalsIgnoreCase(request.getWaterConnection().getConnectionCategory())) {
+					throw new CustomException("INVALID_LABOUR_FEE",
+							"Labour fee is not applicable on Temporary connection");
+				} else if(WCConstants.METERED_CONNECTION.equalsIgnoreCase(request.getWaterConnection().getConnectionType())
+						&& !(WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(request.getWaterConnection().getUsageCategory())
+								|| WCConstants.CONNECTION_BPL.equalsIgnoreCase(request.getWaterConnection().getUsageCategory()))) {
+					throw new CustomException("INVALID_LABOUR_FEE",
+							"Labour fee is applicable on Permanent Metered and Domestic or BPL connection only");
+				} else if(WCConstants.NON_METERED_CONNECTION.equalsIgnoreCase(request.getWaterConnection().getConnectionType())
+						&& !WCConstants.CONNECTION_BPL.equalsIgnoreCase(request.getWaterConnection().getUsageCategory())) {
+					throw new CustomException("INVALID_LABOUR_FEE",
+							"Labour fee is applicable on Permanent Non Metered and BPL connection only");
+				}
+			}
+		}
 	}
 
 	/**
