@@ -204,6 +204,8 @@ public class WSCalculationConstant {
 	
 	public static final String WC_ROADTYPE_MASTER = "RoadType";
 	
+	public static final String WC_LABOURFEE_MASTER = "LabourFee";
+	
 	
 	
 	/**
@@ -260,6 +262,10 @@ public class WSCalculationConstant {
 	public static final String WS_TIME_ADHOC_PENALTY = "WS_TIME_ADHOC_PENALTY";
 	
 	public static final String WS_TIME_ADHOC_REBATE = "WS_TIME_ADHOC_REBATE";
+	
+	public static final String LABOURFEE_TOTALAMOUNT = "totalAmount";
+
+	public static final String WS_LABOUR_FEE = "WS_LABOUR_FEE";
 
 	public static final String WS_UC_COMMERCIAL = "COMMERCIAL";
 	public static final String WS_UC_DOMESTIC = "DOMESTIC";
@@ -270,5 +276,12 @@ public class WSCalculationConstant {
 	public static final String WS_UC_STAND_POST_MUNICIPALITY = "SPMA";
 	public static final String WS_UC_TWSFC = "TWSFC";
 	public static final String WS_UC_ASSOCIATION = "ASSOCIATION";
+	
+	
+	public static final String IS_LABOUR_FEE_APPLICABLE = "isLabourFeeApplicable";
+
+	public static final String IS_INSTALLMENT_APPLICABLE = "isInstallmentApplicable";
+	
+	
 	
 }
