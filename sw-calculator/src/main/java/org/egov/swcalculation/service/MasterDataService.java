@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,17 +18,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.mdms.model.*;
+import org.egov.mdms.model.MasterDetail;
+import org.egov.mdms.model.MdmsCriteria;
+import org.egov.mdms.model.MdmsCriteriaReq;
+import org.egov.mdms.model.MdmsResponse;
+import org.egov.mdms.model.ModuleDetail;
 import org.egov.swcalculation.constants.SWCalculationConstant;
+import org.egov.swcalculation.repository.Repository;
+import org.egov.swcalculation.util.CalculatorUtils;
+import org.egov.swcalculation.util.SWCalculationUtil;
 import org.egov.swcalculation.web.models.CalculationCriteria;
 import org.egov.swcalculation.web.models.RequestInfoWrapper;
 import org.egov.swcalculation.web.models.TaxHeadMaster;
 import org.egov.swcalculation.web.models.TaxHeadMasterResponse;
 import org.egov.swcalculation.web.models.TaxPeriod;
 import org.egov.swcalculation.web.models.TaxPeriodResponse;
-import org.egov.swcalculation.repository.Repository;
-import org.egov.swcalculation.util.CalculatorUtils;
-import org.egov.swcalculation.util.SWCalculationUtil;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -238,8 +243,10 @@ public class MasterDataService {
 			LocalDate today = LocalDate.now();
 			int month = today.getMonthValue();
 			int year = today.getYear();
-			Date date = new Date(year, month, Integer.parseInt(startDay));
-			return date.getTime();
+			Calendar cal = Calendar.getInstance();
+			cal.clear();
+			cal.set(year, month-1, Integer.parseInt(startDay));
+			return cal.getTimeInMillis();
 		}
 		
 	}
