@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -318,8 +319,10 @@ public class MasterDataService {
 			LocalDate today = LocalDate.now();
 			int month = today.getMonthValue();
 			int year = today.getYear();
-			date = new Date(year, month, Integer.parseInt(startDay));
-			return date.getTime();
+			Calendar cal = Calendar.getInstance();
+			cal.clear();
+			cal.set(year, month-1, Integer.parseInt(startDay));
+			return cal.getTimeInMillis();
 		}
 		return date.getTime();
 	}
