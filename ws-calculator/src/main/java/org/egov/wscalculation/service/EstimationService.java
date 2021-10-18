@@ -423,10 +423,10 @@ public class EstimationService {
 	}
 
 	private static void setTimeToEndofDay(Calendar calendar) {
-	    calendar.set(Calendar.HOUR_OF_DAY, 23);
-	    calendar.set(Calendar.MINUTE, 59);
-	    calendar.set(Calendar.SECOND, 59);
-	    calendar.set(Calendar.MILLISECOND, 999);
+	    calendar.set(Calendar.HOUR_OF_DAY, 18);
+	    calendar.set(Calendar.MINUTE, 29);
+	    calendar.set(Calendar.SECOND, 0);
+	    calendar.set(Calendar.MILLISECOND, 0);
 	}
 	
 	
