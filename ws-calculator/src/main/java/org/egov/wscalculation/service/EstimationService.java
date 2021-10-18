@@ -550,7 +550,7 @@ public class EstimationService {
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SECURITY_CHARGE)
 				.estimateAmount(securityCharge.setScale(2, 2)).build());
 		
-		if(labourFee.compareTo(BigDecimal.ZERO) <= 0) {
+		if(labourFee.compareTo(BigDecimal.ZERO) > 0) {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_LABOUR_FEE)
 					.estimateAmount(labourFee.setScale(2, 2)).build());
 		}
