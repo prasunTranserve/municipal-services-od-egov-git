@@ -539,7 +539,7 @@ public class DemandService {
 		for (DemandDetail detail : demand.getDemandDetails()) {
 
 			if(!detail.getTaxHeadMasterCode().equalsIgnoreCase(PT_ROUNDOFF)){
-				taxAmount = taxAmount.add(detail.getTaxAmount());
+				taxAmount = taxAmount.add(detail.getTaxAmount()).subtract(detail.getCollectionAmount());
 			}
 			else{
 				totalRoundOffAmount = totalRoundOffAmount.add(detail.getTaxAmount());
