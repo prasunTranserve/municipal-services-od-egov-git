@@ -557,8 +557,16 @@ public class DemandService {
 
 		BigDecimal decimalRoundOff = null != roundOffEstimate
 				? roundOffEstimate.getEstimateAmount() : BigDecimal.ZERO;
-
-		if(decimalRoundOff.compareTo(BigDecimal.ZERO)!=0){
+		
+		boolean isRoundOffExist = false;
+		for (DemandDetail detail : demand.getDemandDetails()) {
+			if(PT_ROUNDOFF.equalsIgnoreCase(detail.getTaxHeadMasterCode())) {
+				detail.setTaxAmount(decimalRoundOff);
+				isRoundOffExist=true;
+			}
+		};
+		
+		if( !isRoundOffExist && decimalRoundOff.compareTo(BigDecimal.ZERO)!=0){
 				details.add(DemandDetail.builder().taxAmount(roundOffEstimate.getEstimateAmount())
 						.taxHeadMasterCode(roundOffEstimate.getTaxHeadCode()).demandId(demandId).tenantId(tenantId).build());
 		}
