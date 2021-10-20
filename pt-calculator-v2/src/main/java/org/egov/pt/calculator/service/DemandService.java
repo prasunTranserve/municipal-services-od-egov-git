@@ -526,6 +526,7 @@ public class DemandService {
 		String demandId = demand.getId();
 
 		BigDecimal taxAmount = BigDecimal.ZERO;
+		BigDecimal collectedAmount = BigDecimal.ZERO;
 
 		// Collecting the taxHead master codes with the isDebit field in a Map
 		Map<String, Boolean> isTaxHeadDebitMap = mstrDataService.getTaxHeadMasterMap(requestInfoWrapper.getRequestInfo(), tenantId).stream()
@@ -536,13 +537,16 @@ public class DemandService {
 		 */
 
 		BigDecimal totalRoundOffAmount = BigDecimal.ZERO;
+		BigDecimal collectedRoundOffAmount = BigDecimal.ZERO;
 		for (DemandDetail detail : demand.getDemandDetails()) {
 
 			if(!detail.getTaxHeadMasterCode().equalsIgnoreCase(PT_ROUNDOFF)){
-				taxAmount = taxAmount.add(detail.getTaxAmount()).subtract(detail.getCollectionAmount());
+				taxAmount = taxAmount.add(detail.getTaxAmount());
+				collectedAmount = collectedAmount.add(detail.getCollectionAmount());
 			}
 			else{
 				totalRoundOffAmount = totalRoundOffAmount.add(detail.getTaxAmount());
+				collectedRoundOffAmount = collectedRoundOffAmount.add(detail.getCollectionAmount());
 			}
 		}
 
@@ -558,15 +562,19 @@ public class DemandService {
 		BigDecimal decimalRoundOff = null != roundOffEstimate
 				? roundOffEstimate.getEstimateAmount() : BigDecimal.ZERO;
 
-		boolean isRoundOffExist = false;
-		for (DemandDetail detail : demand.getDemandDetails()) {
-			if(PT_ROUNDOFF.equalsIgnoreCase(detail.getTaxHeadMasterCode())) {
-				detail.setTaxAmount(decimalRoundOff);
-				isRoundOffExist=true;
-			}
-		};
+		// Patch fix for roundoff amount for migrated data
+		if(taxAmount.subtract(collectedAmount).compareTo(BigDecimal.ZERO) ==  0
+				&& totalRoundOffAmount.subtract(collectedRoundOffAmount).compareTo(BigDecimal.ZERO) !=  0) {
+			decimalRoundOff = BigDecimal.ZERO;
+			for (DemandDetail detail : demand.getDemandDetails()) {
+				if(PT_ROUNDOFF.equalsIgnoreCase(detail.getTaxHeadMasterCode())) {
+					detail.setTaxAmount(decimalRoundOff);
+				}
+			};
+		}
 		
-		if(!isRoundOffExist && decimalRoundOff.compareTo(BigDecimal.ZERO)!=0){
+		if(taxAmount.subtract(collectedAmount).compareTo(BigDecimal.ZERO) != 0
+				&& decimalRoundOff.compareTo(BigDecimal.ZERO)!=0){
 				details.add(DemandDetail.builder().taxAmount(roundOffEstimate.getEstimateAmount())
 						.taxHeadMasterCode(roundOffEstimate.getTaxHeadCode()).demandId(demandId).tenantId(tenantId).build());
 		}
