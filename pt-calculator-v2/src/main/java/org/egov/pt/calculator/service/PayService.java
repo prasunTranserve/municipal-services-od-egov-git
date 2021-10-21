@@ -412,10 +412,6 @@ public class PayService {
 		if(roundOff.doubleValue() != 0)
 			roundOff = roundOff.subtract(totalRoundOffAmount);
 		
-		if (roundOff.doubleValue() == 0 && totalRoundOffAmount.compareTo(BigDecimal.ZERO) != 0)
-			return TaxHeadEstimate.builder().estimateAmount(BigDecimal.ZERO)
-					.taxHeadCode(CalculatorConstants.PT_ROUNDOFF).build();
-
 		if (roundOff.doubleValue() != 0)
 			return TaxHeadEstimate.builder().estimateAmount(roundOff)
 					.taxHeadCode(CalculatorConstants.PT_ROUNDOFF).build();
