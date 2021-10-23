@@ -67,7 +67,8 @@ public class CalculationService {
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
 	private static final BigDecimal TEN = new BigDecimal("10");// BigDecimal.valueOf(10);
 	private static final BigDecimal FIFTEEN = new BigDecimal("15");// BigDecimal.valueOf(15);
-	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.50");// BigDecimal.valueOf(17.50);
+//	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.50");// BigDecimal.valueOf(17.50);
+	private static final BigDecimal SEVENTEEN_POINT_EIGHT_FIVE = new BigDecimal("17.85");// BigDecimal.valueOf(17.50);
 	private static final BigDecimal TWENTY = new BigDecimal("20");// BigDecimal.valueOf(20);
 	private static final BigDecimal TWENTY_FIVE = new BigDecimal("25");// BigDecimal.valueOf(25);
 	private static final BigDecimal THIRTY = new BigDecimal("30");// BigDecimal.valueOf(30);
@@ -941,7 +942,7 @@ public class CalculationService {
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, RoundingMode.UP);
 			
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_FIVE.multiply(BigDecimal.valueOf(deviationBuitUpArea))
+				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(deviationBuitUpArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, RoundingMode.UP);
 			}
 
@@ -2243,7 +2244,7 @@ public class CalculationService {
 			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea))
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))
+				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
 
