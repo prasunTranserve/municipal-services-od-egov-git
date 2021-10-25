@@ -57,5 +57,6 @@ remomte:
     demand:
       host: http://localhost:8083/billing-service
       search: /demand/_search
+      fetchbill: /bill/v2/_fetchbill
 
       

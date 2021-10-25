@@ -534,5 +534,87 @@ public class PropertyService {
 			// TODO: handle exception
 		}
 	}
+
+	public boolean getProperty(PropertyDetailDTO propertyDetail) throws Exception {
+		boolean isPropertyExist = false;
+
+		PropertyDTO propertyDTO = searchProperty(propertyDetail);
+		if (propertyDTO != null) {
+			log.info(String.format("%s property found", propertyDTO.getPropertyId()));
+			isPropertyExist = true;
+			propertyDetail.setProperty(propertyDTO);
+		}
+		
+		return isPropertyExist;
+	}
+
+	public void callFetchBill(PropertyDetailDTO propertyDetail) throws Exception {
+		//http://localhost:8083/billing-service/bill/v2/_fetchbill?tenantId=od.khordha&consumerCode=WS/KHU/000056&businessService=WS
+		StringBuilder uri = new StringBuilder(properties.getBillingServiceHost()).append(properties.getFetchBillEndpoint())
+				.append("?").append("tenantId=").append(propertyDetail.getProperty().getTenantId())
+				.append("&consumerCode=").append(propertyDetail.getProperty().getPropertyId())
+				.append("&businessService=").append("PT");
+
+		Map<String, Object> propertySearchRequest = prepareSearchPropertyRequest(propertyDetail);
+		Object response = remoteService.fetchResult(uri, propertySearchRequest);
+	}
+	
+	public void writeFetchbillSuccess() throws IOException, InvalidFormatException {
+		String fileName = recordStatistic.getSuccessFile();
+		boolean isNewlyCreated = false;
+		File file = new File(fileName);
+		if (!file.exists()) {
+			file.createNewFile();
+			isNewlyCreated = true;
+		}
+		FileInputStream inputStream = new FileInputStream(file);
+
+		int rownum = 0;
+		try {
+			Workbook workbook;
+			Sheet sheet;
+			if (!isNewlyCreated) {
+				workbook = new XSSFWorkbook(inputStream);
+				sheet = workbook.getSheet("SUCCESS_RECORD");
+			} else {
+				workbook = new XSSFWorkbook();
+				sheet = workbook.createSheet("SUCCESS_RECORD");
+			}
+
+			rownum = sheet.getLastRowNum() + 1;
+
+			if (rownum == 0) {
+				Row headerRow = sheet.createRow(rownum++);
+				Cell headerCellProperty = headerRow.createCell(0);
+				headerCellProperty.setCellValue("OLD_PROPERTY_ID");
+				Cell headerCellPropertyId = headerRow.createCell(1);
+				headerCellPropertyId.setCellValue("DIGIT_PROPERTY_ID");
+				Cell headerCellFetchBillStatus = headerRow.createCell(2);
+				headerCellFetchBillStatus.setCellValue("FETCH_BILL_SUCCESS");
+			}
+
+			for (String oldPropertyId : recordStatistic.getSuccessRecords().keySet()) {
+				String propertyId = recordStatistic.getSuccessRecords().get(oldPropertyId).get(MigrationConst.PROPERTY_ID);
+				String fetchBillStatus = recordStatistic.getSuccessRecords().get(oldPropertyId).get(MigrationConst.FETCH_BILL_STATUS);
+				Row row = sheet.createRow(rownum++);
+				int cellnum = 0;
+				Cell cellProperty = row.createCell(cellnum++);
+				cellProperty.setCellValue(oldPropertyId);
+				Cell cellPropertyId = row.createCell(cellnum++);
+				cellPropertyId.setCellValue(propertyId);
+				Cell cellAssessmentNumber = row.createCell(cellnum++);
+				cellAssessmentNumber.setCellValue(fetchBillStatus);
+
+			}
+
+			FileOutputStream fos = new FileOutputStream(new File(fileName));
+			workbook.write(fos);
+			workbook.close();
+			fos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 	
 }
