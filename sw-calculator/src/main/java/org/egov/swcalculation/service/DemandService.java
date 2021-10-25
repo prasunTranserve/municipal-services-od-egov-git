@@ -3,6 +3,7 @@ package org.egov.swcalculation.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -517,7 +518,12 @@ public class DemandService {
 					&& SWCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR,
 						SWCalculationConstant.EG_SW_INVALID_DEMAND_ERROR_MSG);
-			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom) {
+			Calendar calender = Calendar.getInstance();
+			calender.setTimeInMillis(latestDemandPeriodFrom);
+			int monthOfLatestDemandPeriodFrom = calender.get(Calendar.MONTH);
+			calender.setTimeInMillis(System.currentTimeMillis());
+			int currentMonth = calender.get(Calendar.MONTH);
+			if(demand.getTaxPeriodFrom()==latestDemandPeriodFrom && Integer.compare(monthOfLatestDemandPeriodFrom, --currentMonth)== 0) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);
