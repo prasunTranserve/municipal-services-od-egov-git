@@ -100,4 +100,7 @@ public class PropertiesData {
 	@Value("${remomte.api.demand.search}")
 	private String demandSearchEndpoint;
 	
+	@Value("${remomte.api.demand.fetchbill}")
+	private String fetchBillEndpoint;
+	
 }

@@ -139,6 +139,7 @@ public class MigrationConst {
 	
 	public static final String PROPERTY_ID = "PROPERTY_ID";
 	public static final String ASSESSMENT_NUMBER = "ASSESSMENT_NUMBER";
+	public static final String FETCH_BILL_STATUS = "FETCH_BILL_STATUS";
 	
 	public static final String WATER_CONNECTION_NO = "WATER_CONNECTION_NO";
 	public static final String METER_READING = "METER_READING";

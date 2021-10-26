@@ -6,8 +6,11 @@ import org.apache.poi.EncryptedDocumentException;
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.common.model.RecordStatistic;
+import org.egov.migration.processor.PropertyFetchbillReader;
+import org.egov.migration.processor.PropertyFetchbillWriter;
 import org.egov.migration.processor.PropertyItemWriter;
 import org.egov.migration.processor.PropertyReader;
+import org.egov.migration.processor.PropertySearchTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
@@ -98,5 +101,31 @@ public class BatchConfiguration {
           .processor(getWnsProcessor())
           .writer(getWnsWriter()).build();
     }
+    
+    @Bean(name = "stepPropertyFetchBill")
+    protected Step stepPropertyFetchBill() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(100)
+          .reader(getPropertyFetchbillReader())
+          .processor(getProprtyFetchbillProcessor())
+          .writer(getProprtyFetchbillWriter()).build();
+    }
+	
+	@Bean
+    @StepScope
+    public ItemReader<Property> getPropertyFetchbillReader() throws EncryptedDocumentException, IOException, Exception {
+    	PropertyFetchbillReader propertyFetchbillReader = new PropertyFetchbillReader();
+    	propertyFetchbillReader.setSkipRecord(1);
+    	return propertyFetchbillReader;
+    }
+    
+    @Bean
+    public ItemProcessor<Property, PropertyDetailDTO> getProprtyFetchbillProcessor() {
+		return new PropertySearchTransformProcessor();
+	}
+    
+    @Bean
+    public ItemWriter<PropertyDetailDTO> getProprtyFetchbillWriter() {
+		return new PropertyFetchbillWriter();
+	}
 
 }
