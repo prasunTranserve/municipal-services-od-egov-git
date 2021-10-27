@@ -555,7 +555,7 @@ public class DemandService {
 		 *  
 		 *  If no decimal value found null object will be returned 
 		 */
-		TaxHeadEstimate roundOffEstimate = payService.roundOffDecimals(taxAmount,totalRoundOffAmount);
+		TaxHeadEstimate roundOffEstimate = payService.roundOffDecimals(taxAmount.subtract(collectedAmount),totalRoundOffAmount);
 
 
 
