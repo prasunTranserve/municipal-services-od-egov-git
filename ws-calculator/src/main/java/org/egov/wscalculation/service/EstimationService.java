@@ -167,6 +167,22 @@ public class EstimationService {
 			}
 			waterCharges = rate.multiply(BigDecimal.valueOf(totalUnit)).multiply(BigDecimal.valueOf(ratio));
 		} else if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.nonMeterdConnection)) {
+			String isVolumetricConnection = WSCalculationConstant.NO;
+			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
+			if(additionalDetails.containsKey(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION)) {
+				isVolumetricConnection = additionalDetails.get(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION).toString();
+			}
+			if(isVolumetricConnection != null && WSCalculationConstant.YES.equalsIgnoreCase(isVolumetricConnection)) {
+				BigDecimal volumetricWaterCharge = BigDecimal.ZERO;
+				if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE)) {
+					String amount = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE).toString();
+					if(StringUtils.hasText(amount.trim())) {
+						volumetricWaterCharge = new BigDecimal(amount.trim());
+					}
+				}
+				return volumetricWaterCharge;
+			}
+			
 			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("Permanent")) {
 				if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
 					waterCharges = BigDecimal.valueOf(106);
