@@ -67,7 +67,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 
 	private void enrichConnection(WnsConnection connection) {
 		enrichConnectionFacility(connection);
-		enrichConnectionType(connection);
+//		enrichConnectionType(connection);
 	}
 
 	private void enrichConnectionType(WnsConnection connection) {
@@ -546,7 +546,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		}
 	}
 	
-	private Object transformAdditional(WnsConnection connection) {
+	private Object transformAdditional(WnsConnection connection, String source) {
 		ObjectNode additionalDetails = JsonNodeFactory.instance.objectNode();
 		additionalDetails.put("locality", this.localityCode);
 		additionalDetails.put("ward", MigrationUtility.getWard(connection.getWard()));
@@ -596,6 +596,39 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 				additionalDetails.put("diameter", dia);
 			}
 		}
+		
+		// Water non-metered marked as volumetric
+		if(MigrationConst.CONNECTION_WATER.equals(source) && MigrationConst.CONNECTION_NON_METERED.equalsIgnoreCase(MigrationUtility.getConnectionType(connection.getService().getConnectionType()))) {
+			additionalDetails.put("isVolumetricConnection", "Y");
+			BigDecimal volumetricWaterCharge = BigDecimal.ZERO;
+			if(connection.getDemands() != null) {
+				WnsDemand demand = connection.getDemands().stream()
+						.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+						.findFirst().orElse(null);
+				
+				if(demand != null) {
+					volumetricWaterCharge = MigrationUtility.convertToBigDecimal(demand.getWaterCharges());
+				}
+			}
+			
+			additionalDetails.put("volumetricWaterCharge", volumetricWaterCharge);
+		}
+		
+		// Latest Sewerage Fee 
+		if(MigrationConst.CONNECTION_SEWERAGE.equals(source)) {
+			BigDecimal sewerageFee = BigDecimal.ZERO;
+			if(connection.getDemands() != null) {
+				WnsDemand demand = connection.getDemands().stream()
+						.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+						.findFirst().orElse(null);
+				
+				if(demand != null) {
+					sewerageFee = MigrationUtility.convertToBigDecimal(demand.getSewerageFee());
+				}
+			}
+			additionalDetails.put("migratedSewerageFee", sewerageFee);
+		}
+		
 		return additionalDetails;
 	}
 	
@@ -606,7 +639,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		transformWaterConnection(waterConnectionDTO, connection);
 		transformWaterService(waterConnectionDTO, connection);
 		waterConnectionDTO.setConnectionHolders(transformConnectionHolder(connection));
-		waterConnectionDTO.setAdditionalDetails(transformAdditional(connection));
+		waterConnectionDTO.setAdditionalDetails(transformAdditional(connection, MigrationConst.CONNECTION_WATER));
 		connectionDTO.setWaterConnection(waterConnectionDTO);
 		
 		transformMeterReading(connectionDTO, connection);
@@ -726,7 +759,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		transformSewerageConnection(sewerageConnectionDTO, connection);
 		transformSewerageService(sewerageConnectionDTO, connection);
 		sewerageConnectionDTO.setConnectionHolders(transformConnectionHolder(connection));
-		sewerageConnectionDTO.setAdditionalDetails(transformAdditional(connection));
+		sewerageConnectionDTO.setAdditionalDetails(transformAdditional(connection, MigrationConst.CONNECTION_SEWERAGE));
 		connectionDTO.setSewerageConnection(sewerageConnectionDTO);
 	}
 
