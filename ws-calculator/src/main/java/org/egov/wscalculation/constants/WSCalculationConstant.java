@@ -277,11 +277,13 @@ public class WSCalculationConstant {
 	public static final String WS_UC_TWSFC = "TWSFC";
 	public static final String WS_UC_ASSOCIATION = "ASSOCIATION";
 	
-	
 	public static final String IS_LABOUR_FEE_APPLICABLE = "isLabourFeeApplicable";
 
 	public static final String IS_INSTALLMENT_APPLICABLE = "isInstallmentApplicable";
 	
-	
-	
+	public static final String YES = "Y";
+	public static final String NO = "N";
+
+	public static final String IS_VOLUMETRIC_CONNECTION = "isVolumetricConnection";
+	public static final String VOLUMETRIC_WATER_CHARGE = "volumetricWaterCharge";
 }
