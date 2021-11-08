@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS eg_sw_service
 		ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS index_eg_sw_service_appCreatedDate ON eg_ws_service (appCreatedDate);
+CREATE INDEX IF NOT EXISTS index_eg_sw_service_appCreatedDate ON eg_sw_service (appCreatedDate);
 
 CREATE TABLE IF NOT EXISTS eg_sw_plumberinfo
 (
