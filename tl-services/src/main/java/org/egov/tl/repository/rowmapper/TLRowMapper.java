@@ -59,7 +59,7 @@ public class TLRowMapper  implements ResultSetExtractor<List<TradeLicense>> {
                         .workflowCode(rs.getString("workflowCode"))
                         .oldLicenseNumber(rs.getString("oldlicensenumber"))
                         .applicationDate(applicationDate)
-                        .applicationNumber(rs.getString("applicationnumber"))
+                        .applicationNumber(rs.getString("tl_applicationnumber"))
                         .commencementDate(commencementDate)
                         .issuedDate(issuedDate)
                         .accountId(rs.getString("accountId"))
@@ -147,7 +147,7 @@ public class TLRowMapper  implements ResultSetExtractor<List<TradeLicense>> {
 
             Double operationalArea = (Double) rs.getObject("operationalArea");
             Integer noOfEmployees = (Integer) rs.getObject("noOfEmployees");
-            PGobject pgObj = (PGobject) rs.getObject("additionaldetail");
+            PGobject pgObj = (PGobject) rs.getObject("tld_additionaldetail");
             try {
                 TradeLicenseDetail tradeLicenseDetail = TradeLicenseDetail.builder()
                         .surveyNo(rs.getString("surveyno"))
@@ -263,6 +263,35 @@ public class TLRowMapper  implements ResultSetExtractor<List<TradeLicense>> {
                     .build();
             tradeLicense.getTradeLicenseDetail().addVerificationDocumentsItem(verificationDocument);
         }
+        
+        if(rs.getString("tl_dsc_details_id")!=null) {
+        	
+        	
+            
+        	DscDetails dscDetail = DscDetails.builder()
+                    .documentType(rs.getString("tl_dsc_details_documenttype"))
+                    .documentId(rs.getString("tl_dsc_details_documentid"))
+                    .applicationNumber(rs.getString("tl_dsc_details_applicationnumber"))
+                    .id(rs.getString("tl_dsc_details_id"))
+                    .tenantId(tenantId)
+                    .approvedBy(rs.getString("approvedby"))
+                    .build();
+        	
+        	try {
+        		PGobject pgObj  = (PGobject) rs.getObject("tl_dsc_details_additionaldetail");
+
+        		if(pgObj!=null){
+        			JsonNode additionalDetail = mapper.readTree(pgObj.getValue());
+        			dscDetail.setAdditionalDetail(additionalDetail);
+        		}
+        	} catch (Exception e) {
+				throw new CustomException("PARSING ERROR","The DSC Details additionalDetail json cannot be parsed");
+			}
+        	
+        	
+            tradeLicense.getTradeLicenseDetail().addDscDetailsItem(dscDetail);
+        }
+        
     }
 
 

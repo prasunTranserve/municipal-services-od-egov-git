@@ -117,7 +117,31 @@ import javax.servlet.http.HttpServletRequest;
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @RequestMapping(value = {"/{servicename}/_update", "/_updatedscdetails"}, method = RequestMethod.POST)
+    public ResponseEntity<TradeLicenseResponse> updateDscDetails(@Valid @RequestBody TradeLicenseRequest tradeLicenseRequest,
+                                                       @PathVariable(required = false) String servicename) {
+        List<TradeLicense> licenses = tradeLicenseService.updateDscDetails(tradeLicenseRequest, servicename);
 
+        TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    
+    @RequestMapping(value = {"/{servicename}/_search", "/_searchdscdetails"}, method = RequestMethod.POST)
+    public ResponseEntity<DigitalSignCertificateResponse> searchDscDetails(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+                                                       @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
+                                                       @PathVariable(required = false) String servicename
+            , @RequestHeader HttpHeaders headers) {
+        List<DscDetails> dscDetails = tradeLicenseService.searchDscDetails(criteria,requestInfoWrapper.getRequestInfo());
 
-
+        DigitalSignCertificateResponse response = DigitalSignCertificateResponse.builder().dscDetails(dscDetails).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    
+    }
+    
+    
 }
