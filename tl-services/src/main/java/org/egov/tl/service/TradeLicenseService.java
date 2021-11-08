@@ -382,6 +382,38 @@ public class TradeLicenseService {
         
     }
 
+    
+    /**
+     * Updates the License Document Id from the dsc service
+     * @param tradeLicenseRequest The update Request
+     * @return Updated TradeLcienses
+     */
+    public List<TradeLicense> updateDscDetails(TradeLicenseRequest tradeLicenseRequest, String businessServicefromPath){
+    	
+    	if (businessServicefromPath == null)
+            businessServicefromPath = businessService_TL;
+    	
+    	if(businessServicefromPath!=businessService_TL)
+    	{
+    		throw new CustomException("BUSINESSSERVICE_NOTALLOWED", " The business service is not allowed in this api call");
+    	}
+    	
+    	 AuditDetails auditDetails = tradeUtil.getAuditDetails(tradeLicenseRequest.getRequestInfo().getUserInfo().getUuid(), false);
+         tradeLicenseRequest.getLicenses().forEach(tradeLicense -> {
+             tradeLicense.setAuditDetails(auditDetails);
+         });
+    	
+    	List<TradeLicense> searchResult = getLicensesWithOwnerInfo(tradeLicenseRequest);
+    	tlValidator.validateDscDetails(tradeLicenseRequest,searchResult);
+    	repository.updateDscDetails(tradeLicenseRequest);
+        
+    	
+        return tradeLicenseRequest.getLicenses();
+        
+    }
+    
+    
+    
     public List<TradeLicense> plainSearch(TradeLicenseSearchCriteria criteria, RequestInfo requestInfo){
         List<TradeLicense> licenses;
         List<String> ids = repository.fetchTradeLicenseIds(criteria);
@@ -468,6 +500,23 @@ public class TradeLicenseService {
     		}
     	});
     	
+    }
+    
+    
+    /**
+     * Searches the tradelicens that are approved but signing is pending based on the given uuid
+     * @param criteria
+     * @param requestInfo
+     * @return
+     */
+    public List<DscDetails> searchDscDetails(TradeLicenseSearchCriteria criteria, RequestInfo requestInfo){
+        List<DscDetails> pendingDigitalsignDocuments = new LinkedList<>();
+        
+        tlValidator.validateDscSearch(criteria,requestInfo);
+        
+        pendingDigitalsignDocuments = repository.getDscDetails(criteria);
+       
+       return pendingDigitalsignDocuments;
     }
 
 }
