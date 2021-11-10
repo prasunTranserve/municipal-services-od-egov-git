@@ -165,6 +165,8 @@ public class MigrationConst {
 	public static final String COL_COLLECTION_AMOUNT_AGAINST_LATEST_BILL = "COLLECTION_AMOUNT_AGAINST_LATEST_BILL";
 	
 	public static final List<String> METERED_VOLUMETRIC_CONNECTION = Arrays.asList("commercial", "industrial", "institutional", "apartment");
+	
+	public static final String USAGE_CATEGORY_OTHERS = "Others";
 
 	
 }

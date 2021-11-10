@@ -68,6 +68,45 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	private void enrichConnection(WnsConnection connection) {
 		enrichConnectionFacility(connection);
 //		enrichConnectionType(connection);
+		enrichConnectionUsageCategory(connection);
+	}
+
+	private void enrichConnectionUsageCategory(WnsConnection connection) {
+
+		if(MigrationConst.CONNECTION_METERED.equalsIgnoreCase(connection.getService().getConnectionType())
+				&& MigrationConst.USAGE_CATEGORY_OTHERS.equalsIgnoreCase(connection.getService().getUsageCategory())
+				&& !MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			if(connection.getDemands() != null) {
+				// get the latest demand
+				WnsDemand demand = connection.getDemands().stream()
+						.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+						.findFirst().orElse(null);
+				
+				if(demand != null) {
+					BigDecimal waterCharge = MigrationUtility.convertToBigDecimal(demand.getWaterCharges());
+					if(waterCharge.compareTo(BigDecimal.valueOf(56)) < 1) {
+						if(MigrationUtility.convertToInt(connection.getService().getNoOfTaps()) == null) {
+							connection.getService().setUsageCategory("BPL");
+							connection.getService().setNoOfTaps("1");
+						} else if(MigrationUtility.convertToInt(connection.getService().getNoOfTaps()).equals(1)) {
+							connection.getService().setUsageCategory("BPL");
+						} else {
+							connection.getService().setUsageCategory("DOMESTIC");
+						}
+					} else if(waterCharge.compareTo(BigDecimal.valueOf(360)) == 0) {
+						connection.getService().setUsageCategory("ROADSIDEEATERS");
+					}
+				}
+			}
+		}
+		
+		if(MigrationConst.USAGE_CATEGORY_OTHERS.equalsIgnoreCase(connection.getService().getUsageCategory())
+				&& MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			connection.getService().setUsageCategory("DOMESTIC");
+			if(!StringUtils.hasText(connection.getService().getNoOfFlats())) {
+				connection.getService().setNoOfFlats("24");
+			}
+		}
 	}
 
 	private void enrichConnectionType(WnsConnection connection) {
