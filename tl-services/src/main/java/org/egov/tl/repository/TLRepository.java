@@ -68,10 +68,10 @@ public class TLRepository {
     
     
     /**
-     * Searhces not signed document details in database
+     * Searches not signed document details in database
      *
      * @param criteria The tradeLicense Search criteria
-     * @return List of TradeLicense from seach
+     * @return List of DscDetails 
      */
     public List<DscDetails> getDscDetails(TradeLicenseSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
