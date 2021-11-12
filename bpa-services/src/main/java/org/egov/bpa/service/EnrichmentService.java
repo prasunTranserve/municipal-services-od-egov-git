@@ -1,6 +1,7 @@
 package org.egov.bpa.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import org.egov.bpa.util.BPAUtil;
 import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
+import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.Workflow;
 import org.egov.bpa.web.model.idgen.IdResponse;
 import org.egov.bpa.web.model.workflow.BusinessService;
@@ -181,6 +183,21 @@ public class EnrichmentService {
 					document.setId(UUID.randomUUID().toString());
 				}
 			});
+		}
+		// dsc integration after approval-
+		List<String> roles = bpaRequest.getRequestInfo().getUserInfo().getRoles().stream().map(role -> role.getCode())
+				.collect(Collectors.toList());
+		if ((bpaRequest.getBPA().getStatus() != null) && roles.contains("EMPLOYEE")
+				&& bpaRequest.getBPA().getWorkflow().getAction().equalsIgnoreCase("APPROVE")) {
+			List<DscDetails> dscDetailss = new ArrayList<>();
+			DscDetails dscDetails = new DscDetails();
+			dscDetails.setTenantId(bpaRequest.getBPA().getTenantId());
+			dscDetails.setId(UUID.randomUUID().toString());
+			dscDetails.setApprovedBy(requestInfo.getUserInfo().getUuid());
+			dscDetailss.add(dscDetails);
+			bpaRequest.getBPA().setDscDetails(dscDetailss);
+		} else {
+			bpaRequest.getBPA().setDscDetails(null);
 		}
 
 	}

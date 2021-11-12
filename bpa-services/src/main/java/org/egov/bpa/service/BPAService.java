@@ -32,9 +32,11 @@ import org.egov.bpa.util.BPAErrorConstants;
 import org.egov.bpa.util.BPAUtil;
 import org.egov.bpa.util.NotificationUtil;
 import org.egov.bpa.validator.BPAValidator;
+import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
+import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.landInfo.LandInfo;
 import org.egov.bpa.web.model.landInfo.LandSearchCriteria;
 import org.egov.bpa.web.model.user.UserDetailResponse;
@@ -675,4 +677,44 @@ public class BPAService {
 		}
 		document.save(fileName);
 	}
+	
+	/**
+	 * Updates the BPA Document Id from the dsc service
+	 * 
+	 * @param BPARequest The update Request
+	 * @return Updated BPA
+	 */
+	public BPA updateDscDetails(BPARequest bpaRequest) {
+
+		AuditDetails auditDetails = util.getAuditDetails(bpaRequest.getRequestInfo().getUserInfo().getUuid(), false);
+		bpaRequest.getBPA().setAuditDetails(auditDetails);
+
+		BPASearchCriteria criteria = new BPASearchCriteria();
+
+		criteria.setTenantId(bpaRequest.getBPA().getTenantId());
+		criteria.setApplicationNo(bpaRequest.getBPA().getApplicationNo());
+		List<BPA> searchResult = getBPAFromCriteria(criteria, bpaRequest.getRequestInfo(), Collections.EMPTY_LIST);
+		bpaValidator.validateDscDetails(bpaRequest, searchResult);
+
+		repository.updateDscDetails(bpaRequest);
+		return bpaRequest.getBPA();
+
+	}
+    
+	/**
+	 * Searches the bpas that are approved but signing is pending
+	 * 
+	 * @param criteria
+	 * @param requestInfo
+	 * @return
+	 */
+	public List<DscDetails> searchDscDetails(BPASearchCriteria criteria, RequestInfo requestInfo) {
+		List<DscDetails> pendingDigitalsignDocuments = new LinkedList<>();
+
+		bpaValidator.validateDscSearch(criteria, requestInfo);
+		pendingDigitalsignDocuments = repository.getDscDetails(criteria);
+
+		return pendingDigitalsignDocuments;
+	}
+
 }
