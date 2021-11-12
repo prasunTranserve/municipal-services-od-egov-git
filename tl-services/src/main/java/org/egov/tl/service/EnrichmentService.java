@@ -434,6 +434,7 @@ public class EnrichmentService {
                 	List<DscDetails> DscDetailss =  new ArrayList<>();
                 	DscDetails DscDetails = new DscDetails();
                 	DscDetails.setTenantId(tradeLicense.getTenantId());
+                	DscDetails.setApplicationNumber(tradeLicense.getApplicationNumber());
                 	DscDetails.setId(UUID.randomUUID().toString());
                 	DscDetails.setApprovedBy(requestInfo.getUserInfo().getUuid());
                 	DscDetailss.add(DscDetails);
