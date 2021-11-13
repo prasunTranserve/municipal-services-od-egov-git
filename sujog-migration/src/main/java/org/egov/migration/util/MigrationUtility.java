@@ -921,4 +921,14 @@ public class MigrationUtility {
 		}
 		return new BigDecimal(amt);
 	}
+	
+	public static Integer convertToInt(String value) {
+		if(!StringUtils.hasText(value)) {
+			return null;
+		}
+		if(!value.matches(digitRegex)) {
+			return null;
+		}
+		return Integer.parseInt(value);
+	}
 }

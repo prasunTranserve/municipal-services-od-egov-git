@@ -84,6 +84,8 @@ public class SWCalculationConstant {
 	public static final String SW_RECONNECTION_CHARGE = "SW_RECONNECTION_CHARGE";
 	
 	public static final String SW_OWNERSHIP_CHANGE_FEE = "SW_OWNERSHIP_CHANGE_FEE";
+	
+	public static final String SW_SPECIAL_REBATE = "SW_SPECIAL_REBATE";
 
 	/**
 	 * data fields
@@ -101,6 +103,10 @@ public class SWCalculationConstant {
 	public static final String FLAT_AMOUNT_FIELD_NAME = "flatAmount";
 
 	public static final String RATE_FIELD_NAME = "rate";
+	
+	public static final String IS_SPECIAL_REBATE_ENABLED = "specialReabteEnabled";
+	
+	public static final String SPECIAL_REBATE_RATE = "specialReabteRate";
 
 	/*
 	 * bigdecimal values

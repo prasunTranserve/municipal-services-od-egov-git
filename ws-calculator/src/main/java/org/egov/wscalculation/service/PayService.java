@@ -258,4 +258,40 @@ public class PayService {
 
 		return rebateAmt;
 	}
+
+	public BigDecimal getApplicableSpecialRebate(BigDecimal waterCharge, String assessmentYear, JSONArray rebateMasterList) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+
+		if (null == rebate) return rebateAmt;
+
+		rebateAmt = calculateSpecialRebate(waterCharge, rebate);
+
+		return rebateAmt;
+	}
+
+	private BigDecimal calculateSpecialRebate(BigDecimal waterCharge, Map<String, Object> rebateConfig) {
+		BigDecimal specialRebate = BigDecimal.ZERO;
+
+		if (null == rebateConfig)
+			return specialRebate;
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> configMap = (Map<String, Object>) rebateConfig;
+		
+		boolean isSpecialRebateEnabled = null != configMap.get(WSCalculationConstant.IS_SPECIAL_REBATE_ENABLED)
+				? (boolean) configMap.get(WSCalculationConstant.IS_SPECIAL_REBATE_ENABLED)
+				: false;
+
+		BigDecimal rate = null != configMap.get(WSCalculationConstant.SPECIAL_REBATE_RATE)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.SPECIAL_REBATE_RATE)).doubleValue())
+				: null;
+		
+		if(isSpecialRebateEnabled) {
+			if (null != rate) {
+				specialRebate = waterCharge.multiply(rate.divide(WSCalculationConstant.HUNDRED));
+			}
+		}
+		return specialRebate;
+	}
 }

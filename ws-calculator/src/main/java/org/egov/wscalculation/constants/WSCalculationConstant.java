@@ -83,6 +83,8 @@ public class WSCalculationConstant {
 	public static final String WS_WATER_CESS = "WS_WATER_CESS";
 
 	public static final String WS_CHARGE = "WS_CHARGE";
+	
+	public static final String WS_SPECIAL_REBATE = "WS_SPECIAL_REBATE";
 
 	/**
 	 * data fields
@@ -102,6 +104,10 @@ public class WSCalculationConstant {
 	public static final String RATE_FIELD_NAME = "rate";
 
 	public static final String DAYA_APPLICABLE_NAME = "applicableAfterDays";
+	
+	public static final String IS_SPECIAL_REBATE_ENABLED = "specialReabteEnabled";
+	
+	public static final String SPECIAL_REBATE_RATE = "specialReabteRate";
 
 	/*
 	 * bigdecimal values
