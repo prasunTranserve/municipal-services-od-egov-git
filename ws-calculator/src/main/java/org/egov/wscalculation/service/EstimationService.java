@@ -228,6 +228,13 @@ public class EstimationService {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
 					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
 		}
+		
+		// water Special Rebate
+		BigDecimal specialRebate = payService.getApplicableSpecialRebate(waterCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+		if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
+					.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+		}
 
 		// Water_cess
 		if (timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_WATER_CESS_MASTER) != null) {
