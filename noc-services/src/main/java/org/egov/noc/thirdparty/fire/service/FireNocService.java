@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.egov.noc.config.NOCConfiguration;
+import org.egov.noc.repository.NOCRepository;
 import org.egov.noc.repository.ServiceRequestRepository;
 import org.egov.noc.service.FileStoreService;
+import org.egov.noc.thirdparty.fire.model.FetchApplicationIdsContract;
 import org.egov.noc.thirdparty.fire.model.FetchRecommendationStatusContract;
 import org.egov.noc.thirdparty.fire.model.SubmitFireNocContract;
 import org.egov.noc.thirdparty.model.ThirdPartyNOCPullRequestWrapper;
@@ -17,6 +20,7 @@ import org.egov.noc.thirdparty.service.ThirdPartyNocPullService;
 import org.egov.noc.thirdparty.service.ThirdPartyNocPushService;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.web.model.Document;
+import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.jayway.jsonpath.DocumentContext;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +50,15 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 
 	@Autowired
 	FileStoreService fileStoreService;
+	
+	@Autowired
+	NOCRepository nocRepository;
 
 	private static final String GET_DISTRICTS_ENDPOINT = "/fire_safety/webservices/getFiredistricts";
 	private static final String GET_FIRESTATIONS_ENDPOINT = "/fire_safety/webservices/getFirestations";
 	private static final String SUBMIT_FIRE_NOC_APPL_ENDPOINT = "/fire_safety/webservices/recommendationApi";
 	private static final String FETCH_FIRE_NOC_STATUS_ENDPOINT = "/fire_safety/webservices/recommendationStatus";
+	private static final String FETCH_APPLICATION_IDS_ENDPOINT = "/fire_safety/webservices/recommendationID";
 
 	@Override
 	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
@@ -157,6 +166,11 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 
 	@Override
 	public Workflow pullProcess(ThirdPartyNOCPullRequestWrapper pullRequestWrapper) {
+		Workflow workflow = new Workflow();
+		//step1. check if applicationId is present or not in db--
+		Map<String, String> additionalDetails = (Map<String, String>) pullRequestWrapper.getNoc().getAdditionalDetails();
+		if(Objects.nonNull(additionalDetails.get("applicationId"))) {
+		//step2. if applicationId is there, then call status API below-
 		// recommendationStatus API--
 		StringBuilder fetchStatusUrl = new StringBuilder(config.getFireNocHost());
 		fetchStatusUrl.append(FETCH_FIRE_NOC_STATUS_ENDPOINT);
@@ -170,11 +184,51 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			if (!"In Process".equalsIgnoreCase(applicationStatus))
 				throw new CustomException(NOCConstants.FIRE_NOC_ERROR, "fire noc failed");
 		}
+		
 		switch (applicationStatus) {
 		case "In Process":
 			throw new CustomException(NOCConstants.FIRE_NOC_ERROR, "already in process");
+		case "Rejected":
+			workflow.setAction(NOCConstants.ACTION_REJECT);
+			workflow.setComment("noc rejected by fire department");
+		case "Approved Recommendation Issued":
+			workflow.setAction(NOCConstants.ACTION_APPROVE);
+			workflow.setComment("noc approved by fire department");
 		}
-		Workflow workflow = new Workflow();
+		}
+		else {
+			//if applicationid is not present in db then call fetch applicationids and populate applicationid.If it returns null for applicaitonid, it means payment not done and throw exception
+			//like the code before
+			//two scenarios in in response of fetchapplicationId api- it returns non-null applicationid then set it in db.it returns null then set comment
+			//and status=submit
+			StringBuilder fetchApplicationIdsUrl = new StringBuilder(config.getFireNocHost());
+			fetchApplicationIdsUrl.append(FETCH_APPLICATION_IDS_ENDPOINT);
+			Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
+					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getUserResponse().getEmailId()));
+			//String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";
+			//Object fetchApplicationIdsResponse = new Gson().fromJson(str, HashMap.class);
+			if(fetchApplicationIdsResponse instanceof Map && Objects.nonNull(((Map) fetchApplicationIdsResponse).get("result"))
+					&& Objects.nonNull(((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID"))) {
+				//store application id in db --
+				List<String> applicationIds = (List) ((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID");
+				String applicationId=applicationIds.get(0);//hardcoded as first applicationId as of now
+				additionalDetails.put("applicationId", applicationId);/*
+				try {
+					pullRequestWrapper.getNoc().setAdditionalDetails(mapper.writeValueAsString(additionalDetails));
+				} catch (JsonProcessingException e) {
+					e.printStackTrace();
+				}*/
+				workflow.setComment("applicationId set in database:"+applicationId);
+				NocRequest nocRequest = new NocRequest();
+				nocRequest.setNoc(pullRequestWrapper.getNoc());
+				nocRequest.setRequestInfo(pullRequestWrapper.getRequestInfo());
+				nocRepository.update(nocRequest, false);
+			}else {
+				workflow.setComment("applicationId is null in applicationids API");
+			}
+			workflow.setAction(NOCConstants.ACTION_SUBMIT);
+		}
+
 		return workflow;
 	}
 
