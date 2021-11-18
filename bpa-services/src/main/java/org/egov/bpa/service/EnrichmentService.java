@@ -307,6 +307,7 @@ public class EnrichmentService {
 	 */
 	public void enrichBPACreateRequestV2(BPARequest bpaRequest, Object mdmsData, Map<String, String> values,
 			LinkedHashMap<String, Object> edcr) {
+		log.info(" Inside enrichBPACreateRequestV2 ");
 		RequestInfo requestInfo = bpaRequest.getRequestInfo();
 		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
 		bpaRequest.getBPA().setAuditDetails(auditDetails);
@@ -314,6 +315,7 @@ public class EnrichmentService {
 
 		bpaRequest.getBPA().setAccountId(bpaRequest.getBPA().getAuditDetails().getCreatedBy());
 		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
+		log.info("applicationType "+applicationType);
 		if (applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN)) {
 			populateBusinessService(bpaRequest, edcr);
 
@@ -341,7 +343,7 @@ public class EnrichmentService {
 	 * @param edcr
 	 */
 	private void populateBusinessService(BPARequest bpaRequest, LinkedHashMap<String, Object> edcr) {
-
+		log.info("populateBusinessService ");
 		DocumentContext context = generateERCRContext(edcr);
 
 		// Double plotArea = extractPlotArea(context);
@@ -351,7 +353,7 @@ public class EnrichmentService {
 		// boolean isSpecialBuilding = isSpecialBuilding(context);
 
 		String businessService = extractBusinessService(context);
-
+		log.info("businessService "+businessService);
 		bpaRequest.getBPA().setBusinessService(businessService);
 
 		// setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
