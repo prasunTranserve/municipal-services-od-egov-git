@@ -1,11 +1,15 @@
 package org.egov.tl.web.controllers;
 
 
+
 import org.egov.tl.service.PaymentUpdateService;
 import org.egov.tl.service.TradeLicenseService;
 import org.egov.tl.service.notification.PaymentNotificationService;
 import org.egov.tl.util.ResponseInfoFactory;
 import org.egov.tl.web.models.*;
+import org.egov.tl.web.models.calculation.Calculation;
+import org.egov.tl.web.models.calculation.CalculationRes;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +55,19 @@ import javax.servlet.http.HttpServletRequest;
         TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
                 responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
                 .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @PostMapping({"/{servicename}/_estimate", "/_estimate"})
+    public ResponseEntity<CalculationRes> estimate(@Valid @RequestBody TradeLicenseRequest tradeLicenseRequest,
+                                                       @PathVariable(required = false) String servicename) {
+    	CalculationRes calculationResponse = tradeLicenseService.estimate(tradeLicenseRequest, servicename);
+    	
+    	CalculationRes response = CalculationRes.builder().calculations(calculationResponse.getCalculations())
+				.responseInfo(
+						responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
+				.build();
+    	
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -100,7 +117,31 @@ import javax.servlet.http.HttpServletRequest;
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @RequestMapping(value = {"/{servicename}/_updatedscdetails", "/_updatedscdetails"}, method = RequestMethod.POST)
+    public ResponseEntity<TradeLicenseResponse> updateDscDetails(@Valid @RequestBody TradeLicenseRequest tradeLicenseRequest,
+                                                       @PathVariable(required = false) String servicename) {
+        List<TradeLicense> licenses = tradeLicenseService.updateDscDetails(tradeLicenseRequest, servicename);
 
+        TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    
+    @RequestMapping(value = {"/{servicename}/_searchdscdetails", "/_searchdscdetails"}, method = RequestMethod.POST)
+    public ResponseEntity<DigitalSignCertificateResponse> searchDscDetails(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+                                                       @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
+                                                       @PathVariable(required = false) String servicename
+            , @RequestHeader HttpHeaders headers) {
+        List<DscDetails> dscDetails = tradeLicenseService.searchDscDetails(criteria,requestInfoWrapper.getRequestInfo());
 
-
+        DigitalSignCertificateResponse response = DigitalSignCertificateResponse.builder().dscDetails(dscDetails).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    
+    }
+    
+    
 }

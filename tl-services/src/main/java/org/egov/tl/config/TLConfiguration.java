@@ -100,6 +100,9 @@ public class TLConfiguration {
 
     @Value("${persister.update.tradelicense.workflow.topic}")
     private String updateWorkflowTopic;
+    
+    @Value("${persister.update.tradelicense.dscdetails.topic}")
+    private String updateDscDetailsTopic;
 
     @Value("${persister.update.tradelicense.adhoc.topic}")
     private String updateAdhocTopic;
@@ -135,6 +138,9 @@ public class TLConfiguration {
 
     @Value("${egov.tl.calculator.calculate.endpoint}")
     private String calculateEndpointTL;
+    
+    @Value("${egov.tl.calculator.estimate.endpoint}")
+    private String estimateEndpointTL;
 
     @Value("${egov.bpa.calculator.calculate.endpoint}")
     private String calculateEndpointBPA;

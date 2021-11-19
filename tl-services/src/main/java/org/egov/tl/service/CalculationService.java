@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 @Service
@@ -78,6 +79,40 @@ public class CalculationService {
         List<CalulationCriteria> criterias = new LinkedList<>();
 
         licenses.forEach(license -> {
+            criterias.add(new CalulationCriteria(license,license.getApplicationNumber(),license.getTenantId()));
+        });
+
+        CalculationReq request = CalculationReq.builder().calulationCriteria(criterias)
+                .requestInfo(requestInfo)
+                .build();
+
+        Object result = serviceRequestRepository.fetchResult(uri,request);
+        CalculationRes response = null;
+        try{
+            response = mapper.convertValue(result,CalculationRes.class);
+        }
+        catch (IllegalArgumentException e){
+            throw new CustomException("PARSING ERROR","Failed to parse response of calculate");
+        }
+        return response;
+    }
+    
+    
+
+    public CalculationRes getCalculationEstimates(RequestInfo requestInfo,List<TradeLicense> licenses){
+    	
+
+        if(CollectionUtils.isEmpty(licenses))
+            throw new CustomException("INVALID REQUEST","The request for calculation cannot be empty or null");
+    	
+        StringBuilder uri = utils.getEstimatesURI(licenses.get(0).getBusinessService());
+        List<CalulationCriteria> criterias = new LinkedList<>();
+
+        licenses.forEach(license -> {
+        		license.getTradeLicenseDetail().getTradeUnits().forEach(tradeUnit -> {
+                 tradeUnit.setTenantId(license.getTenantId());
+                 tradeUnit.setActive(true);
+             });
             criterias.add(new CalulationCriteria(license,license.getApplicationNumber(),license.getTenantId()));
         });
 

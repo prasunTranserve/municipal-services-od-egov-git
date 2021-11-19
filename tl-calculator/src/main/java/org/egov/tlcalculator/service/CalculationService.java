@@ -77,6 +77,19 @@ public class CalculationService {
        producer.push(config.getSaveTopic(),calculationRes);
        return calculations;
    }
+   
+   /**
+    * Calculates tax estimates 
+    * @param calculationReq The calculationCriteria request
+    * @return List of calculations for all applicationNumbers or tradeLicenses in calculationReq
+    */
+  public List<Calculation> estimate(CalculationReq calculationReq){
+      String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
+      Object mdmsData = mdmsService.mDMSCall(calculationReq.getRequestInfo(),tenantId);
+      List<Calculation> calculations = getCalculation(calculationReq.getRequestInfo(),
+              calculationReq.getCalulationCriteria(),mdmsData);
+      return calculations;
+  }
 
 
     /***
@@ -276,37 +289,11 @@ public class CalculationService {
              if(billingSlabs.get(0).getType().equals(BillingSlab.TypeEnum.FLAT))
              {
             	 if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
-            	 {
-            		 int numberOfYears = 1 ;
-            		 
-            		 if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
-            		 {
-            			 HashMap<String,Object> additionalDetailsMap = new HashMap<String,Object>();
-            		 
-            		 additionalDetailsMap = (HashMap<String, Object>) license.getTradeLicenseDetail().getAdditionalDetail();
-            		 
-            		 if(!additionalDetailsMap.isEmpty())
-            		 {
-            			 String tradeYears = additionalDetailsMap.get("licensePeriod")+"";
-            			 
-            			 if(tradeYears!=null)
-            			 {
-            				 try {
-								numberOfYears = Integer.parseInt(tradeYears);
-							} catch (NumberFormatException e) {
-								
-								log.error("Error in the request json in additionalDetail the tradeNoOfYears is not a valid number");
-								throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
-							}
-            			 }else
-            				 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
-            			 
-            		 }else
-            			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+            	 { 
+            		 int numberOfYears = getLicensePeriod(license);
             		 
             		 tradeUnitFees.add(billingSlabs.get(0).getRate().multiply(new BigDecimal(numberOfYears)));
-            		 }else
-            			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+            		 
             	 }else
             		 tradeUnitFees.add(billingSlabs.get(0).getRate());
             	 
@@ -315,7 +302,16 @@ public class CalculationService {
 
              if(billingSlabs.get(0).getType().equals(BillingSlab.TypeEnum.RATE)){
                  BigDecimal uomVal = new BigDecimal(tradeUnit.getUomValue());
-                 tradeUnitFees.add(billingSlabs.get(0).getRate().multiply(uomVal));
+                 
+                 if(license.getLicenseType().equals(TradeLicense.LicenseTypeEnum.PERMANENT))
+            	 { 
+            		 int numberOfYears = getLicensePeriod(license);
+            		 tradeUnitFees.add(billingSlabs.get(0).getRate().multiply(uomVal).multiply(new BigDecimal(numberOfYears)));
+            	 }else
+            	 {
+            		 tradeUnitFees.add(billingSlabs.get(0).getRate().multiply(uomVal));
+            	 }
+                 
                  //tradeUnitTotalFee = tradeUnitTotalFee.add(billingSlabs.get(0).getRate().multiply(uomVal));
              }
            i++;
@@ -424,7 +420,48 @@ public class CalculationService {
 
 
 
+ private int  getLicensePeriod(TradeLicense license)
+ {
 
+	 int numberOfYears = 1 ;
+	 
+	 if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+	 {
+		 HashMap<String,Object> additionalDetailsMap = new HashMap<String,Object>();
+	 
+	 additionalDetailsMap = (HashMap<String, Object>) license.getTradeLicenseDetail().getAdditionalDetail();
+	 
+	 if(!additionalDetailsMap.isEmpty())
+	 {
+		 String tradeYears = additionalDetailsMap.get("licensePeriod")+"";
+		 
+		 if(tradeYears!=null)
+		 {
+			 try {
+				numberOfYears = Integer.parseInt(tradeYears);
+				
+				if(numberOfYears<1)
+				{
+					throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The License Period should be minimum 1 year . ");	
+				}
+				
+			} catch (NumberFormatException e) {
+				
+				log.error("Error in the request json in additionalDetail the tradeNoOfYears is not a valid number");
+				throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+			}
+		 }else
+			 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+		 
+	 }else
+		 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+	 
+	 
+	 }else
+		 throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory");
+ 
+	 return numberOfYears ;
+ }
 
 
 

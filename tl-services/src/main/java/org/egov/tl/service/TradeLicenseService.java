@@ -10,8 +10,11 @@ import org.egov.tl.repository.TLRepository;
 import org.egov.tl.service.notification.EditNotificationService;
 import org.egov.tl.util.TLConstants;
 import org.egov.tl.util.TradeUtil;
+import org.egov.tl.validator.MDMSValidator;
 import org.egov.tl.validator.TLValidator;
 import org.egov.tl.web.models.*;
+import org.egov.tl.web.models.calculation.Calculation;
+import org.egov.tl.web.models.calculation.CalculationRes;
 import org.egov.tl.web.models.user.UserDetailResponse;
 import org.egov.tl.web.models.workflow.BusinessService;
 import org.egov.tl.workflow.ActionValidator;
@@ -29,6 +32,8 @@ import static org.egov.tracer.http.HttpUtils.isInterServiceCall;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @Slf4j
@@ -63,6 +68,8 @@ public class TradeLicenseService {
     private TradeUtil tradeUtil;
 
     private TLBatchService tlBatchService;
+    
+    private MDMSValidator mdmsValidator;
 
     @Value("${workflow.bpa.businessServiceCode.fallback_enabled}")
     private Boolean pickWFServiceNameFromTradeTypeOnly;
@@ -73,7 +80,7 @@ public class TradeLicenseService {
                                TLValidator tlValidator, TLWorkflowService TLWorkflowService,
                                CalculationService calculationService, TradeUtil util, DiffService diffService,
                                TLConfiguration config, EditNotificationService editNotificationService, WorkflowService workflowService,
-                               TradeUtil tradeUtil, TLBatchService tlBatchService) {
+                               TradeUtil tradeUtil, TLBatchService tlBatchService ,MDMSValidator mdmsValidator) {
         this.wfIntegrator = wfIntegrator;
         this.enrichmentService = enrichmentService;
         this.userService = userService;
@@ -89,6 +96,7 @@ public class TradeLicenseService {
         this.workflowService = workflowService;
         this.tradeUtil = tradeUtil;
         this.tlBatchService = tlBatchService;
+        this.mdmsValidator = mdmsValidator ;
     }
 
 
@@ -104,7 +112,11 @@ public class TradeLicenseService {
        if(businessServicefromPath==null)
             businessServicefromPath = businessService_TL;
        tlValidator.validateBusinessService(tradeLicenseRequest,businessServicefromPath);
+       if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+	   {
+       setValidToDateInLicense(tradeLicenseRequest);
        tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
+	   }
        Object mdmsData = util.mDMSCall(tradeLicenseRequest);
        actionValidator.validateCreateRequest(tradeLicenseRequest);
        enrichmentService.enrichTLCreateRequest(tradeLicenseRequest, mdmsData);
@@ -138,6 +150,27 @@ public class TradeLicenseService {
         return tradeLicenseRequest.getLicenses();
 	}
 
+    
+    public CalculationRes estimate(TradeLicenseRequest tradeLicenseRequest,String businessServicefromPath){
+       if(businessServicefromPath==null)
+            businessServicefromPath = businessService_TL;
+       
+       RequestInfo requestInfo = tradeLicenseRequest.getRequestInfo();
+       List<TradeLicense> licenses = tradeLicenseRequest.getLicenses();
+       
+       Object mdmsData = util.mDMSCall(tradeLicenseRequest);
+       mdmsValidator.validateMdmsData(tradeLicenseRequest, mdmsData);
+       
+       CalculationRes calculationResponse = new CalculationRes() ;
+       
+       if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+	   {
+    	   calculationResponse = calculationService.getCalculationEstimates(requestInfo,licenses);
+	   }
+
+        return calculationResponse ;
+	}
+    
     public void validateMobileNumberUniqueness(TradeLicenseRequest request) {
         for (TradeLicense license : request.getLicenses()) {
             for (TradeUnit tradeUnit : license.getTradeLicenseDetail().getTradeUnits()) {
@@ -274,8 +307,13 @@ public class TradeLicenseService {
         else{
             if (businessServicefromPath == null)
                 businessServicefromPath = businessService_TL;
+            
             tlValidator.validateBusinessService(tradeLicenseRequest, businessServicefromPath);
+            if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+     	   {
+            setValidToDateInLicense(tradeLicenseRequest);
             tlValidator.validateValidFromValidToAndTradeUnitsSize(tradeLicenseRequest);
+     	   }
             Object mdmsData = util.mDMSCall(tradeLicenseRequest);
             String businessServiceName = null;
             switch (businessServicefromPath) {
@@ -295,7 +333,10 @@ public class TradeLicenseService {
             actionValidator.validateUpdateRequest(tradeLicenseRequest, businessService);
             enrichmentService.enrichTLUpdateRequest(tradeLicenseRequest, businessService);
             tlValidator.validateUpdate(tradeLicenseRequest, searchResult, mdmsData);
+            if(businessServicefromPath!=null && !businessServicefromPath.equals(businessService_BPA))
+      	   {
             tlValidator.validateNonUpdatableFileds(tradeLicenseRequest, searchResult);
+      	   }
             switch(businessServicefromPath)
             {
                 case businessService_BPA:
@@ -341,6 +382,38 @@ public class TradeLicenseService {
         
     }
 
+    
+    /**
+     * Updates the License Document Id from the dsc service
+     * @param tradeLicenseRequest The update Request
+     * @return Updated TradeLcienses
+     */
+    public List<TradeLicense> updateDscDetails(TradeLicenseRequest tradeLicenseRequest, String businessServicefromPath){
+    	
+    	if (businessServicefromPath == null)
+            businessServicefromPath = businessService_TL;
+    	
+    	if(businessServicefromPath!=businessService_TL)
+    	{
+    		throw new CustomException("BUSINESSSERVICE_NOTALLOWED", " The business service is not allowed in this api call");
+    	}
+    	
+    	 AuditDetails auditDetails = tradeUtil.getAuditDetails(tradeLicenseRequest.getRequestInfo().getUserInfo().getUuid(), false);
+         tradeLicenseRequest.getLicenses().forEach(tradeLicense -> {
+             tradeLicense.setAuditDetails(auditDetails);
+         });
+    	
+    	List<TradeLicense> searchResult = getLicensesWithOwnerInfo(tradeLicenseRequest);
+    	tlValidator.validateDscDetails(tradeLicenseRequest,searchResult);
+    	repository.updateDscDetails(tradeLicenseRequest);
+        
+    	
+        return tradeLicenseRequest.getLicenses();
+        
+    }
+    
+    
+    
     public List<TradeLicense> plainSearch(TradeLicenseSearchCriteria criteria, RequestInfo requestInfo){
         List<TradeLicense> licenses;
         List<String> ids = repository.fetchTradeLicenseIds(criteria);
@@ -374,6 +447,76 @@ public class TradeLicenseService {
         tlBatchService.getLicensesAndPerformAction(serviceName, jobname, requestInfo);
 
 
+    }
+    
+    public void setValidToDateInLicense(TradeLicenseRequest tradeLicenseRequest)
+    {
+    	tradeLicenseRequest.getLicenses().forEach(license -> {
+
+    		if(license.getAction().equalsIgnoreCase(TLConstants.TL_ACTION_INITIATE) && license.getLicenseType().toString().equalsIgnoreCase(TradeLicense.LicenseTypeEnum.PERMANENT.toString()) )
+    		{
+    			
+    			Integer	numberOfYears = null ;
+            	
+            	if(license.getTradeLicenseDetail().getAdditionalDetail()!= null)
+       		 {
+       			 JsonNode additionalDetailsNode = null;
+       		 
+       			additionalDetailsNode = license.getTradeLicenseDetail().getAdditionalDetail();
+       		 
+       		 if(additionalDetailsNode != null)
+       		 {
+       			 String tradeYears = null;
+       			 
+       			 if(additionalDetailsNode.get("licensePeriod") != null)
+       				 tradeYears = additionalDetailsNode.get("licensePeriod").textValue();
+       			 
+       			 if(tradeYears!=null)
+       			 {
+       				 try {
+						numberOfYears = Integer.parseInt(tradeYears);
+						
+						Long ValidfromDate = license.getValidFrom();
+						
+						Calendar fromDate = new GregorianCalendar(); 
+			        	fromDate.setTimeInMillis(ValidfromDate);
+			        	
+			        	fromDate.add(Calendar.YEAR, numberOfYears);
+			        	
+			        	Long calculatedValidToDate = fromDate.getTimeInMillis();
+			        	
+			        	license.setValidTo(calculatedValidToDate);
+						
+						
+       				 } catch (NumberFormatException e) {
+							
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","For Permanent trade type License Period is mandatory"); 
+						}
+    			
+    			
+       			 }
+    		}
+       		 }
+    		}
+    	});
+    	
+    }
+    
+    
+    /**
+     * Searches the tradelicens that are approved but signing is pending based on the given uuid
+     * @param criteria
+     * @param requestInfo
+     * @return
+     */
+    public List<DscDetails> searchDscDetails(TradeLicenseSearchCriteria criteria, RequestInfo requestInfo){
+        List<DscDetails> pendingDigitalsignDocuments = new LinkedList<>();
+        
+        tlValidator.validateDscSearch(criteria,requestInfo);
+        
+        pendingDigitalsignDocuments = repository.getDscDetails(criteria);
+       
+       return pendingDigitalsignDocuments;
     }
 
 }

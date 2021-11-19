@@ -1,0 +1,1 @@
+ALTER TABLE eg_tl_address ADD COLUMN ward character varying(64);

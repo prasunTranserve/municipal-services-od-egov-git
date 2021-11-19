@@ -5,6 +5,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tl.config.TLConfiguration;
 import org.egov.tl.producer.Producer;
 import org.egov.tl.repository.builder.TLQueryBuilder;
+import org.egov.tl.repository.rowmapper.TLDigitalSignedCertificateRowMapper;
 import org.egov.tl.repository.rowmapper.TLRowMapper;
 import org.egov.tl.web.models.*;
 import org.egov.tl.workflow.WorkflowService;
@@ -28,6 +29,8 @@ public class TLRepository {
     private TLQueryBuilder queryBuilder;
 
     private TLRowMapper rowMapper;
+    
+    private TLDigitalSignedCertificateRowMapper dscRowMapper;
 
     private Producer producer;
 
@@ -38,13 +41,14 @@ public class TLRepository {
 
     @Autowired
     public TLRepository(JdbcTemplate jdbcTemplate, TLQueryBuilder queryBuilder, TLRowMapper rowMapper,
-                        Producer producer, TLConfiguration config, WorkflowService workflowService) {
+                        Producer producer, TLConfiguration config, WorkflowService workflowService , TLDigitalSignedCertificateRowMapper dscRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.queryBuilder = queryBuilder;
         this.rowMapper = rowMapper;
         this.producer = producer;
         this.config = config;
         this.workflowService = workflowService;
+        this.dscRowMapper =dscRowMapper ;
     }
 
 
@@ -61,6 +65,22 @@ public class TLRepository {
         sortChildObjectsById(licenses);
         return licenses;
     }
+    
+    
+    /**
+     * Searches not signed document details in database
+     *
+     * @param criteria The tradeLicense Search criteria
+     * @return List of DscDetails 
+     */
+    public List<DscDetails> getDscDetails(TradeLicenseSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getTLDscDetailsQuery(criteria, preparedStmtList);
+        List<DscDetails> dscDetails =  jdbcTemplate.query(query, preparedStmtList.toArray(), dscRowMapper);
+        return dscDetails;
+    }
+    
+    
 
     /**
      * Pushes the request on save topic
@@ -106,6 +126,16 @@ public class TLRepository {
 
     }
 
+    
+    
+    public void updateDscDetails(TradeLicenseRequest tradeLicenseRequest)
+    {
+    	RequestInfo requestInfo = tradeLicenseRequest.getRequestInfo();
+        List<TradeLicense> licenses = tradeLicenseRequest.getLicenses();
+        
+       producer.push(config.getUpdateDscDetailsTopic(), new TradeLicenseRequest(requestInfo, licenses));
+        
+    }
 
 
 

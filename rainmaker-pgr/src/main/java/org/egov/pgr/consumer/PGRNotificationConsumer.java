@@ -291,26 +291,27 @@ public class PGRNotificationConsumer {
 			
 			if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN))
 			{
-				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
+				setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
+				//In case of escalation level 4 employee tenant id is od .
 				
-				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
-				
-				if(!StringUtils.isEmpty(department))
-				{
-					setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER4,department,serviceReq,actionInfo,requestInfo);
-				}else
-					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
+//				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
+//				
+//				if(!StringUtils.isEmpty(department))
+//				{
+					setSMSRequestUsingRoleAndDepartment(smsRequestsTobeSent,PGRConstants.TENANT_ID,PGRConstants.ROLE_ESCALATION_OFFICER4,null,serviceReq,actionInfo,requestInfo);
+//				}else
+//					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
 				
 			}
 			
@@ -374,26 +375,26 @@ public class PGRNotificationConsumer {
 			
 			if(actionInfo.getAction()!=null && actionInfo.getAction().equals(WorkFlowConfigs.ACTION_OPEN))
 			{
-				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_GRO,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER1,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER2,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
-				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
+				setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,serviceReq.getTenantId(),PGRConstants.ROLE_ESCALATION_OFFICER3,null,serviceReq,actionInfo,requestInfo);
 			}else if(WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING.equalsIgnoreCase(serviceReq.getStatus().toString()))
 			{
 				
-				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
-				
-				if(!StringUtils.isEmpty(department))
-				{
-					setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.ROLE_ESCALATION_OFFICER4,department,serviceReq,actionInfo,requestInfo);
-				}else
-					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
+//				String department =  notificationService.getDepartmentFromServiceCode(serviceReq, requestInfo);
+//				
+//				if(!StringUtils.isEmpty(department))
+//				{
+					setEmailRequestUsingRoleAndDepartment(emailRequestsTobeSent,PGRConstants.TENANT_ID,PGRConstants.ROLE_ESCALATION_OFFICER4,null,serviceReq,actionInfo,requestInfo);
+//				}else
+//					log.info(" Department not found for the complaint with service code ",serviceReq.getServiceCode());				
 				
 			}
 			
@@ -726,13 +727,13 @@ public class PGRNotificationConsumer {
 	 * @param requestInfo
 	 * @return
 	 */
-	public List<SMSRequest> setSMSRequestUsingRoleAndDepartment(List<SMSRequest> smsRequets , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
+	public List<SMSRequest> setSMSRequestUsingRoleAndDepartment(List<SMSRequest> smsRequets ,String tenantId , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
 	{
 
 
 		List<Map<String, String>> employeesList = null;
 		try {
-			employeesList = notificationService.getEmployeeDetailsOnDepartmentRoleBased(serviceReq.getTenantId(),department,role,requestInfo);
+			employeesList = notificationService.getEmployeeDetailsOnDepartmentRoleBased(tenantId,department,role,requestInfo);
 		} catch (Exception e1) {
 			log.error("  Error in fetching the employee details with name   ");
 			e1.printStackTrace();
@@ -746,6 +747,45 @@ public class PGRNotificationConsumer {
 					log.info("  No mobile number found for the employee with name   {}",employee.get("name"));
 					continue;
 				}
+				//Escalated level4 employee can get notifications only if the complaints are assigned to him
+				if(role.equalsIgnoreCase(PGRConstants.ROLE_ESCALATION_OFFICER4))
+				{
+					String employeeUuid = employee.get("uuid");;
+					List<String> applicableServiceCodes = pGRUtils.getApplicableServiceCodes(requestInfo,employeeUuid);
+					
+					if(applicableServiceCodes!=null && !applicableServiceCodes.isEmpty() )
+					{
+						List<String> applicableServiceCodesList = new ArrayList<String>(Arrays.asList(applicableServiceCodes.get(0).split(",")));
+						if(!applicableServiceCodesList.contains(serviceReq.getServiceCode()))
+							continue ;
+					}else
+						continue;
+				}
+				
+				if(role.equalsIgnoreCase(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				{
+
+					String roleCodes = employee.get("roleCodes").replace("[", "").replace("]", "");
+					
+					List<String> rolesList = new ArrayList<String>(Arrays.asList(roleCodes.split(",")));
+					
+					if(rolesList.contains(PGRConstants.ROLE_ESCALATION_OFFICER_BUILDING_PLAN_ASSIGNEE))
+					{
+						List<String>  menuPathList = new ArrayList<>();
+						menuPathList.add("BuildingPermission");
+						
+						List<String> applicableServiceCodes = pGRUtils.getBuildingPermissionServiceCodes(tenantId, "menuPath", menuPathList.toString(), requestInfo) ;
+						
+						if(applicableServiceCodes!=null)
+						{
+							if(!applicableServiceCodes.contains(serviceReq.getServiceCode()))
+								continue ;
+						}
+						
+					}
+				}
+				
+				
 				String message = getMessageForSMS(serviceReq, actionInfo, requestInfo, PGRConstants.ROLE_EMPLOYEE);
 				if (StringUtils.isEmpty(message))
 					continue;
@@ -772,7 +812,7 @@ public class PGRNotificationConsumer {
 	 * @param requestInfo
 	 * @return
 	 */
-	public List<EmailRequest> setEmailRequestUsingRoleAndDepartment(List<EmailRequest> emailRequestsTobeSent , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
+	public List<EmailRequest> setEmailRequestUsingRoleAndDepartment(List<EmailRequest> emailRequestsTobeSent ,String tenantId , String role ,String department ,Service serviceReq, ActionInfo actionInfo, RequestInfo requestInfo)
 	{
 
 
@@ -781,7 +821,7 @@ public class PGRNotificationConsumer {
 
 
 		
-		List<Map<String, String>>  employeesList =  notificationService.getEmployeeDetailsOnDepartmentRoleBased(serviceReq.getTenantId(),department,role,requestInfo);
+		List<Map<String, String>>  employeesList =  notificationService.getEmployeeDetailsOnDepartmentRoleBased(tenantId,department,role,requestInfo);
 
 		for (Map<String, String> employee : employeesList) {
 			try {
@@ -791,6 +831,45 @@ public class PGRNotificationConsumer {
 					log.info("  No email Id found for the employee with name  {} ",employee.get("name"));
 					continue;
 				}
+				
+				//Escalated level4 employee can get notifications only if the complaints are assigned to him
+				if(role.equalsIgnoreCase(PGRConstants.ROLE_ESCALATION_OFFICER4))
+				{
+					String employeeUuid = employee.get("uuid");;
+					List<String> applicableServiceCodes = pGRUtils.getApplicableServiceCodes(requestInfo,employeeUuid);
+					
+					if(applicableServiceCodes!=null && !applicableServiceCodes.isEmpty() )
+					{
+						List<String> applicableServiceCodesList = new ArrayList<String>(Arrays.asList(applicableServiceCodes.get(0).split(",")));
+						if(!applicableServiceCodesList.contains(serviceReq.getServiceCode()))
+							continue ;
+					}else
+						continue;
+				}
+				
+				if(role.equalsIgnoreCase(PGRConstants.ROLE_ESCALATION_OFFICER1))
+				{
+
+					String roleCodes = employee.get("roleCodes").replace("[", "").replace("]", "");
+					
+					List<String> rolesList = new ArrayList<String>(Arrays.asList(roleCodes.split(",")));
+					
+					if(rolesList.contains(PGRConstants.ROLE_ESCALATION_OFFICER_BUILDING_PLAN_ASSIGNEE))
+					{
+						List<String>  menuPathList = new ArrayList<>();
+						menuPathList.add("BuildingPermission");
+						
+						List<String> applicableServiceCodes = pGRUtils.getBuildingPermissionServiceCodes(tenantId, "menuPath", menuPathList.toString(), requestInfo) ;
+						
+						if(applicableServiceCodes!=null)
+						{
+							if(!applicableServiceCodes.contains(serviceReq.getServiceCode()))
+								continue ;
+						}
+						
+					}
+				}
+				
 				String message = getMessageForEmail(serviceReq, actionInfo, requestInfo, PGRConstants.ROLE_EMPLOYEE);
 			    if (StringUtils.isEmpty(message))
 			        continue;
