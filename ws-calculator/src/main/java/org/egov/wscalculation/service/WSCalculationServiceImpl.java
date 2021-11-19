@@ -283,14 +283,14 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		LocalDateTime date = LocalDateTime.now();
 		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
 		List<String> tenantIds = new ArrayList<>();
-		if(wsCalculationConfiguration.getSchedulerTenants().trim().equalsIgnoreCase("ALL")) {
+		if(StringUtils.hasText(wsCalculationConfiguration.getSchedulerTenants()) && wsCalculationConfiguration.getSchedulerTenants().trim().equalsIgnoreCase("ALL")) {
 			log.info("Processing for all tenants");
 			tenantIds = wSCalculationDao.getTenantId();
 		} else {
-			String tenants = wsCalculationConfiguration.getSchedulerTenants().trim();
+			String tenants = wsCalculationConfiguration.getSchedulerTenants();
 			log.info("Processing for specific tenants: " + tenants);
 			if(StringUtils.hasText(tenants)) {
-				tenantIds = Arrays.asList(tenants.split(","));
+				tenantIds = Arrays.asList(tenants.trim().split(","));
 			}
 		}
 		
@@ -302,7 +302,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		
 		if (tenantIds.isEmpty())
 			return;
-		log.info("Tenant Ids : " + tenantIds.toString());
+		log.info("Effective processing tenant Ids : " + tenantIds.toString());
 		tenantIds.forEach(tenantId -> {
 			tenantId = tenantId.trim();
 			demandService.generateDemandForTenantId(tenantId, requestInfo);

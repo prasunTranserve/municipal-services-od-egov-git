@@ -140,8 +140,9 @@ public class DemandGenerationConsumer {
 			wSCalculationServiceImpl.bulkDemandGeneration(request, masterMap);
 			String connectionNoStrings = request.getCalculationCriteria().stream()
 					.map(criteria -> criteria.getConnectionNo()).collect(Collectors.toSet()).toString();
-			StringBuilder str = new StringBuilder("Demand generated Successfully. For records : ")
-					.append(connectionNoStrings);
+			String tenantId = request.getCalculationCriteria().stream().map(criteria -> criteria.getTenantId()).findFirst().orElse("Not listed");
+			StringBuilder str = new StringBuilder("Demand generated Successfully. For tenantId : ")
+					.append(tenantId).append(". For records: ").append(connectionNoStrings);
 			log.info(str.toString());
 		} catch (Exception ex) {
 			log.error("Demand generation error: ", ex);
