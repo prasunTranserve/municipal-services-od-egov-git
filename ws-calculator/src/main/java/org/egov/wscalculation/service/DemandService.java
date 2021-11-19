@@ -113,6 +113,7 @@ public class DemandService {
 				.get(WSCalculationConstant.BILLING_PERIOD);
 		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
 		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+		log.info(String.format("Billing period startDate: %s, endDate: %s", fromDate.toString(), toDate.toString()));
 		
 		// List that will contain Calculation for new demands
 				List<Calculation> createCalculations = new LinkedList<>();
@@ -717,6 +718,7 @@ public class DemandService {
 				calculationCriteriaList.add(calculationCriteria);
 				CalculationReq calculationReq = CalculationReq.builder().calculationCriteria(calculationCriteriaList)
 						.requestInfo(requestInfo).isconnectionCalculation(true).build();
+				log.info("Generating demand for connectionNo: " + connectionNo);
 				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
 				// log.info("Prepared Statement" + calculationRes.toString());
 

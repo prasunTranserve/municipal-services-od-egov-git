@@ -245,4 +245,10 @@ public class WSCalculationConfiguration {
 
 	@Value("${egov.demand.manualmonthnumber}")
 	private int demandManualMonthNo;
+	
+	@Value("${egov.demand.tenants}")
+	private String schedulerTenants;
+	
+	@Value("${egov.demand.tenants.skip}")
+	private String skipSchedulerTenants;
 }

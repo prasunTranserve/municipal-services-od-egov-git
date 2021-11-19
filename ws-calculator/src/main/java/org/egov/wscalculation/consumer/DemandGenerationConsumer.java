@@ -142,6 +142,7 @@ public class DemandGenerationConsumer {
 					.map(criteria -> criteria.getConnectionNo()).collect(Collectors.toSet()).toString();
 			StringBuilder str = new StringBuilder("Demand generated Successfully. For records : ")
 					.append(connectionNoStrings);
+			log.info(str.toString());
 		} catch (Exception ex) {
 			log.error("Demand generation error: ", ex);
 			producer.push(errorTopic, request);
