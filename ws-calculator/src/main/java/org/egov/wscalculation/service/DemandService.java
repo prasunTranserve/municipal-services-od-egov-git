@@ -115,6 +115,7 @@ public class DemandService {
 				.get(WSCalculationConstant.BILLING_PERIOD);
 		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
 		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+		log.info(String.format("Billing period startDate: %s, endDate: %s", fromDate.toString(), toDate.toString()));
 		
 		// List that will contain Calculation for new demands
 				List<Calculation> createCalculations = new LinkedList<>();
@@ -211,6 +212,9 @@ public class DemandService {
 					.minimumAmountPayable(minimumPayableAmount).tenantId(tenantId).taxPeriodFrom(fromDate)
 					.taxPeriodTo(toDate).consumerType("waterConnection").businessService(businessService)
 					.status(StatusEnum.valueOf("ACTIVE")).billExpiryTime(expiryDate).build());
+			
+			log.info(String.format("Generating demand for tenantId: %s, connectionNo: %s, billPeriodFrom: %s, billPeriodTo: %s",
+					tenantId, consumerCode, fromDate, toDate));
 		}
 		log.info("Demand Object" + demands.toString());
 		List<Demand> demandRes = demandRepository.saveDemand(requestInfo, demands);
@@ -721,6 +725,7 @@ public class DemandService {
 				calculationCriteriaList.add(calculationCriteria);
 				CalculationReq calculationReq = CalculationReq.builder().calculationCriteria(calculationCriteriaList)
 						.requestInfo(requestInfo).isconnectionCalculation(true).build();
+				log.info(String.format("Pushed for demand generation for tenant: %s, connectionNo: %s", tenantId, connectionNo));
 				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
 				// log.info("Prepared Statement" + calculationRes.toString());
 
