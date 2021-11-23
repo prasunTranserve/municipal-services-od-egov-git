@@ -26,6 +26,20 @@ public class BillingslabQueryBuilder {
 		return queryBuilder.toString();
 	}
 	
+	
+	/**
+	 * Builds search query for searching billing slabs from db
+	 * @param criteria
+	 * @param preparedStmtList
+	 * @return
+	 */
+	public String getSearchQueryAudit(BillingSlabSearchCriteria criteria, List<Object> preparedStmtList) {
+		StringBuilder queryBuilder = new StringBuilder();
+		queryBuilder.append("SELECT * from eg_tl_billingslab_audit ");
+		addWhereClause(queryBuilder, criteria, preparedStmtList);
+		return queryBuilder.toString();
+	}
+	
 	/**
 	 * Builds the where clause for the search query. 
 	 * @param queryBuilder

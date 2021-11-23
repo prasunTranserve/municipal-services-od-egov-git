@@ -20,6 +20,7 @@ import org.egov.tlcalculator.utils.ResponseInfoFactory;
 import org.egov.tlcalculator.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.jayway.jsonpath.JsonPath;
@@ -85,6 +86,30 @@ public class BillingslabService {
 				.billingSlab(billingSlabReq.getBillingSlab()).build();
 	}
 	
+	
+	public ModifyBillingSlabRes modifySlabs(BillingSlabReq billingSlabRequestWithDeleteBillingSlabs ,BillingSlabReq billingSlabRequestWithCreateBillingSlabs) {
+		
+		if(!CollectionUtils.isEmpty(billingSlabRequestWithCreateBillingSlabs.getBillingSlab()))
+		{
+		enrichSlabsForCreate(billingSlabRequestWithCreateBillingSlabs);
+		}
+		if(!CollectionUtils.isEmpty(billingSlabRequestWithDeleteBillingSlabs.getBillingSlab()))
+		{
+		enrichSlabsForUpdate(billingSlabRequestWithDeleteBillingSlabs);
+		}
+		
+		ModifyBillingSlabReq modifyBillingSlabRequest = new ModifyBillingSlabReq();
+		modifyBillingSlabRequest.setRequestInfo(billingSlabRequestWithDeleteBillingSlabs.getRequestInfo());
+		modifyBillingSlabRequest.setCreateBillingSlabs(billingSlabRequestWithCreateBillingSlabs.getBillingSlab());
+		modifyBillingSlabRequest.setDeleteBillingSlabs(billingSlabRequestWithDeleteBillingSlabs.getBillingSlab());
+		
+		
+			producer.push(billingSlabConfigs.getPersisterModifyTopic() , modifyBillingSlabRequest);
+		
+		return ModifyBillingSlabRes.builder().responseInfo(factory.createResponseInfoFromRequestInfo(modifyBillingSlabRequest.getRequestInfo(), true))
+				.createBillingSlabs(modifyBillingSlabRequest.getCreateBillingSlabs()).deleteBillingSlabs(modifyBillingSlabRequest.getDeleteBillingSlabs()).build();
+	}
+	
 	/**
 	 * Service layer for searching billing slabs from the db
 	 * @param criteria
@@ -94,6 +119,19 @@ public class BillingslabService {
 	public BillingSlabRes searchSlabs(BillingSlabSearchCriteria criteria, RequestInfo requestInfo) {
 		List<Object> preparedStmtList = new ArrayList<>();
 		String query = queryBuilder.getSearchQuery(criteria, preparedStmtList);
+		return BillingSlabRes.builder().responseInfo(factory.createResponseInfoFromRequestInfo(requestInfo, true))
+				.billingSlab(repository.getDataFromDB(query, preparedStmtList)).build();
+	}
+	
+	/**
+	 * Service layer for searching billing slabs from the eg_tl_audit
+	 * @param criteria
+	 * @param requestInfo
+	 * @return
+	 */
+	public BillingSlabRes searchSlabsAudit(BillingSlabSearchCriteria criteria, RequestInfo requestInfo) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getSearchQueryAudit(criteria, preparedStmtList);
 		return BillingSlabRes.builder().responseInfo(factory.createResponseInfoFromRequestInfo(requestInfo, true))
 				.billingSlab(repository.getDataFromDB(query, preparedStmtList)).build();
 	}

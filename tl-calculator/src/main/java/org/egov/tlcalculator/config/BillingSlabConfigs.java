@@ -16,4 +16,7 @@ public class BillingSlabConfigs {
 	@Value("${kafka.topics.update.service}")
 	public String persisterUpdateTopic;
 	
+	@Value("${kafka.topics.modify.service}")
+	public String persisterModifyTopic;
+	
 }
