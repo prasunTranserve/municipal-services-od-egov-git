@@ -639,7 +639,7 @@ public class DemandService {
 
 		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE, demand.getDemandDetails());
 		if (latestRebateDemandDetail != null) {
-			updateTaxAmount(rebate, latestRebateDemandDetail);
+			updateTaxAmount(rebate.negate(), latestRebateDemandDetail);
 			isRebateUpdated = true;
 		}
 		
