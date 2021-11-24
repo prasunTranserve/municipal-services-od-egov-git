@@ -211,9 +211,9 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		for (CalculationCriteria criteria : request.getCalculationCriteria()) {
 			Map<String, List> estimationMap = estimationService.getEstimationMap(criteria, request.getRequestInfo(),
 					masterMap);
-			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
-					.get(WSCalculationConstant.Billing_Period_Master);
-			masterDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterMap);
+//			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
+//					.get(WSCalculationConstant.Billing_Period_Master);
+//			masterDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterMap);
 			Calculation calculation = getCalculation(request.getRequestInfo(), criteria, estimationMap, masterMap, true);
 			calculations.add(calculation);
 		}
