@@ -233,7 +233,6 @@ public class BillingslabValidator {
 						.applicationType(slab.getApplicationType())
 						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
 						.structureType(slab.getStructureType()).uom(slab.getUom())
-						.type(null == slab.getType() ? null : slab.getType().toString())
 						.uomValue(slab.getFromUom()).build();
 				BillingSlabRes fromSlabRes = service.searchSlabs(fromCriteria, createBillingSlabReq.getRequestInfo());
 				if(!CollectionUtils.isEmpty(fromSlabRes.getBillingSlab())) {
@@ -251,7 +250,6 @@ public class BillingslabValidator {
 						.applicationType(slab.getApplicationType())
 						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
 						.structureType(slab.getStructureType()).uom(slab.getUom())
-						.type(null == slab.getType() ? null : slab.getType().toString())
 						.uomValue(slab.getToUom()).build();
 				BillingSlabRes toSlabRes = service.searchSlabs(toCriteria, createBillingSlabReq.getRequestInfo());
 				if(!CollectionUtils.isEmpty(toSlabRes.getBillingSlab())) {
@@ -328,7 +326,6 @@ public class BillingslabValidator {
 						.applicationType(slab.getApplicationType())
 						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
 						.structureType(slab.getStructureType()).uom(slab.getUom())
-						.type(null == slab.getType() ? null : slab.getType().toString())
 						.from(slab.getFromUom()).to(slab.getToUom()).build();
 				BillingSlabRes slabRes = service.searchSlabs(criteria, createBillingSlabReq.getRequestInfo());
 				if(!CollectionUtils.isEmpty(slabRes.getBillingSlab())) {
