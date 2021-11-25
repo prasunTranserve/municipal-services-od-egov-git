@@ -318,7 +318,7 @@ public class BillingslabValidator {
 	
 	public void UomNullDuplicateCheck(BillingSlabReq createBillingSlabReq, Map<String, String> errorMap ,List<String> deleteBillingSlabids) {
 
-		createBillingSlabReq.getBillingSlab().parallelStream().forEach(slab -> {
+		createBillingSlabReq.getBillingSlab().forEach(slab -> {
 			if(slab.getUom()== null && slab.getFromUom()==null && slab.getToUom()==null)
 			{
 				BillingSlabSearchCriteria criteria = BillingSlabSearchCriteria.builder().tenantId(slab.getTenantId()).accessoryCategory(slab.getAccessoryCategory())
