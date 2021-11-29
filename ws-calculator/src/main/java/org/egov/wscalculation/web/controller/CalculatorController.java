@@ -10,6 +10,7 @@ import org.egov.wscalculation.service.WSCalculationService;
 import org.egov.wscalculation.service.WSCalculationServiceImpl;
 import org.egov.wscalculation.util.ResponseInfoFactory;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
+import org.egov.wscalculation.web.models.BillSchedulerWrapper;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.CalculationRes;
@@ -83,10 +84,14 @@ public class CalculatorController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-
 	@PostMapping("/_jobscheduler")
 	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
 		wSCalculationService.generateDemandBasedOnTimePeriod(requestInfoWrapper.getRequestInfo());
+	}
+	
+	@PostMapping("/_billscheduler")
+	public void billScheduler(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
+		wSCalculationService.generateDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
 	}
 	
 	@PostMapping("/_applyAdhocTax")
