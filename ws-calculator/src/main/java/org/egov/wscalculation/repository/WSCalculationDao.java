@@ -3,6 +3,7 @@ package org.egov.wscalculation.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -21,7 +22,7 @@ public interface WSCalculationDao {
 	
 	int isMeterReadingConnectionExist(List<String> ids);
 	
-	List<String> getConnectionsNoList(String tenantId, String connectionType);
+	List<String> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria);
 	
 	List<String> getTenantId();
 	

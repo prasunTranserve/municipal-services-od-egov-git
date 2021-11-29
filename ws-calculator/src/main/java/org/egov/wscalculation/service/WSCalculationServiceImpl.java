@@ -20,9 +20,11 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
+import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
+import org.egov.wscalculation.web.models.DemandWard;
 import org.egov.wscalculation.web.models.TaxHeadCategory;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
@@ -305,7 +307,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		log.info("Effective processing tenant Ids : " + tenantIds.toString());
 		tenantIds.forEach(tenantId -> {
 			tenantId = tenantId.trim();
-			demandService.generateDemandForTenantId(tenantId, requestInfo);
+			demandService.generateDemandForTenantId(tenantId, requestInfo, null);
 		});
 	}
 	
@@ -373,6 +375,94 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			calculations.add(calculation);
 		}
 		return calculations;
+	}
+	
+	@Override
+	public void generateDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
+		ValidateRequest(billCriteria);
+		enrichRequest(billCriteria);
+		enrichConfiguration(billCriteria);
+
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime date = LocalDateTime.now();
+		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
+		List<String> tenantIds = new ArrayList<>();
+		boolean isAll = billCriteria.getTenants().stream().filter(tenant -> tenant.equalsIgnoreCase("ALL")).findAny().orElse(null) == null ? false : true;
+		if(isAll) {
+			log.info("Processing for all tenants");
+			tenantIds = wSCalculationDao.getTenantId();
+		} else {
+			log.info("Processing for specific tenants");
+			tenantIds = billCriteria.getTenants();
+		}
+
+		boolean isNone = billCriteria.getSkipTenants().stream().filter(tenant -> tenant.equalsIgnoreCase("NONE")).findAny().orElse(null) == null ? false : true;
+		if(!isNone) {
+			log.info("Skip tenants: " + billCriteria.getSkipTenants());
+			tenantIds = tenantIds.stream().filter(tenant -> !billCriteria.getSkipTenants().contains(tenant)).collect(Collectors.toList());
+		}
+		if (tenantIds.isEmpty()) {
+			log.info("Effective processing tenant Ids : " + tenantIds.toString());
+			return;
+		}
+
+		log.info("Effective processing tenant Ids : " + tenantIds.toString());
+		tenantIds.forEach(tenantId -> {
+			demandService.generateDemandForTenantId(tenantId, requestInfo, billCriteria);
+		});
+
+
+	}
+
+	private void ValidateRequest(BillSchedulerCriteria billCriteria) {
+
+		if(billCriteria.getTenants()==null || billCriteria.getTenants().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty");
+		}
+
+		if(billCriteria.getSkipTenants()==null || billCriteria.getSkipTenants().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Skip tenants are missing or empty");
+		}
+
+		if(billCriteria.isSpecificMonth()) {
+			if(billCriteria.getDemandMonth() <= 0) {
+				throw new CustomException("INVALID_REQUEST", "Demand month should be present with positive value");
+			}
+
+			if(billCriteria.getDemandYear() <= 0) {
+				throw new CustomException("INVALID_REQUEST", "Demand year should be present with positive value");
+			}
+		}
+
+		if(billCriteria.getWards() != null && !billCriteria.getWards().isEmpty()) {
+			for (DemandWard ward : billCriteria.getWards()) {
+				if(!StringUtils.hasText(ward.getTenant())) {
+					throw new CustomException("INVALID_REQUEST", "Tenant is not present in specificWards section");
+				}
+
+				if(ward.getWards() == null ) {
+					throw new CustomException("INVALID_REQUEST", "wards can not be empty");
+				}
+			}
+		}
+	}
+
+	private void enrichRequest(BillSchedulerCriteria billCriteria) {
+		billCriteria.setTenants(billCriteria.getTenants().stream().map(String::trim).collect(Collectors.toList()));
+		billCriteria.setSkipTenants(billCriteria.getSkipTenants().stream().map(String::trim).collect(Collectors.toList()));
+	}
+
+	private void enrichConfiguration(BillSchedulerCriteria billCriteria) {
+		wsCalculationConfiguration.setDemandStartEndDateManuallyConfigurable(billCriteria.isSpecificMonth());
+		wsCalculationConfiguration.setDemandManualMonthNo(billCriteria.getDemandMonth());
+		wsCalculationConfiguration.setDemandManualYear(billCriteria.getDemandYear());
+		if(billCriteria.getSpecialRebateMonths() != null) {
+			wsCalculationConfiguration.setSpecialRebateMonths(billCriteria.getSpecialRebateMonths().stream().map(String::valueOf).collect(Collectors.joining(",")));
+		} else {
+			wsCalculationConfiguration.setSpecialRebateMonths(null);
+		}
+
+		wsCalculationConfiguration.setSpecialRebateYear(String.valueOf(billCriteria.getSpecialRebateYear()));
 	}
 	
 }
