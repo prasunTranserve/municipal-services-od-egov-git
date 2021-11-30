@@ -36,6 +36,8 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 	public static final String dateFormat = "dd-MM-yy";
 	
 	public static final BigDecimal appplyRebate = new BigDecimal("0.98");
+	
+	public static final BigDecimal rebatePercentage = new BigDecimal("0.02");
 
 	private String tenantId;
 
@@ -153,7 +155,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		try {
 			ConnectionDTO connectionDTO = new ConnectionDTO();
 			transformWnSConnection(connectionDTO, connection);
-			transformDemandV3(connectionDTO, connection);
+			transformDemandV4(connectionDTO, connection);
 			return connectionDTO;
 		} catch (Exception e) {
 			MigrationUtility.addError(connection.getConnectionNo(), e.getLocalizedMessage());
@@ -557,6 +559,183 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
 					currentDemandDetails.add(demandDetailDTO);
 				}
+				demandDTO.setDemandDetails(currentDemandDetails);
+				demandDTOs.add(demandDTO);
+				
+				connectionDTO.setWaterDemands(demandDTOs);
+			}
+			
+		}
+	}
+	
+	private void transformDemandV4(ConnectionDTO connectionDTO, WnsConnection connection) {
+		List<WnsDemand> demands = connection.getDemands();
+		if(demands==null || demands.isEmpty())
+			return;
+		
+		// get the latest demand
+		WnsDemand demand = demands.stream()
+				.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+				.findFirst().orElse(null);
+		
+		if(demand == null) {
+			return;
+		}
+		
+		boolean isDemandRequired = true;
+		boolean isArrearDemandRequired = false;
+		
+		BigDecimal totalOutStanding = BigDecimal.ZERO;
+		BigDecimal waterCharge = MigrationUtility.convertToBigDecimal(demand.getWaterCharges());
+		//BigDecimal sewerageFee = MigrationUtility.convertToBigDecimal(demand.getSewerageFee());
+		BigDecimal arrearAmount =  MigrationUtility.convertToBigDecimal(demand.getArrear());
+		BigDecimal collectedAmount = MigrationUtility.convertToBigDecimal(demand.getCollectedAmount());
+		BigDecimal rebateAmount = waterCharge.multiply(rebatePercentage).setScale(0, RoundingMode.HALF_UP);
+		
+//		BigDecimal withRebatePayable = arrearAmount.add(waterCharge.multiply(appplyRebate).setScale(0, RoundingMode.HALF_UP));
+//		totalOutStanding = withRebatePayable.subtract(collectedAmount);
+		
+		BigDecimal payableAmount = arrearAmount.add(waterCharge);
+		totalOutStanding = payableAmount.subtract(collectedAmount);
+		
+		if(totalOutStanding.compareTo(waterCharge)>0) {
+			isArrearDemandRequired = true;
+		} else if(totalOutStanding.compareTo(BigDecimal.ZERO)==0) {
+			isDemandRequired = false;
+//		} else if(connectionDTO.isWater() && connectionDTO.isSewerage() && totalOutStanding.compareTo(waterCharge)>0) {
+//			isArrearDemandRequired = true;
+		}
+		
+		if(isDemandRequired) {
+//			if(connectionDTO.isSewerage()) {
+//				List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
+//				if(isArrearDemandRequired && !connectionDTO.isWater()) {
+//					DemandDTO arrearDemandDTO = new DemandDTO();
+//					arrearDemandDTO.setTenantId(connectionDTO.getSewerageConnection().getTenantId());
+//					arrearDemandDTO.setTaxPeriodFrom(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodFrom(), dateFormat));
+//					arrearDemandDTO.setTaxPeriodTo(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodTo(), dateFormat));
+//					
+//					// Arrear for only sewerage
+//					DemandDetailDTO arrearDemandDetailDTO = new DemandDetailDTO();
+//					arrearDemandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+//					arrearDemandDetailDTO.setTaxAmount(arrearAmount);
+//					arrearDemandDetailDTO.setCollectionAmount(collectedAmount.add(sewerageFee.add(arrearAmount).subtract(withRebatePayable)));
+//					
+//					arrearDemandDTO.setDemandDetails(Arrays.asList(arrearDemandDetailDTO));
+//					demandDTOs.add(arrearDemandDTO);
+//				}
+//				
+//				List<DemandDetailDTO> currentDemandDetails = new ArrayList<>();
+//				if(totalOutStanding.compareTo(BigDecimal.ZERO)<0 && !connectionDTO.isWater()) {
+//					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+//					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+//					demandDetailDTO.setTaxAmount(sewerageFee);
+//					demandDetailDTO.setCollectionAmount(sewerageFee);
+//					currentDemandDetails.add(demandDetailDTO);
+//					
+//					DemandDetailDTO AdDemandDetailDTO = new DemandDetailDTO();
+//					AdDemandDetailDTO.setTaxHeadMasterCode("SW_ADVANCE_CARRYFORWARD");
+//					AdDemandDetailDTO.setTaxAmount(totalOutStanding);
+//					AdDemandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+//					currentDemandDetails.add(AdDemandDetailDTO);
+//				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !isArrearDemandRequired && !connectionDTO.isWater()) {
+//					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+//					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+//					demandDetailDTO.setTaxAmount(sewerageFee);
+//					demandDetailDTO.setCollectionAmount(sewerageFee.subtract(totalOutStanding));
+//					currentDemandDetails.add(demandDetailDTO);
+//				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !connectionDTO.isWater()) {
+//					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+//					demandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+//					demandDetailDTO.setTaxAmount(sewerageFee);
+//					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+//					currentDemandDetails.add(demandDetailDTO);
+//				}
+//				
+//				if(!currentDemandDetails.isEmpty()) {
+//					DemandDTO demandDTO = new DemandDTO();
+//					demandDTO.setTenantId(connectionDTO.getSewerageConnection().getTenantId());
+//					demandDTO.setTaxPeriodFrom(MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat));
+//					demandDTO.setTaxPeriodTo(MigrationUtility.getLongDate(demand.getBillingPeriodTo(), dateFormat));
+//					demandDTO.setDemandDetails(currentDemandDetails);
+//					demandDTOs.add(demandDTO);
+//					
+//					connectionDTO.setSewerageDemands(demandDTOs);
+//				}
+//				
+//			}
+			
+			//Water
+			if(connectionDTO.isWater()) {
+				List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
+				if(isArrearDemandRequired) {
+					DemandDTO arrearDemandDTO = new DemandDTO();
+					arrearDemandDTO.setTenantId(connectionDTO.getWaterConnection().getTenantId());
+					arrearDemandDTO.setTaxPeriodFrom(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodFrom(), dateFormat));
+					arrearDemandDTO.setTaxPeriodTo(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodTo(), dateFormat));
+					
+					DemandDetailDTO arrearDemandDetailDTO = new DemandDetailDTO();
+					arrearDemandDetailDTO.setTaxHeadMasterCode("WS_CHARGE");
+					arrearDemandDetailDTO.setTaxAmount(arrearAmount);
+					arrearDemandDetailDTO.setCollectionAmount(collectedAmount);
+					
+					arrearDemandDTO.setDemandDetails(Arrays.asList(arrearDemandDetailDTO));
+					demandDTOs.add(arrearDemandDTO);
+					
+				}
+				
+				DemandDTO demandDTO = new DemandDTO();
+				demandDTO.setTenantId(connectionDTO.getWaterConnection().getTenantId());
+				demandDTO.setTaxPeriodFrom(MigrationUtility.getLongDate(demand.getBillingPeriodFrom(), dateFormat));
+				demandDTO.setTaxPeriodTo(MigrationUtility.getLongDate(demand.getBillingPeriodTo(), dateFormat));
+				List<DemandDetailDTO> currentDemandDetails = new ArrayList<>();
+				if(totalOutStanding.compareTo(BigDecimal.ZERO)<0) {
+					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+					demandDetailDTO.setTaxHeadMasterCode("WS_CHARGE");
+					demandDetailDTO.setTaxAmount(waterCharge);
+					demandDetailDTO.setCollectionAmount(waterCharge);
+					currentDemandDetails.add(demandDetailDTO);
+					
+					// Special Rebate for all demand
+					DemandDetailDTO specialRebateDetailDTO = new DemandDetailDTO();
+					specialRebateDetailDTO.setTaxHeadMasterCode("WS_SPECIAL_REBATE");
+					specialRebateDetailDTO.setTaxAmount(rebateAmount.negate());
+					specialRebateDetailDTO.setCollectionAmount(rebateAmount.negate());
+					currentDemandDetails.add(specialRebateDetailDTO);
+					
+					DemandDetailDTO AdDemandDetailDTO = new DemandDetailDTO();
+					AdDemandDetailDTO.setTaxHeadMasterCode("WS_ADVANCE_CARRYFORWARD");
+					AdDemandDetailDTO.setTaxAmount(totalOutStanding.add(rebateAmount.negate()));
+					AdDemandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+					currentDemandDetails.add(AdDemandDetailDTO);
+				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0 && !isArrearDemandRequired) {
+					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+					demandDetailDTO.setTaxHeadMasterCode("WS_CHARGE");
+					demandDetailDTO.setTaxAmount(waterCharge);
+					demandDetailDTO.setCollectionAmount(waterCharge.subtract(totalOutStanding));
+					currentDemandDetails.add(demandDetailDTO);
+					
+					// Special Rebate for all demand
+					DemandDetailDTO specialRebateDetailDTO = new DemandDetailDTO();
+					specialRebateDetailDTO.setTaxHeadMasterCode("WS_SPECIAL_REBATE");
+					specialRebateDetailDTO.setTaxAmount(rebateAmount.negate());
+					specialRebateDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+					currentDemandDetails.add(specialRebateDetailDTO);
+				} else if(totalOutStanding.compareTo(BigDecimal.ZERO)>0) {
+					DemandDetailDTO demandDetailDTO = new DemandDetailDTO();
+					demandDetailDTO.setTaxHeadMasterCode("WS_CHARGE");
+					demandDetailDTO.setTaxAmount(waterCharge);
+					demandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+					currentDemandDetails.add(demandDetailDTO);
+					
+					// Special Rebate for all demand
+					DemandDetailDTO specialRebateDetailDTO = new DemandDetailDTO();
+					specialRebateDetailDTO.setTaxHeadMasterCode("WS_SPECIAL_REBATE");
+					specialRebateDetailDTO.setTaxAmount(rebateAmount.negate());
+					specialRebateDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+					currentDemandDetails.add(specialRebateDetailDTO);
+				}
+				
 				demandDTO.setDemandDetails(currentDemandDetails);
 				demandDTOs.add(demandDTO);
 				

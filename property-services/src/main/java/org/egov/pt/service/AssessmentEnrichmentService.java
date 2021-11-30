@@ -298,6 +298,11 @@ public class AssessmentEnrichmentService {
 				JsonNode otherDuesNode = propertyAdditionalDetail.get(OTHER_DUES);
 				node.set(OTHER_DUES, otherDuesNode);
 			}
+			
+			if(propertyAdditionalDetail.has(PENDING_FROM)) {
+				JsonNode pendingFrom = propertyAdditionalDetail.get(PENDING_FROM);
+				node.set(PENDING_FROM, pendingFrom);
+			}
 		}
 		
 		request.getAssessment().setAdditionalDetails(node);

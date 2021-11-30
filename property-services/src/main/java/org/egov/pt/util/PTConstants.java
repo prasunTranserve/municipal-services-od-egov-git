@@ -351,6 +351,8 @@ public class PTConstants {
     
     public static final String OTHER_DUES = "otherDues";
     
+    public static final String PENDING_FROM = "pendingFrom";
+    
     public static final String MUTATION_CHARGE = "mutationCharge";
     
     public static final String DECIMAL_REGEX = "^\\d*\\.?\\d+$";

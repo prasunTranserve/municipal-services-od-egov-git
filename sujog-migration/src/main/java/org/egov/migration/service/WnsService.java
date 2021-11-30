@@ -67,19 +67,20 @@ public class WnsService {
 			}
 		}
 		
-		if (conn.isSewerage()) {
-			boolean isSewerageMigrated = false;
-			try {
-				isSewerageMigrated = migrateSewerageConnection(conn);
-				if(isSewerageMigrated) {
-					// success for sewerage connection Migration
-					MigrationUtility.addSuccessForSewerageConnection(conn.getSewerageConnection());
-				}
-			} catch (Exception e) {
-				log.error(e.getLocalizedMessage());
-				MigrationUtility.addError(conn.getSewerageConnection().getOldConnectionNo(), e.getMessage());
-			}
-		}
+		// TODO: As of now we are not migrating sewerage connection.
+//		if (conn.isSewerage()) {
+//			boolean isSewerageMigrated = false;
+//			try {
+//				isSewerageMigrated = migrateSewerageConnection(conn);
+//				if(isSewerageMigrated) {
+//					// success for sewerage connection Migration
+//					MigrationUtility.addSuccessForSewerageConnection(conn.getSewerageConnection());
+//				}
+//			} catch (Exception e) {
+//				log.error(e.getLocalizedMessage());
+//				MigrationUtility.addError(conn.getSewerageConnection().getOldConnectionNo(), e.getMessage());
+//			}
+//		}
 	}
 
 	private boolean migrateSewerageConnection(ConnectionDTO conn) throws Exception {
@@ -255,12 +256,13 @@ public class WnsService {
 			}
 		}
 		
-		if (conn.isSewerage() && conn.getSewerageConnection().getConnectionNo() != null && conn.getSewerageDemands() != null) {
-			boolean isDemandMigrated = migrateSewerageDemand(conn);
-			if(isDemandMigrated) {
-				MigrationUtility.addSuccessForSewerageDemand(conn);
-			}
-		}
+		//TODO: As of now We are not migrating sewerage demand
+//		if (conn.isSewerage() && conn.getSewerageConnection().getConnectionNo() != null && conn.getSewerageDemands() != null) {
+//			boolean isDemandMigrated = migrateSewerageDemand(conn);
+//			if(isDemandMigrated) {
+//				MigrationUtility.addSuccessForSewerageDemand(conn);
+//			}
+//		}
 	}
 
 	private boolean migrateSewerageDemand(ConnectionDTO conn) throws Exception {
