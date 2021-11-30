@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.producer.WSCalculationProducer;
@@ -12,6 +13,7 @@ import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
+import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -126,11 +128,15 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	}
 	
 	@Override
-	public List<String> getConnectionsNoList(String tenantId, String connectionType) {
+	public List<String> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria) {
 		List<Object> preparedStatement = new ArrayList<>();
 		String applicationStatus = WSCalculationConstant.WATER_CONNECTION_APP_STATUS_ACTIVATED_STRING;
 		Boolean isOldApplication = Boolean.FALSE;
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, isOldApplication, preparedStatement);
+		List<String> wards = new ArrayList<>();
+		if(billCriteria != null) {
+			wards = billCriteria.getWards().stream().filter(ward -> ward.getTenant().equalsIgnoreCase(tenantId)).flatMap(ward -> ward.getWards().stream()).map(String::trim).collect(Collectors.toList());
+		}
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, isOldApplication, preparedStatement, wards);
 		log.info("water " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), demandSchedulerRowMapper);
 	}

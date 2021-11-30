@@ -3,10 +3,14 @@ package org.egov.wscalculation.service;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -110,6 +114,10 @@ public class EstimationService {
 		
 		mDataService.setWaterConnectionMasterValues(requestInfo, criteria.getTenantId(), billingSlabMaster,
 				timeBasedExemptionMasterMap);
+		
+		ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterData
+				.get(WSCalculationConstant.Billing_Period_Master);
+		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData);
 		// mDataService.setWaterConnectionMasterValues(requestInfo, tenantId,
 		// billingSlabMaster,
 		// timeBasedExemptionMasterMap);
@@ -117,7 +125,7 @@ public class EstimationService {
 		// 		requestInfo);
 		BigDecimal taxAmt = getWaterEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo);
 		List<TaxHeadEstimate> taxHeadEstimates = getEstimatesForTax(taxAmt, criteria.getWaterConnection(),
-				timeBasedExemptionMasterMap, RequestInfoWrapper.builder().requestInfo(requestInfo).build());
+				timeBasedExemptionMasterMap, RequestInfoWrapper.builder().requestInfo(requestInfo).build(), masterData);
 
 		Map<String, List> estimatesAndBillingSlabs = new HashMap<>();
 		estimatesAndBillingSlabs.put("estimates", taxHeadEstimates);
@@ -216,7 +224,8 @@ public class EstimationService {
 	 */
 	private List<TaxHeadEstimate> getEstimatesForTax(BigDecimal waterCharge,
 			WaterConnection connection,
-			Map<String, JSONArray> timeBasedExemptionsMasterMap, RequestInfoWrapper requestInfoWrapper) {
+			Map<String, JSONArray> timeBasedExemptionsMasterMap, RequestInfoWrapper requestInfoWrapper,
+			Map<String, Object> masterData) {
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
 		// water_charge
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_CHARGE)
@@ -230,10 +239,12 @@ public class EstimationService {
 		}
 		
 		// water Special Rebate
-		BigDecimal specialRebate = payService.getApplicableSpecialRebate(waterCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
-		if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
-					.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+		if(isSpecialRebateApplicableForMonth(masterData)) {
+			BigDecimal specialRebate = payService.getApplicableSpecialRebate(waterCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
+						.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+			}
 		}
 
 		// Water_cess
@@ -421,6 +432,7 @@ public class EstimationService {
 		monthStartDate.setTime(date);
 		if (configs.isDemandStartEndDateManuallyConfigurable()) {
 			monthStartDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+			monthStartDate.set(Calendar.YEAR, configs.getDemandManualYear());
 		}
 		monthStartDate.set(Calendar.DAY_OF_MONTH, monthStartDate.getActualMinimum(Calendar.DAY_OF_MONTH));
 		setTimeToBeginningOfDay(monthStartDate);
@@ -429,6 +441,7 @@ public class EstimationService {
 		monthEndDate.setTime(date);
 		if (configs.isDemandStartEndDateManuallyConfigurable()) {
 			monthEndDate.set(Calendar.MONTH, configs.getDemandManualMonthNo() - 1);
+			monthEndDate.set(Calendar.YEAR, configs.getDemandManualYear());
 		}
 		monthEndDate.set(Calendar.DAY_OF_MONTH, monthEndDate.getActualMaximum(Calendar.DAY_OF_MONTH));
 		setTimeToEndofDay(monthEndDate);
@@ -952,5 +965,26 @@ public class EstimationService {
 		}
 		
 		return estimates;
+	}
+	
+	public boolean isSpecialRebateApplicableForMonth(Map<String, Object> masterMap) {
+		// TODO Auto-generated method stub
+		@SuppressWarnings("unchecked")
+		Map<String, Object> financialYearMaster = (Map<String, Object>) masterMap
+				.get(WSCalculationConstant.BILLING_PERIOD);
+
+		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
+		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+
+		LocalDate taxPeriodFrom = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
+
+		if(StringUtils.hasText(configs.getSpecialRebateYear()) && configs.getSpecialRebateYear().matches("\\d+") &&
+				Integer.parseInt(configs.getSpecialRebateYear()) == taxPeriodFrom.getYear()) {
+			if(StringUtils.hasText(configs.getSpecialRebateMonths())
+					&& (Arrays.asList(configs.getSpecialRebateMonths().trim().split(","))).contains(String.valueOf(taxPeriodFrom.getMonth().getValue()))) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
