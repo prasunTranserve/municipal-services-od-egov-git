@@ -97,6 +97,7 @@ public class BillingslabValidator {
 			validateMandatoryFields(billingSlabRequestWithCreateBillingSlabs, errorMap);
 			duplicateCheck(billingSlabRequestWithCreateBillingSlabs, errorMap);
 			fromToUomCheck(billingSlabRequestWithCreateBillingSlabs, errorMap , deleteBillingSlabids);
+			UomNullDuplicateCheck(billingSlabRequestWithCreateBillingSlabs, errorMap , deleteBillingSlabids);
 			dataIntegrityCheck(billingSlabRequestWithCreateBillingSlabs, errorMap);
 			Map<String, List<String>> mdmsDataMap = service.getMDMSDataForValidation(billingSlabRequestWithCreateBillingSlabs);
 			billingSlabRequestWithCreateBillingSlabs.getBillingSlab().parallelStream().forEach(slab -> validateMDMSCodes(slab, mdmsDataMap, errorMap));
@@ -187,12 +188,12 @@ public class BillingslabValidator {
 				if(slab.getToUom()==null)
 					errorMap.put(ErrorConstants.TOUOM_ERROR_CODE, ErrorConstants.TOUOM_ERROR_MSG );
 				
-				if(slab.getFromUom()<0)
+				if(slab.getFromUom()!=null && slab.getFromUom()<0)
 				{
 					errorMap.put(ErrorConstants.FROMUOM_NEGAVTIVE_ERROR_CODE, ErrorConstants.FROMUOM_NEGAVTIVE_ERROR_MSG );
 				}
 				
-				if(slab.getToUom()<0)
+				if(slab.getToUom()!=null && slab.getToUom()<0)
 				{
 					errorMap.put(ErrorConstants.TOUOM_NEGAVTIVE_ERROR_CODE, ErrorConstants.TOUOM_NEGAVTIVE_ERROR_MSG );
 				}
@@ -232,7 +233,6 @@ public class BillingslabValidator {
 						.applicationType(slab.getApplicationType())
 						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
 						.structureType(slab.getStructureType()).uom(slab.getUom())
-						.type(null == slab.getType() ? null : slab.getType().toString())
 						.uomValue(slab.getFromUom()).build();
 				BillingSlabRes fromSlabRes = service.searchSlabs(fromCriteria, createBillingSlabReq.getRequestInfo());
 				if(!CollectionUtils.isEmpty(fromSlabRes.getBillingSlab())) {
@@ -250,7 +250,6 @@ public class BillingslabValidator {
 						.applicationType(slab.getApplicationType())
 						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
 						.structureType(slab.getStructureType()).uom(slab.getUom())
-						.type(null == slab.getType() ? null : slab.getType().toString())
 						.uomValue(slab.getToUom()).build();
 				BillingSlabRes toSlabRes = service.searchSlabs(toCriteria, createBillingSlabReq.getRequestInfo());
 				if(!CollectionUtils.isEmpty(toSlabRes.getBillingSlab())) {
@@ -315,6 +314,32 @@ public class BillingslabValidator {
 		if(!CollectionUtils.isEmpty(errorMap.keySet())) {
 			throw new CustomException(errorMap);
 		}
+	}
+	
+	public void UomNullDuplicateCheck(BillingSlabReq createBillingSlabReq, Map<String, String> errorMap ,List<String> deleteBillingSlabids) {
+
+		createBillingSlabReq.getBillingSlab().forEach(slab -> {
+			if(slab.getUom()== null && slab.getFromUom()==null && slab.getToUom()==null)
+			{
+				BillingSlabSearchCriteria criteria = BillingSlabSearchCriteria.builder().tenantId(slab.getTenantId()).accessoryCategory(slab.getAccessoryCategory())
+						.tradeType(slab.getTradeType())
+						.applicationType(slab.getApplicationType())
+						.licenseType(null == slab.getLicenseType() ? null : slab.getLicenseType().toString())
+						.structureType(slab.getStructureType()).uom(slab.getUom())
+						.from(slab.getFromUom()).to(slab.getToUom()).build();
+				BillingSlabRes slabRes = service.searchSlabs(criteria, createBillingSlabReq.getRequestInfo());
+				if(!CollectionUtils.isEmpty(slabRes.getBillingSlab())) {
+					if(slabRes.getBillingSlab().size()==1 &&!deleteBillingSlabids.contains(slab.getId()))
+						errorMap.put(ErrorConstants.DELETE_BILLING_SLAB_ERROR_CODE, ErrorConstants.DELETE_BILLING_SLAB_ERROR_MSG + ": "+slab.getId());
+				}
+			}
+		});
+		if(!CollectionUtils.isEmpty(errorMap.keySet())) {
+			throw new CustomException(errorMap);
+		}
+
+
+
 	}
 	
 	/**
