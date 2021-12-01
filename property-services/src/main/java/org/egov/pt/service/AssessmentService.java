@@ -146,16 +146,7 @@ public class AssessmentService {
 			if(assessment.getWorkflow().getState().getState().equalsIgnoreCase(config.getDemandTriggerState())) {
 				calculationService.calculateTax(request, property);
 				//update property with latest demands edited by field inspector only on approval-
-				PropertyRequest propertyRequest = new PropertyRequest();
-				propertyRequest.setRequestInfo(requestInfo);
-				JsonNode propertyAdditionalDetails = property.getAdditionalDetails();
-				Iterator<String> taxheadsFromAssessment = assessment.getAdditionalDetails().fieldNames();
-				while(taxheadsFromAssessment.hasNext()) {
-				    String taxHeadFromAssessment = taxheadsFromAssessment.next();
-				    ((ObjectNode) propertyAdditionalDetails).put(taxHeadFromAssessment, assessment.getAdditionalDetails().get(taxHeadFromAssessment));
-				}
-				propertyRequest.setProperty(property);
-				propertyService.updateProperty(propertyRequest, true);
+				updatePropertyAfterAssessmentApproved(requestInfo, assessment, property);
 			}
 
 			producer.push(props.getUpdateAssessmentTopic(), request);
@@ -263,6 +254,20 @@ public class AssessmentService {
 
 	public void validateAssessment(PropertyRequest request, String assessmentYear) {
 		Map<String, Object> financialYearMaster =utils.getFinancialYear(request.getRequestInfo(), assessmentYear, request.getProperty().getTenantId());
+	}
+	
+	private void updatePropertyAfterAssessmentApproved(RequestInfo requestInfo, Assessment assessment,
+			Property property) {
+		PropertyRequest propertyRequest = new PropertyRequest();
+		propertyRequest.setRequestInfo(requestInfo);
+		JsonNode propertyAdditionalDetails = property.getAdditionalDetails();
+		Iterator<String> taxheadsFromAssessment = assessment.getAdditionalDetails().fieldNames();
+		while (taxheadsFromAssessment.hasNext()) {
+			String taxHeadFromAssessment = taxheadsFromAssessment.next();
+			((ObjectNode) propertyAdditionalDetails).put(taxHeadFromAssessment, assessment.getAdditionalDetails().get(taxHeadFromAssessment));
+		}
+		propertyRequest.setProperty(property);
+		propertyService.updateProperty(propertyRequest, true);
 	}
 
 
