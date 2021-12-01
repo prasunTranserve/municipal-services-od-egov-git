@@ -9,9 +9,12 @@ import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.processor.PropertyFetchbillReader;
 import org.egov.migration.processor.PropertyFetchbillWriter;
 import org.egov.migration.processor.PropertyItemWriter;
+import org.egov.migration.processor.PropertyItemWriterForUser;
 import org.egov.migration.processor.PropertyReader;
+import org.egov.migration.processor.PropertyReaderForUser;
 import org.egov.migration.processor.PropertySearchTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessor;
+import org.egov.migration.processor.PropertyTransformProcessorForUser;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
 import org.egov.migration.processor.WnsTransformProcessor;
@@ -109,6 +112,14 @@ public class BatchConfiguration {
           .processor(getProprtyFetchbillProcessor())
           .writer(getProprtyFetchbillWriter()).build();
     }
+    
+    @Bean(name = "stepPropertyMigrateUser")
+    protected Step stepPropertyMigrateUser() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepPropertyMigrateUser").<Property, PropertyDetailDTO> chunk(100)
+          .reader(getPropertyReaderUser())
+          .processor(getPropertyProcessorUser())
+          .writer(getPropertyWriterUser()).build();
+    }
 	
 	@Bean
     @StepScope
@@ -126,6 +137,24 @@ public class BatchConfiguration {
     @Bean
     public ItemWriter<PropertyDetailDTO> getProprtyFetchbillWriter() {
 		return new PropertyFetchbillWriter();
+	}
+    
+    @Bean
+    @StepScope
+    public ItemReader<Property> getPropertyReaderUser() throws EncryptedDocumentException, IOException, Exception {
+    	PropertyReaderForUser propertyReader = new PropertyReaderForUser();
+    	propertyReader.setSkipRecord(1);
+    	return propertyReader;
+    }
+    
+    @Bean
+    public ItemProcessor<Property, PropertyDetailDTO> getPropertyProcessorUser() {
+		return new PropertyTransformProcessorForUser();
+	}
+    
+    @Bean
+    public ItemWriter<PropertyDetailDTO> getPropertyWriterUser() {
+		return new PropertyItemWriterForUser();
 	}
 
 }

@@ -15,6 +15,7 @@ import lombok.Setter;
 
 public class OwnerInfoDTO {
 
+	private String uuid;
 
 	@JsonProperty("salutation")
     private String salutation;
@@ -51,6 +52,15 @@ public class OwnerInfoDTO {
 
 	@JsonProperty("relationship")
 	private String relationship;
+	
+	@JsonProperty("status")
+	private String status;
+	
+	@JsonProperty("userName")
+    private String userName;
+
+    @JsonProperty("password")
+    private String password;
 
 	@Builder()
 	public OwnerInfoDTO(Long id, String uuid, String userName, String password, String salutation, String name,

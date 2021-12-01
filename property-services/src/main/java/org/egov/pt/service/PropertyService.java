@@ -426,4 +426,11 @@ public class PropertyService {
 		request.getProperty().setWorkflow(null);
 		return request.getProperty();
 	}
+
+	public Property createMigratePropertyUser(PropertyRequest request) {
+		userService.createMigrateUserOnly(request);
+		request.getProperty().setStatus(Status.ACTIVE);
+		request.getProperty().setWorkflow(null);
+		return request.getProperty();
+	}
 }

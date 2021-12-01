@@ -35,6 +35,9 @@ public class PropertiesData {
 	@Value("${remomte.api.pt.migrate}")
 	private String migratePropertyEndpoint;
 	
+	@Value("${remomte.api.pt.migrateuser}")
+	private String migratePropertyUserEndpoint;
+	
 	@Value("${remomte.api.pt.search}")
 	private String ptSearchEndpoint;
 	
