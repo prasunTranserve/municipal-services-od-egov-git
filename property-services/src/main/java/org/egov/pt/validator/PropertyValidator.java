@@ -147,8 +147,9 @@ public class PropertyValidator {
 	/**
      * Validates the masterData,CitizenInfo and the authorization of the assessee for update
      * @param request PropertyRequest for update
+	 * @param skipWorkflowUpdation TODO
      */
-    public void validateRequestForUpdate(PropertyRequest request, Property propertyFromSearch){ 
+    public void validateRequestForUpdate(PropertyRequest request, Property propertyFromSearch, boolean skipWorkflowUpdation){ 
     	
     	Property property = request.getProperty();
     	Map<String, String> errorMap = new HashMap<>();
@@ -164,7 +165,7 @@ public class PropertyValidator {
         if(request.getRequestInfo().getUserInfo().getType().equalsIgnoreCase("CITIZEN"))
             validateAssessees(request,propertyFromSearch, errorMap);
 
-		if (configs.getIsWorkflowEnabled() && request.getProperty().getWorkflow() == null)
+		if (configs.getIsWorkflowEnabled() && request.getProperty().getWorkflow() == null && !skipWorkflowUpdation)
 			throw new CustomException("EG_PT_UPDATE_WF_ERROR", "Workflow information is mandatory for update process");
 
 		// third variable is needed only for mutation
@@ -177,6 +178,7 @@ public class PropertyValidator {
 		 *  
 		 *  creation reason will change for begining of a workflow 
 		 */
+		if(!skipWorkflowUpdation) {
 		if (property.getWorkflow().getAction().equalsIgnoreCase(configs.getMutationOpenState())
 				&& propertyFromSearch.getStatus().equals(Status.ACTIVE)) {
 			fieldsUpdated.remove("creationReason");
@@ -189,6 +191,7 @@ public class PropertyValidator {
 			BusinessService businessService = workflowService.getBusinessService(property.getTenantId(),
 					property.getWorkflow().getBusinessService(), request.getRequestInfo());
 			isstateUpdatable = workflowService.isStateUpdatable(currentState.getState(), businessService);
+		}
 		}
 
 		// third variable is needed only for mutation
@@ -283,9 +286,10 @@ public class PropertyValidator {
 	 * Validates common criteria of update and mutation
 	 * 
 	 * @param request
+	 * @param skipWorkflowUpdation TODO
 	 * @return
 	 */
-	public Property validateCommonUpdateInformation(PropertyRequest request) {
+	public Property validateCommonUpdateInformation(PropertyRequest request, boolean skipWorkflowUpdation) {
 
 		Map<String, String> errorMap = new HashMap<>();
 		Property property = request.getProperty();
@@ -306,7 +310,7 @@ public class PropertyValidator {
 				&& !propertyFromSearch.getCreationReason().equals(reason)) {
 			throw new CustomException("EG_PT_ERROR_CREATION_REASON",
 					"The Creation reason sent in the update Request is Invalid, The Creationg reason can be changed only when a new process is initiated on an ACTIVE record");
-		} else if (propertyFromSearch.getStatus().equals(Status.ACTIVE) && reason.equals(CreationReason.CREATE)) {
+		} else if (propertyFromSearch.getStatus().equals(Status.ACTIVE) && reason.equals(CreationReason.CREATE) && !skipWorkflowUpdation) {
 			throw new CustomException("EG_PT_ERROR_CREATION_REASON",
 					"The Creation reason sent in the update Request is Invalid, The Creationg reason cannot be create for an ACTIVE record");
 		}

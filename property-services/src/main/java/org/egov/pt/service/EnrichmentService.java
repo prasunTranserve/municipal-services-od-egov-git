@@ -99,9 +99,10 @@ public class EnrichmentService {
      * Assigns UUID for new fields that are added and sets propertyDetail and address id from propertyId
      * 
      * @param request  PropertyRequest received for property update
+     * @param skipWorkflowUpdation TODO
      * @param propertiesFromResponse Properties returned by calling search based on id in PropertyRequest
      */
-    public void enrichUpdateRequest(PropertyRequest request,Property propertyFromDb) {
+    public void enrichUpdateRequest(PropertyRequest request,Property propertyFromDb, boolean skipWorkflowUpdation) {
     	
     	Property property = request.getProperty();
         RequestInfo requestInfo = request.getRequestInfo();
@@ -117,7 +118,7 @@ public class EnrichmentService {
 			property.setStatus(Status.ACTIVE);
 			property.getAddress().setId(propertyFromDb.getAddress().getId());
 
-		} else if (isWfEnabled && iswfStarting) {
+		} else if (isWfEnabled && iswfStarting &&!skipWorkflowUpdation) {
 
 			enrichPropertyForNewWf(requestInfo, property, false);
 		}
@@ -310,10 +311,11 @@ public class EnrichmentService {
     /**
      * In case of SENDBACKTOCITIZEN enrich the assignee with the owners and creator of property
      * @param property to be enriched
+     * @param skipWorkflowUpdation TODO
      */
-    public void enrichAssignes(Property property){
+    public void enrichAssignes(Property property, boolean skipWorkflowUpdation){
 
-            if(property.getWorkflow().getAction().equalsIgnoreCase(PTConstants.CITIZEN_SENDBACK_ACTION)){
+            if(!skipWorkflowUpdation && property.getWorkflow().getAction().equalsIgnoreCase(PTConstants.CITIZEN_SENDBACK_ACTION)){
 
                     List<User> assignes = new LinkedList<>();
 

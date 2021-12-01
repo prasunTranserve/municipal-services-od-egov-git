@@ -114,11 +114,12 @@ public class PropertyService {
 	 * Mutation
 	 *
 	 * @param request PropertyRequest containing list of properties to be update
+	 * @param skipWorkflowUpdation TODO
 	 * @return List of updated properties
 	 */
-	public Property updateProperty(PropertyRequest request) {
+	public Property updateProperty(PropertyRequest request, boolean skipWorkflowUpdation) {
 		assessmentService.validateAssessment(request.getProperty().getAdditionalDetails());
-		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
+		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request, skipWorkflowUpdation);
 
 		boolean isRequestForOwnerMutation = CreationReason.MUTATION.equals(request.getProperty().getCreationReason());
 		boolean isLeacyApplicationMobileLink = CreationReason.LINK.equals(request.getProperty().getCreationReason());
@@ -128,7 +129,7 @@ public class PropertyService {
 		} else if (isRequestForOwnerMutation)
 			processOwnerMutation(request, propertyFromSearch);
 		else
-			processPropertyUpdate(request, propertyFromSearch);
+			processPropertyUpdate(request, propertyFromSearch, skipWorkflowUpdation);
 
 		request.getProperty().setWorkflow(null);
 		return request.getProperty();
@@ -143,10 +144,11 @@ public class PropertyService {
 	 *
 	 * @param request
 	 * @param propertyFromSearch
+	 * @param skipWorkflowUpdation TODO
 	 */
-	private void processPropertyUpdate(PropertyRequest request, Property propertyFromSearch) {
+	private void processPropertyUpdate(PropertyRequest request, Property propertyFromSearch, boolean skipWorkflowUpdation) {
 
-		propertyValidator.validateRequestForUpdate(request, propertyFromSearch);
+		propertyValidator.validateRequestForUpdate(request, propertyFromSearch, skipWorkflowUpdation);
 		if (CreationReason.CREATE.equals(request.getProperty().getCreationReason())) {
 			userService.createUser(request);
 		} else {
@@ -169,8 +171,8 @@ public class PropertyService {
 		}
 
 
-		enrichmentService.enrichAssignes(request.getProperty());
-		enrichmentService.enrichUpdateRequest(request, propertyFromSearch);
+		enrichmentService.enrichAssignes(request.getProperty(), skipWorkflowUpdation);
+		enrichmentService.enrichUpdateRequest(request, propertyFromSearch, skipWorkflowUpdation);
 
 		PropertyRequest OldPropertyRequest = PropertyRequest.builder()
 				.requestInfo(request.getRequestInfo())
@@ -179,7 +181,7 @@ public class PropertyService {
 
 		util.mergeAdditionalDetails(request, propertyFromSearch);
 
-		if(config.getIsWorkflowEnabled()) {
+		if(config.getIsWorkflowEnabled() && !skipWorkflowUpdation) {
 
 			// Checking for financialYear in MasterData
 			String assessmentYear = CommonUtils.getFinancialYear();
@@ -247,7 +249,7 @@ public class PropertyService {
 
 		propertyValidator.validateMutation(request, propertyFromSearch);
 		userService.createUserForMutation(request, !propertyFromSearch.getStatus().equals(Status.INWORKFLOW));
-		enrichmentService.enrichAssignes(request.getProperty());
+		enrichmentService.enrichAssignes(request.getProperty(), false);
 		enrichmentService.enrichMutationRequest(request, propertyFromSearch);
 		
 
