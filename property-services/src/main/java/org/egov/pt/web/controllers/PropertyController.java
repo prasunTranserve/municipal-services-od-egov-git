@@ -61,7 +61,7 @@ public class PropertyController {
     @PostMapping("/_update")
     public ResponseEntity<PropertyResponse> update(@Valid @RequestBody PropertyRequest propertyRequest) {
 
-        Property property = propertyService.updateProperty(propertyRequest);
+        Property property = propertyService.updateProperty(propertyRequest, false);
         ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
         PropertyResponse response = PropertyResponse.builder()
                 .properties(Arrays.asList(property))
