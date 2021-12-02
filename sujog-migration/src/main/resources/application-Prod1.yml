@@ -35,6 +35,7 @@ remomte:
       host: http://sujog.odisha.gov.in/property-services
       search: /property/_search
       migrate: /property/_migrateproperty
+      migrateuser: /property/_migratepropertyuser
       asmt:
         search: /assessment/_search
         migrate: /assessment/_migrateassessment
@@ -57,5 +58,6 @@ remomte:
     demand:
       host: http://sujog.odisha.gov.in/billing-service
       search: /demand/_search
+      fetchbill: /bill/v2/_fetchbill
 
       

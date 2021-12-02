@@ -61,7 +61,7 @@ public class PropertyController {
     @PostMapping("/_update")
     public ResponseEntity<PropertyResponse> update(@Valid @RequestBody PropertyRequest propertyRequest) {
 
-        Property property = propertyService.updateProperty(propertyRequest);
+        Property property = propertyService.updateProperty(propertyRequest, false);
         ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
         PropertyResponse response = PropertyResponse.builder()
                 .properties(Arrays.asList(property))
@@ -121,6 +121,18 @@ public class PropertyController {
     @PostMapping("/_migrateproperty")
     public ResponseEntity<PropertyResponse> createMigrateProperty(@RequestBody PropertyRequest propertyRequest) {
     	 Property property = propertyService.createMigrateProperty(propertyRequest);
+         ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
+         PropertyResponse response = PropertyResponse.builder()
+                 .properties(Arrays.asList(property))
+                 .responseInfo(resInfo)
+                 .build();
+         return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+	}
+    
+    @PostMapping("/_migratepropertyuser")
+    public ResponseEntity<PropertyResponse> createMigratePropertyUser(@RequestBody PropertyRequest propertyRequest) {
+    	 Property property = propertyService.createMigratePropertyUser(propertyRequest);
          ResponseInfo resInfo = responseInfoFactory.createResponseInfoFromRequestInfo(propertyRequest.getRequestInfo(), true);
          PropertyResponse response = PropertyResponse.builder()
                  .properties(Arrays.asList(property))

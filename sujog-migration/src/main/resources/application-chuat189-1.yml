@@ -14,15 +14,15 @@ file:
   path:
     input:
       directory: 
-        property: /home/obpsdev/Documents/Migrate_Data/Property/Instance1/File
-        wns: /home/obpsdev/Documents/Migrate_Data/Wns/Instance1/File
+        property: /home/azureuser/Documents/Migrate_Data/Property/Instance1/File
+        wns: /home/azureuser/Documents/Migrate_Data/Wns/Instance1/File
     output:
       property:
-        success: /home/obpsdev/Documents/Migrate_Data/Property/Instance1/Success
-        error: /home/obpsdev/Documents/Migrate_Data/Property/Instance1/Error
+        success: /home/azureuser/Documents/Migrate_Data/Property/Instance1/Success
+        error: /home/azureuser/Documents/Migrate_Data/Property/Instance1/Error
       wns:
-        success: /home/obpsdev/Documents/Migrate_Data/Wns/Instance1/Success
-        error: /home/obpsdev/Documents/Migrate_Data/Wns/Instance1/Error
+        success: /home/azureuser/Documents/Migrate_Data/Wns/Instance1/Success
+        error: /home/azureuser/Documents/Migrate_Data/Wns/Instance1/Error
     
 remomte:
   api:

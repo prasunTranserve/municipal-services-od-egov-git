@@ -531,6 +531,28 @@ public class UserService {
 		return userDetailResponse;
 	}
 
+	public void createMigrateUserOnly(PropertyRequest request) {
+		Property property = request.getProperty();
+		RequestInfo requestInfo = request.getRequestInfo();
+		Role role = getCitizenRole();
+		List<OwnerInfo> owners = property.getOwners();
+
+		for (OwnerInfo ownerFromRequest : owners) {
+
+			addUserDefaultFields(property.getTenantId(), role, ownerFromRequest);
+			UserDetailResponse userDetailResponse = userExists(ownerFromRequest, requestInfo);
+
+			String uuid = ownerFromRequest.getUuid();
+
+			ownerFromRequest.setUserName(uuid);
+			userDetailResponse = createMigrateUser(requestInfo, ownerFromRequest);
+			
+			// Assigns value of fields from user got from userDetailResponse to owner object
+			setOwnerFields(ownerFromRequest, userDetailResponse, requestInfo);
+		}
+		
+	}
+
 
 
 }

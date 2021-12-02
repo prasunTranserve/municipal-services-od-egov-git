@@ -9,7 +9,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -20,6 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.xalan.xsltc.compiler.sym;
 import org.egov.migration.business.model.AssessmentDTO;
 import org.egov.migration.business.model.AssessmentResponse;
+import org.egov.migration.business.model.OwnerInfoDTO;
 import org.egov.migration.business.model.PropertyDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.business.model.PropertyResponse;
@@ -40,6 +44,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -615,6 +620,60 @@ public class PropertyService {
 			e.printStackTrace();
 		}
 
+	}
+
+	public boolean migratePropertyUser(PropertyDetailDTO propertyDetail) throws Exception {
+		boolean isPropertyUserMigrated = false;
+
+		PropertyDTO propertyDTO = searchProperty(propertyDetail);
+		if(propertyDTO != null) {
+			List<OwnerInfoDTO> propertyOwner = propertyDTO.getOwners().stream().filter(ow -> ow.getStatus().equalsIgnoreCase("ACTIVE"))
+				.filter(ow -> ow.getUserName()==null && ow.getPassword()==null).collect(Collectors.toList());
+			if (!propertyOwner.isEmpty()) {
+				enrichOwners(propertyDetail, propertyDTO);
+				isPropertyUserMigrated = doMigratePropertyUser(propertyDetail);
+			} else {
+				log.info(String.format("%s property already migrated", propertyDTO.getPropertyId()));
+				isPropertyUserMigrated = false;
+				propertyDetail.setProperty(propertyDTO);
+			}
+		}
+		
+		return isPropertyUserMigrated;
+	}
+
+	private boolean doMigratePropertyUser(PropertyDetailDTO propertyDetail) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getPtServiceHost())
+				.append(properties.getMigratePropertyUserEndpoint());
+
+		Map<String, Object> migratePropertyRequest = prepareMigratePropertyRequest(propertyDetail);
+		Object response = remoteService.fetchResult(uri, migratePropertyRequest);
+		if (response == null) {
+			return false;
+		} else {
+			PropertyResponse propertyResponse = mapper.convertValue(response, PropertyResponse.class);
+			propertyDetail.setProperty(propertyResponse.getProperties().get(0));
+		}
+		return true;
+	}
+
+	private void enrichOwners(PropertyDetailDTO propertyDetail, PropertyDTO propertyDTO) {
+		if(propertyDetail.getProperty().getOwnershipCategory().equalsIgnoreCase("INDIVIDUAL.MULTIPLEOWNERS")) {
+			List<OwnerInfoDTO> propertyOwner = propertyDTO.getOwners().stream().filter(ow -> ow.getStatus().equalsIgnoreCase("ACTIVE")).collect(Collectors.toList());
+			List<String> names = propertyOwner.stream().map(ow -> ow.getName()).collect(Collectors.toList());
+			propertyDetail.getProperty().setOwners(propertyDetail.getProperty().getOwners().stream().filter(ow -> !names.contains(ow.getName())).collect(Collectors.toList()));
+			propertyOwner = propertyOwner.stream().filter(ow -> !StringUtils.hasText(ow.getName())).collect(Collectors.toList());
+			
+			int index = 0;
+			for (OwnerInfoDTO owner : propertyDetail.getProperty().getOwners()) {
+				owner.setUuid(propertyOwner.get(index).getUuid());
+				index++;
+			}
+		} else {
+			String uuid = propertyDTO.getOwners().stream().filter(ow -> ow.getStatus().equalsIgnoreCase("ACTIVE")).map(ow -> ow.getUuid()).findFirst().orElse(null);
+			propertyDetail.getProperty().getOwners().get(0).setUuid(uuid);
+		}
+		
 	}
 	
 }

@@ -54,14 +54,14 @@ public class PropertyTransformProcessor implements ItemProcessor<Property, Prope
 
 	@Override
 	public PropertyDetailDTO process(Property property) throws Exception {
-		if(validationService.isValidArea(property)) {
+//		if(validationService.isValidArea(property)) {
 			try {
 				enrichProperty(property);
 				return transformProperty(property);
 			} catch (Exception e) {
 				MigrationUtility.addError(property.getPropertyId(), e.getMessage());
 			}
-		}
+//		}
 		return null;
 	}
 

@@ -350,6 +350,16 @@ public class EnrichmentService {
 		});
 		
 	}
+	
+	public void enrichAuditDetails(PropertyRequest propertyRequest, Property propertyFromDb) {
+		AuditDetails auditDetails = propertyutil
+				.getAuditDetails(propertyRequest.getRequestInfo().getUserInfo().getUuid().toString(), true);
+		propertyRequest.getProperty().setAuditDetails(auditDetails);
+		propertyRequest.getProperty().setAccountId(propertyFromDb.getAccountId());
+
+		propertyRequest.getProperty().setAdditionalDetails(propertyutil.jsonMerge(propertyFromDb.getAdditionalDetails(),
+				propertyRequest.getProperty().getAdditionalDetails()));
+	}
 
 
 }
