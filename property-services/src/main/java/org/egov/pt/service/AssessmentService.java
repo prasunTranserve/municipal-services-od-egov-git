@@ -14,6 +14,7 @@ import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Assessment;
 import org.egov.pt.models.AssessmentSearchCriteria;
 import org.egov.pt.models.Property;
+import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.workflow.BusinessService;
 import org.egov.pt.models.workflow.ProcessInstanceRequest;
@@ -53,12 +54,14 @@ public class AssessmentService {
 	private WorkflowService workflowService;
 
 	private CalculationService calculationService;
+	
+	private PropertyService propertyService;
 
 
 	@Autowired
 	public AssessmentService(AssessmentValidator validator, Producer producer, PropertyConfiguration props, AssessmentRepository repository,
 							 AssessmentEnrichmentService assessmentEnrichmentService, PropertyConfiguration config, DiffService diffService,
-							 AssessmentUtils utils, WorkflowService workflowService, CalculationService calculationService) {
+							 AssessmentUtils utils, WorkflowService workflowService, CalculationService calculationService, PropertyService propertyService) {
 		this.validator = validator;
 		this.producer = producer;
 		this.props = props;
@@ -69,6 +72,7 @@ public class AssessmentService {
 		this.utils = utils;
 		this.workflowService = workflowService;
 		this.calculationService = calculationService;
+		this.propertyService = propertyService;
 	}
 
 	/**
@@ -138,8 +142,11 @@ public class AssessmentService {
 			request.getAssessment().getWorkflow().setState(state);
 			//assessmentEnrichmentService.enrichStatus(status, assessment, businessService);
 			assessment.setStatus(Status.fromValue(status));
-			if(assessment.getWorkflow().getState().getState().equalsIgnoreCase(config.getDemandTriggerState()))
+			if(assessment.getWorkflow().getState().getState().equalsIgnoreCase(config.getDemandTriggerState())) {
 				calculationService.calculateTax(request, property);
+				//update property with latest demands edited by field inspector only on approval-
+				updatePropertyAfterAssessmentApproved(requestInfo, assessment, property);
+			}
 
 			producer.push(props.getUpdateAssessmentTopic(), request);
 
@@ -246,6 +253,17 @@ public class AssessmentService {
 
 	public void validateAssessment(PropertyRequest request, String assessmentYear) {
 		Map<String, Object> financialYearMaster =utils.getFinancialYear(request.getRequestInfo(), assessmentYear, request.getProperty().getTenantId());
+	}
+	
+	private void updatePropertyAfterAssessmentApproved(RequestInfo requestInfo, Assessment assessment,
+			Property property) {
+		PropertyRequest propertyRequest = new PropertyRequest();
+		propertyRequest.setRequestInfo(requestInfo);
+		property.setAdditionalDetails(
+				utils.jsonMerge(property.getAdditionalDetails(), assessment.getAdditionalDetails()));
+		propertyRequest.setProperty(property);
+		propertyRequest.getProperty().setCreationReason(CreationReason.UPDATE);
+		propertyService.updateProperty(propertyRequest, true);
 	}
 
 

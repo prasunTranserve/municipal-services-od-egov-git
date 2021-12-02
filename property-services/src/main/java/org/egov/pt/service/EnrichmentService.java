@@ -244,6 +244,16 @@ public class EnrichmentService {
 		 AuditDetails auditDetails = propertyutil.getAuditDetails(requestInfo.getUserInfo().getUuid().toString(), true);
 		 property.setAuditDetails(auditDetails);
 	}
+	
+	public void enrichAuditDetails(PropertyRequest propertyRequest, Property propertyFromDb) {
+		AuditDetails auditDetails = propertyutil
+				.getAuditDetails(propertyRequest.getRequestInfo().getUserInfo().getUuid().toString(), true);
+		propertyRequest.getProperty().setAuditDetails(auditDetails);
+		propertyRequest.getProperty().setAccountId(propertyFromDb.getAccountId());
+		
+		propertyRequest.getProperty().setAdditionalDetails(propertyutil.jsonMerge(propertyFromDb.getAdditionalDetails(),
+				propertyRequest.getProperty().getAdditionalDetails()));
+	}
 
 	/**
 	 * enrich property as new entry for workflow validation

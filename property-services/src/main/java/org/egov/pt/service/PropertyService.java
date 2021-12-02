@@ -114,9 +114,10 @@ public class PropertyService {
 	 * Mutation
 	 *
 	 * @param request PropertyRequest containing list of properties to be update
+	 * @param isUpdateWithoutWF TODO
 	 * @return List of updated properties
 	 */
-	public Property updateProperty(PropertyRequest request) {
+	public Property updateProperty(PropertyRequest request, boolean isUpdateWithoutWF) {
 		assessmentService.validateAssessment(request.getProperty().getAdditionalDetails());
 		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
 
@@ -128,7 +129,7 @@ public class PropertyService {
 		} else if (isRequestForOwnerMutation)
 			processOwnerMutation(request, propertyFromSearch);
 		else
-			processPropertyUpdate(request, propertyFromSearch);
+			processPropertyUpdate(request, propertyFromSearch, isUpdateWithoutWF);
 
 		request.getProperty().setWorkflow(null);
 		return request.getProperty();
@@ -143,10 +144,12 @@ public class PropertyService {
 	 *
 	 * @param request
 	 * @param propertyFromSearch
+	 * @param isUpdateWithoutWF TODO
 	 */
-	private void processPropertyUpdate(PropertyRequest request, Property propertyFromSearch) {
+	private void processPropertyUpdate(PropertyRequest request, Property propertyFromSearch, boolean isUpdateWithoutWF) {
 
-		propertyValidator.validateRequestForUpdate(request, propertyFromSearch);
+		if (!isUpdateWithoutWF)
+			propertyValidator.validateRequestForUpdate(request, propertyFromSearch);
 		if (CreationReason.CREATE.equals(request.getProperty().getCreationReason())) {
 			userService.createUser(request);
 		} else {
@@ -168,9 +171,12 @@ public class PropertyService {
 			userService.createUser(request);
 		}
 
-
-		enrichmentService.enrichAssignes(request.getProperty());
-		enrichmentService.enrichUpdateRequest(request, propertyFromSearch);
+		if (isUpdateWithoutWF) {
+			enrichmentService.enrichAuditDetails(request, propertyFromSearch);
+		} else {
+			enrichmentService.enrichAssignes(request.getProperty());
+			enrichmentService.enrichUpdateRequest(request, propertyFromSearch);
+		}
 
 		PropertyRequest OldPropertyRequest = PropertyRequest.builder()
 				.requestInfo(request.getRequestInfo())
@@ -179,7 +185,7 @@ public class PropertyService {
 
 		util.mergeAdditionalDetails(request, propertyFromSearch);
 
-		if(config.getIsWorkflowEnabled()) {
+		if(config.getIsWorkflowEnabled() && !isUpdateWithoutWF) {
 
 			// Checking for financialYear in MasterData
 			String assessmentYear = CommonUtils.getFinancialYear();
