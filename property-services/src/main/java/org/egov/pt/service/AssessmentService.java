@@ -15,6 +15,7 @@ import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Assessment;
 import org.egov.pt.models.AssessmentSearchCriteria;
 import org.egov.pt.models.Property;
+import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.workflow.BusinessService;
 import org.egov.pt.models.workflow.ProcessInstanceRequest;
@@ -260,13 +261,10 @@ public class AssessmentService {
 			Property property) {
 		PropertyRequest propertyRequest = new PropertyRequest();
 		propertyRequest.setRequestInfo(requestInfo);
-		JsonNode propertyAdditionalDetails = property.getAdditionalDetails();
-		Iterator<String> taxheadsFromAssessment = assessment.getAdditionalDetails().fieldNames();
-		while (taxheadsFromAssessment.hasNext()) {
-			String taxHeadFromAssessment = taxheadsFromAssessment.next();
-			((ObjectNode) propertyAdditionalDetails).put(taxHeadFromAssessment, assessment.getAdditionalDetails().get(taxHeadFromAssessment));
-		}
+		property.setAdditionalDetails(
+				utils.jsonMerge(property.getAdditionalDetails(), assessment.getAdditionalDetails()));
 		propertyRequest.setProperty(property);
+		propertyRequest.getProperty().setCreationReason(CreationReason.UPDATE);
 		propertyService.updateProperty(propertyRequest, true);
 	}
 

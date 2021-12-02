@@ -119,7 +119,7 @@ public class PropertyService {
 	 */
 	public Property updateProperty(PropertyRequest request, boolean skipWorkflowUpdation) {
 		assessmentService.validateAssessment(request.getProperty().getAdditionalDetails());
-		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request, skipWorkflowUpdation);
+		Property propertyFromSearch = propertyValidator.validateCommonUpdateInformation(request);
 
 		boolean isRequestForOwnerMutation = CreationReason.MUTATION.equals(request.getProperty().getCreationReason());
 		boolean isLeacyApplicationMobileLink = CreationReason.LINK.equals(request.getProperty().getCreationReason());
@@ -148,7 +148,8 @@ public class PropertyService {
 	 */
 	private void processPropertyUpdate(PropertyRequest request, Property propertyFromSearch, boolean skipWorkflowUpdation) {
 
-		propertyValidator.validateRequestForUpdate(request, propertyFromSearch, skipWorkflowUpdation);
+		if (!skipWorkflowUpdation)
+			propertyValidator.validateRequestForUpdate(request, propertyFromSearch);
 		if (CreationReason.CREATE.equals(request.getProperty().getCreationReason())) {
 			userService.createUser(request);
 		} else {
@@ -170,9 +171,12 @@ public class PropertyService {
 			userService.createUser(request);
 		}
 
-
-		enrichmentService.enrichAssignes(request.getProperty(), skipWorkflowUpdation);
-		enrichmentService.enrichUpdateRequest(request, propertyFromSearch, skipWorkflowUpdation);
+		if (skipWorkflowUpdation) {
+			enrichmentService.enrichAuditDetails(request, propertyFromSearch);
+		} else {
+			enrichmentService.enrichAssignes(request.getProperty());
+			enrichmentService.enrichUpdateRequest(request, propertyFromSearch);
+		}
 
 		PropertyRequest OldPropertyRequest = PropertyRequest.builder()
 				.requestInfo(request.getRequestInfo())
@@ -249,7 +253,7 @@ public class PropertyService {
 
 		propertyValidator.validateMutation(request, propertyFromSearch);
 		userService.createUserForMutation(request, !propertyFromSearch.getStatus().equals(Status.INWORKFLOW));
-		enrichmentService.enrichAssignes(request.getProperty(), false);
+		enrichmentService.enrichAssignes(request.getProperty());
 		enrichmentService.enrichMutationRequest(request, propertyFromSearch);
 		
 

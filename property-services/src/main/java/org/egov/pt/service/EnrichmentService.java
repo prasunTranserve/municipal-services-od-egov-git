@@ -99,10 +99,9 @@ public class EnrichmentService {
      * Assigns UUID for new fields that are added and sets propertyDetail and address id from propertyId
      * 
      * @param request  PropertyRequest received for property update
-     * @param skipWorkflowUpdation TODO
      * @param propertiesFromResponse Properties returned by calling search based on id in PropertyRequest
      */
-    public void enrichUpdateRequest(PropertyRequest request,Property propertyFromDb, boolean skipWorkflowUpdation) {
+    public void enrichUpdateRequest(PropertyRequest request,Property propertyFromDb) {
     	
     	Property property = request.getProperty();
         RequestInfo requestInfo = request.getRequestInfo();
@@ -118,7 +117,7 @@ public class EnrichmentService {
 			property.setStatus(Status.ACTIVE);
 			property.getAddress().setId(propertyFromDb.getAddress().getId());
 
-		} else if (isWfEnabled && iswfStarting &&!skipWorkflowUpdation) {
+		} else if (isWfEnabled && iswfStarting) {
 
 			enrichPropertyForNewWf(requestInfo, property, false);
 		}
@@ -245,6 +244,16 @@ public class EnrichmentService {
 		 AuditDetails auditDetails = propertyutil.getAuditDetails(requestInfo.getUserInfo().getUuid().toString(), true);
 		 property.setAuditDetails(auditDetails);
 	}
+	
+	public void enrichAuditDetails(PropertyRequest propertyRequest, Property propertyFromDb) {
+		AuditDetails auditDetails = propertyutil
+				.getAuditDetails(propertyRequest.getRequestInfo().getUserInfo().getUuid().toString(), true);
+		propertyRequest.getProperty().setAuditDetails(auditDetails);
+		propertyRequest.getProperty().setAccountId(propertyFromDb.getAccountId());
+		
+		propertyRequest.getProperty().setAdditionalDetails(propertyutil.jsonMerge(propertyFromDb.getAdditionalDetails(),
+				propertyRequest.getProperty().getAdditionalDetails()));
+	}
 
 	/**
 	 * enrich property as new entry for workflow validation
@@ -311,11 +320,10 @@ public class EnrichmentService {
     /**
      * In case of SENDBACKTOCITIZEN enrich the assignee with the owners and creator of property
      * @param property to be enriched
-     * @param skipWorkflowUpdation TODO
      */
-    public void enrichAssignes(Property property, boolean skipWorkflowUpdation){
+    public void enrichAssignes(Property property){
 
-            if(!skipWorkflowUpdation && property.getWorkflow().getAction().equalsIgnoreCase(PTConstants.CITIZEN_SENDBACK_ACTION)){
+            if(property.getWorkflow().getAction().equalsIgnoreCase(PTConstants.CITIZEN_SENDBACK_ACTION)){
 
                     List<User> assignes = new LinkedList<>();
 
