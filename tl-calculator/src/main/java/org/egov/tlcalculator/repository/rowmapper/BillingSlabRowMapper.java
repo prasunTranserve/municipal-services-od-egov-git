@@ -29,10 +29,17 @@ public class BillingSlabRowMapper implements ResultSetExtractor<List<BillingSlab
 				AuditDetails auditDetails = AuditDetails.builder().createdBy(rs.getString("createdby"))
 						.createdTime(rs.getLong("createdtime")).lastModifiedBy(rs.getString("lastmodifiedby"))
 						.lastModifiedTime(rs.getLong("lastmodifiedtime")).build();
+				
+				Double fromUom = rs.getDouble("fromUom");
+                if(rs.wasNull()){fromUom = null;}
+                
+                Double toUom = rs.getDouble("toUom");
+                if(rs.wasNull()){toUom = null;}
+				
 
 				currentBillingSlab = BillingSlab.builder().id(rs.getString("id"))
 						.accessoryCategory(rs.getString("accessorycategory"))
-						.fromUom(rs.getDouble("fromUom"))
+						.fromUom(fromUom)
 						.licenseType(LicenseTypeEnum.fromValue(rs.getString("licensetype")))
 						.applicationType(rs.getString("applicationtype"))
 						.rate(getBigDecimalValue(rs.getBigDecimal("rate")))
@@ -40,7 +47,7 @@ public class BillingSlabRowMapper implements ResultSetExtractor<List<BillingSlab
 						.tenantId(rs.getString("tenantid"))
 						.uom(rs.getString("uom"))
 						.tradeType(rs.getString("tradetype"))
-						.toUom(rs.getDouble("toUom"))
+						.toUom(toUom)
 						.type(TypeEnum.valueOf(rs.getString("type")))
 						.auditDetails(auditDetails).build();
 
