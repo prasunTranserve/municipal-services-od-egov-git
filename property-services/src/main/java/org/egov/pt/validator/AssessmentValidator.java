@@ -34,6 +34,9 @@ import static org.egov.pt.util.PTConstants.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AssessmentValidator {
 
@@ -173,7 +176,10 @@ public class AssessmentValidator {
 		if(!checkIfPropertyExists(assessmentReq.getRequestInfo(), assessment.getPropertyId(), assessment.getTenantId())) {
 			throw new CustomException("PROPERTY_NOT_FOUND", "You're trying to assess a non-existing property.");
 		}
+		
+		log.info("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
 		if (assessment.getAssessmentDate() > new Date().getTime()) {
+			log.error("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
 			errorMap.put(ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_CODE, ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_MSG);
 		}
 
