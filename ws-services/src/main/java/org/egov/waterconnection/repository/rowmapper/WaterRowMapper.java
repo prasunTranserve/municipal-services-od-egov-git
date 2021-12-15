@@ -46,7 +46,6 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 			if (connectionListMap.getOrDefault(Id, null) == null) {
 				currentWaterConnection = new WaterConnection();
 				currentWaterConnection.setTenantId(rs.getString("tenantid"));
-				currentWaterConnection.setConnectionFacility(rs.getString("connectionFacility"));
 				currentWaterConnection.setConnectionCategory(rs.getString("connectionCategory"));
 				currentWaterConnection.setConnectionType(rs.getString("connectionType"));
 				currentWaterConnection.setWaterSource(rs.getString("waterSource"));
@@ -67,10 +66,6 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 				currentWaterConnection.setRoadCuttingArea(rs.getFloat("roadcuttingarea"));
 				currentWaterConnection.setRoadType(rs.getString("roadtype"));
 				currentWaterConnection.setOldApplication(rs.getBoolean("isoldapplication"));
-				currentWaterConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));
-				currentWaterConnection.setProposedToilets(rs.getInt("proposedToilets"));
-				currentWaterConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
-				currentWaterConnection.setNoOfToilets(rs.getInt("noOfToilets"));
 				//Merge code
                 currentWaterConnection.setConnectionFacility(rs.getString("connectionFacility"));
                 currentWaterConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));
