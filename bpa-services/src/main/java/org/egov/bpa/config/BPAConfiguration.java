@@ -324,5 +324,9 @@ public class BPAConfiguration {
 	
 	@Value("${notification.email.subject}")
 	private String emailSubject;
+	
+	//digital certificate integration
+	@Value("${persister.update.bpa.dscdetails.topic}")
+	private String updateDscDetailsTopic;
 
 }
