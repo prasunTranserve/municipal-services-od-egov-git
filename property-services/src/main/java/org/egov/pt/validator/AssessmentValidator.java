@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
@@ -178,7 +179,7 @@ public class AssessmentValidator {
 		}
 		
 		log.info("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
-		if (assessment.getAssessmentDate() > new Date().getTime()) {
+		if (assessment.getAssessmentDate() > new Date().getTime() && !DateUtils.isSameDay(new Date(assessment.getAssessmentDate()), new Date())) {
 			log.error("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
 			errorMap.put(ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_CODE, ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_MSG);
 		}
