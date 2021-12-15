@@ -179,7 +179,7 @@ public class AssessmentValidator {
 		}
 		
 		log.info("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
-		if (assessment.getAssessmentDate() > new Date().getTime() && !DateUtils.isSameDay(new Date(assessment.getAssessmentDate()), new Date())) {
+		if ((assessment.getAssessmentDate() > new Date().getTime()) && !DateUtils.isSameDay(new Date(assessment.getAssessmentDate()), new Date())) {
 			log.error("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
 			errorMap.put(ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_CODE, ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_MSG);
 		}
