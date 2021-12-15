@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.constants.WCConstants;
@@ -31,6 +28,9 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 @Component
 public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>> {
 
@@ -46,6 +46,7 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 			if (connectionListMap.getOrDefault(Id, null) == null) {
 				currentWaterConnection = new WaterConnection();
 				currentWaterConnection.setTenantId(rs.getString("tenantid"));
+				currentWaterConnection.setConnectionFacility(rs.getString("connectionFacility"));
 				currentWaterConnection.setConnectionCategory(rs.getString("connectionCategory"));
 				currentWaterConnection.setConnectionType(rs.getString("connectionType"));
 				currentWaterConnection.setWaterSource(rs.getString("waterSource"));
@@ -66,6 +67,16 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 				currentWaterConnection.setRoadCuttingArea(rs.getFloat("roadcuttingarea"));
 				currentWaterConnection.setRoadType(rs.getString("roadtype"));
 				currentWaterConnection.setOldApplication(rs.getBoolean("isoldapplication"));
+				currentWaterConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));
+				currentWaterConnection.setProposedToilets(rs.getInt("proposedToilets"));
+				currentWaterConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
+				currentWaterConnection.setNoOfToilets(rs.getInt("noOfToilets"));
+				//Merge code
+                currentWaterConnection.setConnectionFacility(rs.getString("connectionFacility"));
+                currentWaterConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));
+                currentWaterConnection.setProposedToilets(rs.getInt("proposedToilets"));
+                currentWaterConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
+                currentWaterConnection.setNoOfToilets(rs.getInt("noOfToilets"));
 				PGobject pgObj = (PGobject) rs.getObject("additionaldetails");
 				ObjectNode additionalDetails = null;
 				if (pgObj != null) {

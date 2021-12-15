@@ -84,6 +84,9 @@ public class SearchCriteria {
 
 	@JsonIgnore
 	private List<String> ownerIds;
+	
+	@JsonProperty("connectionFacility")
+	private String connectionFacility;
 
 	public boolean isEmpty() {
 		return (StringUtils.isEmpty(this.tenantId) && StringUtils.isEmpty(this.mobileNumber)

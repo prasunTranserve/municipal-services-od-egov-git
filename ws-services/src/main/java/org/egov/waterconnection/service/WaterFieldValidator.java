@@ -17,6 +17,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 	@Override
 	public ValidatorResult validate(WaterConnectionRequest waterConnectionRequest, int reqType) {
 		Map<String, String> errorMap = new HashMap<>();
+		if (reqType == WCConstants.CREATE_APPLICATION) {
+			handleCreateApplicationRequest(waterConnectionRequest, errorMap);
+		}
 		if (reqType == WCConstants.UPDATE_APPLICATION) {
 			handleUpdateApplicationRequest(waterConnectionRequest, errorMap);
 		}
@@ -26,6 +29,13 @@ public class WaterFieldValidator implements WaterActionValidator {
 		if (!errorMap.isEmpty())
 			return new ValidatorResult(false, errorMap);
 		return new ValidatorResult(true, errorMap);
+	}
+
+	private void handleCreateApplicationRequest(WaterConnectionRequest waterConnectionRequest,
+			Map<String, String> errorMap) {
+		if(!StringUtils.hasText(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+			errorMap.put("INVALID_WATER_CONNECTION_FACILITY", "Connection Facility should not be empty");
+		}
 	}
 
 	private void handleUpdateApplicationRequest(WaterConnectionRequest waterConnectionRequest,
@@ -52,7 +62,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionExecutionDate())) {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
 			}
-
+			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
+			}
 		}
 		if (WCConstants.APPROVE_CONNECTION_CONST
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
@@ -86,6 +98,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 			}
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionExecutionDate())) {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
+			}
+			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
 			}
 		}
 		if ((WCConstants.SUBMIT_APPLICATION_CONST
@@ -123,6 +138,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 					}
 
 				}
+			}
+			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
 			}
 		}
 	}
