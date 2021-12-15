@@ -29,6 +29,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
+import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
@@ -113,6 +114,7 @@ public class DemandService {
 				.get(WSCalculationConstant.BILLING_PERIOD);
 		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
 		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+		log.info(String.format("Billing period startDate: %s, endDate: %s", fromDate.toString(), toDate.toString()));
 		
 		// List that will contain Calculation for new demands
 				List<Calculation> createCalculations = new LinkedList<>();
@@ -209,6 +211,8 @@ public class DemandService {
 					.minimumAmountPayable(minimumPayableAmount).tenantId(tenantId).taxPeriodFrom(fromDate)
 					.taxPeriodTo(toDate).consumerType("waterConnection").businessService(businessService)
 					.status(StatusEnum.valueOf("ACTIVE")).billExpiryTime(expiryDate).build());
+			log.info(String.format("Generating demand for tenantId: %s, connectionNo: %s, billPeriodFrom: %s, billPeriodTo: %s",
+					tenantId, consumerCode, fromDate, toDate));
 		}
 		log.info("Demand Object" + demands.toString());
 		List<Demand> demandRes = demandRepository.saveDemand(requestInfo, demands);
@@ -636,7 +640,7 @@ public class DemandService {
 
 		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE, demand.getDemandDetails());
 		if (latestRebateDemandDetail != null) {
-			updateTaxAmount(rebate, latestRebateDemandDetail);
+			updateTaxAmount(rebate.negate(), latestRebateDemandDetail);
 			isRebateUpdated = true;
 		}
 		
@@ -691,10 +695,10 @@ public class DemandService {
 	 * @param tenantId
 	 *            TenantId for getting master data.
 	 */
-	public void generateDemandForTenantId(String tenantId, RequestInfo requestInfo) {
+	public void generateDemandForTenantId(String tenantId, RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
 		requestInfo.getUserInfo().setTenantId(tenantId);
 		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
-		generateDemandForULB(billingMasterData, requestInfo, tenantId);
+		generateDemandForULB(billingMasterData, requestInfo, tenantId, billCriteria);
 	}
 
 	/**
@@ -703,12 +707,12 @@ public class DemandService {
 	 * @param requestInfo Request Info
 	 * @param tenantId Tenant Id
 	 */
-	public void generateDemandForULB(Map<String, Object> master, RequestInfo requestInfo, String tenantId) {
+	public void generateDemandForULB(Map<String, Object> master, RequestInfo requestInfo, String tenantId, BillSchedulerCriteria billCriteria) {
 		log.info("Billing master data values for non metered connection:: {}", master);
 		long startDay = (((int) master.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
 		if(isCurrentDateIsMatching((String) master.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
 			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId,
-					WSCalculationConstant.nonMeterdConnection);
+					WSCalculationConstant.nonMeterdConnection, billCriteria);
 			String assessmentYear = estimationService.getAssessmentYear();
 			for (String connectionNo : connectionNos) {
 				CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
@@ -717,6 +721,7 @@ public class DemandService {
 				calculationCriteriaList.add(calculationCriteria);
 				CalculationReq calculationReq = CalculationReq.builder().calculationCriteria(calculationCriteriaList)
 						.requestInfo(requestInfo).isconnectionCalculation(true).build();
+				log.info(String.format("Pushed for demand generation for tenant: %s, connectionNo: %s", tenantId, connectionNo));
 				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
 				// log.info("Prepared Statement" + calculationRes.toString());
 

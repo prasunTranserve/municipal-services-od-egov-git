@@ -124,6 +124,7 @@ public class BPAService {
 		}
 		@SuppressWarnings("unchecked")
 		LinkedHashMap<String, Object> edcr = edcrService.getEDCRDetails(bpaRequest);
+		log.info("EDCR responce "+edcr);
 		//Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
 		Map<String, String> values = edcrService.validateEdcrPlanV2(bpaRequest, mdmsData, edcr);
 		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
@@ -134,7 +135,9 @@ public class BPAService {
 			landService.addLandInfoToBPA(bpaRequest);
 		}
 		//enrichmentService.enrichBPACreateRequest(bpaRequest, mdmsData, values);
-		enrichmentService.enrichBPACreateRequestV2(bpaRequest, mdmsData, values, edcr);			
+		log.info("bpaRequest before  enrichBPACreateRequestV2 "+bpaRequest);
+		enrichmentService.enrichBPACreateRequestV2(bpaRequest, mdmsData, values, edcr);		
+		log.info("bpaRequest after  enrichBPACreateRequestV2 "+bpaRequest);
 		wfIntegrator.callWorkFlow(bpaRequest);
 		nocService.createNocRequest(bpaRequest, mdmsData,edcrService.getEdcrSuggestedRequiredNocs(edcr));
 		// this.addCalculation(applicationType, bpaRequest);

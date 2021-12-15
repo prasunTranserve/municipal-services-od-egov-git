@@ -157,7 +157,7 @@ public class WSCalculatorQueryBuilder {
 	
 	
 	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, Boolean isOldApplication,
-			List<Object> preparedStatement) {
+			List<Object> preparedStatement, List<String> wards) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 		// Add connection type
 		addClauseIfRequired(preparedStatement, query);
@@ -175,6 +175,21 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(isOldApplication);
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno is not null");
+		
+		if(!wards.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.additionaldetails ->> 'ward' in (");
+			int wardCount=0;
+			for (String ward : wards) {
+				if(wardCount==0)
+					query.append("?");
+				else
+					query.append(",?");
+				preparedStatement.add(ward);
+				wardCount++;
+			}
+			query.append(")");
+		}
 		return query.toString();
 		
 	}

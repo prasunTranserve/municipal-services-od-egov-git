@@ -23,7 +23,6 @@ import org.egov.noc.web.model.Document;
 import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
 import org.egov.tracer.model.CustomException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -204,10 +203,10 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			//and status=submit
 			StringBuilder fetchApplicationIdsUrl = new StringBuilder(config.getFireNocHost());
 			fetchApplicationIdsUrl.append(FETCH_APPLICATION_IDS_ENDPOINT);
-			//Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
-				//	new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getUserResponse().getEmailId()));
-			String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";
-			Object fetchApplicationIdsResponse = new Gson().fromJson(str, HashMap.class);
+			Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
+					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getUserResponse().getEmailId()));
+			//String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";
+			//Object fetchApplicationIdsResponse = new Gson().fromJson(str, HashMap.class);
 			if(fetchApplicationIdsResponse instanceof Map && Objects.nonNull(((Map) fetchApplicationIdsResponse).get("result"))
 					&& Objects.nonNull(((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID"))) {
 				//store application id in db --
@@ -229,7 +228,7 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			}
 			workflow.setAction(NOCConstants.ACTION_SUBMIT);
 		}
-		
+
 		return workflow;
 	}
 

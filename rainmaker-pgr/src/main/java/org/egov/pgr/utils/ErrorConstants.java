@@ -15,6 +15,9 @@ public class ErrorConstants {
 	public static final String INVALID_DEPARTMENT_TENANT_MSG = "The Given Department is Invalid for this tenant";
 	public static final String INVALID_DEPARTMENT_TENANT_KEY = "Invalid Department";
 	
+	public static final String INVALID_ULB_GRADE_TENANT_MSG = "The ULB Grade not present for this tenant";
+	public static final String INVALID_ULB_GRADE_TENANT_KEY = "Invalid Tenant ID";
+	
 	public static final String INVALID_TENANT_ID_MDMS_SERVICE_CODE_KEY = "EG_PGR_MDMS_SERVICE_CODES";
 	public static final String INVALID_TENANT_ID_MDMS_SERVICE_CODE_MSG = "No serviceDefs data found for this tenant";
 	

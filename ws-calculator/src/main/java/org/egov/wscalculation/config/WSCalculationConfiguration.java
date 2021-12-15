@@ -245,4 +245,19 @@ public class WSCalculationConfiguration {
 
 	@Value("${egov.demand.manualmonthnumber}")
 	private int demandManualMonthNo;
+	
+	@Value("${egov.demand.manualyear}")
+	private int demandManualYear;
+	
+	@Value("${egov.demand.tenants}")
+	private String schedulerTenants;
+	
+	@Value("${egov.demand.tenants.skip}")
+	private String skipSchedulerTenants;
+	
+	@Value("${egov.demand.specialrebate.months}")
+	private String specialRebateMonths;
+
+	@Value("${egov.demand.specialrebate.year}")
+	private String specialRebateYear;
 }

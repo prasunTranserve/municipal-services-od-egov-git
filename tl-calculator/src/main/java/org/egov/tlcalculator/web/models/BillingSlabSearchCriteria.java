@@ -13,8 +13,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -53,6 +53,9 @@ public class BillingSlabSearchCriteria {
 
 	@JsonProperty("to")
 	private Double to;
+	
+	@JsonProperty("searchIdsInAudit")
+	private Boolean searchIdsInAudit;
 
 	@JsonIgnore
 	private Double uomValue;

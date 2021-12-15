@@ -138,6 +138,10 @@ public class TradeLicenseDetail   {
         @JsonProperty("verificationDocuments")
         @Valid
         private List<Document> verificationDocuments = null;
+        
+        @JsonProperty("dscDetails")
+        @Valid
+        private List<DscDetails> dscDetails = null;
 
         @JsonProperty("additionalDetail")
         private JsonNode additionalDetail = null;
@@ -190,6 +194,15 @@ public class TradeLicenseDetail   {
             }
             if(!this.verificationDocuments.contains(verificationDocumentsItem))
                 this.verificationDocuments.add(verificationDocumentsItem);
+            return this;
+        }
+        
+        public TradeLicenseDetail addDscDetailsItem(DscDetails dscDetailsItem) {
+            if (this.dscDetails == null) {
+            this.dscDetails = new ArrayList<>();
+            }
+            if(!this.dscDetails.contains(dscDetailsItem))
+                this.dscDetails.add(dscDetailsItem);
             return this;
         }
 

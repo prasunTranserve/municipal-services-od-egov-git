@@ -185,6 +185,13 @@ public class EstimationService {
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_TIME_REBATE)
 					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
 		}
+		
+		// Sewerage Special Rebate
+		BigDecimal specialRebate = payService.getApplicableSpecialRebate(sewerageCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_REBATE_MASTER));
+		if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(SWCalculationConstant.SW_SPECIAL_REBATE)
+					.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+		}
 
 		// sewerage cess
 		if (timeBasedExemptionMasterMap.get(SWCalculationConstant.SW_SEWERAGE_CESS_MASTER) != null) {

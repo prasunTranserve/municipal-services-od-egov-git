@@ -198,11 +198,29 @@ public class NotificationService {
 
 			for (Map<String, Object> employee : resultCast) {
 				Map<String, Object> user = (Map) employee.get("user");
+				
+				String roleCodes = "" ;
+				
+				if(user.get("roles")!=null)
+				{
+				List<Map<String, String>> rolesMap = (List<Map<String, String>>) user.get("roles") ;
+				
+				for (Map<String, String> roleMap : rolesMap) {
+					roleCodes = roleCodes+roleMap.get("code").trim()+"," ;
+				}
+				
+				if (roleCodes.endsWith(",")) {
+					roleCodes = roleCodes.substring(0, roleCodes.length() - 1);
+					}
+				
+				}
 
 				Map<String, String> employeeDetails = new HashMap<>();
 
 				employeeDetails.put("name", user.get("name")!=null?user.get("name").toString():"");
+				employeeDetails.put("uuid", user.get("uuid")!=null?user.get("uuid").toString():"");
 				employeeDetails.put("phone", user.get("mobileNumber")!=null?user.get("mobileNumber").toString():"");
+				employeeDetails.put("roleCodes", roleCodes);
 				try {
 					employeeDetails.put("emailId", user.get("emailId")!=null?user.get("emailId").toString():"");
 				} catch (Exception e) {

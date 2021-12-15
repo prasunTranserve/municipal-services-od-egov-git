@@ -20,6 +20,7 @@ import org.egov.tl.repository.TLRepository;
 import org.egov.tl.service.UserService;
 import org.egov.tl.util.TLConstants;
 import org.egov.tl.util.TradeUtil;
+import org.egov.tl.web.models.DscDetails;
 import org.egov.tl.web.models.OwnerInfo;
 import org.egov.tl.web.models.TradeLicense;
 import org.egov.tl.web.models.TradeLicenseRequest;
@@ -327,8 +328,52 @@ public class TLValidator {
         validateDuplicateDocuments(request);
         setFieldsFromSearch(request, searchResult, mdmsData);
         validateOwnerActiveStatus(request);
+        validateUserAuthorization(request, searchResult);
     }
 
+    
+    /**
+     * Validates the Users Authorization for particular license
+     * This method first validates the accountid if both the citizen account id is same and license account id is same it further proceeds and if the account id
+     * are different then checks the mobile number whether already created owners having the mobile number of the citizen logged in 
+     * 
+     * @param request The tradeLciense create or update request
+     * 
+     * 
+     * 
+     */
+    private void validateUserAuthorization(TradeLicenseRequest request , List<TradeLicense> searchResult){
+    	Map<String,String> errorMap = new HashMap<>();
+
+    	if(request.getRequestInfo().getUserInfo().getType().equalsIgnoreCase("CITIZEN" )){
+
+    		String userUUID = request.getRequestInfo().getUserInfo().getUuid();
+    		
+    		searchResult.forEach(license -> {
+    			
+    			if(!(userUUID.equalsIgnoreCase(license.getAccountId())))
+    			{
+    			List<String> ownerMobilenumbers = new LinkedList<>();
+    	        if(!CollectionUtils.isEmpty(license.getTradeLicenseDetail().getOwners())){
+    	            license.getTradeLicenseDetail().getOwners().forEach(owner -> {
+    	                if(owner != null && owner.getUserActive()!=null && owner.getUserActive() && !StringUtils.isEmpty(owner.getUuid()) && !StringUtils.isEmpty(owner.getMobileNumber()) )
+    	                    ownerMobilenumbers.add(owner.getMobileNumber());
+    	            });
+    	        }
+    	        
+    	        
+    	        if(!ownerMobilenumbers.contains(request.getRequestInfo().getUserInfo().getUserName()))
+    	        	errorMap.put("USER NOT AUTHORIZED", "Not authorized to perform this operation");
+    			}
+    	        
+    		});
+    	}
+
+    	if(!errorMap.isEmpty())
+    		throw new CustomException(errorMap);
+    }
+    
+ 
 
     /**
      * Validates that atleast one tradeUnit is active equal true or new tradeUnit
@@ -592,6 +637,18 @@ public class TLValidator {
         }
     }
 
+    public void validateDscSearch( TradeLicenseSearchCriteria criteria , RequestInfo requestInfo) {
+    	
+    	 if(StringUtils.isEmpty(criteria.getEmployeeUuid()))
+         	throw new CustomException("EMPLOYEE_UUID_ERROR", " Employee UUID is mandatory ");
+    	 
+    	 if(StringUtils.isEmpty(criteria.getTenantId()))
+          	throw new CustomException("TENANT_ID_ERROR", " TenantId is mandatory ");
+    	 
+    	 if(!criteria.getEmployeeUuid().equalsIgnoreCase(requestInfo.getUserInfo().getUuid()))
+    		 throw new CustomException("EMPLOYEE_UUID_ERROR", " Employee UUID not matching with the UUID in request ");
+    	 
+    }
 
     /**
      * Validates if the paramters coming in search are allowed
@@ -711,6 +768,13 @@ public class TLValidator {
             		if(tradeUnit.getUomValue()!=null)
             		{
             			Long tradePeriod =  getDifferenceDays(license.getValidFrom(),license.getValidTo());
+            			
+            			//Including the ending date also for trade .
+            			if(tradePeriod!=null)
+            			{
+            				tradePeriod = tradePeriod +1 ;
+            			}
+            			
             			if(!tradePeriod.toString().equalsIgnoreCase(tradeUnit.getUomValue()))
             			{
             				throw new CustomException("UOM VALUE ERROR"," The uom value should be equal to the no .of days between Trade starting date and Trade ending date ");
@@ -739,6 +803,12 @@ public class TLValidator {
        			 {
        				 try {
 						numberOfYears = Integer.parseInt(tradeYears);
+						
+						if(numberOfYears<1)
+						{
+							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The License Period should be minimum 1 year . ");	
+						}
+						
 						if(!validateDifferenceYears(license.getValidFrom(),license.getValidTo(),numberOfYears))
 						{
 							throw new CustomException("LICENSE PERIOD NUMBER OF YEARS ERROR","The difference between Valid From date and valid to date in years should be equal to License Period ");
@@ -933,7 +1003,88 @@ public class TLValidator {
 
 
 
-   
+    
+    public void validateDscDetails(TradeLicenseRequest request, List<TradeLicense> searchResult) {
+        Map<String,TradeLicense> idToTradeLicenseFromSearch = new HashMap<>();
+        searchResult.forEach(tradeLicense -> {
+            idToTradeLicenseFromSearch.put(tradeLicense.getId(),tradeLicense);
+        });
+        request.getLicenses().forEach(license -> {
+        	
+        	TradeLicense tradeLicenseFromSearch = idToTradeLicenseFromSearch.get(license.getId()) ;
+        	
+        	if(tradeLicenseFromSearch==null)
+        	{
+        		throw new CustomException("APPLICATION  ERROR","The Application does not exist ."); 
+        	}
+        	
+        	if(!tradeLicenseFromSearch.getStatus().equalsIgnoreCase(TLConstants.STATUS_APPROVED))
+        	{
+        		throw new CustomException("APPLICATION STATUS ERROR","The Application should be in approved state for document signing ."); 
+        	}
+        	
+        	List<DscDetails> dscDetailsFromSearch = tradeLicenseFromSearch.getTradeLicenseDetail().getDscDetails();
+        	List<DscDetails> dscDetailsFromRequest = license.getTradeLicenseDetail().getDscDetails();
+        	
+        	if(!CollectionUtils.isEmpty(dscDetailsFromSearch))
+        	{
+        		if(dscDetailsFromSearch.size()!=1)
+        			throw new CustomException("DSC DETAILS ERROR","There should be only one Digitally signed documemts for application ."); 
+        		
+        		DscDetails searchedDscDetail = dscDetailsFromSearch.get(0);
+        		
+        		if(!StringUtils.isEmpty(searchedDscDetail.getDocumentId()))
+        			throw new CustomException("DSC DETAILS ERROR","This application License is already digitally signed."); 
+        		
+        	}else
+        		throw new CustomException("DSC DETAILS ERROR","There are no Digitally signed documemts for this application ."); 
+        	
+        	
+        	if(!CollectionUtils.isEmpty(dscDetailsFromRequest))
+        	{
+        		if(dscDetailsFromRequest.size()!=1)
+        			throw new CustomException("DSC DETAILS ERROR","There should be only one Digitally signed documemts for application .");
+        		
+        		DscDetails requestDscDetail = dscDetailsFromRequest.get(0);
+        		DscDetails searchedDscDetail = dscDetailsFromSearch.get(0);
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getApprovedBy()))
+        			throw new CustomException("DSC DETAILS ERROR","Approved by is mandatory in Digitally signed documemts .");
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getApplicationNumber()))
+        			throw new CustomException("DSC DETAILS ERROR","Application Number is mandatory in Digitally signed documemts .");
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getDocumentType()))
+        			throw new CustomException("DSC DETAILS ERROR","Document Type is mandatory in Digitally signed documemts .");
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getId()))
+        			throw new CustomException("DSC DETAILS ERROR","Id is mandatory in Digitally signed documemts .");
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getTenantId()))
+        			throw new CustomException("DSC DETAILS ERROR","TenantId is mandatory in Digitally signed documemts .");
+        		
+        		if(StringUtils.isEmpty(requestDscDetail.getDocumentId()))
+        			throw new CustomException("DSC DETAILS ERROR","DocumentId is mandatory in Digitally signed documemts .");
+        		
+        		
+        		if(!searchedDscDetail.getApplicationNumber().equalsIgnoreCase(requestDscDetail.getApplicationNumber()))
+        			throw new CustomException("DSC DETAILS ERROR","DSC Document Application Number does not match .");
+        		
+        		if(!searchedDscDetail.getId().equalsIgnoreCase(requestDscDetail.getId()))
+        			throw new CustomException("DSC DETAILS ERROR","DSC Document Id does not match .");
+        		
+        		if(!searchedDscDetail.getApprovedBy().equalsIgnoreCase(requestDscDetail.getApprovedBy()))
+        			throw new CustomException("DSC DETAILS ERROR","DSC Document Approved by does not match .");
+        		
+        		if(!searchedDscDetail.getApprovedBy().equalsIgnoreCase(request.getRequestInfo().getUserInfo().getUuid()))
+        			throw new CustomException("DSC DETAILS ERROR","DSC Document Can only be signed by the person who approved it .");
+        		
+        		
+        	}else
+        		throw new CustomException("DSC DETAILS ERROR","There are no Digitally signed documemts for this application ."); 
+
+        });
+    }
    
 
 

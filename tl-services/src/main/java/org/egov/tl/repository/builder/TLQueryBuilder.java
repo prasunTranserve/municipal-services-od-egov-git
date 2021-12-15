@@ -40,15 +40,16 @@ public class TLQueryBuilder {
     private String businessServiceBPA;
 
     private static final String QUERY = "SELECT tl.*,tld.*,tlunit.*,tlacc.*,tlowner.*," +
-            "tladdress.*,tlapldoc.*,tlverdoc.*,tlownerdoc.*,tlinsti.*,tl.id as tl_id,tl.tenantid as tl_tenantId,tl.lastModifiedTime as " +
+            "tladdress.*,tlapldoc.*,tlverdoc.*,tlownerdoc.*,tldscdetails.*,tlinsti.*,tl.id as tl_id,tl.applicationnumber as tl_applicationnumber,tl.tenantid as tl_tenantId,tl.lastModifiedTime as " +
             "tl_lastModifiedTime,tl.createdBy as tl_createdBy,tl.lastModifiedBy as tl_lastModifiedBy,tl.createdTime as " +
-            "tl_createdTime,tl.filestoreid as tl_fileStoreId,tld.id as tld_id,tladdress.id as tl_ad_id,tld.createdBy as tld_createdBy," +
+            "tl_createdTime,tl.filestoreid as tl_fileStoreId,tld.id as tld_id,tld.additionaldetail as tld_additionaldetail,tladdress.id as tl_ad_id,tld.createdBy as tld_createdBy," +
             "tlowner.id as tlowner_uuid,tlowner.active as useractive," +
             "tld.createdTime as tld_createdTime,tld.lastModifiedBy as tld_lastModifiedBy,tld.createdTime as " +
             "tld_createdTime,tlunit.id as tl_un_id,tlunit.tradeType as tl_un_tradeType,tlunit.uom as tl_un_uom,tlunit.active as tl_un_active," +
             "tlunit.uomvalue as tl_un_uomvalue,tlacc.id as tl_acc_id,tlacc.uom as tl_acc_uom,tlacc.uomvalue as tl_acc_uomvalue,tlacc.active as tl_acc_active," +
             "tlapldoc.id as tl_ap_doc_id,tlapldoc.documenttype as tl_ap_doc_documenttype,tlapldoc.filestoreid as tl_ap_doc_filestoreid,tlapldoc.active as tl_ap_doc_active," +
             "tlverdoc.id as tl_ver_doc_id,tlverdoc.documenttype as tl_ver_doc_documenttype,tlverdoc.filestoreid as tl_ver_doc_filestoreid,tlverdoc.active as tl_ver_doc_active," +
+            "tldscdetails.id as tl_dsc_details_id,tldscdetails.documenttype as tl_dsc_details_documenttype,tldscdetails.documentid as tl_dsc_details_documentid,tldscdetails.additionaldetail as  tl_dsc_details_additionaldetail,tldscdetails.applicationnumber as tl_dsc_details_applicationnumber," +
             "tlownerdoc.userid as docuserid,tlownerdoc.tradeLicenseDetailId as doctradelicensedetailid,tlownerdoc.id as ownerdocid,"+
             "tlownerdoc.documenttype as ownerdocType,tlownerdoc.filestoreid as ownerfileStoreId,tlownerdoc.documentuid as ownerdocuid,tlownerdoc.active as ownerdocactive," +
             " tlinsti.id as instiid,tlinsti.name as authorisedpersonname,tlinsti.type as institutiontype,tlinsti.tenantid as institenantId,tlinsti.active as instiactive, "+
@@ -70,7 +71,11 @@ public class TLQueryBuilder {
             +LEFT_OUTER_JOIN_STRING
             +"eg_tl_verificationdocument tlverdoc ON tlverdoc.tradelicensedetailid = tld.id"
             +LEFT_OUTER_JOIN_STRING
+            +"eg_tl_dscdetails tldscdetails ON tldscdetails.tradelicensedetailid = tld.id"
+            +LEFT_OUTER_JOIN_STRING
             +"eg_tl_institution tlinsti ON tlinsti.tradelicensedetailid = tld.id ";
+    
+    private static final String DSC_PENDING_QUERY = "SELECT * FROM eg_tl_dscdetails";
 
 
       private final String paginationWrapper = "SELECT * FROM " +
@@ -78,8 +83,38 @@ public class TLQueryBuilder {
               "({})" +
               " result) result_offset " +
               "WHERE offset_ > ? AND offset_ <= ?";
+      
+      private final String dscPaginationWrapper = "SELECT * FROM " +
+              "(SELECT *, DENSE_RANK() OVER (ORDER BY lastModifiedTime DESC) offset_ FROM " +
+              "({})" +
+              " result) result_offset " +
+              "WHERE offset_ > ? AND offset_ <= ?";
 
 
+    public String getTLDscDetailsQuery(TradeLicenseSearchCriteria criteria, List<Object> preparedStmtList) {
+    	
+    	StringBuilder builder = new StringBuilder(DSC_PENDING_QUERY);
+    	
+    	
+    	if (criteria.getTenantId() != null) {
+            addClauseIfRequired(preparedStmtList, builder);
+            builder.append(" tenantid = ? ");
+            preparedStmtList.add(criteria.getTenantId());
+        }
+    	
+    	if (criteria.getEmployeeUuid() != null) {
+            addClauseIfRequired(preparedStmtList, builder);
+            builder.append(" approvedby = ? ");
+            preparedStmtList.add(criteria.getEmployeeUuid());
+        }
+    	
+         builder.append(" AND  documentid is null ");
+         
+    	
+    	
+    	return addDscPaginationWrapper(builder.toString(),preparedStmtList,criteria);
+    	
+    }
 
 
 
@@ -240,6 +275,27 @@ public class TLQueryBuilder {
 
        return finalQuery;
     }
+    
+    private String addDscPaginationWrapper(String query,List<Object> preparedStmtList,TradeLicenseSearchCriteria criteria){
+    	int limit = config.getDefaultLimit();
+    	int offset = config.getDefaultOffset();
+    	String finalQuery = dscPaginationWrapper.replace("{}",query);
+
+    	if(criteria.getLimit()!=null && criteria.getLimit()<=config.getMaxSearchLimit())
+    		limit = criteria.getLimit();
+
+    	if(criteria.getLimit()!=null && criteria.getLimit()>config.getMaxSearchLimit())
+    		limit = config.getMaxSearchLimit();
+
+    	if(criteria.getOffset()!=null)
+    		offset = criteria.getOffset();
+
+    	preparedStmtList.add(offset);
+    	preparedStmtList.add(limit+offset);
+
+    	return finalQuery;
+    }
+    
 
 
     private static void addClauseIfRequired(List<Object> values, StringBuilder queryString) {

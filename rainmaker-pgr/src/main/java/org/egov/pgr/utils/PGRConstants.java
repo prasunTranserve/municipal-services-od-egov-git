@@ -28,8 +28,11 @@ public class PGRConstants {
 	public static final String SRID_ASSIGNEDTO_JSONPATH = "$.servicesRequestIds.*.businesskey";
 	public static final String MDMS_PGR_MOD_NAME = "RAINMAKER-PGR";
 	public static final String MDMS_SERVICETYPE_MASTER_NAME = "ServiceDefs";
+	public static final String MDMS_ESCALATIONLEVEL4_COMPLAINTS_MASTER_NAME = "Escalationlevel4Complaints";
 	public static final String MDMS_COMMON_MASTERS_MODULE_NAME = "common-masters";
+	public static final String MDMS_TENANT_MODULE_NAME = "tenant";
 	public static final String MDMS_DEPT_MASTERS_MASTER_NAME = "Department";
+	public static final String MDMS_MASTER_TENANTS = "tenants";
 	public static final String MDMS_DESIGNATION_MASTERS_MASTER_NAME = "Designation";
 	public static final String LOCALIZATION_MODULE_NAME = "rainmaker-pgr";
 	
@@ -89,6 +92,8 @@ public class PGRConstants {
 	public static final String JSONPATH_SLA = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs.*.slaHours";
 	public static final String JSONPATH_DEPARTMENT = "$.MdmsRes.RAINMAKER-PGR.ServiceDefs.*.department";
 	public static final String JSONPATH_DEPARTMENTS = "$.MdmsRes.common-masters.Department";
+	public static final String JSONPATH_ULBGRADE = "$.MdmsRes.tenant.tenants";
+	public static final String JSONPATH_APPLICABLE_SERVICE_CODES = "$.MdmsRes.RAINMAKER-PGR.Escalationlevel4Complaints";
 	public static final String JSONPATH_DESIGNATIONS = "$.MdmsRes.common-masters.Designation";
 
 	public static final String SERVICE_NAME = "serviceName";
@@ -159,6 +164,7 @@ public class PGRConstants {
 	public static final String ROLE_ESCALATION_OFFICER2 = "ESCALATION_OFFICER2";
 	public static final String ROLE_ESCALATION_OFFICER3 = "ESCALATION_OFFICER3";
 	public static final String ROLE_ESCALATION_OFFICER4 = "ESCALATION_OFFICER4";
+	public static final String ROLE_ESCALATION_OFFICER_BUILDING_PLAN_ASSIGNEE = "PGR_BP_ESCALATION_OFFICER1";
 	public static final String ROLE_SYSTEM = "SYSTEM";
 	
 	public static final String ROLE_NAME_CITIZEN = "Citizen";
@@ -170,6 +176,12 @@ public class PGRConstants {
 	public static final String ROLE_NAME_ESCALATION_OFFICER2 = "2nd level escalation officer";
 	public static final String ROLE_NAME_ESCALATION_OFFICER3 = "3rd level escalation officer";
 	public static final String ROLE_NAME_ESCALATION_OFFICER4 = "4th level escalation officer";
+	
+	public static final String ULB_GRADE_MUNICIPAL_CORPORATION = "Municipal Corporation";
+	public static final String ULB_GRADE_MUNICIPALITY = "Municipality";
+	public static final String ULB_GRADE_NAC = "NAC";
+	
+	
 	
 	private static Map<String, String> statusNotifKeyMap = prepareStatusNotifKeyMap();
 

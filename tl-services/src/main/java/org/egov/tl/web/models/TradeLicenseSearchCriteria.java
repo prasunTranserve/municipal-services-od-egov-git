@@ -38,6 +38,9 @@ public class TradeLicenseSearchCriteria {
 
     @JsonProperty("mobileNumber")
     private String mobileNumber;
+    
+    @JsonProperty("employeeUuid")
+    private String employeeUuid;
 
     @JsonIgnore
     private String accountId;

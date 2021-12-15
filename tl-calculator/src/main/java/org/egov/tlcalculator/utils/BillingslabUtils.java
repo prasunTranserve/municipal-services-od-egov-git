@@ -43,4 +43,15 @@ public class BillingslabUtils {
 		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
 		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
 	}
+	
+	
+	public static boolean isEmpty(String string) {
+		if(string == null)
+			return true;
+		else if(string.trim().isEmpty())
+			return true;
+		else
+			return false;
+	}
+	
 }
