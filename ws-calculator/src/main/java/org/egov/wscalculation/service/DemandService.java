@@ -711,8 +711,9 @@ public class DemandService {
 		log.info("Billing master data values for non metered connection:: {}", master);
 		long startDay = (((int) master.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
 		if(isCurrentDateIsMatching((String) master.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
-			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId,
-					WSCalculationConstant.nonMeterdConnection, billCriteria);
+//			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId,
+//					WSCalculationConstant.nonMeterdConnection, billCriteria);
+			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId, null, billCriteria);
 			String assessmentYear = estimationService.getAssessmentYear();
 			for (String connectionNo : connectionNos) {
 				CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)

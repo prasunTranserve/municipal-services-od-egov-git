@@ -160,9 +160,12 @@ public class WSCalculatorQueryBuilder {
 			List<Object> preparedStatement, List<String> wards) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 		// Add connection type
-		addClauseIfRequired(preparedStatement, query);
-		query.append(" ws.connectiontype = ? ");
-		preparedStatement.add(connectionType);
+		if(StringUtils.hasText(connectionType)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ws.connectiontype = ? ");
+			preparedStatement.add(connectionType);
+		}
+		
 		// add tenantid
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.tenantid = ? ");
