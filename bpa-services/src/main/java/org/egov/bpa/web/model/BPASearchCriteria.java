@@ -68,6 +68,9 @@ public class BPASearchCriteria {
 	    @JsonProperty("createdBy")
 	    @JsonIgnore
 	    private List<String> createdBy;
+	    
+	    @JsonProperty("approvedBy")
+	    private String approvedBy;
 
 		
 	    public boolean isEmpty() {

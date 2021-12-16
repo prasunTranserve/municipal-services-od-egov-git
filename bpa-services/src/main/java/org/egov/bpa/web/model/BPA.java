@@ -81,6 +81,10 @@ public class BPA   {
 
   @JsonProperty("additionalDetails")
   private Object additionalDetails = null;
+  
+  @JsonProperty("dscDetails")
+  @Valid
+  private List<DscDetails> dscDetails = null;
 
   public BPA id(String id) {
     this.id = id;
@@ -486,4 +490,21 @@ public class BPA   {
     }
     return o.toString().replace("\n", "\n    ");
   }
+  
+	public BPA addDscDetailsItem(DscDetails dscDetailsItem) {
+		if (this.dscDetails == null) {
+			this.dscDetails = new ArrayList<>();
+		}
+		if (!this.dscDetails.contains(dscDetailsItem))
+			this.dscDetails.add(dscDetailsItem);
+		return this;
+	}
+
+	public List<DscDetails> getDscDetails() {
+		return dscDetails;
+	}
+
+	public void setDscDetails(List<DscDetails> dscDetails) {
+		this.dscDetails = dscDetails;
+	}
 }

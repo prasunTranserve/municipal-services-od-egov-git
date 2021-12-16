@@ -11,6 +11,8 @@ import java.util.Map;
 import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.Document;
+import org.egov.bpa.web.model.DscDetails;
+import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -126,5 +128,28 @@ public class BPARowMapper implements ResultSetExtractor<List<BPA>> {
 					.documentUid(rs.getString("documentUid")).build();
 			bpa.addDocumentsItem(document);
 		}
+		
+		if(rs.getString("dsc_id")!=null) {
+        	DscDetails dscDetail = DscDetails.builder()
+                    .documentType(rs.getString("dsc_doctype"))
+                    .documentId(rs.getString("dsc_docid"))
+                    .applicationNo(rs.getString("dsc_applicationno"))
+                    .id(rs.getString("dsc_id"))
+                    .tenantId(tenantId)
+                    .approvedBy(rs.getString("dsc_approvedby"))
+                    .build();
+
+			try {
+				PGobject pgObj = (PGobject) rs.getObject("dsc_additionaldetails");
+
+				if (pgObj != null) {
+					JsonNode additionalDetail = mapper.readTree(pgObj.getValue());
+					dscDetail.setAdditionalDetails(additionalDetail);
+				}
+			} catch (Exception e) {
+				throw new CustomException("PARSING ERROR", "The DSC Details additionalDetail json cannot be parsed");
+			}
+			bpa.addDscDetailsItem(dscDetail);
+        }
 	}
 }
