@@ -110,6 +110,9 @@ public class WSCalculationConstant {
 	public static final String SPECIAL_REBATE_RATE = "specialReabteRate";
 
 	public static final String METER_READING_DATE = "meterReadingDate";
+	
+	public static final String ALLOWED_METER_READING_UPDATE_TILL = "allowUpdateTillDay";
+	
 	/*
 	 * bigdecimal values
 	 */
@@ -137,6 +140,8 @@ public class WSCalculationConstant {
 	public static final String WC_INTEREST_MASTER = "Interest";
 
 	public static final String WC_BILLING_SLAB_MASTER = "WCBillingSlab";
+	
+	public static final String WC_METER_READING_MASTER = "MeterReading";
 
 	public static final List<String> WS_BILLING_SLAB_MASTERS = Collections
 			.unmodifiableList(Arrays.asList(WC_BILLING_SLAB_MASTER));

@@ -49,6 +49,9 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 
 	@Value("${egov.meterservice.createmeterconnection}")
 	private String createMeterConnection;
+	
+	@Value("${egov.meterservice.updatemeterconnection}")
+	private String updateMeterConnection;
 
 	/**
 	 * 
@@ -154,5 +157,16 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		String query = queryBuilder.isBillingPeriodExists(connectionNo, billingPeriod, preparedStatement);
 		log.info("Is BillingPeriod Exits Query: " + query);
 		return jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+	}
+	
+	/**
+	 * 
+	 * @param meterConnectionRequest
+	 *            MeterConnectionRequest contains meter reading connection to be
+	 *            created
+	 */
+	@Override
+	public void updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
+		wSCalculationProducer.push(updateMeterConnection, meterConnectionRequest);
 	}
 }

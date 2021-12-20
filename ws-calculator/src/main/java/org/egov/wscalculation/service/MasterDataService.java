@@ -28,6 +28,7 @@ import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.util.CalculatorUtil;
+import org.egov.wscalculation.util.MeterReadingUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
@@ -61,6 +62,9 @@ public class MasterDataService {
 	
 	@Autowired
 	private EstimationService estimationService;
+	
+	@Autowired
+	private MeterReadingUtil meterReadingUtils;
 
 	/**
 	 * Fetches and creates map of all required masters
@@ -435,6 +439,18 @@ public class MasterDataService {
 			master.put(resp.getKey(), resp.getValue());
 		}
 		return master;
+	}
+	
+	public void loadMeterReadingMasterData(RequestInfo requestInfo, String tenantId,
+			Map<String, Object> masterMap) {
+
+		MdmsResponse response = mapper.convertValue(repository.fetchResult(calculatorUtils.getMdmsSearchUrl(),
+				meterReadingUtils.getMeterReadingMasterData(requestInfo, tenantId)), MdmsResponse.class);
+		Map<String, JSONArray> res = response.getMdmsRes().get(WSCalculationConstant.WS_TAX_MODULE);
+		for (Entry<String, JSONArray> entry : res.entrySet()) {
+			/* Master not contained in list will be stored as it is */
+			masterMap.put(entry.getKey(), entry.getValue());
+		}
 	}
 	
 }

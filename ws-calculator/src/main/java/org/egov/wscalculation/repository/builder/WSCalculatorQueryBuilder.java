@@ -106,7 +106,7 @@ public class WSCalculatorQueryBuilder {
 
 	public String getNoOfMeterReadingConnectionQuery(Set<String> connectionIds, List<Object> preparedStatement) {
 		StringBuilder query = new StringBuilder(noOfConnectionSearchQuery);
-		query.append(" connectionNo in (").append(createQuery(connectionIds)).append(" )");
+		query.append(" id in (").append(createQuery(connectionIds)).append(" )");
 		addToPreparedStatement(preparedStatement, connectionIds);
 		return query.toString();
 	}
@@ -205,6 +205,11 @@ public class WSCalculatorQueryBuilder {
 		query.append(" billingPeriod = ? ");
 		preparedStatement.add(billingPeriod);
 		return query.toString();
+	}
+	
+	public String getSearchLatestQueryString(MeterReadingSearchCriteria criteria, List<Object> preparedStatement) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
