@@ -106,7 +106,7 @@ public class WSCalculatorQueryBuilder {
 
 	public String getNoOfMeterReadingConnectionQuery(Set<String> connectionIds, List<Object> preparedStatement) {
 		StringBuilder query = new StringBuilder(noOfConnectionSearchQuery);
-		query.append(" connectionNo in (").append(createQuery(connectionIds)).append(" )");
+		query.append(" id in (").append(createQuery(connectionIds)).append(" )");
 		addToPreparedStatement(preparedStatement, connectionIds);
 		return query.toString();
 	}
@@ -163,6 +163,14 @@ public class WSCalculatorQueryBuilder {
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" ws.connectiontype = ? ");
 		preparedStatement.add(connectionType);
+		
+		// Add connection type
+		if(StringUtils.hasText(connectionType)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ws.connectiontype = ? ");
+			preparedStatement.add(connectionType);
+		}
+		
 		// add tenantid
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.tenantid = ? ");

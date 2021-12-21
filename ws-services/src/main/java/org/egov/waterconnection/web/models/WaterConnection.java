@@ -45,6 +45,18 @@ public class WaterConnection extends Connection {
 
 	@JsonProperty("usageCategory")
 	private String usageCategory = null;
+	
+	@JsonProperty("proposedwaterclosets")
+	private Integer proposedWaterClosets = null;
+
+	@JsonProperty("proposedtoilets")
+	private Integer proposedToilets = null;
+
+	@JsonProperty("noofwaterclosets")
+	private Integer noOfWaterClosets = null;
+
+	@JsonProperty("nooftoilets")
+	private Integer noOfToilets = null;
 
 
 	public WaterConnection waterSource(String waterSource) {
@@ -226,6 +238,62 @@ public class WaterConnection extends Connection {
 
 	public void setPipeSize(Double pipeSize) {
 		this.pipeSize = pipeSize;
+	}
+	
+	/**
+	 * Proposed water closets for sewerage connection attribute.
+	 * 
+	 * @return pipeSize
+	 **/
+	@ApiModelProperty(value = "No of proposed water closets is citizen input")
+	public Integer getProposedWaterClosets() {
+		return proposedWaterClosets;
+	}
+
+	public void setProposedWaterClosets(Integer proposedWaterClosets) {
+		this.proposedWaterClosets = proposedWaterClosets;
+	}
+
+	/**
+	 * Proposed toilets for sewerage connection attribute.
+	 * 
+	 * @return pipeSize
+	 **/
+	@ApiModelProperty(value = "No of proposed toilets is citizen input")
+	public Integer getProposedToilets() {
+		return proposedToilets;
+	}
+
+	public void setProposedToilets(Integer proposedToilets) {
+		this.proposedToilets = proposedToilets;
+	}
+
+	/**
+	 * No of water closets for sewerage connection attribute.
+	 * 
+	 * @return pipeSize
+	 **/
+	@ApiModelProperty(value = "No of water closets is citizen input")
+	public Integer getNoOfWaterClosets() {
+		return noOfWaterClosets;
+	}
+
+	public void setNoOfWaterClosets(Integer noOfWaterClosets) {
+		this.noOfWaterClosets = noOfWaterClosets;
+	}
+
+	/**
+	 * No of Toilets for sewerage connection attribute.
+	 * 
+	 * @return pipeSize
+	 **/
+	@ApiModelProperty(value = "No of toilets is citizen input")
+	public Integer getNoOfToilets() {
+		return noOfToilets;
+	}
+
+	public void setNoOfToilets(Integer noOfToilets) {
+		this.noOfToilets = noOfToilets;
 	}
 
 	@Override

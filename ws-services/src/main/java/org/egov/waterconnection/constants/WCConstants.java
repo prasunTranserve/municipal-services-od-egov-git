@@ -15,6 +15,8 @@ public class WCConstants {
 	public static final String TAX_JSONPATH_ROOT = "$.MdmsRes.ws-services-calculation";
 
 	public static final String PROPERTY_JSONPATH_ROOT = "$.MdmsRes.PropertyTax";
+	
+	public static final String WS_SERVICES_JSONPATH_ROOT = "$.MdmsRes.ws-services-masters";
 
 	public static final String JSONPATH_CODE_CONNECTION_CATEGORY = "connectionCategory.code";
 
@@ -41,6 +43,8 @@ public class WCConstants {
 	public static final String NON_METERED_CONNECTION = "Non Metered";
 
 	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
+	
+	public static final String MDMS_WC_CONNECTION_FACILITY = "connectionFacility";
 
 	// WS actions
 

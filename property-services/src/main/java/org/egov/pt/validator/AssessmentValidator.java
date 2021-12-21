@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
@@ -34,6 +35,9 @@ import static org.egov.pt.util.PTConstants.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AssessmentValidator {
 
@@ -173,7 +177,10 @@ public class AssessmentValidator {
 		if(!checkIfPropertyExists(assessmentReq.getRequestInfo(), assessment.getPropertyId(), assessment.getTenantId())) {
 			throw new CustomException("PROPERTY_NOT_FOUND", "You're trying to assess a non-existing property.");
 		}
-		if (assessment.getAssessmentDate() > new Date().getTime()) {
+		
+		log.info("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
+		if ((assessment.getAssessmentDate() > new Date().getTime()) && !DateUtils.isSameDay(new Date(assessment.getAssessmentDate()), new Date())) {
+			log.error("Assessment date: "+ assessment.getAssessmentDate() + ", Application current date: "+ new Date().getTime());
 			errorMap.put(ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_CODE, ErrorConstants.ASSMENT_DATE_FUTURE_ERROR_MSG);
 		}
 

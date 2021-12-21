@@ -17,14 +17,22 @@ public class EnrichmentService {
 	 * @param meterConnectionRequest The create request for the meter reading
 	 */
 
-	public void enrichMeterReadingRequest(MeterConnectionRequest meterConnectionRequest) {
-		AuditDetails auditDetails = getAuditDetails(meterConnectionRequest.getRequestInfo().getUserInfo().getUuid(),
-				true);
-		meterConnectionRequest.getMeterReading().setId(UUID.randomUUID().toString());
-		if (meterConnectionRequest.getMeterReading().getLastReadingDate() == null
-				|| meterConnectionRequest.getMeterReading().getLastReadingDate() == 0) {
-			Long lastReadingDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30);
-			meterConnectionRequest.getMeterReading().setLastReadingDate(lastReadingDate);
+	public void enrichMeterReadingRequest(MeterConnectionRequest meterConnectionRequest, boolean isUpdateRequest) {
+		AuditDetails auditDetails;
+		if(isUpdateRequest) {
+			auditDetails = getAuditDetails(meterConnectionRequest.getRequestInfo().getUserInfo().getUuid(),
+					false);
+		} else {
+			auditDetails = getAuditDetails(meterConnectionRequest.getRequestInfo().getUserInfo().getUuid(),
+					true);
+		}
+		if(!isUpdateRequest) {
+			meterConnectionRequest.getMeterReading().setId(UUID.randomUUID().toString());
+			if (meterConnectionRequest.getMeterReading().getLastReadingDate() == null
+					|| meterConnectionRequest.getMeterReading().getLastReadingDate() == 0) {
+				Long lastReadingDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30);
+				meterConnectionRequest.getMeterReading().setLastReadingDate(lastReadingDate);
+			}
 		}
 		meterConnectionRequest.getMeterReading().setAuditDetails(auditDetails);
 	}
