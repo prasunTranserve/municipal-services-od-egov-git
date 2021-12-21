@@ -22,6 +22,7 @@ import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.Document;
+import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.NOC.Noc;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -618,5 +619,95 @@ public class BPAValidator {
 				}
 			}
 		}
+	}
+	
+	public void validateDscSearch(BPASearchCriteria criteria, RequestInfo requestInfo) {
+		if (StringUtils.isEmpty(criteria.getTenantId()))
+			throw new CustomException(BPAErrorConstants.INVALID_SEARCH, "TenantId is mandatory in search");
+	}
+	
+	public void validateDscDetails(BPARequest request, List<BPA> searchResult) {
+		Map<String, BPA> idToBpaMapFromSearch = new HashMap<>();
+		searchResult.forEach(bpa -> {
+			idToBpaMapFromSearch.put(bpa.getId(), bpa);
+		});
+
+		BPA bpaFromRequest = request.getBPA();
+
+		BPA bpaFromSearch = idToBpaMapFromSearch.get(bpaFromRequest.getId());
+
+		if (bpaFromSearch == null) {
+			throw new CustomException("APPLICATION  ERROR", "The Application does not exist .");
+		}
+		
+		if (!bpaFromSearch.getStatus().equalsIgnoreCase("APPROVED")) {
+			throw new CustomException("APPLICATION STATUS ERROR",
+					"The Application should be in approved state for document signing .");
+		}
+
+		List<DscDetails> dscDetailsFromSearch = bpaFromSearch.getDscDetails();
+		List<DscDetails> dscDetailsFromRequest = bpaFromRequest.getDscDetails();
+
+		if (!CollectionUtils.isEmpty(dscDetailsFromSearch)) {
+			if (dscDetailsFromSearch.size() != 1)
+				throw new CustomException("DSC DETAILS ERROR",
+						"There should be only one Digitally signed documemts for application .");
+
+			DscDetails searchedDscDetail = dscDetailsFromSearch.get(0);
+
+			if (!StringUtils.isEmpty(searchedDscDetail.getDocumentId()))
+				throw new CustomException("DSC DETAILS ERROR", "This application License is already digitally signed.");
+
+		} else
+			throw new CustomException("DSC DETAILS ERROR",
+					"There are no Digitally signed documemts for this application .");
+
+		if (!CollectionUtils.isEmpty(dscDetailsFromRequest)) {
+			if (dscDetailsFromRequest.size() != 1)
+				throw new CustomException("DSC DETAILS ERROR",
+						"There should be only one Digitally signed documemts for application .");
+
+			DscDetails requestDscDetail = dscDetailsFromRequest.get(0);
+			DscDetails searchedDscDetail = dscDetailsFromSearch.get(0);
+
+			if (StringUtils.isEmpty(requestDscDetail.getApprovedBy()))
+				throw new CustomException("DSC DETAILS ERROR",
+						"Approved by is mandatory in Digitally signed documemts .");
+
+			if (StringUtils.isEmpty(requestDscDetail.getApplicationNo()))
+				throw new CustomException("DSC DETAILS ERROR",
+						"Application Number is mandatory in Digitally signed documemts .");
+
+			if (StringUtils.isEmpty(requestDscDetail.getDocumentType()))
+				throw new CustomException("DSC DETAILS ERROR",
+						"Document Type is mandatory in Digitally signed documemts .");
+
+			if (StringUtils.isEmpty(requestDscDetail.getId()))
+				throw new CustomException("DSC DETAILS ERROR", "Id is mandatory in Digitally signed documemts .");
+
+			if (StringUtils.isEmpty(requestDscDetail.getTenantId()))
+				throw new CustomException("DSC DETAILS ERROR", "TenantId is mandatory in Digitally signed documemts .");
+
+			if (StringUtils.isEmpty(requestDscDetail.getDocumentId()))
+				throw new CustomException("DSC DETAILS ERROR",
+						"DocumentId is mandatory in Digitally signed documemts .");
+
+			if (!searchedDscDetail.getApplicationNo().equalsIgnoreCase(requestDscDetail.getApplicationNo()))
+				throw new CustomException("DSC DETAILS ERROR", "DSC Document Application Number does not match .");
+
+			if (!searchedDscDetail.getId().equalsIgnoreCase(requestDscDetail.getId()))
+				throw new CustomException("DSC DETAILS ERROR", "DSC Document Id does not match .");
+
+			if (!searchedDscDetail.getApprovedBy().equalsIgnoreCase(requestDscDetail.getApprovedBy()))
+				throw new CustomException("DSC DETAILS ERROR", "DSC Document Approved by does not match .");
+
+			if (!searchedDscDetail.getApprovedBy().equalsIgnoreCase(request.getRequestInfo().getUserInfo().getUuid()))
+				throw new CustomException("DSC DETAILS ERROR",
+						"DSC Document Can only be signed by the person who approved it .");
+
+		} else
+			throw new CustomException("DSC DETAILS ERROR",
+					"There are no Digitally signed documemts for this application .");
+
 	}
 }
