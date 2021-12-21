@@ -52,6 +52,13 @@ public class OpenWaterRowMapper implements ResultSetExtractor<List<WaterConnecti
                 currentWaterConnection.setConnectionExecutionDate(rs.getLong("connectionExecutionDate"));
                 currentWaterConnection.setApplicationType(rs.getString("applicationType"));
                 currentWaterConnection.setDateEffectiveFrom(rs.getLong("dateEffectiveFrom"));
+                
+              //Merge code
+                currentWaterConnection.setConnectionFacility(rs.getString("connectionFacility"));
+                currentWaterConnection.setProposedWaterClosets(rs.getInt("proposedWaterClosets"));
+                currentWaterConnection.setProposedToilets(rs.getInt("proposedToilets"));
+                currentWaterConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
+                currentWaterConnection.setNoOfToilets(rs.getInt("noOfToilets"));
 
                 AuditDetails auditdetails = AuditDetails.builder().createdBy(rs.getString("ws_createdBy"))
                         .createdTime(rs.getLong("ws_createdTime")).lastModifiedBy(rs.getString("ws_lastModifiedBy"))

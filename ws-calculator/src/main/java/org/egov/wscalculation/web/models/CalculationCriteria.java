@@ -1,5 +1,7 @@
 package org.egov.wscalculation.web.models;
 
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
@@ -55,5 +57,8 @@ public class CalculationCriteria {
 	//Fee Estimation
 	@JsonProperty("applicationNo")
 	private String applicationNo;
+	
+	@JsonProperty("meterReadingLists")
+	private List<MeterReading> meterReadingLists;
 
 }
