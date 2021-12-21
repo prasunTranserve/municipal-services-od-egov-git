@@ -88,37 +88,39 @@ public class DemandGenerationConsumer {
 	@KafkaListener(topics = {
 			"${persister.demand.based.dead.letter.topic.batch}" }, containerFactory = "kafkaListenerContainerFactory")
 	public void listenDeadLetterTopic(final List<Message<?>> records) {
-		CalculationReq calculationReq = mapper.convertValue(records.get(0).getPayload(), CalculationReq.class);
-		Map<String, Object> masterMap = mDataService.loadMasterData(calculationReq.getRequestInfo(),
-				calculationReq.getCalculationCriteria().get(0).getTenantId());
-		records.forEach(record -> {
-			try {
-				CalculationReq calcReq = mapper.convertValue(record.getPayload(), CalculationReq.class);
-
-				calcReq.getCalculationCriteria().forEach(calcCriteria -> {
-					CalculationReq request = CalculationReq.builder().calculationCriteria(Arrays.asList(calcCriteria))
-							.requestInfo(calculationReq.getRequestInfo()).isconnectionCalculation(true).build();
-					try {
-						log.info("Generating Demand for Criteria : " + mapper.writeValueAsString(calcCriteria));
-						// processing single
-						generateDemandInBatch(request, masterMap, config.getDeadLetterTopicSingle());
-					} catch (final Exception e) {
-						StringBuilder builder = new StringBuilder();
-						try {
-							builder.append("Error while generating Demand for Criteria: ")
-									.append(mapper.writeValueAsString(calcCriteria));
-						} catch (JsonProcessingException e1) {
-							log.error("KAFKA_PROCESS_ERROR", e1);
-						}
-						log.error(builder.toString(), e);
-					}
-				});
-			} catch (final Exception e) {
-				StringBuilder builder = new StringBuilder();
-				builder.append("Error while listening to value: ").append(record).append(" on dead letter topic.");
-				log.error(builder.toString(), e);
-			}
-		});
+		log.info("Dead letter topic received data. Skipping without doing anything");
+		//TODO: Need to check this section for refinement
+//		CalculationReq calculationReq = mapper.convertValue(records.get(0).getPayload(), CalculationReq.class);
+//		Map<String, Object> masterMap = mDataService.loadMasterData(calculationReq.getRequestInfo(),
+//				calculationReq.getCalculationCriteria().get(0).getTenantId());
+//		records.forEach(record -> {
+//			try {
+//				CalculationReq calcReq = mapper.convertValue(record.getPayload(), CalculationReq.class);
+//
+//				calcReq.getCalculationCriteria().forEach(calcCriteria -> {
+//					CalculationReq request = CalculationReq.builder().calculationCriteria(Arrays.asList(calcCriteria))
+//							.requestInfo(calculationReq.getRequestInfo()).isconnectionCalculation(true).build();
+//					try {
+//						log.info("Generating Demand for Criteria : " + mapper.writeValueAsString(calcCriteria));
+//						// processing single
+//						generateDemandInBatch(request, masterMap, config.getDeadLetterTopicSingle());
+//					} catch (final Exception e) {
+//						StringBuilder builder = new StringBuilder();
+//						try {
+//							builder.append("Error while generating Demand for Criteria: ")
+//									.append(mapper.writeValueAsString(calcCriteria));
+//						} catch (JsonProcessingException e1) {
+//							log.error("KAFKA_PROCESS_ERROR", e1);
+//						}
+//						log.error(builder.toString(), e);
+//					}
+//				});
+//			} catch (final Exception e) {
+//				StringBuilder builder = new StringBuilder();
+//				builder.append("Error while listening to value: ").append(record).append(" on dead letter topic.");
+//				log.error(builder.toString(), e);
+//			}
+//		});
 	}
 
 	/**
@@ -146,7 +148,11 @@ public class DemandGenerationConsumer {
 			log.info(str.toString());
 		} catch (Exception ex) {
 			log.error("Demand generation error: ", ex);
-			producer.push(errorTopic, request);
+			String connectionNoStrings = request.getCalculationCriteria().stream()
+					.map(criteria -> criteria.getConnectionNo()).collect(Collectors.toSet()).toString();
+			log.error("Demand generation error for connection no: ", connectionNoStrings);
+			
+//			producer.push(errorTopic, request);
 		}
 
 	}
