@@ -109,6 +109,10 @@ public class WSCalculationConstant {
 
 	public static final String SPECIAL_REBATE_RATE = "specialReabteRate";
 
+	public static final String METER_READING_DATE = "meterReadingDate";
+	
+	public static final String ALLOWED_METER_READING_UPDATE_TILL = "allowUpdateTillDay";
+	
 	/*
 	 * bigdecimal values
 	 */
@@ -136,6 +140,8 @@ public class WSCalculationConstant {
 	public static final String WC_INTEREST_MASTER = "Interest";
 
 	public static final String WC_BILLING_SLAB_MASTER = "WCBillingSlab";
+	
+	public static final String WC_METER_READING_MASTER = "MeterReading";
 
 	public static final List<String> WS_BILLING_SLAB_MASTERS = Collections
 			.unmodifiableList(Arrays.asList(WC_BILLING_SLAB_MASTER));
@@ -292,4 +298,18 @@ public class WSCalculationConstant {
 
 	public static final String IS_VOLUMETRIC_CONNECTION = "isVolumetricConnection";
 	public static final String VOLUMETRIC_WATER_CHARGE = "volumetricWaterCharge";
+	
+	public static final String SW_SCRUTINY_FEE = "SW_SCRUTINY_FEE";
+	public static final String SW_SECURITY_CHARGE = "SW_SECURITY_CHARGE";
+	public static final String SW_CHARGE = "SW_CHARGE";
+	public static final String SW_WATER_CESS = "SW_SEWERAGE_CESS";
+	
+	public static final String SW_SEWERAGE_CESS_MASTER = "SewerageCess";
+	
+	public static final String MDMS_WATER_CONNECTION = "WATER";
+	public static final String MDMS_SEWERAGE_CONNECTION = "SEWERAGE";
+	public static final String MDMS_WATER_SEWERAGE_CONNECTION = "WATER-SEWERAGE";
+	
+	
+	
 }

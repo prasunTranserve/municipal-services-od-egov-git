@@ -27,5 +27,7 @@ public interface WSCalculationDao {
 	List<String> getTenantId();
 	
 	int isBillingPeriodExists(String connectionNo, String billingPeriod);
+	
+	void updateMeterReading(MeterConnectionRequest meterConnectionRequest);
 
 }

@@ -16,6 +16,8 @@ import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPAResponse;
 import org.egov.bpa.web.model.BPASearchCriteria;
+import org.egov.bpa.web.model.DigitalSignCertificateResponse;
+import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.RequestInfoWrapper;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -95,6 +98,32 @@ public class BPAController {
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + BPAConstants.EDCR_PDF + "\"")
 				.body(resource);
+	}
+	
+	@PostMapping(value = {"/_updatedscdetails"})
+    public ResponseEntity<BPAResponse> updateDscDetails(@Valid @RequestBody BPARequest bpaRequest) {
+        BPA bpa = bpaService.updateDscDetails(bpaRequest);
+        List<BPA> bpas=new ArrayList<>();
+        bpas.add(bpa);
+
+        BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(bpaRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+	
+	@PostMapping(value = { "/_searchdscdetails" })
+	public ResponseEntity<DigitalSignCertificateResponse> searchDscDetails(
+			@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria, @RequestHeader HttpHeaders headers) {
+		List<DscDetails> dscDetails = bpaService.searchDscDetails(criteria, requestInfoWrapper.getRequestInfo());
+
+		DigitalSignCertificateResponse response = DigitalSignCertificateResponse.builder().dscDetails(dscDetails)
+				.responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(),
+						true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
 	}
 
 }

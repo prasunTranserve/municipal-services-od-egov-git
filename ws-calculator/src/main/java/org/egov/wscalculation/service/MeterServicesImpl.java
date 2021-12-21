@@ -2,12 +2,17 @@ package org.egov.wscalculation.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.validator.WSCalculationValidator;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
+import org.egov.wscalculation.web.models.BulkMeterConnectionRequest;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
@@ -35,6 +40,9 @@ public class MeterServicesImpl implements MeterService {
 	
 	@Autowired
 	private WSCalculationWorkflowValidator wsCalulationWorkflowValidator;
+	
+	@Autowired
+	private MasterDataService masterDataService; 
 
 	@Autowired
 	public MeterServicesImpl(EnrichmentService enrichmentService) {
@@ -55,12 +63,12 @@ public class MeterServicesImpl implements MeterService {
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateMeterReading(meterConnectionRequest, true);
 		}
-		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest);
+		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, false);
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.saveMeterReading(meterConnectionRequest);
-		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
-			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
-		}
+//		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
+//			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
+//		}
 		return meterReadingsList;
 	}
 
@@ -93,5 +101,40 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> searchMeterReadings(MeterReadingSearchCriteria criteria, RequestInfo requestInfo) {
 		return wSCalculationDao.searchMeterReadings(criteria);
+	}
+	
+	/**
+	 * 
+	 * @param meterConnectionRequest MeterConnectionRequest contains meter reading connection to be updated
+	 * @return List of MeterReading after create
+	 */
+
+	@Override
+	public List<MeterReading> updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
+		Map<String, Object> masterMap = new HashMap<>();
+		masterDataService.loadMeterReadingMasterData(meterConnectionRequest.getRequestInfo(),
+				meterConnectionRequest.getMeterReading().getTenantId(), masterMap);
+		Boolean genratedemand = true;
+		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
+		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
+			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
+			wsCalculationValidator.validateUpdateMeterReading(meterConnectionRequest, true);
+		}
+		wsCalculationValidator.validateUpdate(meterConnectionRequest, masterMap);
+		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, true);
+		meterReadingsList.add(meterConnectionRequest.getMeterReading());
+		wSCalculationDao.updateMeterReading(meterConnectionRequest);
+		return meterReadingsList;
+	}
+
+	@Override
+	public List<MeterReading> bulkCreateMeterReading(@Valid BulkMeterConnectionRequest bulkMeterConnectionRequest) {
+		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
+		for (MeterReading meterReading : bulkMeterConnectionRequest.getMeterReading()) {
+			MeterConnectionRequest connectionRequest = MeterConnectionRequest.builder().requestInfo(bulkMeterConnectionRequest.getRequestInfo())
+					.meterReading(meterReading).build();
+			meterReadingsList.addAll(createMeterReading(connectionRequest));
+		}
+		return meterReadingsList;
 	}
 }

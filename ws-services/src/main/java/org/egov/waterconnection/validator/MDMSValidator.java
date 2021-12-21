@@ -69,7 +69,7 @@ public class MDMSValidator {
 			String taxjsonPath = WCConstants.TAX_JSONPATH_ROOT;
 			String tenantId = request.getWaterConnection().getTenantId();
 			List<String> names = new ArrayList<>(Arrays.asList(WCConstants.MDMS_WC_CONNECTION_TYPE,
-					WCConstants.MDMS_WC_CONNECTION_CATEGORY, WCConstants.MDMS_WC_WATER_SOURCE));
+					WCConstants.MDMS_WC_CONNECTION_CATEGORY, WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.MDMS_WC_CONNECTION_FACILITY));
 			Map<String, List<String>> codes = getAttributeValues(tenantId, WCConstants.MDMS_WC_MOD_NAME, names,
 					"$.*.code", jsonPath, request.getRequestInfo());
 			List<String> taxModelnames = new ArrayList<>(Arrays.asList(WCConstants.WC_ROADTYPE_MASTER));
@@ -78,7 +78,7 @@ public class MDMSValidator {
 
 			// merge codes
 			String[] finalmasterNames = {WCConstants.MDMS_WC_CONNECTION_TYPE, WCConstants.MDMS_WC_CONNECTION_CATEGORY,
-					WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.WC_ROADTYPE_MASTER};
+					WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.WC_ROADTYPE_MASTER, WCConstants.MDMS_WC_CONNECTION_FACILITY};
 			Map<String, List<String>> finalcodes = Stream.of(codes, codeFromCalculatorMaster).map(Map::entrySet)
 					.flatMap(Collection::stream).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			validateMDMSData(finalmasterNames, finalcodes);
@@ -159,6 +159,12 @@ public class MDMSValidator {
 				}
 			}
 		}
+		if (!StringUtils.isEmpty(waterConnection.getConnectionFacility())
+				&& !codes.get(WCConstants.MDMS_WC_CONNECTION_FACILITY).contains(waterConnection.getConnectionFacility())) {
+			messageBuilder = new StringBuilder();
+			messageBuilder.append("Connection facility value is invalid, please enter proper value! ");
+			errorMap.put("INVALID_WATER_CONNECTION_Facility", messageBuilder.toString());
+		}
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
 	}
@@ -171,13 +177,20 @@ public class MDMSValidator {
 	public void validateMasterForCreateRequest(WaterConnectionRequest request) {
 		// calling property related master
 		List<String> propertyModuleMasters = new ArrayList<>(Arrays.asList(WCConstants.PROPERTY_OWNERTYPE));
-		Map<String, List<String>> codesFromPropetyMasters = getAttributeValues(request.getWaterConnection().getTenantId(),
+		Map<String, List<String>> codesFromMasters = getAttributeValues(request.getWaterConnection().getTenantId(),
 				WCConstants.PROPERTY_MASTER_MODULE, propertyModuleMasters, "$.*.code",
 				WCConstants.PROPERTY_JSONPATH_ROOT, request.getRequestInfo());
+		
+		List<String> wnsModuleMasters = new ArrayList<>(Arrays.asList(WCConstants.MDMS_WC_CONNECTION_FACILITY));
+		Map<String, List<String>> codesFromWnsMasters = getAttributeValues(request.getWaterConnection().getTenantId(),
+				WCConstants.MDMS_WC_MOD_NAME, wnsModuleMasters, "$.*.code",
+				WCConstants.WS_SERVICES_JSONPATH_ROOT, request.getRequestInfo());
+		codesFromMasters.putAll(codesFromWnsMasters);
+		
 		// merge codes
-		String[] finalmasterNames = {WCConstants.PROPERTY_OWNERTYPE};
-		validateMDMSData(finalmasterNames, codesFromPropetyMasters);
-		validateCodesForCreateRequest(request, codesFromPropetyMasters);
+		String[] finalmasterNames = {WCConstants.PROPERTY_OWNERTYPE, WCConstants.MDMS_WC_CONNECTION_FACILITY};
+		validateMDMSData(finalmasterNames, codesFromMasters);
+		validateCodesForCreateRequest(request, codesFromMasters);
 	}
 
 	/**
@@ -196,6 +209,12 @@ public class MDMSValidator {
 				}
 			});
 		}
+		
+		if(!StringUtils.hasText(request.getWaterConnection().getConnectionFacility())
+				|| !codes.get(WCConstants.MDMS_WC_CONNECTION_FACILITY).contains(request.getWaterConnection().getConnectionFacility())) {
+			errorMap.put("INVALID_CONNECTION_FACILITY",
+					"The Connection facility '" + request.getWaterConnection().getConnectionFacility() + "' does not exists");
+		}
 
 		if (!errorMap.isEmpty())
 			throw new CustomException(errorMap);
@@ -208,7 +227,7 @@ public class MDMSValidator {
 			String taxjsonPath = WCConstants.TAX_JSONPATH_ROOT;
 			String tenantId = request.getWaterConnection().getTenantId();
 			List<String> names = new ArrayList<>(Arrays.asList(WCConstants.MDMS_WC_CONNECTION_TYPE,
-					WCConstants.MDMS_WC_CONNECTION_CATEGORY, WCConstants.MDMS_WC_WATER_SOURCE));
+					WCConstants.MDMS_WC_CONNECTION_CATEGORY, WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.MDMS_WC_CONNECTION_FACILITY));
 			Map<String, List<String>> codes = getAttributeValues(tenantId, WCConstants.MDMS_WC_MOD_NAME, names,
 					"$.*.code", jsonPath, request.getRequestInfo());
 			List<String> taxModelnames = new ArrayList<>(Arrays.asList(WCConstants.WC_ROADTYPE_MASTER));
@@ -216,7 +235,7 @@ public class MDMSValidator {
 					taxModelnames, "$.*.code", taxjsonPath, request.getRequestInfo());
 			// merge codes
 			String[] finalmasterNames = {WCConstants.MDMS_WC_CONNECTION_TYPE, WCConstants.MDMS_WC_CONNECTION_CATEGORY,
-					WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.WC_ROADTYPE_MASTER};
+					WCConstants.MDMS_WC_WATER_SOURCE, WCConstants.WC_ROADTYPE_MASTER, WCConstants.MDMS_WC_CONNECTION_FACILITY};
 			Map<String, List<String>> finalcodes = Stream.of(codes, codeFromCalculatorMaster).map(Map::entrySet)
 					.flatMap(Collection::stream).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			validateMDMSData(finalmasterNames, finalcodes);

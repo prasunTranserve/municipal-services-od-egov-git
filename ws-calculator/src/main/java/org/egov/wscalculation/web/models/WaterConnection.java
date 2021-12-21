@@ -45,6 +45,12 @@ import io.swagger.annotations.ApiModelProperty;
 
 	@JsonProperty("usageCategory")
 	private String usageCategory = null;
+	
+	@JsonProperty("connectionFacility")
+	private String connectionFacility = null;
+	
+	@JsonProperty("noOfWaterClosets")
+	private Integer noOfWaterClosets = null;
 
 
 	public WaterConnection waterSource(String waterSource) {
@@ -227,6 +233,36 @@ import io.swagger.annotations.ApiModelProperty;
 
 	public void setPipeSize(Double pipeSize) {
 		this.pipeSize = pipeSize;
+	}
+
+	/**
+	 * Connection Facility for calculation attribute.
+	 * 
+	 * @return connectionFacility
+	 **/
+	@ApiModelProperty(value = "Connection Facility for calculation attribute")
+	
+	public String getConnectionFacility() {
+		return connectionFacility;
+	}
+
+	public void setConnectionFacility(String connectionFacility) {
+		this.connectionFacility = connectionFacility;
+	}
+
+	/**
+	 * No of water closets for non-metered calculation attribute.
+	 * 
+	 * @return noOfWaterClosets
+	 **/
+	@ApiModelProperty(value = "No of water closets for non-metered calculation attribute.")
+	
+	public Integer getNoOfWaterClosets() {
+		return noOfWaterClosets;
+	}
+
+	public void setNoOfWaterClosets(Integer noOfWaterClosets) {
+		this.noOfWaterClosets = noOfWaterClosets;
 	}
 
 	@Override

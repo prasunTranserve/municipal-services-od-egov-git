@@ -1,20 +1,23 @@
 
 package org.egov.waterconnection.web.models;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import org.egov.waterconnection.web.models.workflow.ProcessInstance;
-import org.springframework.validation.annotation.Validated;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+
+import org.egov.waterconnection.web.models.workflow.ProcessInstance;
+import org.springframework.validation.annotation.Validated;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 /**
  * This is lightweight property object that can be used as reference by
@@ -128,6 +131,9 @@ public class Connection {
 
 	@JsonProperty("oldApplication")
 	private Boolean oldApplication = false;
+	
+	@JsonProperty("connectionFacility")
+	private String connectionFacility = null;
 
 	public Connection id(String id) {
 		this.id = id;
@@ -604,6 +610,21 @@ public class Connection {
 		this.applicationType = applicationType;
 	}
 
+	/**
+	 * The value provided by client
+	 * 
+	 * @return connectionFacility
+	 **/
+	@ApiModelProperty(required = true, value = "It is a master data, defined in MDMS.")
+	@Size(min = 5, max = 32)
+	public String getConnectionFacility() {
+		return connectionFacility;
+	}
+
+	public void setConnectionFacility(String connectionFacility) {
+		this.connectionFacility = connectionFacility;
+	}
+
 	@Override
 	public boolean equals(java.lang.Object o) {
 		if (this == o) {
@@ -632,7 +653,8 @@ public class Connection {
 				&& Objects.equals(this.connectionHolders, connection.connectionHolders)
 				&& Objects.equals(this.applicationType, connection.applicationType)
 				&& Objects.equals(this.dateEffectiveFrom, connection.dateEffectiveFrom)
-				&& Objects.equals(this.oldApplication,connection.oldApplication);
+				&& Objects.equals(this.oldApplication,connection.oldApplication)
+				&& Objects.equals(this.connectionFacility, connection.connectionFacility);
 	}
 
 	@Override
@@ -640,7 +662,7 @@ public class Connection {
 		return Objects.hash(id, tenantId, propertyId, applicationNo, applicationStatus, status, connectionNo,
 				oldConnectionNo, documents, roadCuttingInfo, plumberInfo, roadType, roadCuttingArea, connectionExecutionDate,
 				connectionCategory, connectionType, additionalDetails, auditDetails, connectionHolders,
-				applicationType, dateEffectiveFrom, oldApplication);
+				applicationType, dateEffectiveFrom, oldApplication, connectionFacility);
 	}
 
 	@Override
@@ -670,6 +692,7 @@ public class Connection {
 		sb.append("    applicationType: ").append(toIndentedString(applicationType)).append("\n");
 		sb.append("	   dateEffectiveFrom: ").append(toIndentedString(dateEffectiveFrom)).append("\n");
 		sb.append("	   oldApplication: ").append(toIndentedString(oldApplication)).append("\n");
+		sb.append("	   connectionFacility: ").append(toIndentedString(connectionFacility)).append("\n");
 		sb.append("}");
 		return sb.toString();
 	}

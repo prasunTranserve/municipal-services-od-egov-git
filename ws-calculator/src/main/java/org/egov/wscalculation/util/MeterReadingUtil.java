@@ -1,6 +1,7 @@
 package org.egov.wscalculation.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -10,6 +11,7 @@ import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.mdms.model.ModuleDetail;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.config.WSCalculationConfiguration;
+import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingResponse;
@@ -56,6 +58,20 @@ public class MeterReadingUtil {
 		List<ModuleDetail> moduleDetails = new ArrayList<>();
 		moduleDetails.add(moduleDetail);
 		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
+		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+	}
+	
+	/**
+	 * Methods provides all the usage category master for Water Service module
+	 */
+	public MdmsCriteriaReq getMeterReadingMasterData(RequestInfo requestInfo, String tenantId) {
+		List<MasterDetail> details = new ArrayList<>();
+		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_METER_READING_MASTER).build());
+		
+		ModuleDetail mdDtl = ModuleDetail.builder().masterDetails(details)
+				.moduleName(WSCalculationConstant.WS_TAX_MODULE).build();
+		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().moduleDetails(Arrays.asList(mdDtl)).tenantId(tenantId)
+				.build();
 		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
 	}
 
