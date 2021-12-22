@@ -294,5 +294,9 @@ public class WCConstants {
 	public static final String CONNECTION_DOMESTIC = "Domestic";
 	
 	public static final String CONNECTION_BPL = "BPL";
+	
+	public static final String SERVICE_WATER = "WATER";
+	public static final String SERVICE_SEWERAGE = "SEWERAGE";
+	public static final String SERVICE_WATER_SEWERAGE = "WATER-SEWERAGE";
 
 }
