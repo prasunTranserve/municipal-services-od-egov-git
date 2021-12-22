@@ -42,10 +42,16 @@ public class WaterFieldValidator implements WaterActionValidator {
 			Map<String, String> errorMap) {
 		if (WCConstants.ACTIVATE_CONNECTION_CONST
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
+			}
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				errorMap.put("INVALID_WATER_CONNECTION_TYPE", "Connection type should not be empty");
 			}
-			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getWaterSource())) {
+			if ( StringUtils.hasText(waterConnectionRequest.getWaterConnection().getConnectionFacility())
+					&& (WCConstants.SERVICE_WATER.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionFacility())
+							|| WCConstants.SERVICE_WATER_SEWERAGE.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionFacility()))
+					&& StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getWaterSource())) {
 				errorMap.put("INVALID_WATER_SOURCE", "WaterConnection cannot be created  without water source");
 			}
 			
@@ -61,9 +67,6 @@ public class WaterFieldValidator implements WaterActionValidator {
 			}
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionExecutionDate())) {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
-			}
-			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
-				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
 			}
 		}
 		if (WCConstants.APPROVE_CONNECTION_CONST
@@ -90,17 +93,20 @@ public class WaterFieldValidator implements WaterActionValidator {
 		boolean isEmployee = waterConnectionRequest.getRequestInfo().getUserInfo().getRoles().stream().map(role -> role.getCode()).collect(Collectors.toList()).contains(WCConstants.ROLE_EMPLOYEE);
 		if (WCConstants.APPROVE_CONNECTION
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
+				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
+			}
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				errorMap.put("INVALID_WATER_CONNECTION_TYPE", "Connection type should not be empty");
 			}
-			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getWaterSource())) {
+			if (StringUtils.hasText(waterConnectionRequest.getWaterConnection().getConnectionFacility())
+					&& (WCConstants.SERVICE_WATER.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionFacility())
+							|| WCConstants.SERVICE_WATER_SEWERAGE.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionFacility()))
+					&& StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getWaterSource())) {
 				errorMap.put("INVALID_WATER_SOURCE", "WaterConnection cannot be created  without water source");
 			}
 			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionExecutionDate())) {
 				errorMap.put("INVALID_CONNECTION_EXECUTION_DATE", "Connection execution date should not be empty");
-			}
-			if (StringUtils.isEmpty(waterConnectionRequest.getWaterConnection().getConnectionFacility())) {
-				errorMap.put("INVALID_CONNECTION_FACILITY", "Connection Facility should not be empty");
 			}
 		}
 		if ((WCConstants.SUBMIT_APPLICATION_CONST
