@@ -31,7 +31,7 @@ public class BPAQueryBuilder {
 			+ "(SELECT *, DENSE_RANK() OVER (ORDER BY bpa_lastModifiedTime DESC) offset_ FROM " + "({})"
 			+ " result) result_offset " + "WHERE offset_ > ? AND offset_ <= ?";
 	
-	private static final String DSC_PENDING_QUERY = "SELECT * FROM eg_bpa_dscdetails";
+	private static final String DSC_PENDING_QUERY = "SELECT ebd.* FROM eg_bpa_dscdetails ebd inner join eg_bpa_buildingplan ebb on ebb.applicationno = ebd.applicationno ";
 	private final String dscPaginationWrapper = "SELECT * FROM " +
             "(SELECT *, DENSE_RANK() OVER (ORDER BY lastModifiedTime DESC) offset_ FROM " +
             "({})" +
@@ -246,15 +246,20 @@ public class BPAQueryBuilder {
 		StringBuilder builder = new StringBuilder(DSC_PENDING_QUERY);
 		if (criteria.getTenantId() != null) {
 			addClauseIfRequired(preparedStmtList, builder);
-			builder.append(" tenantid = ? ");
+			builder.append(" ebd.tenantid = ? ");
 			preparedStmtList.add(criteria.getTenantId());
 		}
     	if (criteria.getApprovedBy() != null) {
             addClauseIfRequired(preparedStmtList, builder);
-            builder.append(" approvedby = ? ");
+            builder.append(" ebd.approvedby = ? ");
             preparedStmtList.add(criteria.getApprovedBy());
         }
-		builder.append(" AND  documentid is null ");
+    	
+    	addClauseIfRequired(preparedStmtList, builder);
+    	builder.append(" ebb.status = ? ");
+    	preparedStmtList.add("APPROVED");
+    	
+		builder.append(" AND  ebd.documentid is null ");
 		return addDscPaginationWrapper(builder.toString(), preparedStmtList, criteria);
 	}
 	
