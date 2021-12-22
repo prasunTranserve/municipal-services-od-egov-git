@@ -46,16 +46,16 @@ public class WaterConnection extends Connection {
 	@JsonProperty("usageCategory")
 	private String usageCategory = null;
 	
-	@JsonProperty("proposedwaterclosets")
+	@JsonProperty("proposedWaterClosets")
 	private Integer proposedWaterClosets = null;
 
-	@JsonProperty("proposedtoilets")
+	@JsonProperty("proposedToilets")
 	private Integer proposedToilets = null;
 
-	@JsonProperty("noofwaterclosets")
+	@JsonProperty("noOfWaterClosets")
 	private Integer noOfWaterClosets = null;
 
-	@JsonProperty("nooftoilets")
+	@JsonProperty("noOfToilets")
 	private Integer noOfToilets = null;
 
 
