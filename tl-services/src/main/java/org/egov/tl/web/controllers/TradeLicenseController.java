@@ -129,7 +129,7 @@ import javax.servlet.http.HttpServletRequest;
     }
     
     
-    @RequestMapping(value = {"/{servicename}/_searchdscdetails", "/_searchdscdetails"}, method = RequestMethod.POST)
+    @RequestMapping(value = {"/_searchdscdetails"}, method = RequestMethod.POST)
     public ResponseEntity<DigitalSignCertificateResponse> searchDscDetails(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
                                                        @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
                                                        @PathVariable(required = false) String servicename
