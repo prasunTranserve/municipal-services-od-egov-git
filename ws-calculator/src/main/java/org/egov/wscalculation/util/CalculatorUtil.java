@@ -144,7 +144,7 @@ public class CalculatorUtil {
 		int size = waterConnectionList.size();
 		if(size>1){
 			WaterConnection waterConnection = null;
-			if(waterConnectionList.get(size-1).getApplicationType().equalsIgnoreCase("MODIFY_WATER_CONNECTION") && waterConnectionList.get(size-1).getDateEffectiveFrom() > System.currentTimeMillis()){
+			if(waterConnectionList.get(size-1).getApplicationType().equalsIgnoreCase(WSCalculationConstant.MODIFY_CONNECTION) && waterConnectionList.get(size-1).getDateEffectiveFrom() > System.currentTimeMillis()){
 				waterConnection =  waterConnectionList.get(size-2);
 			}
 			else

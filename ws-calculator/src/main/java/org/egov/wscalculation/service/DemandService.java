@@ -546,7 +546,7 @@ public class DemandService {
 
 				}
 
-				if(connection.getApplicationType().equalsIgnoreCase("MODIFY_WATER_CONNECTION")){
+				if(WSCalculationConstant.MODIFY_CONNECTION.equalsIgnoreCase(connection.getApplicationType())){
 					WaterConnectionRequest waterConnectionRequest = WaterConnectionRequest.builder().waterConnection(connection)
 							.requestInfo(requestInfo).build();
 					// Property property = wsCalculationUtil.getProperty(waterConnectionRequest);

@@ -311,5 +311,5 @@ public class WSCalculationConstant {
 	public static final String MDMS_SEWERAGE_CONNECTION = "SEWERAGE";
 	public static final String MDMS_WATER_SEWERAGE_CONNECTION = "WATER-SEWERAGE";
 	
-	
+	public static final String MODIFY_CONNECTION = "MODIFY_CONNECTION";
 }
