@@ -146,8 +146,6 @@ public class WSCalculationConstant {
 	public static final List<String> WS_BILLING_SLAB_MASTERS = Collections
 			.unmodifiableList(Arrays.asList(WC_BILLING_SLAB_MASTER));
 
-	public static final List<String> TAX_APPLICABLE = Collections.unmodifiableList(Arrays.asList(WS_CHARGE));
-
 	public static final String flatRateCalculationAttribute = "Flat";
 
 	public static final String meteredConnectionType = "Metered";
@@ -311,5 +309,7 @@ public class WSCalculationConstant {
 	public static final String MDMS_WATER_SEWERAGE_CONNECTION = "WATER-SEWERAGE";
 	
 	public static final String MODIFY_CONNECTION = "MODIFY_CONNECTION";
+	
+	public static final List<String> TAX_APPLICABLE = Collections.unmodifiableList(Arrays.asList(WS_CHARGE, SW_CHARGE));
 	
 }
