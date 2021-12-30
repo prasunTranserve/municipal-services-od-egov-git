@@ -159,11 +159,7 @@ public class WSCalculatorQueryBuilder {
 	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, Boolean isOldApplication,
 			List<Object> preparedStatement, List<String> wards) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
-		// Add connection type
-		addClauseIfRequired(preparedStatement, query);
-		query.append(" ws.connectiontype = ? ");
-		preparedStatement.add(connectionType);
-		
+
 		// Add connection type
 		if(StringUtils.hasText(connectionType)) {
 			addClauseIfRequired(preparedStatement, query);
