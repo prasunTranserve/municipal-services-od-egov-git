@@ -70,6 +70,9 @@ public class PropertiesData {
 	@Value("${remomte.api.ws.connectionmigrate}")
 	private String wsMigrateEndpoint;
 	
+	@Value("${remomte.api.ws.swmigrate}")
+	private String wsUpdateEndpoint;
+	
 	@Value("${remomte.api.ws.calculator.host}")
 	private String wsCalculatorHost; //meterreadingsearch
 	

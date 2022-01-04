@@ -168,5 +168,8 @@ public class MigrationConst {
 	
 	public static final String USAGE_CATEGORY_OTHERS = "Others";
 
+	public static final String SERVICE_WATER = "WATER";
+	public static final String SERVICE_SEWERAGE = "SEWERAGE";
+	public static final String SERVICE_WATER_SEWERAGE = "WATER-SEWERAGE";
 	
 }

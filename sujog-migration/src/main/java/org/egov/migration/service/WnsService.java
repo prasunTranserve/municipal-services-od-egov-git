@@ -5,11 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -21,7 +19,6 @@ import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.ConnectionResponse;
 import org.egov.migration.business.model.DemandDTO;
 import org.egov.migration.business.model.MeterReadingDTO;
-import org.egov.migration.business.model.SewerageConnectionDTO;
 import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.common.model.RequestInfo;
@@ -66,75 +63,6 @@ public class WnsService {
 				MigrationUtility.addError(conn.getWaterConnection().getOldConnectionNo(), e.getMessage());
 			}
 		}
-		
-		// TODO: As of now we are not migrating sewerage connection.
-//		if (conn.isSewerage()) {
-//			boolean isSewerageMigrated = false;
-//			try {
-//				isSewerageMigrated = migrateSewerageConnection(conn);
-//				if(isSewerageMigrated) {
-//					// success for sewerage connection Migration
-//					MigrationUtility.addSuccessForSewerageConnection(conn.getSewerageConnection());
-//				}
-//			} catch (Exception e) {
-//				log.error(e.getLocalizedMessage());
-//				MigrationUtility.addError(conn.getSewerageConnection().getOldConnectionNo(), e.getMessage());
-//			}
-//		}
-	}
-
-	private boolean migrateSewerageConnection(ConnectionDTO conn) throws Exception {
-		boolean isSewerageConnectionMigrated = false;
-		SewerageConnectionDTO sewerageConnection = searchSewerageConnection(conn);
-		if (sewerageConnection == null) {
-			log.info(String.format("Migrating Sewerage: %s", conn.getSewerageConnection().getOldConnectionNo()));
-			isSewerageConnectionMigrated = doMigrateSewerageConnection(conn);
-		} else {
-			// Add in success log
-			log.info(String.format("Sewerage connection: %s already migrated", sewerageConnection.getOldConnectionNo()));
-			conn.setSewerageConnection(sewerageConnection);
-			isSewerageConnectionMigrated = true;
-		}
-		return isSewerageConnectionMigrated;
-	}
-
-	private SewerageConnectionDTO searchSewerageConnection(ConnectionDTO conn) throws Exception {
-		StringBuilder uri = new StringBuilder(properties.getSwServiceHost()).append(properties.getSwSearchEndpoint())
-				.append("?").append("oldConnectionNumber=").append(conn.getSewerageConnection().getOldConnectionNo())
-				.append("&tenantId=").append(conn.getSewerageConnection().getTenantId());
-
-		Map<String, Object> connectionSearchRequest = prepareSearchConnectionRequest();
-		Object response = remoteService.fetchResult(uri, connectionSearchRequest);
-		if (response == null) {
-			return null;
-		} else {
-			ConnectionResponse connectionResponse = mapper.convertValue(response, ConnectionResponse.class);
-			if (connectionResponse.getSewerageConnections().isEmpty())
-				return null;
-			return connectionResponse.getSewerageConnections().get(0);
-		}
-	}
-
-	private boolean doMigrateSewerageConnection(ConnectionDTO conn) throws Exception {
-		StringBuilder uri = new StringBuilder(properties.getSwServiceHost())
-				.append(properties.getSwMigrateConnectionEndpoint());
-
-		Map<String, Object> migrateConnectionRequest = prepareSewerageConnectionRequest(conn.getSewerageConnection());
-		Object response = remoteService.fetchResult(uri, migrateConnectionRequest);
-		if (response == null) {
-			return false;
-		} else {
-			ConnectionResponse connectionResponse = mapper.convertValue(response, ConnectionResponse.class);
-			conn.setSewerageConnection(connectionResponse.getSewerageConnections().get(0));
-		}
-		return true;
-	}
-
-	private Map<String, Object> prepareSewerageConnectionRequest(SewerageConnectionDTO sewerageConnection) {
-		Map<String, Object> migrateConnectionRequest = new HashMap<>();
-		migrateConnectionRequest.put("RequestInfo", prepareRequestInfo());
-		migrateConnectionRequest.put("SewerageConnection", sewerageConnection);
-		return migrateConnectionRequest;
 	}
 
 	private boolean migrateWaterConnection(ConnectionDTO conn) throws Exception {
@@ -263,32 +191,6 @@ public class WnsService {
 //				MigrationUtility.addSuccessForSewerageDemand(conn);
 //			}
 //		}
-	}
-
-	private boolean migrateSewerageDemand(ConnectionDTO conn) throws Exception {
-		StringBuilder uri = new StringBuilder(properties.getSwCalculatorHost())
-				.append(properties.getSwMigrateDemandEndpoint());
-		
-		if(!conn.getSewerageDemands().isEmpty()) {
-			conn.getSewerageDemands().forEach(demand -> {
-					demand.setConsumerCode(conn.getSewerageConnection().getConnectionNo());
-					demand.setPayer(conn.getSewerageConnection().getConnectionHolders().get(0));
-					demand.setBillExpiryTime(0L);
-				});
-		}
-		
-		boolean isSewerageDemandMigrated = false;
-		List<DemandDTO> demands = searchDemand(conn, MigrationConst.CONNECTION_SEWERAGE);
-		if (demands == null) {
-			demands = doMigrateDemand(uri, conn.getSewerageDemands());
-			if(demands != null && !demands.isEmpty()) {
-				isSewerageDemandMigrated = true;
-			}
-		} else {
-			isSewerageDemandMigrated = true;
-		}
-		conn.setSewerageDemands(demands);
-		return isSewerageDemandMigrated;
 	}
 
 	private boolean migrateWaterDemand(ConnectionDTO conn) throws Exception {
@@ -566,6 +468,46 @@ public class WnsService {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+	}
+
+	public WaterConnectionDTO getWaterConnection(ConnectionDTO connectionDTO) throws Exception {
+		WaterConnectionDTO waterConnectionDTO = searchWaterConnection(connectionDTO);
+		return waterConnectionDTO;
+	}
+
+	public void migrateSewerageConnection(ConnectionDTO conn) {
+		boolean isMigrated = false;
+		try {
+			if(MigrationConst.SERVICE_WATER_SEWERAGE.equals(conn.getWaterConnection().getConnectionFacility())) {
+				// Update connection
+				isMigrated = updateWaterConnection(conn);
+				
+			} else if(MigrationConst.SERVICE_SEWERAGE.equals(conn.getWaterConnection().getConnectionFacility())) {
+				// new insert
+				isMigrated = migrateWaterConnection(conn);
+			}
+			if(isMigrated) {
+				MigrationUtility.addSuccessForWaterConnection(conn.getWaterConnection());
+			}
+		} catch (Exception e) {
+			log.error(e.getLocalizedMessage());
+			MigrationUtility.addError(conn.getWaterConnection().getOldConnectionNo(), e.getMessage());
+		}
+		
+	}
+
+	private boolean updateWaterConnection(ConnectionDTO conn) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getWsServiceHost()).append(properties.getWsUpdateEndpoint());
+
+		Map<String, Object> migrateConnectionRequest = prepareWaterConnectionRequest(conn.getWaterConnection());
+		Object response = remoteService.fetchResult(uri, migrateConnectionRequest);
+		if (response == null) {
+			return false;
+		} else {
+			ConnectionResponse connectionResponse = mapper.convertValue(response, ConnectionResponse.class);
+			conn.setWaterConnection(connectionResponse.getWaterConnection().get(0));
+		}
+		return true;
 	}
 
 

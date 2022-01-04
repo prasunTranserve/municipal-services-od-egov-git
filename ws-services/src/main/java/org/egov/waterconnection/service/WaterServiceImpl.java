@@ -462,4 +462,19 @@ public class WaterServiceImpl implements WaterService {
 		}
 		
 	}
+	
+	@Override
+	public List<WaterConnection> migrateSewerageConnection(WaterConnectionRequest waterConnectionRequest) {
+		
+		Property property = Property.builder().tenantId(waterConnectionRequest.getWaterConnection().getTenantId())
+				.build();
+		WaterConnection searchResult = getConnectionForUpdateRequest(
+				waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
+		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
+		waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.UPDATE_APPLICATION);
+		userService.updateUser(waterConnectionRequest, searchResult);
+		enrichmentService.postStatusEnrichment(waterConnectionRequest);
+		waterDao.updateWaterConnection(waterConnectionRequest, true);
+		return Arrays.asList(waterConnectionRequest.getWaterConnection());
+	}
 }
