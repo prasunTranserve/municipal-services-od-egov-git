@@ -170,42 +170,47 @@ public class EstimationService {
 			}
 			//Double totalUnit = criteria.getCurrentReading() - criteria.getLastReading();
 			Double totalUnit = calculateTotalUnit(criteria, masterData);
-			BigDecimal rate = BigDecimal.ZERO;
-			if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("PERMANENT")) {
-				if(usageType.equalsIgnoreCase("Domestic")) {
-					rate = BigDecimal.valueOf(5.29);
-				} else if(WSCalculationConstant.WS_UC_COMMERCIAL.equalsIgnoreCase(usageType)
-						|| WSCalculationConstant.WS_UC_INDUSTRIAL.equalsIgnoreCase(usageType)
-						|| WSCalculationConstant.WS_UC_INSTITUTIONAL.equalsIgnoreCase(usageType)) {
-					rate = BigDecimal.valueOf(17.45);
-				} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
-					rate = BigDecimal.valueOf(5.29);
-				} else if(WSCalculationConstant.WS_UC_ASSOCIATION.equalsIgnoreCase(usageType)) {
-					rate = BigDecimal.valueOf(17.45);
-				}
-				
-			} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("TEMPORARY")) {
-				if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
-					rate = BigDecimal.valueOf(5.29);
-				} else if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageType)) {
-					rate = BigDecimal.valueOf(32.77);
-				}
-			}
+			BigDecimal rate = getMeteredRate(criteria, usageType);
 			waterCharges = rate.multiply(BigDecimal.valueOf(totalUnit)).multiply(BigDecimal.valueOf(ratio));
 		} else if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.nonMeterdConnection)) {
 			String isVolumetricConnection = WSCalculationConstant.NO;
+			boolean isMigratedConnection = true;
+			String isDailyConsumption = WSCalculationConstant.NO;
+			String volumetricConsumption = "0";
+			if(StringUtils.isEmpty(criteria.getWaterConnection().getOldConnectionNo())) {
+				isMigratedConnection = false;
+			}
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			if(additionalDetails.containsKey(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION)) {
 				isVolumetricConnection = additionalDetails.get(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION).toString();
 			}
+			if(additionalDetails.containsKey(WSCalculationConstant.IS_DAILY_CONSUMPTION)) {
+				isDailyConsumption = additionalDetails.get(WSCalculationConstant.IS_DAILY_CONSUMPTION).toString();
+			}
+			if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_CONSUMPTION)) {
+				volumetricConsumption = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_CONSUMPTION).toString();
+			}
 			if(isVolumetricConnection != null && WSCalculationConstant.YES.equalsIgnoreCase(isVolumetricConnection)) {
 				BigDecimal volumetricWaterCharge = BigDecimal.ZERO;
-				if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE)) {
-					String amount = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE).toString();
-					if(StringUtils.hasText(amount.trim())) {
-						volumetricWaterCharge = new BigDecimal(amount.trim());
+				if(isMigratedConnection) {
+					if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE)) {
+						String amount = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE).toString();
+						if(StringUtils.hasText(amount.trim())) {
+							volumetricWaterCharge = new BigDecimal(amount.trim());
+						}
+					}
+				} else {
+					BigDecimal rate = getMeteredRate(criteria, usageType);
+					if(WSCalculationConstant.YES.equalsIgnoreCase(isDailyConsumption)) {
+						BigDecimal maxDays = getDaysInMonth(masterData.get(WSCalculationConstant.BILLING_PERIOD));
+						BigDecimal volumetricConsumptionKL = new BigDecimal(volumetricConsumption);
+						volumetricWaterCharge = volumetricConsumptionKL.multiply(maxDays).multiply(rate).setScale(2, RoundingMode.HALF_UP);
+					} else {
+						BigDecimal volumetricConsumptionKL = new BigDecimal(volumetricConsumption);
+						volumetricWaterCharge = volumetricConsumptionKL.multiply(rate).setScale(2, RoundingMode.HALF_UP);
 					}
 				}
+				
 				return volumetricWaterCharge;
 			}
 			
@@ -231,6 +236,31 @@ public class EstimationService {
 			}
 		}
 		return waterCharges;
+	}
+
+	private BigDecimal getMeteredRate(CalculationCriteria criteria, String usageType) {
+		BigDecimal rate = BigDecimal.ZERO;
+		if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("PERMANENT")) {
+			if(usageType.equalsIgnoreCase("Domestic")) {
+				rate = BigDecimal.valueOf(5.29);
+			} else if(WSCalculationConstant.WS_UC_COMMERCIAL.equalsIgnoreCase(usageType)
+					|| WSCalculationConstant.WS_UC_INDUSTRIAL.equalsIgnoreCase(usageType)
+					|| WSCalculationConstant.WS_UC_INSTITUTIONAL.equalsIgnoreCase(usageType)) {
+				rate = BigDecimal.valueOf(17.45);
+			} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
+				rate = BigDecimal.valueOf(5.29);
+			} else if(WSCalculationConstant.WS_UC_ASSOCIATION.equalsIgnoreCase(usageType)) {
+				rate = BigDecimal.valueOf(17.45);
+			}
+			
+		} else if(criteria.getWaterConnection().getConnectionCategory().equalsIgnoreCase("TEMPORARY")) {
+			if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
+				rate = BigDecimal.valueOf(5.29);
+			} else if(WSCalculationConstant.WS_UC_TWSFC.equalsIgnoreCase(usageType)) {
+				rate = BigDecimal.valueOf(32.77);
+			}
+		}
+		return rate;
 	}
 
 	/**
@@ -1190,6 +1220,14 @@ public class EstimationService {
 			}
 		}
 		return sewerageCharge;
+	}
+	
+	private BigDecimal getDaysInMonth(Object object) {
+		HashMap<String, Object> billPeriodMaster = (HashMap<String, Object>) object;
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis((long) billPeriodMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES));
+		int maxDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+		return BigDecimal.valueOf(maxDays);
 	}
 	
 }

@@ -58,6 +58,10 @@ public class WnsBatchTriggerController {
 	@Autowired
 	WnsMigrationJobExecutionListner wnsMigrationJobExecutionListner;
 	
+	@Autowired
+	@Qualifier("stepSwMigrate")
+	Step stepSwMigrate;
+	
 	@PostMapping("/wns-migrate/run")
 	public void runWnsMigration(@RequestBody @Valid MigrationRequest request) throws InvalidFormatException, IOException {
 		properties.setAuthToken(request.getAuthToken());
@@ -76,6 +80,54 @@ public class WnsBatchTriggerController {
 			        			.incrementer(new RunIdIncrementer())
 			        			.listener(wnsMigrationJobExecutionListner)
 			        			.flow(stepWnsMigrate).end().build();
+			        	
+			        	JobParameters jobParameters = new JobParametersBuilder()
+			        			.addLong("time", System.currentTimeMillis())
+			        			.addString("filePath", file)
+			        			.addString("fileName", fileName)
+			        			.toJobParameters();
+			        	
+						jobLauncher.run(job, jobParameters);
+						try {
+							wnsService.writeExecutionTime();
+						} catch (InvalidFormatException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
+							| JobParametersInvalidException e) {
+						e.printStackTrace();
+					}
+				} else {
+					log.error("File name %s is not matching with in tenants list", fileToProceed.getName());
+					wnsService.writeFileError(fileToProceed.getName());
+				}
+				
+			}
+		}
+	}
+	
+	@PostMapping("/sw-migrate/run")
+	public void runSwMigration(@RequestBody @Valid MigrationRequest request) throws InvalidFormatException, IOException {
+		properties.setAuthToken(request.getAuthToken());
+		File scanFolder = new File(properties.getWnsDataFileDirectory());
+		for (File fileToProceed : scanFolder.listFiles()) {
+			if(fileToProceed.isFile() && fileToProceed.getName().endsWith(".xlsx")) {
+				// Scanning of folder
+				if(MigrationUtility.getSystemProperties().getTenants().containsKey(fileToProceed.getName().split("\\.")[0].toLowerCase())) {
+					String fileName =  fileToProceed.getName().toLowerCase();
+					String file = fileToProceed.getPath();
+			        try {
+			        	recordStatistic.getErrorRecords().clear();
+			        	recordStatistic.getSuccessRecords().clear();
+			        	
+			        	Job job = jobBuilderFactory.get("firstBatchJob")
+			        			.incrementer(new RunIdIncrementer())
+			        			.listener(wnsMigrationJobExecutionListner)
+			        			.flow(stepSwMigrate).end().build();
 			        	
 			        	JobParameters jobParameters = new JobParametersBuilder()
 			        			.addLong("time", System.currentTimeMillis())

@@ -931,4 +931,14 @@ public class MigrationUtility {
 		}
 		return Integer.parseInt(value);
 	}
+
+	public static String getConnectionFacility(WnsConnection connection) {
+		if(MigrationConst.CONNECTION_WATER.equalsIgnoreCase(connection.getConnectionFacility())) {
+			return MigrationConst.SERVICE_WATER;
+		} else if(MigrationConst.CONNECTION_SEWERAGE.equalsIgnoreCase(connection.getConnectionFacility())) {
+			return MigrationConst.SERVICE_SEWERAGE;
+		} else {
+			return MigrationConst.SERVICE_WATER_SEWERAGE;
+		}
+	}
 }

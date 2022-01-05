@@ -15,6 +15,9 @@ import org.egov.migration.processor.PropertyReaderForUser;
 import org.egov.migration.processor.PropertySearchTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessorForUser;
+import org.egov.migration.processor.SwItemReader;
+import org.egov.migration.processor.SwItemWriter;
+import org.egov.migration.processor.SwTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
 import org.egov.migration.processor.WnsTransformProcessor;
@@ -120,6 +123,14 @@ public class BatchConfiguration {
           .processor(getPropertyProcessorUser())
           .writer(getPropertyWriterUser()).build();
     }
+    
+    @Bean(name = "stepSwMigrate")
+    protected Step stepSwMigrate() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepSwMigrate").<WnsConnection, ConnectionDTO> chunk(100)
+          .reader(getSwReader())
+          .processor(getSwProcessor())
+          .writer(getSwWriter()).build();
+    }
 	
 	@Bean
     @StepScope
@@ -157,4 +168,21 @@ public class BatchConfiguration {
 		return new PropertyItemWriterForUser();
 	}
 
+    @Bean
+    @StepScope
+    public ItemReader<WnsConnection> getSwReader() throws EncryptedDocumentException, IOException, Exception {
+    	SwItemReader swItemReader = new SwItemReader();
+    	swItemReader.setSkipRecord(1);
+    	return swItemReader;
+    }
+    
+    @Bean
+    public ItemProcessor<WnsConnection, ConnectionDTO> getSwProcessor() {
+		return new SwTransformProcessor();
+	}
+    
+    @Bean
+    public ItemWriter<ConnectionDTO> getSwWriter() {
+		return new SwItemWriter();
+	}
 }

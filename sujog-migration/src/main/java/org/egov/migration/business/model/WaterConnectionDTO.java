@@ -30,13 +30,13 @@ public class WaterConnectionDTO {
 	private Long meterInstallationDate = null;
 
 	@JsonProperty("proposedPipeSize")
-	private Double proposedPipeSize = null;
+	private Integer proposedPipeSize = null;
 
 	@JsonProperty("proposedTaps")
 	private Integer proposedTaps = null;
 
 	@JsonProperty("pipeSize")
-	private Double pipeSize = null;
+	private Integer pipeSize = null;
 
 	@JsonProperty("noOfTaps")
 	private Integer noOfTaps = null;
@@ -96,6 +96,24 @@ public class WaterConnectionDTO {
 
 	@JsonProperty("oldApplication")
 	private Boolean oldApplication = false;
+	
+	@JsonProperty("proposedWaterClosets")
+	private Integer proposedWaterClosets = null;
+
+	@JsonProperty("proposedToilets")
+	private Integer proposedToilets = null;
+
+	@JsonProperty("noOfWaterClosets")
+	private Integer noOfWaterClosets = null;
+
+	@JsonProperty("noOfToilets")
+	private Integer noOfToilets = null;
+	
+	@JsonProperty("connectionFacility")
+	private String connectionFacility = null;
+	
+	@JsonProperty("processInstance")
+	private ProcessInstance processInstance = null;
 	
 	public void addConnectionHolders(ConnectionHolderDTO connectionHolder) {
 		if(this.connectionHolders == null) {

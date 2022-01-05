@@ -963,6 +963,7 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 		waterConnectionDTO.setProposedTaps(MigrationUtility.getNoOfTaps(service.getNoOfTaps()));
 		waterConnectionDTO.setUsageCategory(MigrationUtility.getConnectionUsageCategory(service.getUsageCategory()));
 		waterConnectionDTO.setNoOfFlats(MigrationUtility.getDefaultZero(service.getNoOfFlats()));
+		waterConnectionDTO.setConnectionFacility(MigrationConst.SERVICE_WATER);
 		
 	}
 	

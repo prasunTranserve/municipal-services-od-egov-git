@@ -43,6 +43,7 @@ remomte:
       host: http://localhost:8083/ws-services/wc
       search: /_search
       connectionmigrate: /_migrate
+      swmigrate: /_swmigrate
       calculator:
         host: http://localhost:8083/ws-calculator
         meterreadingmigeate: /meterConnection/_migrateMeterReading
