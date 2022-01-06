@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.egov.wscalculation.web.models.BulkMeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingResponse;
@@ -62,6 +63,17 @@ public class MeterReadingController {
 	public ResponseEntity<MeterReadingResponse> migrateMeterReading(
 			@Valid @RequestBody MeterConnectionRequest meterConnectionRequest) {
 		List<MeterReading> meterReadings = meterService.migrateMeterReading(meterConnectionRequest);
+		MeterReadingResponse response = MeterReadingResponse.builder().meterReadings(meterReadings).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(meterConnectionRequest.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+	
+	@RequestMapping(value = "/bulk/_create", method = RequestMethod.POST, produces = "application/json")
+	public ResponseEntity<MeterReadingResponse> bulkCreateMeterReading(
+			@Valid @RequestBody BulkMeterConnectionRequest meterConnectionRequest) {
+		List<MeterReading> meterReadings = meterService.bulkCreateMeterReading(meterConnectionRequest);
 		MeterReadingResponse response = MeterReadingResponse.builder().meterReadings(meterReadings).responseInfo(
 				responseInfoFactory.createResponseInfoFromRequestInfo(meterConnectionRequest.getRequestInfo(), true))
 				.build();
