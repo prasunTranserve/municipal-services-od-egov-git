@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.validator.WSCalculationValidator;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
+import org.egov.wscalculation.web.models.BulkMeterConnectionRequest;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
+import org.egov.wscalculation.web.models.MeterReading.Status;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -93,5 +97,25 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> searchMeterReadings(MeterReadingSearchCriteria criteria, RequestInfo requestInfo) {
 		return wSCalculationDao.searchMeterReadings(criteria);
+	}
+	
+	@Override
+	public List<MeterReading> bulkCreateMeterReading(@Valid BulkMeterConnectionRequest bulkMeterConnectionRequest) {
+		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
+		for (MeterReading meterReading : bulkMeterConnectionRequest.getMeterReading()) {
+			MeterConnectionRequest connectionRequest = MeterConnectionRequest.builder().requestInfo(bulkMeterConnectionRequest.getRequestInfo())
+					.meterReading(meterReading).build();
+			List<MeterReading> meterReadings = new ArrayList<>();
+			try {
+				meterReadings = createMeterReading(connectionRequest);
+				meterReading = meterReadings.get(0);
+				meterReading.setStatus(Status.SUCCESS);
+			} catch (Exception e) {
+				meterReading.setStatus(Status.FAIL);
+				meterReadings.add(meterReading);
+			}
+			meterReadingsList.add(meterReading);
+		}
+		return meterReadingsList;
 	}
 }
