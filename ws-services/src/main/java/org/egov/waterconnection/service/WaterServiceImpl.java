@@ -472,7 +472,7 @@ public class WaterServiceImpl implements WaterService {
 				waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
 		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
 		waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.UPDATE_APPLICATION);
-		userService.updateUser(waterConnectionRequest, searchResult);
+		//userService.updateUser(waterConnectionRequest, searchResult);
 		enrichmentService.postStatusEnrichment(waterConnectionRequest);
 		waterDao.updateWaterConnection(waterConnectionRequest, true);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
