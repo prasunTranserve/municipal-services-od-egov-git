@@ -106,6 +106,40 @@ public class MeterReading {
 
 	@JsonProperty("tenantId")
 	private String tenantId = null;
+	
+	/**
+	 * Gets or Sets status
+	 */
+	public enum Status {
+		SUCCESS("SUCCESS"),
+
+		FAIL("FAIL");
+
+		private String value;
+
+		Status(String value) {
+			this.value = value;
+		}
+
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.valueOf(value);
+		}
+
+		@JsonCreator
+		public static Status fromValue(String text) {
+			for (Status b : Status.values()) {
+				if (String.valueOf(b.value).equals(text)) {
+					return b;
+				}
+			}
+			return null;
+		}
+	}
+
+	@JsonProperty("status")
+	private Status status = null;
 
 	public MeterReading id(String id) {
 		this.id = id;
@@ -334,6 +368,25 @@ public class MeterReading {
 	public void setTenantId(String tenantId) {
 		this.tenantId = tenantId;
 	}
+	
+	public MeterReading status(Status status) {
+		this.status = status;
+		return this;
+	}
+
+	/**
+	 * Get meterStatus
+	 *
+	 * @return meterStatus
+	 **/
+	@ApiModelProperty(required = true, readOnly = true, value = "")
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
 
 	@Override
 	public boolean equals(java.lang.Object o) {
@@ -352,7 +405,8 @@ public class MeterReading {
 				&& Objects.equals(this.currentReading, meterReading.currentReading)
 				&& Objects.equals(this.currentReadingDate, meterReading.currentReadingDate)
 				&& Objects.equals(this.consumption, meterReading.consumption)
-				&& Objects.equals(this.tenantId, meterReading.tenantId);
+				&& Objects.equals(this.tenantId, meterReading.tenantId)
+				&& Objects.equals(this.status, meterReading.status);
 	}
 
 	@Override
@@ -375,6 +429,7 @@ public class MeterReading {
 		sb.append("    currentReadingDate: ").append(toIndentedString(currentReadingDate)).append("\n");
 		sb.append("    consumption: ").append(toIndentedString(consumption)).append("\n");
 		sb.append("	   tenantId: ").append(toIndentedString(tenantId)).append("\n");
+		sb.append("    status: ").append(toIndentedString(status)).append("\n");
 		sb.append("}");
 		return sb.toString();
 	}
