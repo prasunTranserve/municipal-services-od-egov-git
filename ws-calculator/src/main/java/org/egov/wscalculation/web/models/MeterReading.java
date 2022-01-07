@@ -110,14 +110,14 @@ public class MeterReading {
 	/**
 	 * Gets or Sets status
 	 */
-	public enum Status {
+	public enum SuccessFail {
 		SUCCESS("SUCCESS"),
 
 		FAIL("FAIL");
 
 		private String value;
 
-		Status(String value) {
+		SuccessFail(String value) {
 			this.value = value;
 		}
 
@@ -128,8 +128,8 @@ public class MeterReading {
 		}
 
 		@JsonCreator
-		public static Status fromValue(String text) {
-			for (Status b : Status.values()) {
+		public static SuccessFail fromValue(String text) {
+			for (SuccessFail b : SuccessFail.values()) {
 				if (String.valueOf(b.value).equals(text)) {
 					return b;
 				}
@@ -139,7 +139,7 @@ public class MeterReading {
 	}
 
 	@JsonProperty("status")
-	private Status status = null;
+	private SuccessFail status = null;
 
 	public MeterReading id(String id) {
 		this.id = id;
@@ -369,7 +369,7 @@ public class MeterReading {
 		this.tenantId = tenantId;
 	}
 	
-	public MeterReading status(Status status) {
+	public MeterReading status(SuccessFail status) {
 		this.status = status;
 		return this;
 	}
@@ -380,11 +380,11 @@ public class MeterReading {
 	 * @return meterStatus
 	 **/
 	@ApiModelProperty(required = true, readOnly = true, value = "")
-	public Status getStatus() {
+	public SuccessFail getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(SuccessFail status) {
 		this.status = status;
 	}
 
@@ -429,7 +429,7 @@ public class MeterReading {
 		sb.append("    currentReadingDate: ").append(toIndentedString(currentReadingDate)).append("\n");
 		sb.append("    consumption: ").append(toIndentedString(consumption)).append("\n");
 		sb.append("	   tenantId: ").append(toIndentedString(tenantId)).append("\n");
-		sb.append(" status: ").append(toIndentedString(status)).append("\n");
+		sb.append("    status: ").append(toIndentedString(status)).append("\n");
 		sb.append("}");
 		return sb.toString();
 	}
