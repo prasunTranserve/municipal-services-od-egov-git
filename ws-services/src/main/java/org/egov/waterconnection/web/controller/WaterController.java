@@ -85,7 +85,7 @@ public class WaterController {
 	
 	@RequestMapping(value = "/_swmigrate", method = RequestMethod.POST, produces = "application/json")
 	public ResponseEntity<WaterConnectionResponse> migrateSewerageConnection(
-			@Valid @RequestBody WaterConnectionRequest waterConnectionRequest) {
+			@RequestBody WaterConnectionRequest waterConnectionRequest) {
 		List<WaterConnection> waterConnection = waterService.migrateSewerageConnection(waterConnectionRequest);
 		WaterConnectionResponse response = WaterConnectionResponse.builder().waterConnection(waterConnection)
 				.responseInfo(responseInfoFactory
