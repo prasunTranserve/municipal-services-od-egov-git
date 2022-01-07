@@ -1,7 +1,6 @@
 package org.egov.wscalculation.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -15,7 +14,7 @@ import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
-import org.egov.wscalculation.web.models.MeterReading.Status;
+import org.egov.wscalculation.web.models.MeterReading.SuccessFail;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -118,9 +117,9 @@ public class MeterServicesImpl implements MeterService {
 			try {
 				meterReadings = createMeterReading(connectionRequest);
 				meterReading = meterReadings.get(0);
-				meterReading.setStatus(Status.SUCCESS);
+				meterReading.setStatus(SuccessFail.SUCCESS);
 			} catch (Exception e) {
-				meterReading.setStatus(Status.FAIL);
+				meterReading.setStatus(SuccessFail.FAIL);
 				meterReadings.add(meterReading);
 			}
 			meterReadingsList.add(meterReading);
