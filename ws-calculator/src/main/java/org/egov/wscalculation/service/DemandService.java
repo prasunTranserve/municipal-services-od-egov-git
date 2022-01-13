@@ -858,5 +858,33 @@ public class DemandService {
 		});
 		
 	}
+	
+	public void generateDemandForConnections(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
+		String tenantId = billCriteria.getTenants().get(0);
+		requestInfo.getUserInfo().setTenantId(tenantId);
+		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
+		generateDemandForConnection(billingMasterData, requestInfo, tenantId, billCriteria);
+	}
+
+	private void generateDemandForConnection(Map<String, Object> master, RequestInfo requestInfo,
+			String tenantId, BillSchedulerCriteria billCriteria) {
+		log.info("Billing master data values for non metered connection:: {}", master);
+		long startDay = (((int) master.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
+		if(isCurrentDateIsMatching((String) master.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
+//			List<String> connectionNos = billCriteria.getConnectionNos();
+			String assessmentYear = estimationService.getAssessmentYear();
+			for (String connectionNo : billCriteria.getConnectionNos()) {
+				CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
+						.assessmentYear(assessmentYear).connectionNo(connectionNo).build();
+				List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
+				calculationCriteriaList.add(calculationCriteria);
+				CalculationReq calculationReq = CalculationReq.builder().calculationCriteria(calculationCriteriaList)
+						.requestInfo(requestInfo).isconnectionCalculation(true).build();
+				log.info(String.format("Pushed for demand generation for tenant: %s, connectionNo: %s", tenantId, connectionNo));
+				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
+				// log.info("Prepared Statement" + calculationRes.toString());
+			}
+		}
+	}
 
 }
