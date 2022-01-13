@@ -113,4 +113,9 @@ public class CalculatorController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping("/generate/_bill")
+	public void generateBill(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
+		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
+	}
 }

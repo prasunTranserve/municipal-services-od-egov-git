@@ -18,4 +18,6 @@ public interface WSCalculationService {
 	void generateDemandBasedOnTimePeriod(RequestInfo requestInfo);
 
 	void generateDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria);
+
+	void generateConnectionDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria);
 }
