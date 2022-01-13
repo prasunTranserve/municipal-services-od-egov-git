@@ -464,5 +464,37 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		
 		wsCalculationConfiguration.setSpecialRebateYear(String.valueOf(billCriteria.getSpecialRebateYear()));
 	}
+
+	@Override
+	public void generateConnectionDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
+		ValidateConnectionRequest(billCriteria);
+		enrichConfiguration(billCriteria);
+		
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime date = LocalDateTime.now();
+		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
+		demandService.generateDemandForConnections(requestInfo, billCriteria);
+	}
+
+	private void ValidateConnectionRequest(BillSchedulerCriteria billCriteria) {
+		if(billCriteria.getTenants()==null || billCriteria.getTenants().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty");
+		}
+		
+		if(billCriteria.isSpecificMonth()) {
+			if(billCriteria.getDemandMonth() <= 0) {
+				throw new CustomException("INVALID_REQUEST", "Demand month should be present with positive value");
+			}
+			
+			if(billCriteria.getDemandYear() <= 0) {
+				throw new CustomException("INVALID_REQUEST", "Demand year should be present with positive value");
+			}
+		}
+		
+		if(billCriteria.getConnectionNos() == null || billCriteria.getConnectionNos().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "No connection specified for bill generation");
+		}
+		
+	}
 	
 }

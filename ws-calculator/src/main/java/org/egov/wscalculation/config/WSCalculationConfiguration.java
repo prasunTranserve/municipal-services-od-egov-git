@@ -263,4 +263,10 @@ public class WSCalculationConfiguration {
 	
 	@Value("${egov.demand.specialrebate.year}")
 	private String specialRebateYear;
+	
+	@Value("${egov.sw.demand.migrated.value.enabled}")
+	private boolean swMigratedDemandValueEnabled;
+	
+	@Value("${egov.sw.demand.months.count}")
+	private int swdemandMonthsCount;
 }
