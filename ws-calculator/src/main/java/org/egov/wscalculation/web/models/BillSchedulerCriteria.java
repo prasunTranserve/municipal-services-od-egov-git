@@ -41,4 +41,8 @@ public class BillSchedulerCriteria {
 	
 	@JsonProperty(value = "specificWards")
 	private List<DemandWard> wards; 	
+	
+	@JsonProperty(value = "connectionNos")
+	private List<String> connectionNos;
+	
 }
