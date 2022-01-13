@@ -262,6 +262,17 @@ public class EstimationService {
 		if(WSCalculationConstant.MDMS_WATER_CONNECTION.equalsIgnoreCase(criteria.getWaterConnection().getConnectionFacility())) {
 			return sewerageCharge;
 		}
+		
+		if(configs.isSwMigratedDemandValueEnabled()) {
+			int swDemandMonth = configs.getSwdemandMonthsCount();
+			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
+			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
+			if(additionalDetails.containsKey("migratedSewerageFee")) {
+				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
+			}
+
+			return migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, RoundingMode.HALF_UP);
+		}
 
 		String usageCategory = criteria.getWaterConnection().getUsageCategory();
 		

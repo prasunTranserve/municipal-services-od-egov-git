@@ -40,5 +40,9 @@ public class BillSchedulerCriteria {
 	private int specialRebateYear;
 	
 	@JsonProperty(value = "specificWards")
-	private List<DemandWard> wards; 	
+	private List<DemandWard> wards; 
+	
+	@JsonProperty(value = "connectionNos")
+	private List<String> connectionNos;
+	
 }

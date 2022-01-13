@@ -103,4 +103,9 @@ public class CalculatorController {
 	public void billScheduler(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
 		wSCalculationService.generateDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
 	}
+	
+	@PostMapping("/generate/_bill")
+	public void generateBill(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
+		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
+	}
 }
