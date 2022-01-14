@@ -573,6 +573,9 @@ public class EnrichmentService {
 			bpa.getLandInfo().getOwners().forEach(ownerInfo -> {
 				assignes.add(ownerInfo.getUuid());
 			});
+			// architect should also be able to submit if sent back to citizen
+			if (bpa.getAccountId() != null)
+				assignes.add(bpa.getAccountId());
 
 			Set<String> registeredUUIDS = userService.getUUidFromUserName(bpa);
 
