@@ -1176,12 +1176,15 @@ public class EstimationService {
 			return sewerageCharge;
 		}
 		
+		log.info("Generate Sewerage demand with migrated value: " + configs.isSwMigratedDemandValueEnabled());
 		if(configs.isSwMigratedDemandValueEnabled()) {
 			int swDemandMonth = configs.getSwdemandMonthsCount();
+			log.info("Generating sewerage bill for " + swDemandMonth + " months");
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
 				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
+				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
 			
 			return migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, RoundingMode.HALF_UP);
