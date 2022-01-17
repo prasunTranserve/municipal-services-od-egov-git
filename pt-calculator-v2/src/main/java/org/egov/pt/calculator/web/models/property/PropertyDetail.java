@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -26,7 +25,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-
 /**
  * PropertyDetail
  */
@@ -40,189 +38,188 @@ import lombok.ToString;
 @Builder
 @EqualsAndHashCode
 @ToString
-public class PropertyDetail   {
-       /* @JsonProperty("id")
-        private String id;*/
+public class PropertyDetail {
+	/*
+	 * @JsonProperty("id") private String id;
+	 */
 
-              /**
-   * Source of a assessment data. The properties will be created in a system based on the data avaialble in their manual records or during field survey. There can be more from client to client.
-   */
+	/**
+	 * Source of a assessment data. The properties will be created in a system based
+	 * on the data avaialble in their manual records or during field survey. There
+	 * can be more from client to client.
+	 */
 
-        @JsonProperty("tenantId")
-        private String tenantId;
+	@JsonProperty("tenantId")
+	private String tenantId;
 
-        @JsonProperty("citizenInfo")
-        private OwnerInfo citizenInfo;
+	@JsonProperty("citizenInfo")
+	private OwnerInfo citizenInfo;
 
+	public enum SourceEnum {
+		MUNICIPAL_RECORDS("MUNICIPAL_RECORDS"),
 
-        public enum SourceEnum {
-    MUNICIPAL_RECORDS("MUNICIPAL_RECORDS"),
-    
-    FIELD_SURVEY("FIELD_SURVEY");
+		FIELD_SURVEY("FIELD_SURVEY");
 
-    private String value;
+		private String value;
 
-    SourceEnum(String value) {
-      this.value = value;
-    }
+		SourceEnum(String value) {
+			this.value = value;
+		}
 
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.valueOf(value);
+		}
 
-    @JsonCreator
-    public static SourceEnum fromValue(String text) {
-      for (SourceEnum b : SourceEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
+		@JsonCreator
+		public static SourceEnum fromValue(String text) {
+			for (SourceEnum b : SourceEnum.values()) {
+				if (String.valueOf(b.value).equals(text)) {
+					return b;
+				}
+			}
+			return null;
+		}
+	}
 
-        @JsonProperty("source")
-        private SourceEnum source;
+	@JsonProperty("source")
+	private SourceEnum source;
 
-        @JsonProperty("usage")
-        private String usage;
+	@JsonProperty("usage")
+	private String usage;
 
-        @NotNull
-        @Min(1)
-        @JsonProperty("noOfFloors")
-        private Long noOfFloors;
+	@NotNull
+	@JsonProperty("noOfFloors")
+	private Long noOfFloors;
 
-        @JsonProperty("landArea")
-        private Double landArea;
+	@JsonProperty("landArea")
+	private Double landArea;
 
-        @JsonProperty("buildUpArea")
-        private Double buildUpArea;
+	@JsonProperty("buildUpArea")
+	private Double buildUpArea;
 
-        @JsonProperty("units")
-        @Valid
-        private List<Unit> units;
+	@JsonProperty("units")
+	@Valid
+	private List<Unit> units;
 
-        @JsonProperty("documents")
-        @Valid
-        private Set<Document> documents;
+	@JsonProperty("documents")
+	@Valid
+	private Set<Document> documents;
 
-        @JsonProperty("additionalDetails")
-        private Object additionalDetails;
+	@JsonProperty("additionalDetails")
+	private Object additionalDetails;
 
-        @NotEmpty
-        @JsonProperty("financialYear")
-        private String financialYear;
+	@NotEmpty
+	@JsonProperty("financialYear")
+	private String financialYear;
 
-        @NotEmpty
-        @JsonProperty("propertyType")
-        private String propertyType;
+	@NotEmpty
+	@JsonProperty("propertyType")
+	private String propertyType;
 
-        @JsonProperty("propertySubType")
-        private String propertySubType;
+	@JsonProperty("propertySubType")
+	private String propertySubType;
 
-        @JsonProperty("assessmentNumber")
-        private String assessmentNumber;
+	@JsonProperty("assessmentNumber")
+	private String assessmentNumber;
 
-        @JsonProperty("assessmentDate")
-        private Long assessmentDate;
+	@JsonProperty("assessmentDate")
+	private Long assessmentDate;
 
-        @JsonProperty("usageCategoryMajor")
-        private String usageCategoryMajor;
+	@JsonProperty("usageCategoryMajor")
+	private String usageCategoryMajor;
 
-         @JsonProperty("usageCategoryMinor")
-         private String usageCategoryMinor;
+	@JsonProperty("usageCategoryMinor")
+	private String usageCategoryMinor;
 
-        @NotEmpty
-        @JsonProperty("ownershipCategory")
-        private String ownershipCategory;
+	@NotEmpty
+	@JsonProperty("ownershipCategory")
+	private String ownershipCategory;
 
-        @JsonProperty("subOwnershipCategory")
-        private String subOwnershipCategory;
+	@JsonProperty("subOwnershipCategory")
+	private String subOwnershipCategory;
 
-        @JsonProperty("adhocExemption")
-        private BigDecimal adhocExemption;
+	@JsonProperty("adhocExemption")
+	private BigDecimal adhocExemption;
 
-        @JsonProperty("adhocPenalty")
-        private BigDecimal adhocPenalty;
+	@JsonProperty("adhocPenalty")
+	private BigDecimal adhocPenalty;
 
-        @JsonProperty("owners")
-        @Valid
-        @NotNull
-        @Size(min=1)
-        private Set<OwnerInfo> owners;
+	@JsonProperty("owners")
+	@Valid
+	@NotNull
+	@Size(min = 1)
+	private Set<OwnerInfo> owners;
 
-        @JsonProperty("auditDetails")
-        private AuditDetails auditDetails;
+	@JsonProperty("auditDetails")
+	private AuditDetails auditDetails;
 
+	/**
+	 * Property can be created from different channels Eg. System (properties
+	 * created by ULB officials), CFC Counter (From citizen faciliation counters)
+	 * etc. Here we are defining some known channels, there can be more client to
+	 * client.
+	 */
+	public enum ChannelEnum {
+		SYSTEM("SYSTEM"),
 
+		CFC_COUNTER("CFC_COUNTER"),
 
-    /**
-   * Property can be created from different channels Eg. System (properties created by ULB officials), CFC Counter (From citizen faciliation counters) etc. Here we are defining some known channels, there can be more client to client.
-   */
-  public enum ChannelEnum {
-    SYSTEM("SYSTEM"),
-    
-    CFC_COUNTER("CFC_COUNTER"),
-    
-    CITIZEN("CITIZEN"),
-    
-    DATA_ENTRY("DATA_ENTRY"),
-    
-    MIGRATION("MIGRATION");
+		CITIZEN("CITIZEN"),
 
-    private String value;
+		DATA_ENTRY("DATA_ENTRY"),
 
-    ChannelEnum(String value) {
-      this.value = value;
-    }
+		MIGRATION("MIGRATION");
 
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
+		private String value;
 
-    @JsonCreator
-    public static ChannelEnum fromValue(String text) {
-      for (ChannelEnum b : ChannelEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
+		ChannelEnum(String value) {
+			this.value = value;
+		}
 
-        @JsonProperty("channel")
-        private ChannelEnum channel;
+		@Override
+		@JsonValue
+		public String toString() {
+			return String.valueOf(value);
+		}
 
+		@JsonCreator
+		public static ChannelEnum fromValue(String text) {
+			for (ChannelEnum b : ChannelEnum.values()) {
+				if (String.valueOf(b.value).equals(text)) {
+					return b;
+				}
+			}
+			return null;
+		}
+	}
 
-        public PropertyDetail addUnitsItem(Unit unitsItem) {
-            if (this.units == null) {
-            this.units = new ArrayList<>();
-            }
-        this.units.add(unitsItem);
-        return this;
-        }
+	@JsonProperty("channel")
+	private ChannelEnum channel;
 
-        public PropertyDetail addDocumentsItem(Document documentsItem) {
-            if (this.documents == null) {
-            this.documents = new HashSet<>();
-            }
-        this.documents.add(documentsItem);
-        return this;
-        }
+	public PropertyDetail addUnitsItem(Unit unitsItem) {
+		if (this.units == null) {
+			this.units = new ArrayList<>();
+		}
+		this.units.add(unitsItem);
+		return this;
+	}
 
+	public PropertyDetail addDocumentsItem(Document documentsItem) {
+		if (this.documents == null) {
+			this.documents = new HashSet<>();
+		}
+		this.documents.add(documentsItem);
+		return this;
+	}
 
-    public PropertyDetail addOwnersItem(OwnerInfo ownersItem) {
-        if (this.owners == null) {
-            this.owners = new HashSet<>();
-        }
-        this.owners.add(ownersItem);
-        return this;
-    }
+	public PropertyDetail addOwnersItem(OwnerInfo ownersItem) {
+		if (this.owners == null) {
+			this.owners = new HashSet<>();
+		}
+		this.owners.add(ownersItem);
+		return this;
+	}
 
 }
-
