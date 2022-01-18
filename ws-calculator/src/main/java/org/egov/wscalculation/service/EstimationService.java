@@ -247,7 +247,12 @@ public class EstimationService {
 		LocalDate billingStartDate = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
 		LocalDate billingEndDate = Instant.ofEpochMilli(toDate).atZone(ZoneId.systemDefault()).toLocalDate();
 		
-		return criteria.getMeterReadingLists().stream().filter(meterReading -> {
+		return criteria.getMeterReadingLists().stream()
+				.filter(meterReading -> {
+					LocalDate createdDate = Instant.ofEpochMilli(meterReading.getAuditDetails().getCreatedTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+					return wSCalculationUtil.getMeterReadingAllowedate(masterData).isBefore(createdDate);
+				})
+				.filter(meterReading -> {
 					LocalDate readingDate = Instant.ofEpochMilli(meterReading.getCurrentReadingDate()).atZone(ZoneId.systemDefault()).toLocalDate();
 					return readingDate.compareTo(billingStartDate) >= 0 && readingDate.compareTo(billingEndDate) <= 0;
 				})
@@ -263,18 +268,15 @@ public class EstimationService {
 			return sewerageCharge;
 		}
 		
-		log.info("Generate Sewerage demand with migrated value: " + configs.isSwMigratedDemandValueEnabled());
-		if(configs.isSwMigratedDemandValueEnabled()) {
-			int swDemandMonth = configs.getSwdemandMonthsCount();
-			log.info("Generating sewerage bill for " + swDemandMonth + " months");
+		log.info("Generate Sewerage demand with migrated value: " + configs.isSwDemandMigratedAmountEnabled());
+		if(configs.isSwDemandMigratedAmountEnabled()) {
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
 				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
-				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
+//				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
-
-			return migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, RoundingMode.HALF_UP);
+			return migratedSewerageFee;
 		}
 
 		String usageCategory = criteria.getWaterConnection().getUsageCategory();
@@ -346,6 +348,34 @@ public class EstimationService {
 			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
 				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
 						.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+			}
+		}
+		
+		// Sewerage arrear fee
+		if(configs.isSwArrearDemandEnabled()) {
+			BigDecimal swArrearAmount = BigDecimal.ZERO;
+			int swDemandMonth = configs.getSwArrearMonthCount();
+			log.info("Generating sewerage bill for " + swDemandMonth + " months");
+			LinkedHashMap additionalDetails = (LinkedHashMap)connection.getAdditionalDetails();
+			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
+			if(additionalDetails.containsKey("migratedSewerageFee")) {
+				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
+				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
+			}
+			swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
+			if(swArrearAmount.compareTo(BigDecimal.ZERO) > 0) {
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_ADHOC_CHARGE)
+						.estimateAmount(swArrearAmount.setScale(2, 2)).build());
+			}
+
+			// Sewerage Special Rebate
+			if(swArrearAmount.compareTo(BigDecimal.ZERO) > 0 && configs.isSwSpecialRebateApplicable()) {
+				BigDecimal swSpecialRebate = BigDecimal.ZERO;
+				swSpecialRebate = swArrearAmount.multiply(BigDecimal.valueOf(0.02)).setScale(2, 2);
+				if(swSpecialRebate.compareTo(BigDecimal.ZERO) > 0) {
+					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_SPECIAL_REBATE)
+							.estimateAmount(swSpecialRebate.setScale(2, 2).negate()).build());
+				}
 			}
 		}
 

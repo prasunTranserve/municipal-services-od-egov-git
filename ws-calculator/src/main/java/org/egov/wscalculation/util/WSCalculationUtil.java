@@ -1,6 +1,8 @@
 package org.egov.wscalculation.util;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
+import net.minidev.json.JSONArray;
 
 @Component
 @Getter
@@ -258,5 +261,15 @@ public class WSCalculationUtil {
 			return true;
 		else
 			return false;
+	}
+	
+	public LocalDate getMeterReadingAllowedate(Map<String, Object> masterMap) {
+		JSONArray meterReadingMaster = (JSONArray) masterMap.get(WSCalculationConstant.WC_METER_READING_MASTER);
+		try {
+			LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) meterReadingMaster.get(0);
+			return LocalDate.parse(map.get(WSCalculationConstant.SCHEDULER_ALLOWED_METER_READING_FROM_DATE).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		} catch (Exception e) {
+			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
+		}
 	}
 }
