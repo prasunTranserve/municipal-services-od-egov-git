@@ -56,6 +56,8 @@ public class DemandGenerationConsumer {
 		CalculationReq calculationReq = mapper.convertValue(records.get(0).getPayload(), CalculationReq.class);
 		Map<String, Object> masterMap = mDataService.loadMasterData(calculationReq.getRequestInfo(),
 				calculationReq.getCalculationCriteria().get(0).getTenantId());
+		mDataService.loadMeterReadingMasterData(calculationReq.getRequestInfo(),
+				calculationReq.getCalculationCriteria().get(0).getTenantId(), masterMap);
 		List<CalculationCriteria> calculationCriteria = new ArrayList<>();
 		records.forEach(record -> {
 			try {

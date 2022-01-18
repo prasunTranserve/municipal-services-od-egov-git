@@ -269,7 +269,12 @@ public class WSCalculationValidator {
 			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
 		}
 
-		LocalDate permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), day);
+		LocalDate permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), 1);
+		if(permissibleDate.lengthOfMonth() < day) {
+			permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), permissibleDate.lengthOfMonth());
+		} else {
+			permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), day);
+		}
 		return permissibleDate;
 	}
 }
