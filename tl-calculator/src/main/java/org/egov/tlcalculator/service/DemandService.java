@@ -202,7 +202,7 @@ public class DemandService {
                     .consumerCode(consumerCode)
                     .demandDetails(demandDetails)
                     .payer(owner)
-                    .billExpiryTime(2629800000L);
+                    .billExpiryTime(2629800000L)
                     .minimumAmountPayable(config.getMinimumPayableAmount())
                     .tenantId(tenantId)
                     .taxPeriodFrom(taxPeriodFrom)
