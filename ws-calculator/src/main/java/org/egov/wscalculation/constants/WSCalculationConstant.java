@@ -112,6 +112,8 @@ public class WSCalculationConstant {
 	public static final String METER_READING_DATE = "meterReadingDate";
 
 	public static final String ALLOWED_METER_READING_UPDATE_TILL = "allowUpdateTillDay";
+	
+	public static final String SCHEDULER_ALLOWED_METER_READING_FROM_DATE = "schedulerAllowFromDate";
 
 	/*
 	 * bigdecimal values
@@ -314,4 +316,9 @@ public class WSCalculationConstant {
 	public static final String MODIFY_CONNECTION = "MODIFY_CONNECTION";
 	
 	public static final List<String> TAX_APPLICABLE = Collections.unmodifiableList(Arrays.asList(WS_CHARGE, SW_CHARGE));
+
+	public static final String SW_ADHOC_CHARGE = "SW_ADHOC_CHARGE";
+	
+	public static final String SW_SPECIAL_REBATE = "SW_SPECIAL_REBATE";
+	
 }
