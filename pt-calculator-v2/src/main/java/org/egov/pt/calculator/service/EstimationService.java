@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -618,7 +619,7 @@ public class EstimationService {
 		final String dtlOwnerShipCat = detail.getOwnershipCategory();
 		final String dtlSubOwnerShipCat = detail.getSubOwnershipCategory();
 		final String dtlAreaType = property.getAddress().getLocality().getArea();
-		final Boolean dtlIsMultiFloored = detail.getNoOfFloors() > 1;
+		final Boolean dtlIsMultiFloored = !Objects.isNull(detail.getNoOfFloors()) && detail.getNoOfFloors() > 1;
 
 		return billingSlabs.stream().filter(slab -> {
 
