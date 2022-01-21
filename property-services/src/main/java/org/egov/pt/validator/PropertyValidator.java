@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -290,7 +291,13 @@ public class PropertyValidator {
 		Map<String, String> errorMap = new HashMap<>();
 		Property property = request.getProperty();
 		validateIds(request, errorMap);
-		validateMobileNumber(request, errorMap);
+		
+		//Remove mobile no validation in case of updation of properties for migrated properties.
+		if(Objects.isNull(property.getOldPropertyId()) || 
+				( !Objects.isNull(property.getOldPropertyId()) && !CreationReason.UPDATE.equals(property.getCreationReason()) ) ) {
+			validateMobileNumber(request, errorMap);
+		}
+		
 
         PropertyCriteria criteria = getPropertyCriteriaForSearch(request);
         List<Property> propertiesFromSearchResponse = service.searchProperty(criteria, request.getRequestInfo());
