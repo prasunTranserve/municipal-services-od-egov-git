@@ -75,7 +75,7 @@ public class ThirdPartyNocService {
 					ThirdPartyNocPushService thirdPartyNocPushService = getPushBean(noc.getNocType());
 
 					UserResponse userResponse = getUser(noc, requestInfoWrapper);
-					requestInfoWrapper.getRequestInfo().setUserInfo(userResponse.getUser().get(0));
+					//requestInfoWrapper.getRequestInfo().setUserInfo(userResponse.getUser().get(0));
 					BPA bpa = bpaService.getBuildingPlan(requestInfoWrapper.getRequestInfo(), noc.getTenantId(),
 							noc.getSourceRefId(), null);
 
