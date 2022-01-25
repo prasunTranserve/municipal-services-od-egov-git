@@ -79,5 +79,9 @@ public class BPAErrorConstants {
 	public static final String EG_WF_ERROR = "EG WF ERROR";
 
 	public static final String NOC_SERVICE_EXCEPTION = "NOC_SERVICE_EXCEPTION";
+	
+	public static final String BPA_GENDER_MISSING = "BPA GENDER MISSING";
+	
+	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
 
 }
