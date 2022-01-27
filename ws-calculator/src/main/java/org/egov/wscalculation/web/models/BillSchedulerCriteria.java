@@ -1,5 +1,6 @@
 package org.egov.wscalculation.web.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -43,5 +44,5 @@ public class BillSchedulerCriteria {
 	private List<DemandWard> wards;
 	
 	@JsonProperty(value = "connectionNos")
-	private List<String> connectionNos;
+	private List<String> connectionNos = new ArrayList<>();
 }
