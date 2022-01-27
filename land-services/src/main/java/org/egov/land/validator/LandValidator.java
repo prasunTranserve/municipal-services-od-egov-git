@@ -3,6 +3,7 @@ package org.egov.land.validator;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.validation.Valid;
 
@@ -26,6 +27,7 @@ public class LandValidator {
 		validateApplicationDocuments(landRequest, null);
 //		validateUser(landRequest);
 		validateDuplicateUser(landRequest);
+		validateOwnerDetails(landRequest);
 	}
 	
 	
@@ -83,5 +85,23 @@ public class LandValidator {
 		if (requestInfo.getUserInfo().getType().equalsIgnoreCase(LandConstants.CITIZEN) && !criteria.isEmpty()
 				&& !criteria.tenantIdOnly() && criteria.getTenantId() == null)
 			throw new CustomException(LandConstants.INVALID_SEARCH, "TenantId is mandatory in search");
+	}
+	
+	/**
+	 * Validates fatherOrHusbandName and gender if ownerType is individual.single
+	 * 
+	 * @param request
+	 */
+	private void validateOwnerDetails(LandInfoRequest landInfoRequest) {
+		if (landInfoRequest.getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+				&& Objects.isNull(landInfoRequest.getLandInfo().getOwners().get(0).getGender())) {
+			throw new CustomException(LandConstants.LAND_OWNER_GENDER_MISSING,
+					"Gender is mandatory for Individual Single Owner");
+		}
+		if (landInfoRequest.getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+				&& Objects.isNull(landInfoRequest.getLandInfo().getOwners().get(0).getFatherOrHusbandName())) {
+			throw new CustomException(LandConstants.LAND_OWNER_FATHER_NAME_MISSING,
+					"Father or Husband's Name is mandatory for Individual Single Owner");
+		}
 	}
 }

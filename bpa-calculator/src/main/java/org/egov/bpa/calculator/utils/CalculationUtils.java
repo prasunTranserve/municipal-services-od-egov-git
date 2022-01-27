@@ -1,8 +1,14 @@
 package org.egov.bpa.calculator.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
 import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.web.models.AuditDetails;
+import org.egov.bpa.calculator.web.models.CalculationReq;
+import org.egov.bpa.calculator.web.models.CalulationCriteria;
 import org.egov.bpa.calculator.web.models.RequestInfoWrapper;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.BPAResponse;
@@ -163,5 +169,27 @@ public class CalculationUtils {
 			break;
 		}
 		return billingTaxHead;
+	}
+	
+	/**
+	 * Validates fatherOrHusbandName and gender if ownerType is individual.single
+	 * 
+	 * @param request
+	 */
+	public void validateOwnerDetails(CalculationReq calculationReq) {
+		Map<String, String> errorMap = new HashMap<>();
+		for (CalulationCriteria calculationCriteria : calculationReq.getCalulationCriteria()) {
+			if (calculationCriteria.getBpa().getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+					&& Objects.isNull(calculationCriteria.getBpa().getLandInfo().getOwners().get(0).getGender())) {
+				errorMap.put(BPACalculatorConstants.BPA_GENDER_MISSING,"Gender is mandatory for Individual Single Owner");
+			}
+			if (calculationCriteria.getBpa().getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+					&& Objects.isNull(calculationCriteria.getBpa().getLandInfo().getOwners().get(0).getFatherOrHusbandName())) {
+				errorMap.put(BPACalculatorConstants.BPA_FATHER_NAME_MISSING,
+						"Father or Husband's Name is mandatory for Individual Single Owner");
+			}
+		}
+		if (!CollectionUtils.isEmpty(errorMap))
+			throw new CustomException(errorMap);
 	}
 }

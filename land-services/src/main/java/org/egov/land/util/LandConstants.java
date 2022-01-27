@@ -80,6 +80,8 @@ public class LandConstants {
 
 	public static final String INVALID_TENANT_ID_MDMS_MSG = "No data found for this tenentID";
 	
+	public static final String LAND_OWNER_GENDER_MISSING = "LAND OWNER GENDER MISSING";
 	
+	public static final String LAND_OWNER_FATHER_NAME_MISSING = "LAND OWNER FATHER OR HUSBAND NAME MISSING";	
 	
 }

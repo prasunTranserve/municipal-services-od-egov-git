@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang.StringUtils;
 import org.egov.bpa.config.BPAConfiguration;
@@ -57,6 +58,7 @@ public class BPAValidator {
 	public void validateCreate(BPARequest bpaRequest, Object mdmsData, Map<String, String> values) {
 		mdmsValidator.validateMdmsData(bpaRequest, mdmsData);
 		validateApplicationDocuments(bpaRequest, mdmsData, null, values);
+		validateOwnerDetails(bpaRequest);
 	}
 
 
@@ -709,5 +711,23 @@ public class BPAValidator {
 			throw new CustomException("DSC DETAILS ERROR",
 					"There are no Digitally signed documemts for this application .");
 
+	}
+	
+	/**
+	 * Validates fatherOrHusbandName and gender if ownerType is individual.single
+	 * 
+	 * @param request
+	 */
+	private void validateOwnerDetails(BPARequest bpaRequest) {
+		if (bpaRequest.getBPA().getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+				&& Objects.isNull(bpaRequest.getBPA().getLandInfo().getOwners().get(0).getGender())) {
+			throw new CustomException(BPAErrorConstants.BPA_GENDER_MISSING,
+					"Gender is mandatory for Individual Single Owner");
+		}
+		if (bpaRequest.getBPA().getLandInfo().getOwnershipCategory().toLowerCase().contains("individual.singleowner")
+				&& Objects.isNull(bpaRequest.getBPA().getLandInfo().getOwners().get(0).getFatherOrHusbandName())) {
+			throw new CustomException(BPAErrorConstants.BPA_FATHER_NAME_MISSING,
+					"Father or Husband's Name is mandatory for Individual Single Owner");
+		}
 	}
 }

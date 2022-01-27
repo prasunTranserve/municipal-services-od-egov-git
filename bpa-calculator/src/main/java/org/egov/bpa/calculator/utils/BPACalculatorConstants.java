@@ -332,5 +332,7 @@ public class BPACalculatorConstants {
 	public static final String JSON_REAR_YARD = "rearYard";
 	public static final String JSON_SIDE_YARD1 = "sideYard1";
 	public static final String JSON_SIDE_YARD2 = "sideYard2";
-	
+
+	public static final String BPA_GENDER_MISSING = "BPA GENDER MISSING";
+	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
 }
