@@ -27,7 +27,9 @@ public class NOCConstants {
 	
 	public static final String ACTION_APPROVE = "APPROVE";	
 	
-	public static final String ACTION_SUBMIT = "SUBMIT";	
+	public static final String ACTION_SUBMIT = "SUBMIT";
+	
+	public static final String NOC_STATUS_SUBMITED = "SUBMITED";
 	
 	public static final String ACTION_AUTO_APPROVE="AUTO_APPROVE";
 	
@@ -67,7 +69,9 @@ public class NOCConstants {
 	
 	public static final String ACTION_INITIATE = "INITIATE";	
 
-	public static final String ACTION_INPROGRESS = "INPROGRESS";	
+	public static final String ACTION_INPROGRESS = "INPROGRESS";
+	
+	public static final String NOC_STATUS_INPROGRESS = "INPROGRESS";
 
 	public static final String INITIATED_TIME = "SubmittedOn";	
 	

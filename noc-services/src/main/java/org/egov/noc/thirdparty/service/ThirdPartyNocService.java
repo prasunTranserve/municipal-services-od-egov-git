@@ -67,7 +67,7 @@ public class ThirdPartyNocService {
 	 */
 	private void pushprocess(RequestInfoWrapper requestInfoWrapper) {
 
-		List<Noc> nocs = nocRepository.getNocData(getNocSearchCriteria(NOCConstants.ACTION_INPROGRESS));
+		List<Noc> nocs = nocRepository.getNocData(getNocSearchCriteria(NOCConstants.NOC_STATUS_INPROGRESS));
 		for (Noc noc : nocs) {
 			Map<String, String> map = JsonPath.parse(noc.getAdditionalDetails()).json();
 			if (NOCConstants.THIRD_PARTY_MODE.equals(map.get(NOCConstants.MODE))) {
@@ -98,7 +98,7 @@ public class ThirdPartyNocService {
 	}
 
 	private void pullprocess(RequestInfoWrapper requestInfoWrapper) {
-		List<Noc> nocs = nocRepository.getNocData(getNocSearchCriteria(NOCConstants.ACTION_SUBMIT));
+		List<Noc> nocs = nocRepository.getNocData(getNocSearchCriteria(NOCConstants.NOC_STATUS_SUBMITED));
 		for (Noc noc : nocs) {
 			Map<String, String> map = JsonPath.parse(noc.getAdditionalDetails()).json();
 			if (NOCConstants.THIRD_PARTY_MODE.equals(map.get(NOCConstants.MODE))) {
