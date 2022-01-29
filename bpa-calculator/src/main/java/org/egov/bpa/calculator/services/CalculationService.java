@@ -94,6 +94,7 @@ public class CalculationService {
 	 *         calculationReq
 	 */
 	public List<Calculation> calculate(CalculationReq calculationReq) {
+		utils.validateOwnerDetails(calculationReq);
 		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
 		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
 		// List<Calculation> calculations =
