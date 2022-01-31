@@ -453,6 +453,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	private void enrichRequest(BillSchedulerCriteria billCriteria) {
 		billCriteria.setTenants(billCriteria.getTenants().stream().map(String::trim).collect(Collectors.toList()));
 		billCriteria.setSkipTenants(billCriteria.getSkipTenants().stream().map(String::trim).collect(Collectors.toList()));
+		billCriteria.setConnectionNos(new ArrayList<>());
 	}
 
 	private void enrichConfiguration(BillSchedulerCriteria billCriteria) {
