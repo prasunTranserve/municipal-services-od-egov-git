@@ -19,6 +19,7 @@ import org.egov.noc.thirdparty.model.ThirdPartyNOCPushRequestWrapper;
 import org.egov.noc.thirdparty.service.ThirdPartyNocPullService;
 import org.egov.noc.thirdparty.service.ThirdPartyNocPushService;
 import org.egov.noc.util.NOCConstants;
+import org.egov.noc.util.NOCUtil;
 import org.egov.noc.web.model.Document;
 import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
@@ -53,6 +54,9 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 	
 	@Autowired
 	NOCRepository nocRepository;
+	
+	@Autowired
+	NOCUtil nocUtil;
 
 	private static final String GET_DISTRICTS_ENDPOINT = "/fire_safety/webservices/getFiredistricts";
 	private static final String GET_FIRESTATIONS_ENDPOINT = "/fire_safety/webservices/getFirestations";
@@ -81,17 +85,17 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			String identityProofDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.IDENTITYPROOF");
 			String ownershipDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.OWNERIDPROOF");
 
+			Map<String, String> additionalDetails = (Map<String, String>) infoWrapper.getNoc().getAdditionalDetails();
 			SubmitFireNocContract sfnc = SubmitFireNocContract.builder()
 					.name(infoWrapper.getUserResponse().getUserName()).email(infoWrapper.getUserResponse().getEmailId())
 					.mobile(infoWrapper.getUserResponse().getMobileNumber()).isOwner("NO")
-					.noofBuilding(paramMap.get("noOfBlocks")).buidlingType("2")// hardcoded as 3rd party API to be
-																				// provided
+					.noofBuilding(paramMap.get("noOfBlocks")).buidlingType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.buildingType.id"))
 					.buildingName(infoWrapper.getBpa().getLandInfo().getAddress().getBuildingName())
 					.proposedOccupany(paramMap.get("occupancyTypeEdcr")).noOfFloor(paramMap.get("noOfStorey"))
 					.height(paramMap.get("buildingHeight")).measureType("Mtr")
 					.category(paramMap.get("proposedOccupancy")).builtupArea(paramMap.get("builtupAreaEdcr"))
-					.areameasureType("Mtr").fireDistrict("28")// hardcoded .Later read from UI params
-					.fireStation("181")
+					.areameasureType("Mtr").fireDistrict(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireDistrict.id"))
+					.fireStation(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireStation.id"))
 					.adreesOfBuilding(mapper.writeValueAsString(infoWrapper.getBpa().getLandInfo().getAddress()))
 					.buildingPlan(sitePlanDoc).buildingPlanext("pdf") // to resolve later
 					.plainApplication(plainApplicationDoc).plainApplicationext("pdf")
