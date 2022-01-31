@@ -15,6 +15,7 @@ import org.egov.wscalculation.web.models.Property;
 import org.egov.wscalculation.web.models.PropertyCriteria;
 import org.egov.wscalculation.web.models.PropertyResponse;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
+import org.egov.wscalculation.web.models.WaterConnection;
 import org.egov.wscalculation.web.models.WaterConnectionRequest;
 import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -258,5 +259,27 @@ public class WSCalculationUtil {
 			return true;
 		else
 			return false;
+	}
+	
+	public List<String> getFilteredConnections(List<WaterConnection> connectionList) {
+		long connectionExecutionLimit = getbillingEndDate();
+		return connectionList.stream().filter(wc -> wc.getConnectionExecutionDate() <= connectionExecutionLimit)
+				.map(wc -> wc.getConnectionNo()).distinct().collect(Collectors.toList());
+	}
+
+	private long getbillingEndDate() {
+		Calendar monthEndDate = Calendar.getInstance();
+		//monthEndDate.setTime(date);
+		if (configurations.isDemandStartEndDateManuallyConfigurable()) {
+			monthEndDate.set(Calendar.MONTH, configurations.getDemandManualMonthNo() - 1);
+			monthEndDate.set(Calendar.YEAR, configurations.getDemandManualYear());
+		}
+		monthEndDate.set(Calendar.DAY_OF_MONTH, monthEndDate.getActualMaximum(Calendar.DAY_OF_MONTH));
+		monthEndDate.set(Calendar.HOUR_OF_DAY, 18);
+		monthEndDate.set(Calendar.MINUTE, 29);
+		monthEndDate.set(Calendar.SECOND, 0);
+		monthEndDate.set(Calendar.MILLISECOND, 0);
+
+		return monthEndDate.getTimeInMillis();
 	}
 }

@@ -29,7 +29,7 @@ public class WSCalculatorQueryBuilder {
 	
 	private final static String connectionNoWaterConnectionSearchQuery = "SELECT conn.connectionNo as conn_no FROM eg_ws_service wc INNER JOIN eg_ws_connection conn ON wc.connection_id = conn.id";
 	
-	private static final String connectionNoListQuery = "SELECT distinct(conn.connectionno) FROM eg_ws_connection conn INNER JOIN eg_ws_service ws ON conn.id = ws.connection_id";
+	private static final String connectionNoListQuery = "SELECT distinct conn.connectionno, ws.connectionexecutiondate FROM eg_ws_connection conn INNER JOIN eg_ws_service ws ON conn.id = ws.connection_id";
 
 	private static final String distinctTenantIdsCriteria = "SELECT distinct(tenantid) FROM eg_ws_connection ws";
 
@@ -157,7 +157,7 @@ public class WSCalculatorQueryBuilder {
 	
 	
 	public String getConnectionNumberList(String tenantId, String connectionType, String applicationStatus, Boolean isOldApplication,
-			List<Object> preparedStatement, List<String> wards) {
+			List<Object> preparedStatement, List<String> wards, List<String> connectionNos) {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 		// Add connection type
 		addClauseIfRequired(preparedStatement, query);
@@ -190,6 +190,20 @@ public class WSCalculatorQueryBuilder {
 			}
 			query.append(")");
 		}
+		
+		if(!connectionNos.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.connectionno in (");
+			int length = connectionNos.size();
+			for (int i = 0; i < length; i++) {
+				query.append(" ?");
+				if (i != length - 1)
+					query.append(",");
+				preparedStatement.add(connectionNos.get(i));
+			}
+			query.append(")");
+		}
+		
 		return query.toString();
 		
 	}

@@ -17,6 +17,7 @@ import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
+import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -115,28 +116,29 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	}
 	
 	@Override
-	public ArrayList<String> searchConnectionNos(String connectionType,String tenantId) {
-		ArrayList<String> connectionNos = new ArrayList<>();
+	public ArrayList<WaterConnection> searchConnectionNos(String connectionType,String tenantId) {
+		ArrayList<WaterConnection> connectionNos = new ArrayList<>();
 		List<Object> preparedStatement = new ArrayList<>();
 		String query = queryBuilder.getConnectionNumberFromWaterServicesQuery(preparedStatement,connectionType, tenantId);
 		if (query == null)
 			return connectionNos;
 		log.info("Query: " + query);
 
-		connectionNos = (ArrayList<String>)jdbcTemplate.query(query,preparedStatement.toArray(),demandSchedulerRowMapper);
+		connectionNos = (ArrayList<WaterConnection>)jdbcTemplate.query(query,preparedStatement.toArray(),demandSchedulerRowMapper);
 		return connectionNos;
 	}
 	
 	@Override
-	public List<String> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria) {
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria) {
 		List<Object> preparedStatement = new ArrayList<>();
 		String applicationStatus = WSCalculationConstant.WATER_CONNECTION_APP_STATUS_ACTIVATED_STRING;
 		Boolean isOldApplication = Boolean.FALSE;
 		List<String> wards = new ArrayList<>();
-		if(billCriteria != null) {
+		if(billCriteria != null && billCriteria.getWards() != null) {
 			wards = billCriteria.getWards().stream().filter(ward -> ward.getTenant().equalsIgnoreCase(tenantId)).flatMap(ward -> ward.getWards().stream()).map(String::trim).collect(Collectors.toList());
 		}
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, isOldApplication, preparedStatement, wards);
+		List<String> connectionNos = billCriteria.getConnectionNos();
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, applicationStatus, isOldApplication, preparedStatement, wards, connectionNos);
 		log.info("water " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), demandSchedulerRowMapper);
 	}
