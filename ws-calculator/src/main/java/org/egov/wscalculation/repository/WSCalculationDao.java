@@ -7,6 +7,7 @@ import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
+import org.egov.wscalculation.web.models.WaterConnection;
 
 public interface WSCalculationDao {
 
@@ -16,13 +17,13 @@ public interface WSCalculationDao {
 	
 	ArrayList<String> searchTenantIds();
 
-	ArrayList<String> searchConnectionNos(String connectionType, String tenantId);
+	ArrayList<WaterConnection> searchConnectionNos(String connectionType, String tenantId);
 	
 	List<MeterReading> searchCurrentMeterReadings(MeterReadingSearchCriteria criteria);
 	
 	int isMeterReadingConnectionExist(List<String> ids);
 	
-	List<String> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria);
+	List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, BillSchedulerCriteria billCriteria);
 	
 	List<String> getTenantId();
 	

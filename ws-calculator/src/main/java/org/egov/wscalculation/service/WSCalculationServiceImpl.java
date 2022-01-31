@@ -259,7 +259,9 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		// the value 86400 is wrong as to convert millis to days the millis need to divide by 86400000
 		if (demandStartingDate.getDayOfMonth() == (demandGenerateDateMillis) / 86400) {
 
-			ArrayList<String> connectionNos = wSCalculationDao.searchConnectionNos(connectionType, tenantId);
+//			ArrayList<String> connectionNos = wSCalculationDao.searchConnectionNos(connectionType, tenantId);
+			ArrayList<WaterConnection> connections = wSCalculationDao.searchConnectionNos(connectionType, tenantId);
+			List<String> connectionNos = connections.stream().map(wc -> wc.getConnectionNo()).distinct().collect(Collectors.toList());
 			for (String connectionNo : connectionNos) {
 
 				CalculationReq calculationReq = new CalculationReq();
@@ -452,6 +454,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	private void enrichRequest(BillSchedulerCriteria billCriteria) {
 		billCriteria.setTenants(billCriteria.getTenants().stream().map(String::trim).collect(Collectors.toList()));
 		billCriteria.setSkipTenants(billCriteria.getSkipTenants().stream().map(String::trim).collect(Collectors.toList()));
+		billCriteria.setConnectionNos(new ArrayList<>());
 	}
 
 	private void enrichConfiguration(BillSchedulerCriteria billCriteria) {
