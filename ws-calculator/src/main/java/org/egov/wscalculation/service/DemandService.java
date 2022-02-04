@@ -294,7 +294,7 @@ public class DemandService {
 			if (!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(WSCalculationConstant.WS_Round_Off))
 				totalTax = totalTax.add(demandDetail.getTaxAmount());
 			else
-				previousRoundOff = previousRoundOff.add(demandDetail.getTaxAmount());
+				previousRoundOff = previousRoundOff.add(demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount()));
 		}
 
 		BigDecimal decimalValue = totalTax.remainder(BigDecimal.ONE);
