@@ -39,4 +39,5 @@ public class WnsConnectionService {
 	private String noOfToilets;
 	private String proposedWaterClosets;
 	private String proposedToilets;
+	private String createdDate;
 }

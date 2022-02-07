@@ -119,7 +119,7 @@ public class ValidationService {
 			}
 			List<String> errMessages = new ArrayList<String>();
 			Set<ConstraintViolation<WnsConnection>> violations = new HashSet<>();
-			if (MigrationUtility.isActiveConnection(connection)) {
+//			if (MigrationUtility.isActiveConnection(connection)) {
 
 				ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 				Validator validator = factory.getValidator();
@@ -132,10 +132,10 @@ public class ValidationService {
 //				ValidateSewerageConnection(connection, errMessages);
 //				validateMeterReading(connection, errMessages);
 //				validateDemand(connection, errMessages);
-			} else {
-				log.error("Connection: "+ connection.getConnectionNo() +" is not a valid record");
-				errMessages.add("Connection not Approved and Active");
-			}
+//			} else {
+//				log.error("Connection: "+ connection.getConnectionNo() +" is not a valid record");
+//				errMessages.add("Connection not Approved and Active");
+//			}
 			
 			if(errMessages.isEmpty()) {
 				return true;

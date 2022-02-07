@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -281,7 +282,8 @@ public class MigrationUtility {
 	
 	public static Long getExecutionDate(String dateString, String dateformat) {
 		if (StringUtils.isEmpty(dateString)) {
-			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+			return LocalDate.of(2021, Month.AUGUST, 1).atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+//			return LocalDate.now().atTime(11,0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		}
 		try {
 			return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(dateformat)).atTime(11, 0)
@@ -673,9 +675,8 @@ public class MigrationUtility {
 		} catch (Exception e) {
 			return LocalDate.of(1980, 1, 1);
 		}
-		
 	}
-
+	
 	public static String getConnectionUsageCategory(String usageCategory) {
 		if(StringUtils.isEmpty(usageCategory)) {
 			return "DOMESTIC";
@@ -684,6 +685,10 @@ public class MigrationUtility {
 		if(usageCategory.equalsIgnoreCase("Apartment")) {
 			return "DOMESTIC";
 		}
+		if(usageCategory.equalsIgnoreCase("Others")) {
+			return "BPL";
+		}
+		
 		return usageCategory.toUpperCase();
 	}
 

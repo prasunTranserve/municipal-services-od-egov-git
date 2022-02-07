@@ -22,10 +22,8 @@ import org.egov.migration.mapper.MeterReadingRowMapper;
 import org.egov.migration.mapper.WnsDemandRowMapper;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
-import org.egov.migration.reader.model.WnsConnectionRowMap;
 import org.egov.migration.reader.model.WnsDemand;
 import org.egov.migration.reader.model.WnsMeterReading;
-import org.egov.migration.reader.model.WnsServiceRowMap;
 import org.egov.migration.reader.model.WnsConnectionService;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
@@ -39,7 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class WnsItemReader implements ItemReader<WnsConnection> {
+public class WnsItemReaderv1 implements ItemReader<WnsConnection> {
 	
 	private String file;
 	private String ulb;
@@ -56,14 +54,11 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	private Map<String, Integer> holderColMap;
 	private Map<String, Integer> demandColMap;
 	
-	private Map<String, WnsServiceRowMap> serviceRowMap;
+	private Map<String, Integer> serviceRowMap;
 	private Map<String, List<Integer>> meterReadingRowMap;
 	private Map<String, Integer> holderRowMap;
 	private Map<String, List<Integer>> demandRowMap;
 	
-	private Map<String, WnsConnectionRowMap> wnsConnectionRowMap;
-	
-	private Sheet connectionSheet;
 	private Sheet serviceSheet;
 	private Sheet meterReadingSheet;
 	private Sheet holderSheet;
@@ -84,11 +79,11 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	@Autowired
 	private WnsDemandRowMapper demandRowMapper;
 	
-	public WnsItemReader() throws EncryptedDocumentException, IOException, Exception {
+	public WnsItemReaderv1() throws EncryptedDocumentException, IOException, Exception {
 		this.connectionRowIndex = 0;
 	}
 	
-	public WnsItemReader(String file) throws EncryptedDocumentException, IOException, Exception {
+	public WnsItemReaderv1(String file) throws EncryptedDocumentException, IOException, Exception {
 		this.file = file;
 		this.connectionRowIndex = 0;
 	}
@@ -114,7 +109,6 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 //			this.connectionRowIndex++;
 //			return getConnection(this.connectionRowIterator.next());
 //		}
-//		return null;
 		
 		WnsConnection connection = null;
 		do {
@@ -123,10 +117,11 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 				this.connectionRowIndex++;
 				connection = getConnection(this.connectionRowIterator.next());
 			}
-//			if(connection != null && activeConnectionCountMap.get(connection.getConnectionNo()) != null && wnsConnectionRowMap.get(connection.getConnectionNo())) {
-//				MigrationUtility.addError(connection.getConnectionNo(), String.format("%s Approved and Active connection present", activeConnectionCountMap.get(connection.getConnectionNo())));
-//			}
-		} while(connection == null);
+			if(connection != null && activeConnectionCountMap.get(connection.getConnectionNo()) != null && activeConnectionCountMap.get(connection.getConnectionNo())>1) {
+				MigrationUtility.addError(connection.getConnectionNo(), String.format("%s Approved and Active connection present", activeConnectionCountMap.get(connection.getConnectionNo())));
+			}
+		} while(connection != null && activeConnectionCountMap.get(connection.getConnectionNo()) != null && activeConnectionCountMap.get(connection.getConnectionNo())>1
+				&& this.connectionRowIterator.hasNext());
 		
 		return connection;
 	}
@@ -134,10 +129,6 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	private WnsConnection getConnection(Row connectionRow) {
 		WnsConnection connection = connectionRowMapper.mapRow(this.ulb, connectionRow, this.connectionColMap);
 		log.info("ConnectionNo: "+connection.getConnectionNo()+" reading...");
-		if(wnsConnectionRowMap.get(connection.getConnectionNo()).isMigrated()) {
-			return null;
-		}
-		connection = getConnectionConnection(connection.getConnectionNo());
 		
 		WnsConnectionService service = getConnectionService(connection.getConnectionNo());
 		WnsConnectionHolder holder = getConnectionHolder(connection.getConnectionNo());
@@ -149,21 +140,8 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		connection.setMeterReading(meterReading);
 		connection.setDemands(demand);
 		
-		updateConnectionRowMap(connection.getConnectionNo());
-		
 		log.info("ConnectionNo: "+connection.getConnectionNo()+" read successfully");
 		return connection;
-	}
-
-	private void updateConnectionRowMap(String connectionNo) {
-		this.wnsConnectionRowMap.get(connectionNo).setMigrated(true);
-	}
-
-	private WnsConnection getConnectionConnection(String connectionNo) {
-		if(this.wnsConnectionRowMap.get(connectionNo) == null)
-			return null;
-		WnsConnectionRowMap connectionRowMap = this.wnsConnectionRowMap.get(connectionNo);
-		return connectionRowMapper.mapRow(this.ulb, this.connectionSheet.getRow(connectionRowMap.getRowNumber()), this.connectionColMap);
 	}
 
 	private List<WnsDemand> getConsolidateDemand(List<WnsDemand> demand1, List<WnsDemand> demand2) {
@@ -201,7 +179,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
 		if(this.serviceRowMap.get(connectionNo) == null)
 			return null;
-		return connectionServiceRowMapper.mapRow(this.ulb, this.serviceSheet.getRow(this.serviceRowMap.get(connectionNo).getRowNum()), this.serviceColMap);
+		return connectionServiceRowMapper.mapRow(this.ulb, this.serviceSheet.getRow(this.serviceRowMap.get(connectionNo)), this.serviceColMap);
 	}
 
 	private void readConnection() throws EncryptedDocumentException, IOException {
@@ -212,8 +190,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		Sheet connectionSheet = workbook.getSheet(MigrationConst.SHEET_CONNECTION);
 		
 		updateConnectionColumnMap(connectionSheet.getRow(0));
-		prepareConnectionRowMapper(connectionSheet);
-		//searchDupplicateActiveConnection(connectionSheet);
+		searchDupplicateActiveConnection(connectionSheet);
 		
 		this.connectionRowIterator = connectionSheet.iterator();
 		updatConnectionServiceRowMap(workbook);
@@ -236,48 +213,6 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 				}
 			}
 		}
-	}
-	
-	private void prepareConnectionRowMapper(Sheet connectionSheet) {
-		this.connectionSheet=connectionSheet;
-		wnsConnectionRowMap = new HashMap<>();
-		Iterator<Row> connections = connectionSheet.iterator();
-		while(connections.hasNext()) {
-			Row row = connections.next();
-			WnsConnection connection = connectionRowMapper.mapRow(this.ulb, row, this.connectionColMap);
-			if(wnsConnectionRowMap.get(connection.getConnectionNo())==null) {
-				wnsConnectionRowMap.put(connection.getConnectionNo(), getWnsConnection(connection, row));
-			} else {
-				wnsConnectionRowMap.put(connection.getConnectionNo(), updateWnsConnection(wnsConnectionRowMap.get(connection.getConnectionNo()), connection, row));
-			}
-		}
-	}
-
-	private WnsConnectionRowMap updateWnsConnection(WnsConnectionRowMap previousConnection, WnsConnection incomingConnection,
-			Row row) {
-		if(MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(previousConnection.getApplicationStatus())
-				&& MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(incomingConnection.getApplicationStatus())) {
-			if(MigrationUtility.toDate(previousConnection.getLastupdateDate()).isBefore(MigrationUtility.toDate(incomingConnection.getLastUpdatedDate()))) {
-				return getWnsConnection(incomingConnection, row);
-			}
-		} else if (MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(previousConnection.getApplicationStatus())) {
-			return previousConnection;
-		} else if(MigrationConst.APPLICATION_APPROVED.equalsIgnoreCase(incomingConnection.getApplicationStatus())) {
-			return getWnsConnection(incomingConnection, row);
-		} else {
-			if(MigrationUtility.toDate(previousConnection.getLastupdateDate()).isBefore(MigrationUtility.toDate(incomingConnection.getLastUpdatedDate()))) {
-				return getWnsConnection(incomingConnection, row);
-			}
-		}
-		return previousConnection;
-	}
-
-	private WnsConnectionRowMap getWnsConnection(WnsConnection connection, Row row) {
-		WnsConnectionRowMap connectionRowMap = WnsConnectionRowMap.builder().connectionNo(connection.getConnectionNo())
-				.applicationStatus(connection.getApplicationStatus())
-				.lastupdateDate(connection.getLastUpdatedDate())
-				.rowNumber(row.getRowNum()).build();
-		return connectionRowMap;
 	}
 
 	private void updateDemandRowMap(Workbook workbook) {
@@ -366,40 +301,9 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 			if(row.getRowNum()==0) {
 				updateserviceColumnMap(row);
 			} else {
-				String connectionNo = MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CONNECTION_NO)), false));
-				if(this.serviceRowMap.containsKey(connectionNo)) {
-					this.serviceRowMap.put(connectionNo, updateService(serviceRowMap.get(connectionNo), row));
-				} else {
-					this.serviceRowMap.put(connectionNo, getService(connectionNo, row));
-				}
+				this.serviceRowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), row.getRowNum());
 			}
 		});
-	}
-	
-	private WnsServiceRowMap updateService(WnsServiceRowMap previousServiceRowMap, Row row) {
-		String incomingConnctionType = MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CONNECTION_TYPE)), false);
-		String incomingcreatedDate = MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CREATED_DATE)), false);
-		if(MigrationConst.CONNECTION_METERED.equalsIgnoreCase(previousServiceRowMap.getConnectionType())
-				&& !previousServiceRowMap.getConnectionType().equalsIgnoreCase(incomingConnctionType)) {
-			return previousServiceRowMap;
-		} else if(MigrationConst.CONNECTION_NON_METERED.equalsIgnoreCase(previousServiceRowMap.getConnectionType())
-				&& !previousServiceRowMap.getConnectionType().equalsIgnoreCase(incomingConnctionType)) {
-			return getService(previousServiceRowMap.getConnectionNo(), row);
-		} else {
-			if(MigrationUtility.toDate(previousServiceRowMap.getCreatedDate()).isBefore(MigrationUtility.toDate(incomingcreatedDate))) {
-				return getService(previousServiceRowMap.getConnectionNo(), row);
-			} else {
-				return previousServiceRowMap;
-			}
-		}
-	}
-
-	private WnsServiceRowMap getService(String connectionNo, Row row) {
-		WnsServiceRowMap serviceRowMap = WnsServiceRowMap.builder().connectionNo(connectionNo)
-				.connectionType(MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CONNECTION_TYPE)), false))
-				.createdDate(MigrationUtility.readCellValue(row.getCell(this.serviceColMap.get(MigrationConst.COL_CREATED_DATE)), false))
-				.rowNum(row.getRowNum()).build();
-		return serviceRowMap;
 	}
 
 	private void updateserviceColumnMap(Row row) {
