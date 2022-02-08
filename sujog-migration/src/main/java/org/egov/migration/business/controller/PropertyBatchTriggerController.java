@@ -88,7 +88,7 @@ public class PropertyBatchTriggerController {
 			        	Job job = jobBuilderFactory.get("firstBatchJob")
 			        			.incrementer(new RunIdIncrementer())
 			        			.listener(propertyMigrationJobExecutionListner)
-			        			.flow(stepPropertyMigrateUser).end().build();
+			        			.flow(stepPropertyMigrate).end().build();
 			        	
 			        	JobParameters jobParameters = new JobParametersBuilder()
 			        			.addLong("time", System.currentTimeMillis())

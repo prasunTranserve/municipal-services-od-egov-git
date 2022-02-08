@@ -27,7 +27,7 @@ public class WnsConnection {
 //	@NotEmpty(message = "Connection facility cannot be empty/blank")
 	private String connectionFacility;
 	
-	@NotEmpty(message = "Application Status cannot be empty/blank")
+//	@NotEmpty(message = "Application Status cannot be empty/blank")
 	private String applicationStatus;
 	
 	@NotEmpty(message = "Status cannot be empty/blank")
@@ -49,5 +49,7 @@ public class WnsConnection {
 	private List<WnsMeterReading> meterReading;
 	
 	private List<WnsDemand> demands;
+	
+	private String lastUpdatedDate;
 	
 }

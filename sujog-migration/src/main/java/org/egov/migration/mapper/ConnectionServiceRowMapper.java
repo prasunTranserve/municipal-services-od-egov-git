@@ -34,6 +34,7 @@ public class ConnectionServiceRowMapper {
 		service.setProposedWaterClosets(columnMap.get(MigrationConst.COL_PROPOSED_WATER_CLOSETS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PROPOSED_WATER_CLOSETS)), false));
 		service.setProposedToilets(columnMap.get(MigrationConst.COL_PROPOSED_TOILETS)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_PROPOSED_TOILETS)), false));
 		service.setConnectionCategory(columnMap.get(MigrationConst.COL_CONNECTION_CATEGORY)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CONNECTION_CATEGORY)), false));
+		service.setCreatedDate(columnMap.get(MigrationConst.COL_CREATED_DATE)==null ? null : MigrationUtility.readCellValue(row.getCell(columnMap.get(MigrationConst.COL_CREATED_DATE)), false));
 		
 		return service;
 	}
