@@ -275,4 +275,10 @@ public class WSCalculationConfiguration {
 	
 	@Value("${egov.demand.arrear.sw.special.rebate.applicable}")
 	private boolean swSpecialRebateApplicable;
+	
+	@Value("${bulk.demand.batch.value}")
+	private Integer bulkbatchSize;
+
+	@Value("${bulk.demand.offset.value}")
+	private Integer batchOffset;
 }

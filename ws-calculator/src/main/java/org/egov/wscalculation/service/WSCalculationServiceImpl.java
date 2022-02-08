@@ -22,6 +22,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
@@ -32,6 +33,7 @@ import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.JsonPath;
@@ -284,33 +286,26 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	/**
 	 * Generate Demand Based on Time (Monthly, Quarterly, Yearly)
 	 */
-	public void generateDemandBasedOnTimePeriod(RequestInfo requestInfo) {
+	public void generateDemandBasedOnTimePeriod(RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
+		
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		LocalDateTime date = LocalDateTime.now();
 		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
+		
 		List<String> tenantIds = new ArrayList<>();
-		if(StringUtils.hasText(wsCalculationConfiguration.getSchedulerTenants()) && wsCalculationConfiguration.getSchedulerTenants().trim().equalsIgnoreCase("ALL")) {
-			log.info("Processing for all tenants");
+		if(!CollectionUtils.isEmpty(bulkBillCriteria.getTenantIds())){
+			tenantIds = bulkBillCriteria.getTenantIds();
+		}
+		else
 			tenantIds = wSCalculationDao.getTenantId();
-		} else {
-			String tenants = wsCalculationConfiguration.getSchedulerTenants();
-			log.info("Processing for specific tenants: " + tenants);
-			if(StringUtils.hasText(tenants)) {
-				tenantIds = Arrays.asList(tenants.trim().split(","));
-			}
-		}
 
-		if(StringUtils.hasText(wsCalculationConfiguration.getSkipSchedulerTenants()) && !wsCalculationConfiguration.getSkipSchedulerTenants().trim().equalsIgnoreCase("NONE")) {
-			log.info("Skip tenants: " + wsCalculationConfiguration.getSkipSchedulerTenants());
-			List<String> skipTenants = Arrays.asList(wsCalculationConfiguration.getSkipSchedulerTenants().trim().split(","));
-			tenantIds = tenantIds.stream().filter(tenant -> !skipTenants.contains(tenant)).collect(Collectors.toList());
-		}
 		if (tenantIds.isEmpty())
 			return;
+		
 		log.info("Effective processing tenant Ids : " + tenantIds.toString());
 		tenantIds.forEach(tenantId -> {
 			tenantId = tenantId.trim();
-			demandService.generateDemandForTenantId(tenantId, requestInfo, null);
+			demandService.generateDemandForTenantId(tenantId, requestInfo, bulkBillCriteria);
 		});
 	}
 	
