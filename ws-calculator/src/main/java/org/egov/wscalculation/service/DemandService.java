@@ -284,7 +284,7 @@ public class DemandService {
 	 * @param demandDetails
 	 *            The list of demandDetail
 	 */
-	private void addRoundOffTaxHead(String tenantId, List<DemandDetail> demandDetails) {
+	public void addRoundOffTaxHead(String tenantId, List<DemandDetail> demandDetails) {
 		BigDecimal totalTax = BigDecimal.ZERO;
 
 		BigDecimal previousRoundOff = BigDecimal.ZERO;
@@ -916,7 +916,62 @@ public class DemandService {
 		requestInfo.getUserInfo().setTenantId(tenantId);
 		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
 //		generateDemandForConnection(billingMasterData, requestInfo, tenantId, billCriteria);
-		generateDemandForULB(billingMasterData, requestInfo, tenantId, billCriteria);
+//		generateDemandForULB(billingMasterData, requestInfo, tenantId, billCriteria);
+	}
+
+	/**
+	 * 
+	 * @param getBillCriteria Bill Criteria
+	 * @param requestInfoWrapper contains request info wrapper
+	 * @return updated demand response
+	 */
+	public List<Demand> updateDemands(GetBillCriteria getBillCriteria, RequestInfoWrapper requestInfoWrapper, Boolean isCallFromBulkGen) {
+
+		if (getBillCriteria.getAmountExpected() == null)
+			getBillCriteria.setAmountExpected(BigDecimal.ZERO);
+		RequestInfo requestInfo = requestInfoWrapper.getRequestInfo();
+		Map<String, JSONArray> billingSlabMaster = new HashMap<>();
+
+		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
+		mstrDataService.setWaterConnectionMasterValues(requestInfo, getBillCriteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
+
+		
+		if (CollectionUtils.isEmpty(getBillCriteria.getConsumerCodes()))
+			getBillCriteria.setConsumerCodes(Collections.singletonList(getBillCriteria.getConnectionNumber()));
+
+		DemandResponse res = mapper.convertValue(
+				repository.fetchResult(utils.getDemandSearchUrl(getBillCriteria), requestInfoWrapper),
+				DemandResponse.class);
+		if (CollectionUtils.isEmpty(res.getDemands())) {
+			return Collections.emptyList();
+		}
+
+
+		// Loop through the consumerCodes and re-calculate the time base applicable
+		Map<String, Demand> consumerCodeToDemandMap = res.getDemands().stream()
+				.collect(Collectors.toMap(Demand::getId, Function.identity()));
+		List<Demand> demandsToBeUpdated = new LinkedList<>();
+
+		String tenantId = getBillCriteria.getTenantId();
+
+		List<TaxPeriod> taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), tenantId, WSCalculationConstant.SERVICE_FIELD_VALUE_WS);
+		
+		consumerCodeToDemandMap.forEach((id, demand) ->{
+			if (demand.getStatus() != null
+					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
+				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
+						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
+			applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			addRoundOffTaxHead(tenantId, demand.getDemandDetails());
+			demandsToBeUpdated.add(demand);
+		});
+
+		//Call demand update in bulk to update the interest or penalty
+		DemandRequest request = DemandRequest.builder().demands(demandsToBeUpdated).requestInfo(requestInfo).build();
+		if(!isCallFromBulkGen)
+		repository.fetchResult(utils.getUpdateDemandUrl(), request);
+		return demandsToBeUpdated;
 	}
 
 //	private void generateDemandForConnection(Map<String, Object> master, RequestInfo requestInfo,

@@ -209,7 +209,7 @@ public class MasterDataService {
 		Map<String, Object> master = new HashMap<>();
 		for (Object o : mdmsResponse) {
 			if ((((Map<String, Object>) o).get(WSCalculationConstant.ConnectionType).toString())
-					.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())) {
+					.equalsIgnoreCase(connectiontype)) {
 				master = (Map<String, Object>) o;
 				break;
 			}

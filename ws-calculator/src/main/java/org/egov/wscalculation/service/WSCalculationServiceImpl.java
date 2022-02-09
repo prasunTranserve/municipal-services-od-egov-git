@@ -4,13 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.kafka.common.protocol.types.Field.Str;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
@@ -406,7 +404,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			
 		log.info("Effective processing tenant Ids : " + tenantIds.toString());
 		tenantIds.forEach(tenantId -> {
-			demandService.generateDemandForTenantId(tenantId, requestInfo, billCriteria);
+//			demandService.generateDemandForTenantId(tenantId, requestInfo, billCriteria);
 		});
 	
 		
