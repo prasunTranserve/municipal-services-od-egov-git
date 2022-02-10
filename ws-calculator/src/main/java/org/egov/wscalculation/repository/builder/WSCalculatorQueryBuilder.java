@@ -260,7 +260,7 @@ public class WSCalculatorQueryBuilder {
 		return countQuery;
 	}
 	
-	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos) {
 		//StringBuilder query = new StringBuilder(connectionNoListQuery);
 
 		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
@@ -294,6 +294,20 @@ public class WSCalculatorQueryBuilder {
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" wc.connectionexecutiondate <= ? ");
 		preparedStatement.add(toDate);
+		
+		// added for connection wise bill generation
+		if(!connectionNos.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.connectionno in (");
+			int length = connectionNos.size();
+			for (int i = 0; i < length; i++) {
+				query.append(" ?");
+				if (i != length - 1)
+					query.append(",");
+				preparedStatement.add(connectionNos.get(i));
+			}
+			query.append(")");
+		}
 
 		return query.toString();
 		

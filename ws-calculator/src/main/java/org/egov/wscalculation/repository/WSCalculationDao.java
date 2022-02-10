@@ -34,6 +34,6 @@ public interface WSCalculationDao {
 	long getConnectionCount(String tenantId, Long fromDate, Long toDate);
 
 	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Integer batchOffset,
-			Integer batchsize, Long fromDate, Long toDate);
+			Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos);
 
 }

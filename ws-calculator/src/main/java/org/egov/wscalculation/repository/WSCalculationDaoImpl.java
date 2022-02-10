@@ -191,9 +191,10 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	}
 	
 	@Override
-	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate,
+			List<String> connectionNos) {
 		List<Object> preparedStatement = new ArrayList<>();
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate);
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate, connectionNos);
 		log.info("connection " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
 	}
