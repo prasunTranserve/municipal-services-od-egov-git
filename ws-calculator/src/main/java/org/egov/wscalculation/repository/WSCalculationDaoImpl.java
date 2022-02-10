@@ -184,6 +184,7 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		preparedStatement.add(fromDate);
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantid);
+		preparedStatement.add(toDate);
 
 		long count = jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
 		return count;
@@ -193,7 +194,7 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
 		List<Object> preparedStatement = new ArrayList<>();
 		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate);
-		log.info("water " + connectionType + " connection list : " + query);
+		log.info("connection " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
 	}
 }

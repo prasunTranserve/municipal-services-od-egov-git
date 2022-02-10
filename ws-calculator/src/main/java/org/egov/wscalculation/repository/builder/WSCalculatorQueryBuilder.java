@@ -33,7 +33,11 @@ public class WSCalculatorQueryBuilder {
 
 	private static final String distinctTenantIdsCriteria = "SELECT distinct(tenantid) FROM eg_ws_connection ws";
 	
-	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and wc.connectiontype ='Non Metered' and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)";
+	/* only considering non-metered connection */
+//	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and wc.connectiontype ='Non Metered' and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)";
+	
+	/* Considering metered connection */
+	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?) and wc.connectionexecutiondate <= ?";
 
 	private static String holderSelectValues = "connectionholder.tenantid as holdertenantid, connectionholder.connectionid as holderapplicationId, userid, connectionholder.status as holderstatus, isprimaryholder, connectionholdertype, holdershippercentage, connectionholder.relationship as holderrelationship, connectionholder.createdby as holdercreatedby, connectionholder.createdtime as holdercreatedtime, connectionholder.lastmodifiedby as holderlastmodifiedby, connectionholder.lastmodifiedtime as holderlastmodifiedtime";
 
@@ -44,6 +48,7 @@ public class WSCalculatorQueryBuilder {
 	private static final String WATER_SEARCH_QUERY = "SELECT conn.*, wc.*, document.*, plumber.*, wc.connectionCategory, wc.connectionType, wc.waterSource, wc.usagecategory,"
 			+ " wc.meterId, wc.meterInstallationDate, wc.pipeSize, wc.noOfTaps, wc.proposedPipeSize, wc.proposedTaps, wc.connection_id as connection_Id, wc.connectionExecutionDate, wc.initialmeterreading, wc.appCreatedDate,"
 			+ " wc.detailsprovidedby, wc.estimationfileStoreId , wc.sanctionfileStoreId , wc.estimationLetterDate,"
+			+ " wc.connectionfacility, wc.noofwaterclosets, wc.nooftoilets,"
 			+ " conn.id as conn_id, conn.tenantid, conn.applicationNo, conn.applicationStatus, conn.status, conn.connectionNo, conn.oldConnectionNo, conn.property_id, conn.roadcuttingarea,"
 			+ " conn.action, conn.adhocpenalty, conn.adhocrebate, conn.adhocpenaltyreason, conn.applicationType, conn.dateEffectiveFrom,"
 			+ " conn.adhocpenaltycomment, conn.adhocrebatereason, conn.adhocrebatecomment, conn.createdBy as ws_createdBy, conn.lastModifiedBy as ws_lastModifiedBy,"
@@ -260,9 +265,11 @@ public class WSCalculatorQueryBuilder {
 
 		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
 		// Add connection type
-		addClauseIfRequired(preparedStatement, query);
-		query.append(" wc.connectiontype = ? ");
-		preparedStatement.add(connectionType);
+		if(!StringUtils.isEmpty(connectionType)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" wc.connectiontype = ? ");
+			preparedStatement.add(connectionType);
+		}
 		// add tenantid
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.tenantid = ? ");
@@ -282,6 +289,11 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(batchOffset);
 		preparedStatement.add(batchsize);
 		query.append(orderbyClause);
+		
+		// remove the connection which was created after billing period
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectionexecutiondate <= ? ");
+		preparedStatement.add(toDate);
 
 		return query.toString();
 		
