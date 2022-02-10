@@ -127,7 +127,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 //			if(connection != null && activeConnectionCountMap.get(connection.getConnectionNo()) != null && wnsConnectionRowMap.get(connection.getConnectionNo())) {
 //				MigrationUtility.addError(connection.getConnectionNo(), String.format("%s Approved and Active connection present", activeConnectionCountMap.get(connection.getConnectionNo())));
 //			}
-		} while(connection == null);
+		} while(connection == null && this.connectionRowIterator.hasNext());
 		
 		return connection;
 	}
