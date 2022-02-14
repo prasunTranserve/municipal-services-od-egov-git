@@ -292,7 +292,7 @@ public class DemandService {
 		 */
 		for (DemandDetail demandDetail : demandDetails) {
 			if (!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(WSCalculationConstant.WS_Round_Off))
-				totalTax = totalTax.add(demandDetail.getTaxAmount());
+				totalTax = totalTax.add(demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount()));
 			else
 				previousRoundOff = previousRoundOff.add(demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount()));
 		}
