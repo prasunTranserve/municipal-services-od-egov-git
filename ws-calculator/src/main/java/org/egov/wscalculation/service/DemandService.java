@@ -896,4 +896,33 @@ public class DemandService {
 //		
 //	}
 
+	public List<Demand> cancelAndCreateNewDemands(@Valid DemandRequest demandRequest) {
+		log.info("cancelAndCreateNewDemands >> ");
+		List<Demand> demandsToBeCanceled = demandRequest.getDemands();
+		List<Demand> updatedDemands = new LinkedList<>();
+		Demand demand = null;
+		for( Demand canceledDemand : demandsToBeCanceled ) {
+			canceledDemand.setStatus(Demand.StatusEnum.CANCELLED);
+			demand = Demand.builder().tenantId(canceledDemand.getTenantId()).businessService(canceledDemand.getBusinessService()).consumerType(canceledDemand.getConsumerType())
+					.consumerCode(canceledDemand.getConsumerCode()).payer(canceledDemand.getPayer()).taxPeriodFrom(canceledDemand.getTaxPeriodFrom())
+					.taxPeriodTo(canceledDemand.getTaxPeriodTo()).status(Demand.StatusEnum.ACTIVE)
+					.minimumAmountPayable(canceledDemand.getMinimumAmountPayable()).demandDetails(canceledDemand.getDemandDetails())
+					.additionalDetails(canceledDemand.getAdditionalDetails()).build();
+			updatedDemands.add(demand);
+		}
+		demandRepository.updateDemand(demandRequest.getRequestInfo(), demandsToBeCanceled);
+		
+		log.info("Demand cancelled successfully");
+		
+		List<Demand> demandRes = demandRepository.saveDemand(demandRequest.getRequestInfo(), updatedDemands);
+		
+		log.info(" The created demands are : " + demandRes);
+		
+		fetchBill(demandRes, demandRequest.getRequestInfo());
+		
+		log.info("<< cancelAndCreateNewDemands");
+		
+		return demandRes;
+	}
+
 }
