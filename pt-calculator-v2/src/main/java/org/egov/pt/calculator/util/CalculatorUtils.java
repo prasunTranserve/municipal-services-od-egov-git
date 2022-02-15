@@ -796,5 +796,42 @@ public class CalculatorUtils {
         }
         return isTaxPeriodPresent;
     }
+    
+    /**
+     * Returns the applicable total tax amount to be paid on a demand
+     *
+     * @param demand
+     * @return
+     */
+    public BigDecimal getTaxAmtForDemandForPenaltyGeneration(Demand demand) {
+        BigDecimal taxAmt = BigDecimal.ZERO;
+//        BigDecimal amountForAccDeatil = BigDecimal.ZERO;
+        BigDecimal collectedAmt = BigDecimal.ZERO;
+        
+        for (DemandDetail detail : demand.getDemandDetails()) {
+        	//Indicates that penalty amount has already been paid fully or partially and hence no further calculation is required
+        	if(CalculatorConstants.PT_TIME_PENALTY.equals(detail.getTaxHeadMasterCode())
+        			&& detail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
+        			&& detail.getTaxAmount().subtract(detail.getCollectionAmount()).compareTo(BigDecimal.ZERO) >= 0) {
+        		taxAmt = BigDecimal.ZERO;
+        		break;
+        	}
+        	
+        	//Consider all taxheads other than PT_TIME_PENALTY
+        	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(detail.getTaxHeadMasterCode())) {
+//        		amountForAccDeatil = BigDecimal.ZERO;
+        		collectedAmt = collectedAmt.add(detail.getCollectionAmount());
+//            	amountForAccDeatil = detail.getTaxAmount().subtract(detail.getCollectionAmount());
+            	taxAmt = taxAmt.add(detail.getTaxAmount());
+        	}
+        }
+        
+        //Penalty will not be calculated if the amount has already been collected
+        if(collectedAmt == taxAmt) {
+        	taxAmt = BigDecimal.ZERO;
+        }
+        
+        return taxAmt;
+    }
 
 }

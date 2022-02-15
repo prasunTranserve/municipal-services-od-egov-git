@@ -363,5 +363,10 @@ public class CalculatorConstants {
 	/* Tax heads fields in additional details */
 	
     public static final String MUTATION_CHARGE = "mutationCharge";
+    
+    public static final List<String> ULB_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
+			.asList("od.cuttack"));
+    public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
+			.asList(PT_TIME_PENALTY));
 	
 }

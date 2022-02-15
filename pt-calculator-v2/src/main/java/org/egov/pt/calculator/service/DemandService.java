@@ -383,6 +383,7 @@ public class DemandService {
 		PropertyDetail detail = property.getPropertyDetails().get(0);
 		String propertyType = detail.getPropertyType();
 		String consumerCode = property.getPropertyId();
+		BigDecimal minimumAmountPayable = BigDecimal.ZERO;
 
 		OwnerInfo owner = null;
 
@@ -403,11 +404,18 @@ public class DemandService {
 		List<DemandDetail> details = new ArrayList<>();
 
 		details = getAdjustedDemandDetails(tenantId,calculation,demand);
+		
+		if(configs.getPtMinAmountPayableFixed()) {
+			minimumAmountPayable = BigDecimal.valueOf(configs.getPtMinAmountPayable());
+		}else {
+			minimumAmountPayable = calculation.getTaxAmount().multiply(configs.getPtMinAmountPayablePercentage())
+					.divide(BigDecimal.valueOf(100));
+		}
 
 		return Demand.builder().tenantId(tenantId).businessService(configs.getPtModuleCode()).consumerType(propertyType)
 				.consumerCode(consumerCode).payer(owner.toCommonUser()).taxPeriodFrom(calculation.getFromDate())
 				.taxPeriodTo(calculation.getToDate()).status(Demand.DemandStatusEnum.ACTIVE)
-				.minimumAmountPayable(BigDecimal.valueOf(configs.getPtMinAmountPayable())).demandDetails(details)
+				.minimumAmountPayable(minimumAmountPayable).demandDetails(details)
 				.build();
 	}
 
@@ -431,13 +439,12 @@ public class DemandService {
 				&& demand.getTaxPeriodTo().compareTo(t.getToDate()) <= 0)
 		.findAny().orElse(null);
 		
-		if(!(taxPeriod.getFromDate()<= System.currentTimeMillis() && taxPeriod.getToDate() >= System.currentTimeMillis()))
+		//Checks if the current date id within demand from and to date 
+		if((demand.getTaxPeriodFrom()<= System.currentTimeMillis() && demand.getTaxPeriodTo() >= System.currentTimeMillis()))
 			isCurrentDemand = true;
 		/*
 		 * method to get the latest collected time from the receipt service
 		 */
-
-
 		List<Payment> payments = paymentService.getPaymentsFromDemand(demand,requestInfoWrapper);
 
 
@@ -448,6 +455,8 @@ public class DemandService {
 		List<DemandDetail> details = demand.getDemandDetails();
 
 		BigDecimal taxAmt = utils.getTaxAmtFromDemandForApplicablesGeneration(demand);
+		BigDecimal taxAmtForPenalty = utils.getTaxAmtForDemandForPenaltyGeneration(demand);
+		
 		BigDecimal collectedPtTax = BigDecimal.ZERO;
 		BigDecimal totalCollectedAmount = BigDecimal.ZERO;
 
@@ -458,16 +467,25 @@ public class DemandService {
 				collectedPtTax = collectedPtTax.add(detail.getCollectionAmount());
 		}
 
-
-		Map<String, BigDecimal> rebatePenaltyEstimates = payService.applyPenaltyRebateAndInterest(taxAmt,collectedPtTax,
+		BigDecimal penalty = BigDecimal.ZERO;
+		BigDecimal rebate = BigDecimal.ZERO;
+		BigDecimal interest = BigDecimal.ZERO;
+		
+		//Penalty will be applied to selected ulb's and on arrear amount
+		if(CalculatorConstants.ULB_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(demand.getTenantId())){
+			penalty = payService.applyPenalty(taxAmtForPenalty,collectedPtTax,
+	                taxPeriod.getFinancialYear(), timeBasedExmeptionMasterMap,payments,taxPeriod);
+		}
+		
+		rebate = payService.applyRebate(taxAmt, collectedPtTax, taxPeriod.getFinancialYear(),
+				timeBasedExmeptionMasterMap, payments, taxPeriod);
+		
+		interest = payService.applyInterest(taxAmt,collectedPtTax,
                 taxPeriod.getFinancialYear(), timeBasedExmeptionMasterMap,payments,taxPeriod);
 		
-		if(null == rebatePenaltyEstimates) return isCurrentDemand;
 		
-		BigDecimal rebate = rebatePenaltyEstimates.get(PT_TIME_REBATE);
-		BigDecimal penalty = rebatePenaltyEstimates.get(CalculatorConstants.PT_TIME_PENALTY);
-		BigDecimal interest = rebatePenaltyEstimates.get(CalculatorConstants.PT_TIME_INTEREST);
-
+		if(Objects.isNull(penalty) && Objects.isNull(rebate) && Objects.isNull(interest)) return isCurrentDemand;
+		
 		DemandDetailAndCollection latestPenaltyDemandDetail,latestInterestDemandDetail;
 
 
@@ -483,7 +501,6 @@ public class DemandService {
 						.build());
 		}
 
-
 		if(interest.compareTo(BigDecimal.ZERO)!=0){
 			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(PT_TIME_INTEREST,details);
 			if(latestInterestDemandDetail!=null){
@@ -492,7 +509,8 @@ public class DemandService {
 			}
 		}
 
-		if(penalty.compareTo(BigDecimal.ZERO)!=0){
+		//Penalty will applied to arrear amount and not the current years demand
+		if(penalty.compareTo(BigDecimal.ZERO)!=0 && !isCurrentDemand){
 			latestPenaltyDemandDetail = utils.getLatestDemandDetailByTaxHead(PT_TIME_PENALTY,details);
 			if(latestPenaltyDemandDetail!=null){
 				updateTaxAmount(penalty,latestPenaltyDemandDetail);
@@ -500,10 +518,12 @@ public class DemandService {
 			}
 		}
 
-		
-		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0)
+		//Inserts new PT_TIME_PENALTY tax head in demand details if it does not exists
+		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0 && !isCurrentDemand)
 			details.add(DemandDetail.builder().taxAmount(penalty).taxHeadMasterCode(CalculatorConstants.PT_TIME_PENALTY)
 					.demandId(demandId).tenantId(tenantId).build());
+		
+		//Inserts new PT_TIME_INTERESET tax head in demand details if it does not exists
 		if (!isInterestUpdated && interest.compareTo(BigDecimal.ZERO) > 0)
 			details.add(
 					DemandDetail.builder().taxAmount(interest).taxHeadMasterCode(CalculatorConstants.PT_TIME_INTEREST)

@@ -137,6 +137,12 @@ public class Configurations {
 	@Value("${pt.mutation.minpayable.amount}")
 	private BigDecimal ptMutationMinPayable;
 	
+	@Value("${pt.module.minpayable.fixed}")
+	private Boolean ptMinAmountPayableFixed;
+	
+	@Value("${pt.module.minpayable.percentage}")
+	private BigDecimal ptMinAmountPayablePercentage;
+	
 
 
 }
