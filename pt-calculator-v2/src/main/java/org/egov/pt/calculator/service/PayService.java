@@ -462,7 +462,81 @@ public class PayService {
 		interestAmt = mDService.calculateApplicables(applicableAmount, interestMap);
 		return interestAmt.multiply(noOfDays.divide(BigDecimal.valueOf(365), 6, 5));
 	}
+	
+	/**
+	 * Updates the incoming demand with latest rebate values if applicable
+	 * 
+	 * @param taxAmt
+	 * @param collectedPtTax
+	 * @param assessmentYear
+	 * @param timeBasedExmeptionMasterMap
+	 * @param payments
+	 * @param taxPeriod
+	 * @return
+	 */
+	public BigDecimal applyRebate(BigDecimal taxAmt,BigDecimal collectedPtTax,
+			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
 
+		if (BigDecimal.ZERO.compareTo(taxAmt) >= 0)
+			return BigDecimal.ZERO;
+
+
+		BigDecimal rebate = getRebate(taxAmt, assessmentYear,
+				timeBasedExmeptionMasterMap.get(CalculatorConstants.REBATE_MASTER));
+
+		return !Objects.isNull(rebate) ? rebate : BigDecimal.ZERO;
+	}
+	
+	
+	/**
+	 * Updates the incoming demand with latest penalty values if applicable
+	 * 
+	 * @param taxAmt
+	 * @param collectedPtTax
+	 * @param assessmentYear
+	 * @param timeBasedExmeptionMasterMap
+	 * @param payments
+	 * @param taxPeriod
+	 * @return
+	 */
+	public BigDecimal applyPenalty(BigDecimal taxAmt,BigDecimal collectedPtTax,
+			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
+
+		if (BigDecimal.ZERO.compareTo(taxAmt) >= 0)
+			return BigDecimal.ZERO;
+
+		BigDecimal penalty = BigDecimal.ZERO;
+
+		penalty = getPenalty(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.PENANLTY_MASTER));
+
+		return !Objects.isNull(penalty) ? penalty : BigDecimal.ZERO;
+	}
+	
+	
+	/**
+	 * Updates the incoming demand with latest interest values if applicable
+	 * 
+	 * @param taxAmt
+	 * @param collectedPtTax
+	 * @param assessmentYear
+	 * @param timeBasedExmeptionMasterMap
+	 * @param payments
+	 * @param taxPeriod
+	 * @return
+	 */
+	public BigDecimal applyInterest(BigDecimal taxAmt,BigDecimal collectedPtTax,
+			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
+
+		if (BigDecimal.ZERO.compareTo(taxAmt) >= 0)
+			return BigDecimal.ZERO;
+
+		BigDecimal interest = BigDecimal.ZERO;
+
+		interest = getInterest(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.INTEREST_MASTER),
+				payments,taxPeriod);
+
+		return !Objects.isNull(interest) ? interest : BigDecimal.ZERO;
+	}
 
 
 
