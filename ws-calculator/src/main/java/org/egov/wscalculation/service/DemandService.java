@@ -719,7 +719,7 @@ public class DemandService {
 //			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId,
 //					WSCalculationConstant.nonMeterdConnection, billCriteria);
 			log.info("Proposed Connections: "+billCriteria.getConnectionNos());
-			List<WaterConnection> ConnectionList = waterCalculatorDao.getConnectionsNoList(tenantId, null, billCriteria);
+			List<WaterConnection> ConnectionList = waterCalculatorDao.getConnectionsNoList(tenantId, WSCalculationConstant.nonMeterdConnection, billCriteria);
 			List<String> connectionNos = wsCalculationUtil.getFilteredConnections(ConnectionList);
 			log.info("Actual Connections: "+connectionNos.toString());
 			String assessmentYear = estimationService.getAssessmentYear();

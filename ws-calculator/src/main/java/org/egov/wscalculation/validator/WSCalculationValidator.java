@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneId;
 import java.util.*;
 
@@ -109,7 +110,15 @@ public class WSCalculationValidator {
 				meterReading.getBillingPeriod());
 		if (billingPeriodNumber > 0)
 			errorMap.put("INVALID_METER_READING_BILLING_PERIOD", "Billing Period Already Exists");
-
+		
+		// Restricting to add multiple meter reading in a month
+		Calendar lastReadingDate = calculationUtil.getCalendar(meterReading.getLastReadingDate());
+		Calendar currentReadingDate = calculationUtil.getCalendar(meterReading.getCurrentReadingDate());
+		if(lastReadingDate.get(Calendar.MONTH)==currentReadingDate.get(Calendar.MONTH) && lastReadingDate.get(Calendar.YEAR)==currentReadingDate.get(Calendar.YEAR)) {
+			errorMap.put("INVALID_CURRENT_METER_READING",
+					"Meter reading for the current month has already been captured. Cannot insert more than one meter reading in a month");
+		}
+		
 		if (!errorMap.isEmpty()) {
 			throw new CustomException(errorMap);
 		}
