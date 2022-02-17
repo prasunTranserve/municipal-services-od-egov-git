@@ -27,6 +27,7 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,23 +68,20 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 	@Override
 	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
 		try {
-			// TODO--
-			// add in config of noc-services the new property fire.host,token
-
 			// submit fire noc application -
 			StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
 			submitFireNocUrl.append(SUBMIT_FIRE_NOC_APPL_ENDPOINT);
 			DocumentContext edcrDetail = infoWrapper.getEdcr();
 			Map<String, String> paramMap = getParamsFromEdcr(edcrDetail);
 
-			String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.REVSITEPLAN.REVSITEPLAN");
+			String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.BuildingPlan");
 			String plainApplicationDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
 					"NOC.FIRE.PlainApplication");
 			String applicantSignature = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
 					"NOC.FIRE.ApplicantSignature");
 			String applicantPhoto = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.ApplicantPhoto");
-			String identityProofDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.IDENTITYPROOF");
-			String ownershipDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "BPA", "APPL.OWNERIDPROOF");
+			String identityProofDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.IdentityProofDoc");
+			String ownershipDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.OwnershipDoc");
 
 			Map<String, String> additionalDetails = (Map<String, String>) infoWrapper.getNoc().getAdditionalDetails();
 			SubmitFireNocContract sfnc = SubmitFireNocContract.builder()
@@ -97,11 +95,14 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 					.areameasureType("Mtr").fireDistrict(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireDistrict.id"))
 					.fireStation(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireStation.id"))
 					.adreesOfBuilding(mapper.writeValueAsString(infoWrapper.getBpa().getLandInfo().getAddress()))
-					.buildingPlan(sitePlanDoc).buildingPlanext("pdf") // to resolve later
+					.buildingPlan(sitePlanDoc).buildingPlanext("pdf")
 					.plainApplication(plainApplicationDoc).plainApplicationext("pdf")
 					.applicantSignature(applicantSignature).applicantSignatureext("jpg").applicantPhoto(applicantPhoto)
 					.applicantPhotoext("jpg").identyProofDoc(identityProofDoc).identyProofDocext("pdf")
-					.ownershipDoc(ownershipDoc).ownershipDocext("pdf").token(config.getFireNocToken()).build();
+					.identyProofType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofType.id"))
+					.identyProofNo(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofNo"))
+					.ownershipDoc(ownershipDoc).ownershipDocext("pdf").token(config.getFireNocToken())
+					.suyogApplicationId(infoWrapper.getNoc().getApplicationNo()).build();
 
 			Object submitFireNocResponse = serviceRequestRepository.fetchResult(submitFireNocUrl, sfnc);
 			if (submitFireNocResponse instanceof Map) {
@@ -185,8 +186,6 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			Map<String, Object> statusResponse = (Map<String, Object>) fetchStatusResponse;
 			Map<String, Object> result = (Map<String, Object>) statusResponse.get("result");
 			applicationStatus = String.valueOf(result.get("applicationStatus"));
-			if (!"In Process".equalsIgnoreCase(applicationStatus))
-				throw new CustomException(NOCConstants.FIRE_NOC_ERROR, "fire noc failed");
 		}
 		
 		switch (applicationStatus) {
@@ -208,14 +207,15 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			StringBuilder fetchApplicationIdsUrl = new StringBuilder(config.getFireNocHost());
 			fetchApplicationIdsUrl.append(FETCH_APPLICATION_IDS_ENDPOINT);
 			Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
-					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getUserResponse().getEmailId()));
+					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getNoc().getApplicationNo()));
 			//String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";
 			//Object fetchApplicationIdsResponse = new Gson().fromJson(str, HashMap.class);
-			if(fetchApplicationIdsResponse instanceof Map && Objects.nonNull(((Map) fetchApplicationIdsResponse).get("result"))
-					&& Objects.nonNull(((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID"))) {
+			if (fetchApplicationIdsResponse instanceof Map
+					&& Objects.nonNull(((Map) fetchApplicationIdsResponse).get("result")) 
+					&& !StringUtils.isEmpty(((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID"))) {
 				//store application id in db --
-				List<String> applicationIds = (List) ((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID");
-				String applicationId=applicationIds.get(0);//hardcoded as first applicationId as of now
+				String applicationId = String
+						.valueOf(((Map) ((Map) fetchApplicationIdsResponse).get("result")).get("applicationID"));
 				additionalDetails.put("applicationId", applicationId);/*
 				try {
 					pullRequestWrapper.getNoc().setAdditionalDetails(mapper.writeValueAsString(additionalDetails));
