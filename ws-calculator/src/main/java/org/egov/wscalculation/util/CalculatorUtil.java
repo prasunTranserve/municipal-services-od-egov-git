@@ -2,6 +2,7 @@ package org.egov.wscalculation.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -371,5 +372,12 @@ public class CalculatorUtil {
 		url.append("tenantId=").append(tenantId).append("&");
 		url.append("businessIds=").append(businessIds);
 		return url.toString();
+	}
+	
+	public Calendar getCalendar(Long dateInMilisecound) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(dateInMilisecound);
+		
+		return cal;
 	}
 }
