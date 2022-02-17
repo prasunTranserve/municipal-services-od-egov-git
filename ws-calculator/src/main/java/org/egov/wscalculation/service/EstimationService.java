@@ -319,6 +319,7 @@ public class EstimationService {
 		// Sewerage arrear fee
 		if(configs.isSwArrearDemandEnabled()) {
 			BigDecimal swArrearAmount = BigDecimal.ZERO;
+			BigDecimal swArrearRebateApplicableOnAmount = BigDecimal.ZERO;
 			LinkedHashMap additionalDetails = (LinkedHashMap)connection.getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
@@ -329,6 +330,7 @@ public class EstimationService {
 					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthMeter()
 					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearMeter()) {
 				int swDemandMonth = configs.getSwArrearMonthCountForMeter();
+				swArrearRebateApplicableOnAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 				int lastSwChargeApplicableFor = getMonthDifference(criteria.getFrom(), criteria.getTo());
 				int swArrearApplicaleMonth = swDemandMonth-lastSwChargeApplicableFor+1;
 				log.info("Generating sewerage arrear bill for " + swArrearApplicaleMonth + " months");
@@ -337,6 +339,7 @@ public class EstimationService {
 					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthNonMeter()
 					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearNonMeter()) {
 				int swDemandMonth = configs.getSwArrearMonthCountForNonMeter();
+				swArrearRebateApplicableOnAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 				log.info("Generating sewerage arrear bill for " + swDemandMonth + " months");
 				swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 			}
@@ -347,9 +350,9 @@ public class EstimationService {
 			}
 			
 			// Sewerage Special Rebate
-			if(swArrearAmount.compareTo(BigDecimal.ZERO) > 0 && configs.isSwSpecialRebateApplicable()) {
+			if(swArrearRebateApplicableOnAmount.compareTo(BigDecimal.ZERO) > 0 && configs.isSwSpecialRebateApplicable()) {
 				BigDecimal swSpecialRebate = BigDecimal.ZERO;
-				swSpecialRebate = swArrearAmount.multiply(BigDecimal.valueOf(0.02)).setScale(2, 2);
+				swSpecialRebate = swArrearRebateApplicableOnAmount.multiply(BigDecimal.valueOf(0.02)).setScale(2, 2);
 				if(swSpecialRebate.compareTo(BigDecimal.ZERO) > 0) {
 					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_SPECIAL_REBATE)
 							.estimateAmount(swSpecialRebate.setScale(2, 2).negate()).build());
