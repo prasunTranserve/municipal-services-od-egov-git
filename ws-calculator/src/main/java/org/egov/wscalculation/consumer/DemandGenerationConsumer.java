@@ -1,18 +1,17 @@
 package org.egov.wscalculation.consumer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.egov.wscalculation.config.WSCalculationConfiguration;
-import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
-import org.egov.wscalculation.web.models.CalculationCriteria;
-import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.producer.WSCalculationProducer;
 import org.egov.wscalculation.service.MasterDataService;
 import org.egov.wscalculation.service.WSCalculationServiceImpl;
+import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
+import org.egov.wscalculation.web.models.CalculationCriteria;
+import org.egov.wscalculation.web.models.CalculationReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.Message;
@@ -56,8 +55,6 @@ public class DemandGenerationConsumer {
 		CalculationReq calculationReq = mapper.convertValue(records.get(0).getPayload(), CalculationReq.class);
 		Map<String, Object> masterMap = mDataService.loadMasterData(calculationReq.getRequestInfo(),
 				calculationReq.getCalculationCriteria().get(0).getTenantId());
-		mDataService.loadMeterReadingMasterData(calculationReq.getRequestInfo(),
-				calculationReq.getCalculationCriteria().get(0).getTenantId(), masterMap);
 		List<CalculationCriteria> calculationCriteria = new ArrayList<>();
 		records.forEach(record -> {
 			try {

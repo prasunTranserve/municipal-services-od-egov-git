@@ -61,18 +61,4 @@ public class MeterReadingUtil {
 		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
 	}
 	
-	/**
-	 * Methods provides all the usage category master for Water Service module
-	 */
-	public MdmsCriteriaReq getMeterReadingMasterData(RequestInfo requestInfo, String tenantId) {
-		List<MasterDetail> details = new ArrayList<>();
-		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_METER_READING_MASTER).build());
-
-		ModuleDetail mdDtl = ModuleDetail.builder().masterDetails(details)
-				.moduleName(WSCalculationConstant.WS_TAX_MODULE).build();
-		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().moduleDetails(Arrays.asList(mdDtl)).tenantId(tenantId)
-				.build();
-		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
-	}
-
 }

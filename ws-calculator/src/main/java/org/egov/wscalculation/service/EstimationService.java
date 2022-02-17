@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -30,8 +29,6 @@ import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.util.WaterCessUtil;
 import org.egov.wscalculation.web.models.BillingSlab;
 import org.egov.wscalculation.web.models.CalculationCriteria;
-import org.egov.wscalculation.web.models.MeterReading;
-import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.RoadCuttingInfo;
 import org.egov.wscalculation.web.models.SearchCriteria;
@@ -1202,28 +1199,6 @@ public class EstimationService {
 		return false;
 	}
 	
-	private Double calculateTotalUnit(CalculationCriteria criteria, Map<String, Object> masterData) {
-		@SuppressWarnings("unchecked")
-		Map<String, Object> financialYearMaster = (Map<String, Object>) masterData.get(WSCalculationConstant.BILLING_PERIOD);
-
-		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
-		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
-		LocalDate billingStartDate = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
-		LocalDate billingEndDate = Instant.ofEpochMilli(toDate).atZone(ZoneId.systemDefault()).toLocalDate();
-
-		return criteria.getMeterReadingLists().stream()
-				.filter(meterReading -> {
-					LocalDate createdDate = Instant.ofEpochMilli(meterReading.getAuditDetails().getCreatedTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-					return wSCalculationUtil.getMeterReadingAllowedate(masterData).isBefore(createdDate);
-				})
-				.filter(meterReading -> {
-					LocalDate readingDate = Instant.ofEpochMilli(meterReading.getCurrentReadingDate()).atZone(ZoneId.systemDefault()).toLocalDate();
-					return readingDate.compareTo(billingStartDate) >= 0 && readingDate.compareTo(billingEndDate) <= 0;
-				})
-				.mapToDouble(meterReading -> meterReading.getCurrentReading() - meterReading.getLastReading())
-				.sum();
-	}
-
 	private BigDecimal getSewerageEstimationChargeV2(WaterConnection waterConnection, CalculationCriteria criteria,
 			RequestInfo requestInfo) {
 

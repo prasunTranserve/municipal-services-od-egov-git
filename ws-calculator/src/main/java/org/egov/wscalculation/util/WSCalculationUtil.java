@@ -264,16 +264,6 @@ public class WSCalculationUtil {
 			return false;
 	}
 	
-	public LocalDate getMeterReadingAllowedate(Map<String, Object> masterMap) {
-		JSONArray meterReadingMaster = (JSONArray) masterMap.get(WSCalculationConstant.WC_METER_READING_MASTER);
-		try {
-			LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) meterReadingMaster.get(0);
-			return LocalDate.parse(map.get(WSCalculationConstant.SCHEDULER_ALLOWED_METER_READING_FROM_DATE).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-		} catch (Exception e) {
-			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
-		}
-	}
-
 	public List<String> getFilteredConnections(List<WaterConnection> connectionList) {
 		long connectionExecutionLimit = getbillingEndDate();
 		return connectionList.stream().filter(wc -> wc.getConnectionExecutionDate() <= connectionExecutionLimit)
