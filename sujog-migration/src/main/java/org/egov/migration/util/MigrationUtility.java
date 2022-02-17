@@ -317,10 +317,6 @@ public class MigrationUtility {
 		LocalDateTime finFirstDate = LocalDateTime.of(Integer.parseInt(year), 4, 2, 1, 0, 0);
 		return finFirstDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 	}
-	
-	public static void main(String[] args) {
-		System.out.println(getTaxPeriodFrom("2021-22"));
-	}
 
 	public static Long getTaxPeriodTo(String finYear) {
 		if (StringUtils.isEmpty(finYear))
