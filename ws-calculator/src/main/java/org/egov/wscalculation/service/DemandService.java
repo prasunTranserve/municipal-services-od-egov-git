@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -715,7 +717,7 @@ public class DemandService {
 //					WSCalculationConstant.nonMeterdConnection, billCriteria);
 //			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId, null, billCriteria);
 			log.info("Proposed Connections: "+billCriteria.getConnectionNos());
-			List<WaterConnection> ConnectionList = waterCalculatorDao.getConnectionsNoList(tenantId, null, billCriteria);
+			List<WaterConnection> ConnectionList = waterCalculatorDao.getConnectionsNoList(tenantId, WSCalculationConstant.nonMeterdConnection, billCriteria);
 			List<String> connectionNos = wsCalculationUtil.getFilteredConnections(ConnectionList);
 			log.info("Actual Connections: "+connectionNos.toString());
 			String assessmentYear = estimationService.getAssessmentYear();

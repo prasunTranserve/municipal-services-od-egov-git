@@ -1,6 +1,7 @@
 package org.egov.wscalculation.config;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -267,10 +268,30 @@ public class WSCalculationConfiguration {
 	@Value("${egov.demand.arrear.sw.enabled}")
 	private boolean swArrearDemandEnabled;
 
-	@Value("${egov.demand.arrear.sw.months.count}")
-	private int swArrearMonthCount;
+	@Value("${egov.demand.arrear.sw.billing.month.meter}")
+	private int swArrearBillingMonthMeter;
+
+	@Value("${egov.demand.arrear.sw.billing.year.meter}")
+	private int swArrearBillingYearMeter;
+
+	@Value("${egov.demand.arrear.sw.months.count.meter}")
+	private int swArrearMonthCountForMeter;
+
+	@Value("${egov.demand.arrear.sw.billing.month.nonmeter}")
+	private int swArrearBillingMonthNonMeter;
+
+	@Value("${egov.demand.arrear.sw.billing.year.nonmeter}")
+	private int swArrearBillingYearNonMeter;
+
+	@Value("${egov.demand.arrear.sw.months.count.nonmeter}")
+	private int swArrearMonthCountForNonMeter;
 
 	@Value("${egov.demand.arrear.sw.special.rebate.applicable}")
 	private boolean swSpecialRebateApplicable;
 	
+	@Value("#{new java.text.SimpleDateFormat('dd/MM/yyyy').parse('${egov.demand.sw.active.meter}')}")
+    private Date swApplicableForMeter;
+
+	@Value("#{new java.text.SimpleDateFormat('dd/MM/yyyy').parse('${egov.demand.sw.active.nonmeter}')}")
+    private Date swApplicableForNonMeter;
 }

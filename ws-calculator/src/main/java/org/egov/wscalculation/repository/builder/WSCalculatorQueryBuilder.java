@@ -161,11 +161,9 @@ public class WSCalculatorQueryBuilder {
 		StringBuilder query = new StringBuilder(connectionNoListQuery);
 
 		// Add connection type
-		if(StringUtils.hasText(connectionType)) {
-			addClauseIfRequired(preparedStatement, query);
-			query.append(" ws.connectiontype = ? ");
-			preparedStatement.add(connectionType);
-		}
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" ws.connectiontype = ? ");
+		preparedStatement.add(connectionType);
 		
 		// add tenantid
 		addClauseIfRequired(preparedStatement, query);
@@ -180,20 +178,20 @@ public class WSCalculatorQueryBuilder {
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno is not null");
 		
-		if(!wards.isEmpty()) {
-			addClauseIfRequired(preparedStatement, query);
-			query.append(" conn.additionaldetails ->> 'ward' in (");
-			int wardCount=0;
-			for (String ward : wards) {
-				if(wardCount==0)
-					query.append("?");
-				else
-					query.append(",?");
-				preparedStatement.add(ward);
-				wardCount++;
-			}
-			query.append(")");
-		}
+//		if(!wards.isEmpty()) {
+//			addClauseIfRequired(preparedStatement, query);
+//			query.append(" conn.additionaldetails ->> 'ward' in (");
+//			int wardCount=0;
+//			for (String ward : wards) {
+//				if(wardCount==0)
+//					query.append("?");
+//				else
+//					query.append(",?");
+//				preparedStatement.add(ward);
+//				wardCount++;
+//			}
+//			query.append(")");
+//		}
 		
 		if(!connectionNos.isEmpty()) {
 			addClauseIfRequired(preparedStatement, query);
