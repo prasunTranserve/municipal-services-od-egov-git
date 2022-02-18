@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -904,27 +905,52 @@ public class DemandService {
 		List<Calculation> calculations = null;
 		List<Demand> demandRes = new LinkedList<>();
 		List<TaxHeadEstimate> taxHeadEstimates = null;
-		for( Demand canceledDemand : demandsToBeUpdated ) {
+		
+		validateDemandUpdateRquest(demandsToBeUpdated, demandRequest.getRequestInfo());
+		
+		for( Demand demand : demandsToBeUpdated ) {
 			calculations = new ArrayList<>();
-			waterConnectionList = calculatorUtils.getWaterConnection(demandRequest.getRequestInfo(), canceledDemand.getConsumerCode(), canceledDemand.getTenantId());
+			
+			waterConnectionList = calculatorUtils.getWaterConnection(demandRequest.getRequestInfo(), demand.getConsumerCode(), demand.getTenantId());
 			if(Objects.isNull(waterConnectionList) || waterConnectionList.isEmpty()) {
 				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for consumer code: "
-						+ canceledDemand.getConsumerCode());
+						+ demand.getConsumerCode());
 					
 			}
+			
+			
 			waterConnection = calculatorUtils.getWaterConnectionObject(waterConnectionList);
-			taxHeadEstimates = prepareTaxHeadEstimatesFromDemand(canceledDemand);
-			calculations.add(Calculation.builder().waterConnection(waterConnection).tenantId(canceledDemand.getTenantId())
+			taxHeadEstimates = prepareTaxHeadEstimatesFromDemand(demand);
+			calculations.add(Calculation.builder().waterConnection(waterConnection).tenantId(demand.getTenantId())
 					.taxHeadEstimates(taxHeadEstimates).connectionNo(waterConnection.getConnectionNo())
 					.applicationNO(waterConnection.getApplicationNo()).build());
-			demandRes.addAll(updateDemandForCalculation(demandRequest.getRequestInfo(), calculations, canceledDemand.getTaxPeriodFrom(),
-					canceledDemand.getTaxPeriodTo(), true));
+			demandRes.addAll(updateDemandForCalculation(demandRequest.getRequestInfo(), calculations, demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(), true));
 			
 		}
 		
 		log.info("<< cancelAndCreateNewDemands");
 		
 		return demandRes;
+	}
+	
+	private void validateDemandUpdateRquest(List<Demand> demandsToBeUpdated,RequestInfo requestInfo) {
+		Demand oldDemand = null;
+		for( Demand demand : demandsToBeUpdated ) {
+			Set<String> consumerCodes = Collections.singleton(demand.getConsumerCode());
+			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(), requestInfo);
+			if (CollectionUtils.isEmpty(searchResult))
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for Number: "
+						+ consumerCodes.toString());
+			
+			oldDemand = searchResult.get(0);
+			
+			if(oldDemand.getIsPaymentCompleted()) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
+						+ consumerCodes.toString());
+			}
+		}
 	}
 
 	private List<TaxHeadEstimate> prepareTaxHeadEstimatesFromDemand(Demand demand) {
