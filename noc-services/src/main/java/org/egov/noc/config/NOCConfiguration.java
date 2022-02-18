@@ -159,4 +159,13 @@ public class NOCConfiguration {
 	
 	@Value("${fire.noc.token}")
 	private String fireNocToken;
+	
+	@Value("${fire.noc.getFiredistricts.endpoint}")
+	private String getFiredistrictsEndpoint;
+	
+	@Value("${fire.noc.getFireStations.endpoint}")
+	private String getFireStationsEndpoint;
+	
+	@Value("${fire.noc.getBuildingtypes.endpoint}")
+	private String getBuildingtypesEndpoint;
 }
