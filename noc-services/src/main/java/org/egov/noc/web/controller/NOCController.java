@@ -48,6 +48,7 @@ import javax.validation.Valid;
 
 import org.egov.noc.config.ResponseInfoFactory;
 import org.egov.noc.service.NOCService;
+import org.egov.noc.thirdparty.fire.model.FetchMastersResponse;
 import org.egov.noc.thirdparty.service.ThirdPartyNocService;
 import org.egov.noc.web.model.Noc;
 import org.egov.noc.web.model.NocRequest;
@@ -59,6 +60,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -140,5 +142,16 @@ public class NOCController {
 				responseInfoFactory.createResponseInfoFromRequestInfo(thirdPartyNocRequest.getRequestInfo(), true))
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	/*
+	 * For calling third party fire dept API to fetch master data
+	 * 
+	 */
+	@PostMapping(value = "/thirdPartyData/{dataType}")
+	public ResponseEntity<FetchMastersResponse> getThirdPartyData(@PathVariable("dataType") String dataType){
+		nocService.getThirdPartyData(dataType);
+		FetchMastersResponse fetchMastersResponse = nocService.getThirdPartyData(dataType);
+		return new ResponseEntity<>(fetchMastersResponse,HttpStatus.OK);
 	}
 }

@@ -3,13 +3,16 @@ package org.egov.noc.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.NOCRepository;
+import org.egov.noc.thirdparty.fire.model.FetchMastersResponse;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.util.NOCUtil;
 import org.egov.noc.validator.NOCValidator;
@@ -28,8 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class NOCService {
 
 	@Autowired
@@ -52,6 +59,12 @@ public class NOCService {
 
 	@Autowired
 	private FileStoreService fileStoreService;
+	
+	@Autowired
+	private NOCConfiguration config;
+	
+	@Autowired
+	private RestTemplate restTemplate;
 
 	/**
 	 * entry point from controller, takes care of next level logic from controller
@@ -191,6 +204,37 @@ public class NOCService {
 		}
 
 		return processedNoc;
+	}
+	
+	/**
+	 * For calling third party fire dept API to fetch master data
+	 * 
+	 * @param dataType
+	 * @return FetchMastersResponse
+	 */
+	public FetchMastersResponse getThirdPartyData(String dataType) {
+		log.info("dataType inside method getThirdPartyData:"+dataType);
+		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
+		switch (dataType) {
+		case "getFiredistricts":
+			submitFireNocUrl.append(config.getGetFiredistrictsEndpoint());
+		case "getFireStations":
+			submitFireNocUrl.append(config.getGetFireStationsEndpoint());
+		case "getBuildingtypes":
+			submitFireNocUrl.append(config.getGetBuildingtypesEndpoint());
+		}
+		Map<String, String> fetchDataFromFireContract = new HashMap<>();
+		fetchDataFromFireContract.put("token", config.getFireNocToken());
+		FetchMastersResponse fetchMastersResponse = null;
+		try {
+			log.info("url for fetching thirdparty data:"+submitFireNocUrl);
+			fetchMastersResponse = restTemplate.postForObject(submitFireNocUrl.toString(), fetchDataFromFireContract,
+					FetchMastersResponse.class);
+		} catch (Exception ex) {
+			log.error("exception while calling third party API to fetch master data", ex);
+			throw new CustomException("FIRE_API_ERROR", "not able to fetch for dataType:" + dataType);
+		}
+		return fetchMastersResponse;
 	}
 
 	private String getNmaValidAction(String status) {
