@@ -111,10 +111,6 @@ public class WSCalculationConstant {
 	
 	public static final String METER_READING_DATE = "meterReadingDate";
 
-	public static final String ALLOWED_METER_READING_UPDATE_TILL = "allowUpdateTillDay";
-	
-	public static final String SCHEDULER_ALLOWED_METER_READING_FROM_DATE = "schedulerAllowFromDate";
-
 	/*
 	 * bigdecimal values
 	 */

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.kafka.common.protocol.types.Field.Str;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
@@ -85,8 +84,6 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			//Calculate and create demand for connection
 			masterMap = masterDataService.loadMasterData(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
-			masterDataService.loadMeterReadingMasterData(request.getRequestInfo(),
-					request.getCalculationCriteria().get(0).getTenantId(), masterMap);
 			calculations = getCalculations(request, masterMap);
 		} else {
 			//Calculate and create demand for application

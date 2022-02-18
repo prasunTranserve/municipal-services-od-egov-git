@@ -1,9 +1,7 @@
 package org.egov.wscalculation.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.validation.Valid;
 
@@ -120,19 +118,19 @@ public class MeterServicesImpl implements MeterService {
 
 	@Override
 	public List<MeterReading> updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
-		Map<String, Object> masterMap = new HashMap<>();
-		masterDataService.loadMeterReadingMasterData(meterConnectionRequest.getRequestInfo(),
-				meterConnectionRequest.getMeterReading().getTenantId(), masterMap);
 		Boolean genratedemand = true;
 		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateUpdateMeterReading(meterConnectionRequest, true);
 		}
-		wsCalculationValidator.validateUpdate(meterConnectionRequest, masterMap);
+		wsCalculationValidator.validateUpdate(meterConnectionRequest);
 		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, true);
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.updateMeterReading(meterConnectionRequest);
+		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
+		}
 		return meterReadingsList;
 	}
 
