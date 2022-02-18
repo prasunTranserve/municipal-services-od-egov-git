@@ -16,5 +16,5 @@ import lombok.ToString;
 public class FetchApplicationIdsContract {
 
 	private String token;
-	private String userName;
+	private String suyogApplicationId;
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MasterDetail;
@@ -13,8 +14,13 @@ import org.egov.mdms.model.ModuleDetail;
 import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.ServiceRequestRepository;
 import org.egov.noc.web.model.AuditDetails;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 
 @Component
 public class NOCUtil {
@@ -107,6 +113,19 @@ public class NOCUtil {
 		MdmsCriteriaReq mdmsCriteriaReq = getMDMSRequest(requestInfo, tenantId);
 		Object result = serviceRequestRepository.fetchResult(getMdmsSearchUrl(), mdmsCriteriaReq);
 		return result;
+	}
+	
+	/**
+	 * extract value of a node from map
+	 * 
+	 * @param dataMap data
+	 * @param key     jsonpath to extract from data
+	 * @return
+	 */
+	public String getValue(Map dataMap, String key) {
+		String jsonString = new JSONObject(dataMap).toString();
+		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
+		return context.read(key) + "";
 	}
 	
 }
