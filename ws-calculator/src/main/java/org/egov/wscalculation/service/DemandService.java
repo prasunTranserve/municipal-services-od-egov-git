@@ -907,6 +907,11 @@ public class DemandService {
 		for( Demand canceledDemand : demandsToBeUpdated ) {
 			calculations = new ArrayList<>();
 			waterConnectionList = calculatorUtils.getWaterConnection(demandRequest.getRequestInfo(), canceledDemand.getConsumerCode(), canceledDemand.getTenantId());
+			if(Objects.isNull(waterConnectionList) || waterConnectionList.isEmpty()) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for consumer code: "
+						+ canceledDemand.getConsumerCode());
+					
+			}
 			waterConnection = calculatorUtils.getWaterConnectionObject(waterConnectionList);
 			taxHeadEstimates = prepareTaxHeadEstimatesFromDemand(canceledDemand);
 			calculations.add(Calculation.builder().waterConnection(waterConnection).tenantId(canceledDemand.getTenantId())
