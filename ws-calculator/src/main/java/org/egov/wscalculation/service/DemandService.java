@@ -896,33 +896,40 @@ public class DemandService {
 //		
 //	}
 
-	public List<Demand> cancelAndCreateNewDemands(@Valid DemandRequest demandRequest) {
+	public List<Demand> modifyDemands(@Valid DemandRequest demandRequest) {
 		log.info("cancelAndCreateNewDemands >> ");
-		List<Demand> demandsToBeCanceled = demandRequest.getDemands();
-		List<Demand> updatedDemands = new LinkedList<>();
-		Demand demand = null;
-		for( Demand canceledDemand : demandsToBeCanceled ) {
-			canceledDemand.setStatus(Demand.StatusEnum.CANCELLED);
-			demand = Demand.builder().tenantId(canceledDemand.getTenantId()).businessService(canceledDemand.getBusinessService()).consumerType(canceledDemand.getConsumerType())
-					.consumerCode(canceledDemand.getConsumerCode()).payer(canceledDemand.getPayer()).taxPeriodFrom(canceledDemand.getTaxPeriodFrom())
-					.taxPeriodTo(canceledDemand.getTaxPeriodTo()).status(Demand.StatusEnum.ACTIVE)
-					.minimumAmountPayable(canceledDemand.getMinimumAmountPayable()).demandDetails(canceledDemand.getDemandDetails())
-					.additionalDetails(canceledDemand.getAdditionalDetails()).build();
-			updatedDemands.add(demand);
+		List<Demand> demandsToBeUpdated = demandRequest.getDemands();
+		List<WaterConnection> waterConnectionList = null;
+		WaterConnection waterConnection = null;
+		List<Calculation> calculations = null;
+		List<Demand> demandRes = new LinkedList<>();
+		List<TaxHeadEstimate> taxHeadEstimates = null;
+		for( Demand canceledDemand : demandsToBeUpdated ) {
+			calculations = new ArrayList<>();
+			waterConnectionList = calculatorUtils.getWaterConnection(demandRequest.getRequestInfo(), canceledDemand.getConsumerCode(), canceledDemand.getTenantId());
+			waterConnection = calculatorUtils.getWaterConnectionObject(waterConnectionList);
+			taxHeadEstimates = prepareTaxHeadEstimatesFromDemand(canceledDemand);
+			calculations.add(Calculation.builder().waterConnection(waterConnection).tenantId(canceledDemand.getTenantId())
+					.taxHeadEstimates(taxHeadEstimates).connectionNo(waterConnection.getConnectionNo())
+					.applicationNO(waterConnection.getApplicationNo()).build());
+			demandRes.addAll(updateDemandForCalculation(demandRequest.getRequestInfo(), calculations, canceledDemand.getTaxPeriodFrom(),
+					canceledDemand.getTaxPeriodTo(), true));
+			
 		}
-		demandRepository.updateDemand(demandRequest.getRequestInfo(), demandsToBeCanceled);
-		
-		log.info("Demand cancelled successfully");
-		
-		List<Demand> demandRes = demandRepository.saveDemand(demandRequest.getRequestInfo(), updatedDemands);
-		
-		log.info(" The created demands are : " + demandRes);
-		
-		fetchBill(demandRes, demandRequest.getRequestInfo());
 		
 		log.info("<< cancelAndCreateNewDemands");
 		
 		return demandRes;
+	}
+
+	private List<TaxHeadEstimate> prepareTaxHeadEstimatesFromDemand(Demand demand) {
+		List<TaxHeadEstimate> taxHeadEstimates = new ArrayList<>();
+		for(DemandDetail demandDetail : demand.getDemandDetails()) {
+			taxHeadEstimates.add(TaxHeadEstimate.builder().taxHeadCode(demandDetail.getTaxHeadMasterCode())
+			.estimateAmount(demandDetail.getTaxAmount())
+			.build());
+		}
+		return taxHeadEstimates;
 	}
 
 }
