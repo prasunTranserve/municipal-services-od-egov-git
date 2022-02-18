@@ -36,9 +36,9 @@ public class DemandController {
 	@Autowired
 	private final ResponseInfoFactory responseInfoFactory;
 	
-	@PostMapping("/_update")
+	@PostMapping("/_modify")
 	public ResponseEntity<DemandResponse> updateDemands(@RequestHeader HttpHeaders headers, @RequestBody @Valid DemandRequest demandRequest) {
-		List<Demand> demands = demandService.cancelAndCreateNewDemands(demandRequest);
+		List<Demand> demands = demandService.modifyDemands(demandRequest);
 		DemandResponse response = DemandResponse.builder().demands(demands)
 				.responseInfo(
 				responseInfoFactory.createResponseInfoFromRequestInfo(demandRequest.getRequestInfo(), true))
