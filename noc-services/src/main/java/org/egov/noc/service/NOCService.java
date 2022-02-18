@@ -33,7 +33,10 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class NOCService {
 
 	@Autowired
@@ -210,6 +213,7 @@ public class NOCService {
 	 * @return FetchMastersResponse
 	 */
 	public FetchMastersResponse getThirdPartyData(String dataType) {
+		log.info("dataType inside method getThirdPartyData:"+dataType);
 		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
 		switch (dataType) {
 		case "getFiredistricts":
@@ -223,9 +227,11 @@ public class NOCService {
 		fetchDataFromFireContract.put("token", config.getFireNocToken());
 		FetchMastersResponse fetchMastersResponse = null;
 		try {
+			log.info("url for fetching thirdparty data:"+submitFireNocUrl);
 			fetchMastersResponse = restTemplate.postForObject(submitFireNocUrl.toString(), fetchDataFromFireContract,
 					FetchMastersResponse.class);
 		} catch (Exception ex) {
+			log.error("exception while calling third party API to fetch master data", ex);
 			throw new CustomException("FIRE_API_ERROR", "not able to fetch for dataType:" + dataType);
 		}
 		return fetchMastersResponse;
