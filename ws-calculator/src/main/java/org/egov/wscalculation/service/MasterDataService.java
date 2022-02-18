@@ -441,16 +441,4 @@ public class MasterDataService {
 		return master;
 	}
 	
-	public void loadMeterReadingMasterData(RequestInfo requestInfo, String tenantId,
-			Map<String, Object> masterMap) {
-
-		MdmsResponse response = mapper.convertValue(repository.fetchResult(calculatorUtils.getMdmsSearchUrl(),
-				meterReadingUtils.getMeterReadingMasterData(requestInfo, tenantId)), MdmsResponse.class);
-		Map<String, JSONArray> res = response.getMdmsRes().get(WSCalculationConstant.WS_TAX_MODULE);
-		for (Entry<String, JSONArray> entry : res.entrySet()) {
-			/* Master not contained in list will be stored as it is */
-			masterMap.put(entry.getKey(), entry.getValue());
-		}
-	}
-	
 }

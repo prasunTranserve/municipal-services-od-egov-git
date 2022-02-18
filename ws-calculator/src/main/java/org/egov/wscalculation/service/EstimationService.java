@@ -57,7 +57,6 @@ public class EstimationService {
 	
 	@Autowired
 	private CalculatorUtil calculatorUtil;
-	
 
 	@Autowired
 	private ObjectMapper mapper;

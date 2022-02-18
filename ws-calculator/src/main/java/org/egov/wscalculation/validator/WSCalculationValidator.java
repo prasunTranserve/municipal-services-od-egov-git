@@ -1,7 +1,18 @@
 package org.egov.wscalculation.validator;
 
-import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
@@ -16,12 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -177,7 +183,7 @@ public class WSCalculationValidator {
 		if (connection != null
 				&& !WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(connection.getConnectionType())) {
 			errorMap.put("INVALID_WATER_CONNECTION_TYPE",
-					"Meter reading can not be create for : " + connection.getConnectionType() + " connection");
+					"Meter reading can not be created for : " + connection.getConnectionType() + " connection");
 		}
 		Set<String> connectionNos = new HashSet<>();
 		connectionNos.add(meterReading.getConnectionNo());
@@ -203,7 +209,7 @@ public class WSCalculationValidator {
 
 		if (isUpdate && (meterReading.getCurrentReading() == null)) {
 			errorMap.put("INVALID_CURRENT_METER_READING",
-					"Current Meter Reading cannot be update without current meter reading");
+					"Current Meter Reading cannot be updated without current meter reading");
 		}
 
 		if (isUpdate && !StringUtils.isEmpty(meterReading.getId())) {
@@ -217,17 +223,12 @@ public class WSCalculationValidator {
 			errorMap.put("INVALID_BILLING_PERIOD", "Meter Reading cannot be updated without billing period");
 		}
 
-//		int billingPeriodNumber = wSCalculationDao.isBillingPeriodExists(meterReading.getConnectionNo(),
-//				meterReading.getBillingPeriod());
-//		if (billingPeriodNumber > 0)
-//			errorMap.put("INVALID_METER_READING_BILLING_PERIOD", "Billing Period Already Exists");
-
 		if (!errorMap.isEmpty()) {
 			throw new CustomException(errorMap);
 		}
 	}
 
-	public void validateUpdate(MeterConnectionRequest meterConnectionRequest, Map<String, Object> masterMap) {
+	public void validateUpdate(MeterConnectionRequest meterConnectionRequest) {
 		// TODO Auto-generated method stub
 		Map<String, String> errorMap = new HashMap<>();
 		
@@ -245,12 +246,6 @@ public class WSCalculationValidator {
 			if(!meterReading.getId().equals(meterConnectionRequest.getMeterReading().getId())) {
 				errorMap.put("INVALID_METER_READING_UPDATE", "Meter reading is not allowed to update except the last reading.");
 			}
-			
-			LocalDate currentReadingDate = Instant.ofEpochMilli(meterReading.getCurrentReadingDate()).atZone(ZoneId.systemDefault()).toLocalDate();
-			LocalDate updatableTillDate = getUpdatableTillDate(currentReadingDate, masterMap);
-			if(updatableTillDate.isBefore(LocalDate.now())) {
-				errorMap.put("INVALID_METER_READING_UPDATE", "Meter reading is not allowed to update after " + updatableTillDate.toString());
-			}
 		}
 		
 		if (!errorMap.isEmpty()) {
@@ -259,27 +254,4 @@ public class WSCalculationValidator {
 		
 	}
 
-	private LocalDate getUpdatableTillDate(LocalDate currentReadingDate, Map<String, Object> masterMap) {
-		JSONArray meterReadingMaster = (JSONArray) masterMap.get(WSCalculationConstant.WC_METER_READING_MASTER);
-		int day;
-		try {
-			LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) meterReadingMaster.get(0);
-			day = Integer.parseInt(map.get(WSCalculationConstant.ALLOWED_METER_READING_UPDATE_TILL).toString());
-		} catch (Exception e) {
-			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
-		}
-		
-		if(day==0) {
-			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
-		}
-		
-		LocalDate permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), 1);
-		if(permissibleDate.lengthOfMonth() < day) {
-			permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), permissibleDate.lengthOfMonth());
-		} else {
-			permissibleDate = LocalDate.of(currentReadingDate.getYear(), currentReadingDate.getMonth(), day);
-		}
-		return permissibleDate;
-	}
-	
 }

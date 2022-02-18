@@ -1,15 +1,17 @@
 package org.egov.wscalculation.util;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
+import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.web.models.DemandDetail;
 import org.egov.wscalculation.web.models.DemandDetailAndCollection;
 import org.egov.wscalculation.web.models.GetBillCriteria;
@@ -19,7 +21,6 @@ import org.egov.wscalculation.web.models.PropertyResponse;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.egov.wscalculation.web.models.WaterConnectionRequest;
-import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,6 @@ import org.springframework.util.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
-import net.minidev.json.JSONArray;
 
 @Component
 @Getter
@@ -262,16 +262,6 @@ public class WSCalculationUtil {
 			return true;
 		else
 			return false;
-	}
-	
-	public LocalDate getMeterReadingAllowedate(Map<String, Object> masterMap) {
-		JSONArray meterReadingMaster = (JSONArray) masterMap.get(WSCalculationConstant.WC_METER_READING_MASTER);
-		try {
-			LinkedHashMap<String, Object> map = (LinkedHashMap<String, Object>) meterReadingMaster.get(0);
-			return LocalDate.parse(map.get(WSCalculationConstant.SCHEDULER_ALLOWED_METER_READING_FROM_DATE).toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-		} catch (Exception e) {
-			throw new CustomException("MDMS_READ_ERROR", "unable to parse master data. please check the MeterReading configuration." );
-		}
 	}
 	
 	public List<String> getFilteredConnections(List<WaterConnection> connectionList) {
