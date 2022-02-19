@@ -785,7 +785,7 @@ public class EstimationService {
 			}
 		}
 		
-		BigDecimal labourFee = calculateLabourFee(criteria.getWaterConnection().getAdditionalDetails(), masterData);
+		BigDecimal labourFee = calculateLabourFee(criteria.getWaterConnection(), masterData);
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SCRUTINY_FEE)
@@ -802,14 +802,14 @@ public class EstimationService {
 	}
 	
 	
-	private BigDecimal calculateLabourFee(Object additionalDetails, Map<String, Object> masterData) {
+	private BigDecimal calculateLabourFee(WaterConnection waterConnection, Map<String, Object> masterData) {
 		BigDecimal labourFee = BigDecimal.ZERO;
 		boolean isLabourFeeApplicable = Boolean.FALSE;
 		boolean isInstallmentApplicable = Boolean.FALSE;
-		if(additionalDetails == null) {
+		if(waterConnection.getAdditionalDetails() == null) {
 			return labourFee;
 		}
-		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)additionalDetails;
+		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)waterConnection.getAdditionalDetails();
 		if(additionalDetailJsonNode.containsKey(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE)) {
 			isLabourFeeApplicable = additionalDetailJsonNode.get(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE).toString().equalsIgnoreCase("Y") 
 					? Boolean.TRUE:Boolean.FALSE;
@@ -827,11 +827,26 @@ public class EstimationService {
 		JSONObject labourFeeObj = mapper.convertValue(labourFeeMaster.get(0), JSONObject.class);
 		
 		if(isLabourFeeApplicable && isInstallmentApplicable) {
-			//TODO: installment Calculation
+			if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
+					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+						|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
+				|| (WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(waterConnection.getConnectionType())
+						&& WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory()))) {
+				//TODO: installment Calculation
+			}
 			
 		} else if(isLabourFeeApplicable && !isInstallmentApplicable) {
-			if (labourFeeObj.get(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
-				labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
+			if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
+					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+						|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
+				|| (WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(waterConnection.getConnectionType())
+						&& WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory()))) {
+				
+				if (labourFeeObj.get(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
+					labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
+				}
 			}
 		}
 		
