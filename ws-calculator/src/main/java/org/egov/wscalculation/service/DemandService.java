@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -876,33 +877,70 @@ public class DemandService {
 //
 //	}
 
-	public List<Demand> cancelAndCreateNewDemands(@Valid DemandRequest demandRequest) {
+	public List<Demand> modifyDemands(@Valid DemandRequest demandRequest) {
 		log.info("cancelAndCreateNewDemands >> ");
-		List<Demand> demandsToBeCanceled = demandRequest.getDemands();
-		List<Demand> updatedDemands = new LinkedList<>();
-		Demand demand = null;
-		for( Demand canceledDemand : demandsToBeCanceled ) {
-			canceledDemand.setStatus(Demand.StatusEnum.CANCELLED);
-			demand = Demand.builder().tenantId(canceledDemand.getTenantId()).businessService(canceledDemand.getBusinessService()).consumerType(canceledDemand.getConsumerType())
-					.consumerCode(canceledDemand.getConsumerCode()).payer(canceledDemand.getPayer()).taxPeriodFrom(canceledDemand.getTaxPeriodFrom())
-					.taxPeriodTo(canceledDemand.getTaxPeriodTo()).status(Demand.StatusEnum.ACTIVE)
-					.minimumAmountPayable(canceledDemand.getMinimumAmountPayable()).demandDetails(canceledDemand.getDemandDetails())
-					.additionalDetails(canceledDemand.getAdditionalDetails()).build();
-			updatedDemands.add(demand);
+		List<Demand> demandsToBeUpdated = demandRequest.getDemands();
+		List<WaterConnection> waterConnectionList = null;
+		WaterConnection waterConnection = null;
+		List<Calculation> calculations = null;
+		List<Demand> demandRes = new LinkedList<>();
+		List<TaxHeadEstimate> taxHeadEstimates = null;
+		
+		validateDemandUpdateRquest(demandsToBeUpdated, demandRequest.getRequestInfo());
+		
+		for( Demand demand : demandsToBeUpdated ) {
+			calculations = new ArrayList<>();
+			
+			waterConnectionList = calculatorUtils.getWaterConnection(demandRequest.getRequestInfo(), demand.getConsumerCode(), demand.getTenantId());
+			if(Objects.isNull(waterConnectionList) || waterConnectionList.isEmpty()) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for consumer code: "
+						+ demand.getConsumerCode());
+					
+			}
+			
+			
+			waterConnection = calculatorUtils.getWaterConnectionObject(waterConnectionList);
+			taxHeadEstimates = prepareTaxHeadEstimatesFromDemand(demand);
+			calculations.add(Calculation.builder().waterConnection(waterConnection).tenantId(demand.getTenantId())
+					.taxHeadEstimates(taxHeadEstimates).connectionNo(waterConnection.getConnectionNo())
+					.applicationNO(waterConnection.getApplicationNo()).build());
+			demandRes.addAll(updateDemandForCalculation(demandRequest.getRequestInfo(), calculations, demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(), true));
+			
 		}
-		demandRepository.updateDemand(demandRequest.getRequestInfo(), demandsToBeCanceled);
-		
-		log.info("Demand cancelled successfully");
-		
-		List<Demand> demandRes = demandRepository.saveDemand(demandRequest.getRequestInfo(), updatedDemands);
-		
-		log.info(" The created demands are : " + demandRes);
-		
-		fetchBill(demandRes, demandRequest.getRequestInfo());
 		
 		log.info("<< cancelAndCreateNewDemands");
 		
 		return demandRes;
+	}
+	
+	private void validateDemandUpdateRquest(List<Demand> demandsToBeUpdated,RequestInfo requestInfo) {
+		Demand oldDemand = null;
+		for( Demand demand : demandsToBeUpdated ) {
+			Set<String> consumerCodes = Collections.singleton(demand.getConsumerCode());
+			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(), requestInfo);
+			if (CollectionUtils.isEmpty(searchResult))
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for Number: "
+						+ consumerCodes.toString());
+			
+			oldDemand = searchResult.get(0);
+			
+			if(oldDemand.getIsPaymentCompleted()) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
+						+ consumerCodes.toString());
+			}
+		}
+	}
+
+	private List<TaxHeadEstimate> prepareTaxHeadEstimatesFromDemand(Demand demand) {
+		List<TaxHeadEstimate> taxHeadEstimates = new ArrayList<>();
+		for(DemandDetail demandDetail : demand.getDemandDetails()) {
+			taxHeadEstimates.add(TaxHeadEstimate.builder().taxHeadCode(demandDetail.getTaxHeadMasterCode())
+			.estimateAmount(demandDetail.getTaxAmount())
+			.build());
+		}
+		return taxHeadEstimates;
 	}
 
 }
