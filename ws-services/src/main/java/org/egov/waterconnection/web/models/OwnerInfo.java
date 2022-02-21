@@ -28,7 +28,7 @@ public class OwnerInfo extends User{
 	@JsonProperty("ownerInfoUuid")
 	private String ownerInfoUuid;
 	
-	@NotNull
+	@NotNull(message = "Mobile number can not be blank")
 	@JsonProperty("mobileNumber")
 	private String mobileNumber;
 
@@ -47,7 +47,7 @@ public class OwnerInfo extends User{
 	@JsonProperty("ownerShipPercentage")
 	private Double ownerShipPercentage;
 
-	@NotNull
+	@NotNull(message = "Owner Type can not be blank")
 	@JsonProperty("ownerType")
 	private String ownerType;
 
