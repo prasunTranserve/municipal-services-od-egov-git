@@ -53,10 +53,11 @@ public class ActionValidator {
 					throw new CustomException("INVALID_LABOUR_FEE",
 							"Labour fee is not applicable on Temporary connection");
 				} else if(WCConstants.METERED_CONNECTION.equalsIgnoreCase(request.getWaterConnection().getConnectionType())
-						&& !(WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(request.getWaterConnection().getUsageCategory())
-								|| WCConstants.CONNECTION_BPL.equalsIgnoreCase(request.getWaterConnection().getUsageCategory()))) {
+						&& (!(WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(request.getWaterConnection().getUsageCategory())
+								&& request.getWaterConnection().getNoOfFlats().compareTo(0) <= 0)
+							|| !WCConstants.CONNECTION_BPL.equalsIgnoreCase(request.getWaterConnection().getUsageCategory()))) {
 					throw new CustomException("INVALID_LABOUR_FEE",
-							"Labour fee is applicable on Permanent Metered and Domestic or BPL connection only");
+							"Labour fee is applicable on Permanent Metered and non Apartment Domestic or BPL connection only");
 				} else if(WCConstants.NON_METERED_CONNECTION.equalsIgnoreCase(request.getWaterConnection().getConnectionType())
 						&& !WCConstants.CONNECTION_BPL.equalsIgnoreCase(request.getWaterConnection().getUsageCategory())) {
 					throw new CustomException("INVALID_LABOUR_FEE",
