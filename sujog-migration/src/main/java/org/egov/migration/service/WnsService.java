@@ -177,20 +177,12 @@ public class WnsService {
 	}
 
 	public void migrateDemands(ConnectionDTO conn) throws Exception {
-		if (conn.isWater() && conn.getWaterConnection().getConnectionNo() != null && conn.getWaterDemands() != null) {
+		if (conn.getWaterConnection().getConnectionNo() != null && conn.getWaterDemands() != null) {
 			boolean isDemandMigrated = migrateWaterDemand(conn);
 			if(isDemandMigrated) {
 				MigrationUtility.addSuccessForWaterDemand(conn);
 			}
 		}
-		
-		//TODO: As of now We are not migrating sewerage demand
-//		if (conn.isSewerage() && conn.getSewerageConnection().getConnectionNo() != null && conn.getSewerageDemands() != null) {
-//			boolean isDemandMigrated = migrateSewerageDemand(conn);
-//			if(isDemandMigrated) {
-//				MigrationUtility.addSuccessForSewerageDemand(conn);
-//			}
-//		}
 	}
 
 	private boolean migrateWaterDemand(ConnectionDTO conn) throws Exception {
