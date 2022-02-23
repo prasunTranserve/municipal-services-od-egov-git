@@ -44,6 +44,10 @@ public class WCConstants {
 
 	public static final String LINK_MOBILE_NUMBER = "LINK_MOBILE_NUMBER";
 	
+	public static final String APPL_TYPE_UPDATE_VOLUMETRIC = "UPDATE_VOLUMETRIC_DETAILS";
+	public static final String ADDITIONAL_DETAIL_VOLUMETRIC_WATER_CHARGE = "volumetricWaterCharge";
+	public static final String ADDITIONAL_DETAIL_MIGRATED_SEWERAGE_FEE = "migratedSewerageFee";
+	
 	public static final String MDMS_WC_CONNECTION_FACILITY = "connectionFacility";
 
 	// WS actions
