@@ -332,14 +332,14 @@ public class EstimationService {
 		BigDecimal totalCharge = waterCharge.add(SewerageCharge);
 		
 		// water timebase Rebate
-		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
-		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
-					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
-		}
+//		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+//		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
+//			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
+//					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
+//		}
 		
 		// water Special Rebate
-		if(isSpecialRebateApplicableForMonth(masterData)) {
+		if(isSpecialRebateApplicableForMonth(criteria, masterData)) {
 			BigDecimal specialRebate = payService.getApplicableSpecialRebate(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
 			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
 				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
@@ -350,7 +350,6 @@ public class EstimationService {
 		// Sewerage arrear fee
 		if(configs.isSwArrearDemandEnabled()) {
 			BigDecimal swArrearAmount = BigDecimal.ZERO;
-			BigDecimal swArrearRebateApplicableOnAmount = BigDecimal.ZERO;
 			LinkedHashMap additionalDetails = (LinkedHashMap)connection.getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
@@ -361,7 +360,6 @@ public class EstimationService {
 					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthMeter()
 					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearMeter()) {
 				int swDemandMonth = configs.getSwArrearMonthCountForMeter();
-				swArrearRebateApplicableOnAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 				int lastSwChargeApplicableFor = getMonthDifference(criteria.getFrom(), criteria.getTo());
 				int swArrearApplicaleMonth = swDemandMonth-lastSwChargeApplicableFor+1;
 				log.info("Generating sewerage arrear bill for " + swArrearApplicaleMonth + " months");
@@ -370,7 +368,6 @@ public class EstimationService {
 					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthNonMeter()
 					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearNonMeter()) {
 				int swDemandMonth = configs.getSwArrearMonthCountForNonMeter();
-				swArrearRebateApplicableOnAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 				log.info("Generating sewerage arrear bill for " + swDemandMonth + " months");
 				swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
 			}
@@ -381,9 +378,9 @@ public class EstimationService {
 			}
 			
 			// Sewerage Special Rebate
-			if(swArrearRebateApplicableOnAmount.compareTo(BigDecimal.ZERO) > 0 && configs.isSwSpecialRebateApplicable()) {
+			if(swArrearAmount.compareTo(BigDecimal.ZERO) > 0 && configs.isSwSpecialRebateApplicable()) {
 				BigDecimal swSpecialRebate = BigDecimal.ZERO;
-				swSpecialRebate = swArrearRebateApplicableOnAmount.multiply(BigDecimal.valueOf(0.02)).setScale(2, 2);
+				swSpecialRebate = swArrearAmount.multiply(BigDecimal.valueOf(0.02)).setScale(2, 2);
 				if(swSpecialRebate.compareTo(BigDecimal.ZERO) > 0) {
 					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_SPECIAL_REBATE)
 							.estimateAmount(swSpecialRebate.setScale(2, 2).negate()).build());
@@ -1225,7 +1222,7 @@ public class EstimationService {
 		return estimates;
 	}
 	
-	public boolean isSpecialRebateApplicableForMonth(Map<String, Object> masterMap) {
+	public boolean isSpecialRebateApplicableForMonth(CalculationCriteria criteria, Map<String, Object> masterMap) {
 		// TODO Auto-generated method stub
 		@SuppressWarnings("unchecked")
 		Map<String, Object> financialYearMaster = (Map<String, Object>) masterMap
@@ -1236,11 +1233,19 @@ public class EstimationService {
 
 		LocalDate taxPeriodFrom = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
 
-		if(StringUtils.hasText(configs.getSpecialRebateYear()) && configs.getSpecialRebateYear().matches("\\d+") &&
-				Integer.parseInt(configs.getSpecialRebateYear()) == taxPeriodFrom.getYear()) {
-			if(StringUtils.hasText(configs.getSpecialRebateMonths())
-					&& (Arrays.asList(configs.getSpecialRebateMonths().trim().split(","))).contains(String.valueOf(taxPeriodFrom.getMonth().getValue()))) {
-				return true;
+		if(WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())) {
+			 return Arrays.asList(configs.getSpecialRebateMonthsForMeteredConnection().trim().split(",")).stream()
+				.filter(monYear ->
+					Integer.parseInt(monYear.split("/")[0]) == taxPeriodFrom.getMonth().getValue() &&
+							Integer.parseInt(monYear.split("/")[1]) == taxPeriodFrom.getYear()
+				).count() > 0 ? true : false;
+		} else {
+			if(StringUtils.hasText(configs.getSpecialRebateYear()) && configs.getSpecialRebateYear().matches("\\d+") &&
+					Integer.parseInt(configs.getSpecialRebateYear()) == taxPeriodFrom.getYear()) {
+				if(StringUtils.hasText(configs.getSpecialRebateMonths())
+						&& (Arrays.asList(configs.getSpecialRebateMonths().trim().split(","))).contains(String.valueOf(taxPeriodFrom.getMonth().getValue()))) {
+					return true;
+				}
 			}
 		}
 		return false;
