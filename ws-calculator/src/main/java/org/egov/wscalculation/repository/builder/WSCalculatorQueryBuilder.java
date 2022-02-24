@@ -32,6 +32,42 @@ public class WSCalculatorQueryBuilder {
 	private static final String connectionNoListQuery = "SELECT distinct conn.connectionno, ws.connectionexecutiondate FROM eg_ws_connection conn INNER JOIN eg_ws_service ws ON conn.id = ws.connection_id";
 
 	private static final String distinctTenantIdsCriteria = "SELECT distinct(tenantid) FROM eg_ws_connection ws";
+	
+	/* only considering non-metered connection */
+//	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and wc.connectiontype ='Non Metered' and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)";
+	
+	/* Considering metered connection */
+	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?) and wc.connectionexecutiondate <= ?";
+
+	private static String holderSelectValues = "connectionholder.tenantid as holdertenantid, connectionholder.connectionid as holderapplicationId, userid, connectionholder.status as holderstatus, isprimaryholder, connectionholdertype, holdershippercentage, connectionholder.relationship as holderrelationship, connectionholder.createdby as holdercreatedby, connectionholder.createdtime as holdercreatedtime, connectionholder.lastmodifiedby as holderlastmodifiedby, connectionholder.lastmodifiedtime as holderlastmodifiedtime";
+
+	private static final String INNER_JOIN_STRING = "INNER JOIN";
+
+	private static final String LEFT_OUTER_JOIN_STRING = " LEFT OUTER JOIN ";
+	
+	private static final String WATER_SEARCH_QUERY = "SELECT conn.*, wc.*, document.*, plumber.*, wc.connectionCategory, wc.connectionType, wc.waterSource, wc.usagecategory,"
+			+ " wc.meterId, wc.meterInstallationDate, wc.pipeSize, wc.noOfTaps, wc.proposedPipeSize, wc.proposedTaps, wc.connection_id as connection_Id, wc.connectionExecutionDate, wc.initialmeterreading, wc.appCreatedDate,"
+			+ " wc.detailsprovidedby, wc.estimationfileStoreId , wc.sanctionfileStoreId , wc.estimationLetterDate,"
+			+ " wc.connectionfacility, wc.noofwaterclosets, wc.nooftoilets,"
+			+ " conn.id as conn_id, conn.tenantid, conn.applicationNo, conn.applicationStatus, conn.status, conn.connectionNo, conn.oldConnectionNo, conn.property_id, conn.roadcuttingarea,"
+			+ " conn.action, conn.adhocpenalty, conn.adhocrebate, conn.adhocpenaltyreason, conn.applicationType, conn.dateEffectiveFrom,"
+			+ " conn.adhocpenaltycomment, conn.adhocrebatereason, conn.adhocrebatecomment, conn.createdBy as ws_createdBy, conn.lastModifiedBy as ws_lastModifiedBy,"
+			+ " conn.createdTime as ws_createdTime, conn.lastModifiedTime as ws_lastModifiedTime,conn.additionaldetails, "
+			+ " conn.locality, conn.isoldapplication, conn.roadtype, document.id as doc_Id, document.documenttype, document.filestoreid, document.active as doc_active, plumber.id as plumber_id,"
+			+ " plumber.name as plumber_name, plumber.licenseno, roadcuttingInfo.id as roadcutting_id, roadcuttingInfo.roadtype as roadcutting_roadtype, roadcuttingInfo.roadcuttingarea as roadcutting_roadcuttingarea, roadcuttingInfo.roadcuttingarea as roadcutting_roadcuttingarea,"
+			+ " roadcuttingInfo.active as roadcutting_active, plumber.mobilenumber as plumber_mobileNumber, plumber.gender as plumber_gender, plumber.fatherorhusbandname, plumber.correspondenceaddress,"
+			+ " plumber.relationship, " + holderSelectValues
+			+ " FROM eg_ws_connection conn "
+			+  INNER_JOIN_STRING
+			+" eg_ws_service wc ON wc.connection_id = conn.id"
+			+  LEFT_OUTER_JOIN_STRING
+			+ "eg_ws_applicationdocument document ON document.wsid = conn.id"
+			+  LEFT_OUTER_JOIN_STRING
+			+ "eg_ws_plumberinfo plumber ON plumber.wsid = conn.id"
+			+  LEFT_OUTER_JOIN_STRING
+			+ "eg_ws_connectionholder connectionholder ON connectionholder.connectionid = conn.id"
+			+  LEFT_OUTER_JOIN_STRING
+			+ "eg_ws_roadcuttinginfo roadcuttingInfo ON roadcuttingInfo.wsid = conn.id ";
 
 
 	public String getDistinctTenantIds() {
@@ -216,6 +252,63 @@ public class WSCalculatorQueryBuilder {
 		query.append(" billingPeriod = ? ");
 		preparedStatement.add(billingPeriod);
 		return query.toString();
+	}
+	
+	public String getCountQuery() {
+		return countQuery;
+	}
+	
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos) {
+		//StringBuilder query = new StringBuilder(connectionNoListQuery);
+
+		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
+		// Add connection type
+		if(!StringUtils.isEmpty(connectionType)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" wc.connectiontype = ? ");
+			preparedStatement.add(connectionType);
+		}
+		// add tenantid
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.tenantid = ? ");
+		preparedStatement.add(tenantId);
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno is not null");
+
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
+		preparedStatement.add(fromDate);
+		preparedStatement.add(toDate);
+		preparedStatement.add(tenantId);
+
+		addClauseIfRequired(preparedStatement, query);
+		String orderbyClause = " conn.connectionno IN (select connectionno FROM eg_ws_connection where tenantid=? and connectionno is not null ORDER BY connectionno OFFSET ? LIMIT ?)";
+		preparedStatement.add(tenantId);
+		preparedStatement.add(batchOffset);
+		preparedStatement.add(batchsize);
+		query.append(orderbyClause);
+		
+		// remove the connection which was created after billing period
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectionexecutiondate <= ? ");
+		preparedStatement.add(toDate);
+		
+		// added for connection wise bill generation
+		if(!connectionNos.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.connectionno in (");
+			int length = connectionNos.size();
+			for (int i = 0; i < length; i++) {
+				query.append(" ?");
+				if (i != length - 1)
+					query.append(",");
+				preparedStatement.add(connectionNos.get(i));
+			}
+			query.append(")");
+		}
+
+		return query.toString();
+		
 	}
 
 }

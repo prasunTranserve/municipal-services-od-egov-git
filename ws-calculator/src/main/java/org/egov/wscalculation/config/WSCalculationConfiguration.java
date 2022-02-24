@@ -300,4 +300,11 @@ public class WSCalculationConfiguration {
 	
 	@Value("#{new java.text.SimpleDateFormat('dd/MM/yyyy').parse('${egov.demand.sw.active.nonmeter}')}")
     private Date swApplicableForNonMeter;
+
+	@Value("${bulk.demand.batch.value}")
+	private Integer bulkbatchSize;
+
+	@Value("${bulk.demand.offset.value}")
+	private Integer batchOffset;
+
 }

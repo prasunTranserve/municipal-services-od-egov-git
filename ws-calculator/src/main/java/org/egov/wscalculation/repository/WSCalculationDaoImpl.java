@@ -13,6 +13,7 @@ import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
+import org.egov.wscalculation.repository.rowmapper.WaterRowMapper;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
@@ -46,6 +47,9 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	
 	@Autowired
 	private DemandSchedulerRowMapper demandSchedulerRowMapper;
+	
+	@Autowired
+	private WaterRowMapper waterRowMapper;
 	
 
 	@Value("${egov.meterservice.createmeterconnection}")
@@ -170,5 +174,28 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	@Override
 	public void updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
 		wSCalculationProducer.push(updateMeterConnection, meterConnectionRequest);
+	}
+	
+	@Override
+	public long getConnectionCount(String tenantid, Long fromDate, Long toDate){
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getCountQuery();
+		preparedStatement.add(tenantid);
+		preparedStatement.add(fromDate);
+		preparedStatement.add(toDate);
+		preparedStatement.add(tenantid);
+		preparedStatement.add(toDate);
+
+		long count = jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+		return count;
+	}
+	
+	@Override
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate,
+			List<String> connectionNos) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate, connectionNos);
+		log.info("connection " + connectionType + " connection list : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
 	}
 }
