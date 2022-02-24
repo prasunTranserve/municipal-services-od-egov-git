@@ -22,7 +22,7 @@ public class Document {
   private String id ;
 
   @JsonProperty("documentType")
-  @NotNull
+  @NotNull(message = "Docuent type can not be blank")
   private String documentType ;
 
   @JsonProperty("fileStoreId")

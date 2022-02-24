@@ -215,28 +215,28 @@ public class MasterDataService {
 			}
 		}
 		Map<String, Object> billingPeriod = new HashMap<>();
-//		if (master.get(WSCalculationConstant.ConnectionType).toString()
-//				.equalsIgnoreCase(WSCalculationConstant.meteredConnectionType)) {
-//			billingPeriod.put(WSCalculationConstant.STARTING_DATE_APPLICABLES, criteria.getFrom());
-//			billingPeriod.put(WSCalculationConstant.ENDING_DATE_APPLICABLES, criteria.getTo());
-//		} else {
-		if (WSCalculationConstant.Monthly_Billing_Period
-				.equalsIgnoreCase(master.get(WSCalculationConstant.Billing_Cycle_String).toString())) {
-			estimationService.getMonthStartAndEndDate(billingPeriod);
-		} else if (WSCalculationConstant.Quaterly_Billing_Period
-				.equalsIgnoreCase(master.get(WSCalculationConstant.Billing_Cycle_String).toString())) {
-			estimationService.getQuarterStartAndEndDate(billingPeriod);
+		if (master.get(WSCalculationConstant.ConnectionType).toString()
+				.equalsIgnoreCase(WSCalculationConstant.meteredConnectionType)) {
+			billingPeriod.put(WSCalculationConstant.STARTING_DATE_APPLICABLES, criteria.getFrom());
+			billingPeriod.put(WSCalculationConstant.ENDING_DATE_APPLICABLES, criteria.getTo());
 		} else {
-			LocalDateTime demandEndDate = LocalDateTime.now();
-			demandEndDate = setCurrentDateValueToStartingOfDay(demandEndDate);
-			Long endDaysMillis = (Long) master.get(WSCalculationConstant.Demand_End_Date_String);
-
-			billingPeriod.put(WSCalculationConstant.STARTING_DATE_APPLICABLES,
-					Timestamp.valueOf(demandEndDate).getTime() - endDaysMillis);
-			billingPeriod.put(WSCalculationConstant.ENDING_DATE_APPLICABLES,
-					Timestamp.valueOf(demandEndDate).getTime());
+			if (WSCalculationConstant.Monthly_Billing_Period
+					.equalsIgnoreCase(master.get(WSCalculationConstant.Billing_Cycle_String).toString())) {
+				estimationService.getMonthStartAndEndDate(billingPeriod);
+			} else if (WSCalculationConstant.Quaterly_Billing_Period
+					.equalsIgnoreCase(master.get(WSCalculationConstant.Billing_Cycle_String).toString())) {
+				estimationService.getQuarterStartAndEndDate(billingPeriod);
+			} else {
+				LocalDateTime demandEndDate = LocalDateTime.now();
+				demandEndDate = setCurrentDateValueToStartingOfDay(demandEndDate);
+				Long endDaysMillis = (Long) master.get(WSCalculationConstant.Demand_End_Date_String);
+	
+				billingPeriod.put(WSCalculationConstant.STARTING_DATE_APPLICABLES,
+						Timestamp.valueOf(demandEndDate).getTime() - endDaysMillis);
+				billingPeriod.put(WSCalculationConstant.ENDING_DATE_APPLICABLES,
+						Timestamp.valueOf(demandEndDate).getTime());
+			}
 		}
-//		}
 		log.info("Demand Expiry Date : {}", master.get(WSCalculationConstant.Demand_Expiry_Date_String));
 		BigInteger expiryDate = new BigInteger(
 				String.valueOf(master.get(WSCalculationConstant.Demand_Expiry_Date_String)));
@@ -439,18 +439,6 @@ public class MasterDataService {
 			master.put(resp.getKey(), resp.getValue());
 		}
 		return master;
-	}
-	
-	public void loadMeterReadingMasterData(RequestInfo requestInfo, String tenantId,
-			Map<String, Object> masterMap) {
-
-		MdmsResponse response = mapper.convertValue(repository.fetchResult(calculatorUtils.getMdmsSearchUrl(),
-				meterReadingUtils.getMeterReadingMasterData(requestInfo, tenantId)), MdmsResponse.class);
-		Map<String, JSONArray> res = response.getMdmsRes().get(WSCalculationConstant.WS_TAX_MODULE);
-		for (Entry<String, JSONArray> entry : res.entrySet()) {
-			/* Master not contained in list will be stored as it is */
-			masterMap.put(entry.getKey(), entry.getValue());
-		}
 	}
 	
 }

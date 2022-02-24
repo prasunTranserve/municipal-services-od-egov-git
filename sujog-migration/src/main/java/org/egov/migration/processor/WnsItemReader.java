@@ -22,6 +22,7 @@ import org.egov.migration.mapper.MeterReadingRowMapper;
 import org.egov.migration.mapper.WnsDemandRowMapper;
 import org.egov.migration.reader.model.WnsConnection;
 import org.egov.migration.reader.model.WnsConnectionHolder;
+import org.egov.migration.reader.model.WnsConnectionHolderRowMap;
 import org.egov.migration.reader.model.WnsConnectionRowMap;
 import org.egov.migration.reader.model.WnsDemand;
 import org.egov.migration.reader.model.WnsMeterReading;
@@ -58,7 +59,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 	
 	private Map<String, WnsServiceRowMap> serviceRowMap;
 	private Map<String, List<Integer>> meterReadingRowMap;
-	private Map<String, Integer> holderRowMap;
+	private Map<String, WnsConnectionHolderRowMap> holderRowMap;
 	private Map<String, List<Integer>> demandRowMap;
 	
 	private Map<String, WnsConnectionRowMap> wnsConnectionRowMap;
@@ -126,7 +127,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 //			if(connection != null && activeConnectionCountMap.get(connection.getConnectionNo()) != null && wnsConnectionRowMap.get(connection.getConnectionNo())) {
 //				MigrationUtility.addError(connection.getConnectionNo(), String.format("%s Approved and Active connection present", activeConnectionCountMap.get(connection.getConnectionNo())));
 //			}
-		} while(connection == null);
+		} while(connection == null && this.connectionRowIterator.hasNext());
 		
 		return connection;
 	}
@@ -194,7 +195,7 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 		connectionNo = MigrationUtility.addLeadingZeros(connectionNo);
 		if(this.holderRowMap.get(connectionNo) == null)
 			return null;
-		return connectionHolderRowMapper.mapRow(this.ulb, this.holderSheet.getRow(this.holderRowMap.get(connectionNo)), this.holderColMap);
+		return connectionHolderRowMapper.mapRow(this.ulb, this.holderSheet.getRow(this.holderRowMap.get(connectionNo).getRowNum()), this.holderColMap);
 	}
 
 	private WnsConnectionService getConnectionService(String connectionNo) {
@@ -345,10 +346,32 @@ public class WnsItemReader implements ItemReader<WnsConnection> {
 			if(row.getRowNum()==0) {
 				updateHolderColumnMap(row);
 			} else {
-				this.holderRowMap.put(MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.holderColMap.get(MigrationConst.COL_CONNECTION_NO)), false)), row.getRowNum());
+				String connectionNo = MigrationUtility.addLeadingZeros(MigrationUtility.readCellValue(row.getCell(this.holderColMap.get(MigrationConst.COL_CONNECTION_NO)), false));
+				if(this.holderRowMap.containsKey(connectionNo)) {
+					this.holderRowMap.put(connectionNo, updateConnectionHolder(holderRowMap.get(connectionNo), row));
+				} else {
+					this.holderRowMap.put(connectionNo, getConnectionHolder(connectionNo, row));
+				}
 			}
 		});
-		
+	}
+
+	private WnsConnectionHolderRowMap updateConnectionHolder(WnsConnectionHolderRowMap previousConnectionHolderRowMap,
+			Row row) {
+		String incomingcreatedDate = MigrationUtility.readCellValue(row.getCell(this.holderColMap.get(MigrationConst.COL_LAST_MODIFIED_ON)), false);
+		if(MigrationUtility.toDate(previousConnectionHolderRowMap.getCreatedDate()).isBefore(MigrationUtility.toDate(incomingcreatedDate))) {
+			return getConnectionHolder(previousConnectionHolderRowMap.getConnectionNo(), row);
+		} else {
+			return previousConnectionHolderRowMap;
+		}
+	}
+
+	private WnsConnectionHolderRowMap getConnectionHolder(String connectionNo, Row row) {
+		WnsConnectionHolderRowMap connectionHolderRowMap = WnsConnectionHolderRowMap.builder()
+				.connectionNo(connectionNo)
+				.createdDate(MigrationUtility.readCellValue(row.getCell(this.holderColMap.get(MigrationConst.COL_LAST_MODIFIED_ON)), false))
+				.rowNum(row.getRowNum()).build();
+		return connectionHolderRowMap;
 	}
 
 	private void updateHolderColumnMap(Row row) {

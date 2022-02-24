@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.Period;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -18,11 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -33,8 +29,6 @@ import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.util.WaterCessUtil;
 import org.egov.wscalculation.web.models.BillingSlab;
 import org.egov.wscalculation.web.models.CalculationCriteria;
-import org.egov.wscalculation.web.models.MeterReading;
-import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.RoadCuttingInfo;
 import org.egov.wscalculation.web.models.SearchCriteria;
@@ -46,6 +40,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -110,12 +107,7 @@ public class EstimationService {
 					.append(" connection no");
 			throw new CustomException("WATER_CONNECTION_NOT_FOUND", builder.toString());
 		}
-		// Enrich criteria with meter reading
-		if(WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())) {
-			MeterReadingSearchCriteria meterSearchCriteria = MeterReadingSearchCriteria.builder().tenantId(tenantId).connectionNos(Stream.of(criteria.getConnectionNo()).collect(Collectors.toSet())).build();
-			List<MeterReading> meterReadingLists = meterService.searchMeterReadings(meterSearchCriteria, requestInfo);
-			criteria.setMeterReadingLists(meterReadingLists);
-		}
+
 		Map<String, JSONArray> billingSlabMaster = new HashMap<>();
 		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
 		ArrayList<String> billingSlabIds = new ArrayList<>();
@@ -139,7 +131,7 @@ public class EstimationService {
 		// 		requestInfo);
 		BigDecimal waterTaxAmt = getWaterEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo, masterData);
 		BigDecimal sewerageTaxAmt = getSewerageEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo);
-		List<TaxHeadEstimate> taxHeadEstimates = getEstimatesForTax(waterTaxAmt, sewerageTaxAmt, criteria.getWaterConnection(),
+		List<TaxHeadEstimate> taxHeadEstimates = getEstimatesForTax(waterTaxAmt, sewerageTaxAmt, criteria,
 				timeBasedExemptionMasterMap, RequestInfoWrapper.builder().requestInfo(requestInfo).build(), masterData);
 
 		Map<String, List> estimatesAndBillingSlabs = new HashMap<>();
@@ -168,8 +160,7 @@ public class EstimationService {
 					ratio = Long.parseLong(meterReadingRatio.split(":")[1]);
 				}
 			}
-			//Double totalUnit = criteria.getCurrentReading() - criteria.getLastReading();
-			Double totalUnit = calculateTotalUnit(criteria, masterData);
+			Double totalUnit = criteria.getCurrentReading() - criteria.getLastReading();
 			BigDecimal rate = getMeteredRate(criteria, usageType);
 			waterCharges = rate.multiply(BigDecimal.valueOf(totalUnit)).multiply(BigDecimal.valueOf(ratio));
 		} else if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.nonMeterdConnection)) {
@@ -272,9 +263,18 @@ public class EstimationService {
 	 * @return - Returns list of TaxHeadEstimates
 	 */
 	private List<TaxHeadEstimate> getEstimatesForTax(BigDecimal waterCharge, BigDecimal SewerageCharge,
-			WaterConnection connection,
+			CalculationCriteria criteria,
 			Map<String, JSONArray> timeBasedExemptionsMasterMap, RequestInfoWrapper requestInfoWrapper,
 			Map<String, Object> masterData) {
+		WaterConnection connection = criteria.getWaterConnection();
+		
+		
+		@SuppressWarnings("unchecked")
+		Map<String, Object> financialYearMaster =  (Map<String, Object>) masterData
+				.get(WSCalculationConstant.BILLING_PERIOD);
+		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+		Calendar billingPeriodTo = calculatorUtil.getCalendar(toDate);
+		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
 		
 		if(WSCalculationConstant.MDMS_WATER_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
@@ -284,24 +284,28 @@ public class EstimationService {
 					.estimateAmount(waterCharge.setScale(2, 2)).build());
 		}
 
-		if(WSCalculationConstant.MDMS_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
-				|| WSCalculationConstant.MDMS_WATER_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())) {
-			// sewerage_charge
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
-					.estimateAmount(SewerageCharge.setScale(2, 2)).build());
+		if(((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+				&& !billingPeriodTo.getTime().before(configs.getSwApplicableForMeter()))
+			||(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+						&& !billingPeriodTo.getTime().before(configs.getSwApplicableForNonMeter())))
+			&& (WSCalculationConstant.MDMS_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
+					|| WSCalculationConstant.MDMS_WATER_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility()))) {
+				// sewerage_charge
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
+						.estimateAmount(SewerageCharge.setScale(2, 2)).build());
 		}
 
 		BigDecimal totalCharge = waterCharge.add(SewerageCharge);
 
 		// water timebase Rebate
-		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
-		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
-			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
-					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
-		}
+//		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+//		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
+//			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
+//					.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
+//		}
 		
 		// water Special Rebate
-		if(isSpecialRebateApplicableForMonth(masterData)) {
+		if(isSpecialRebateApplicableForMonth(criteria, masterData)) {
 			BigDecimal specialRebate = payService.getApplicableSpecialRebate(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
 			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
 				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
@@ -312,15 +316,28 @@ public class EstimationService {
 		// Sewerage arrear fee
 		if(configs.isSwArrearDemandEnabled()) {
 			BigDecimal swArrearAmount = BigDecimal.ZERO;
-			int swDemandMonth = configs.getSwArrearMonthCount();
-			log.info("Generating sewerage bill for " + swDemandMonth + " months");
 			LinkedHashMap additionalDetails = (LinkedHashMap)connection.getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
 				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
 				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
-			swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
+			if(WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthMeter()
+					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearMeter()) {
+				int swDemandMonth = configs.getSwArrearMonthCountForMeter();
+				int lastSwChargeApplicableFor = getMonthDifference(criteria.getFrom(), criteria.getTo());
+				int swArrearApplicaleMonth = swDemandMonth-lastSwChargeApplicableFor+1;
+				log.info("Generating sewerage arrear bill for " + swArrearApplicaleMonth + " months");
+				swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swArrearApplicaleMonth)).setScale(2, 2);
+			} else if(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+					&& billingPeriodTo.get(Calendar.MONTH)+1==configs.getSwArrearBillingMonthNonMeter()
+					&& billingPeriodTo.get(Calendar.YEAR)==configs.getSwArrearBillingYearNonMeter()) {
+				int swDemandMonth = configs.getSwArrearMonthCountForNonMeter();
+				log.info("Generating sewerage arrear bill for " + swDemandMonth + " months");
+				swArrearAmount = migratedSewerageFee.multiply(BigDecimal.valueOf(swDemandMonth)).setScale(2, 2);
+			}
+			
 			if(swArrearAmount.compareTo(BigDecimal.ZERO) > 0) {
 				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_ADHOC_CHARGE)
 						.estimateAmount(swArrearAmount.setScale(2, 2)).build());
@@ -765,7 +782,7 @@ public class EstimationService {
 			}
 		}
 		
-		BigDecimal labourFee = calculateLabourFee(criteria.getWaterConnection().getAdditionalDetails(), masterData);
+		BigDecimal labourFee = calculateLabourFee(criteria.getWaterConnection(), masterData);
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
 		estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SCRUTINY_FEE)
@@ -782,14 +799,14 @@ public class EstimationService {
 	}
 	
 	
-	private BigDecimal calculateLabourFee(Object additionalDetails, Map<String, Object> masterData) {
+	private BigDecimal calculateLabourFee(WaterConnection waterConnection, Map<String, Object> masterData) {
 		BigDecimal labourFee = BigDecimal.ZERO;
 		boolean isLabourFeeApplicable = Boolean.FALSE;
 		boolean isInstallmentApplicable = Boolean.FALSE;
-		if(additionalDetails == null) {
+		if(waterConnection.getAdditionalDetails() == null) {
 			return labourFee;
 		}
-		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)additionalDetails;
+		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)waterConnection.getAdditionalDetails();
 		if(additionalDetailJsonNode.containsKey(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE)) {
 			isLabourFeeApplicable = additionalDetailJsonNode.get(WSCalculationConstant.IS_LABOUR_FEE_APPLICABLE).toString().equalsIgnoreCase("Y") 
 					? Boolean.TRUE:Boolean.FALSE;
@@ -807,11 +824,26 @@ public class EstimationService {
 		JSONObject labourFeeObj = mapper.convertValue(labourFeeMaster.get(0), JSONObject.class);
 		
 		if(isLabourFeeApplicable && isInstallmentApplicable) {
-			//TODO: installment Calculation
+			if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
+					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+						|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
+				|| (WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(waterConnection.getConnectionType())
+						&& WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory()))) {
+				//TODO: installment Calculation
+			}
 			
 		} else if(isLabourFeeApplicable && !isInstallmentApplicable) {
-			if (labourFeeObj.get(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
-				labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
+			if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
+					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+						|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
+				|| (WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(waterConnection.getConnectionType())
+						&& WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory()))) {
+				
+				if (labourFeeObj.get(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
+					labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
+				}
 			}
 		}
 		
@@ -1158,7 +1190,7 @@ public class EstimationService {
 
 	}
 
-	public boolean isSpecialRebateApplicableForMonth(Map<String, Object> masterMap) {
+	public boolean isSpecialRebateApplicableForMonth(CalculationCriteria criteria, Map<String, Object> masterMap) {
 		// TODO Auto-generated method stub
 		@SuppressWarnings("unchecked")
 		Map<String, Object> financialYearMaster = (Map<String, Object>) masterMap
@@ -1169,38 +1201,24 @@ public class EstimationService {
 		
 		LocalDate taxPeriodFrom = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
 	
-		if(StringUtils.hasText(configs.getSpecialRebateYear()) && configs.getSpecialRebateYear().matches("\\d+") &&
-				Integer.parseInt(configs.getSpecialRebateYear()) == taxPeriodFrom.getYear()) {
-			if(StringUtils.hasText(configs.getSpecialRebateMonths())
-					&& (Arrays.asList(configs.getSpecialRebateMonths().trim().split(","))).contains(String.valueOf(taxPeriodFrom.getMonth().getValue()))) {
-				return true;
+		if(WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())) {
+			 return Arrays.asList(configs.getSpecialRebateMonthsForMeteredConnection().trim().split(",")).stream()
+				.filter(monYear ->
+					Integer.parseInt(monYear.split("/")[0]) == taxPeriodFrom.getMonth().getValue() &&
+							Integer.parseInt(monYear.split("/")[1]) == taxPeriodFrom.getYear()
+				).count() > 0 ? true : false;
+		} else {
+			if(StringUtils.hasText(configs.getSpecialRebateYear()) && configs.getSpecialRebateYear().matches("\\d+") &&
+					Integer.parseInt(configs.getSpecialRebateYear()) == taxPeriodFrom.getYear()) {
+				if(StringUtils.hasText(configs.getSpecialRebateMonths())
+						&& (Arrays.asList(configs.getSpecialRebateMonths().trim().split(","))).contains(String.valueOf(taxPeriodFrom.getMonth().getValue()))) {
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 	
-	private Double calculateTotalUnit(CalculationCriteria criteria, Map<String, Object> masterData) {
-		@SuppressWarnings("unchecked")
-		Map<String, Object> financialYearMaster = (Map<String, Object>) masterData.get(WSCalculationConstant.BILLING_PERIOD);
-
-		Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
-		Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
-		LocalDate billingStartDate = Instant.ofEpochMilli(fromDate).atZone(ZoneId.systemDefault()).toLocalDate();
-		LocalDate billingEndDate = Instant.ofEpochMilli(toDate).atZone(ZoneId.systemDefault()).toLocalDate();
-
-		return criteria.getMeterReadingLists().stream()
-				.filter(meterReading -> {
-					LocalDate createdDate = Instant.ofEpochMilli(meterReading.getAuditDetails().getCreatedTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-					return wSCalculationUtil.getMeterReadingAllowedate(masterData).isBefore(createdDate);
-				})
-				.filter(meterReading -> {
-					LocalDate readingDate = Instant.ofEpochMilli(meterReading.getCurrentReadingDate()).atZone(ZoneId.systemDefault()).toLocalDate();
-					return readingDate.compareTo(billingStartDate) >= 0 && readingDate.compareTo(billingEndDate) <= 0;
-				})
-				.mapToDouble(meterReading -> meterReading.getCurrentReading() - meterReading.getLastReading())
-				.sum();
-	}
-
 	private BigDecimal getSewerageEstimationChargeV2(WaterConnection waterConnection, CalculationCriteria criteria,
 			RequestInfo requestInfo) {
 
@@ -1209,15 +1227,22 @@ public class EstimationService {
 			return sewerageCharge;
 		}
 		
+		BigDecimal monthsApplicable = BigDecimal.ONE;
+		if(criteria.getWaterConnection().getConnectionType().equals(WSCalculationConstant.meteredConnectionType)
+				&& WSCalculationConstant.MDMS_WATER_SEWERAGE_CONNECTION.equalsIgnoreCase(criteria.getWaterConnection().getConnectionFacility())) {
+			int swChargeApplicableMonth = getMonthDifference(criteria.getFrom(), criteria.getTo());
+			monthsApplicable = BigDecimal.valueOf(swChargeApplicableMonth);
+		}
+		
 		log.info("Generate Sewerage demand with migrated value: " + configs.isSwDemandMigratedAmountEnabled());
-		if(configs.isSwDemandMigratedAmountEnabled()) {
+		if(StringUtils.hasText(criteria.getWaterConnection().getOldConnectionNo()) && configs.isSwDemandMigratedAmountEnabled()) {
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
 				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
 //				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
-			return migratedSewerageFee;
+			return migratedSewerageFee.multiply(monthsApplicable);
 		}
 
 		String usageCategory = criteria.getWaterConnection().getUsageCategory();
@@ -1242,8 +1267,18 @@ public class EstimationService {
 				sewerageCharge = calculateDiameterFixedCharge(criteria.getWaterConnection().getAdditionalDetails());
 			}
 		}
-		return sewerageCharge;
+		
+		return sewerageCharge.multiply(monthsApplicable);
 
+	}
+	
+	private int getMonthDifference(Long fromLongDate, Long toLongDate) {
+		Calendar lastMeterReadingDate = calculatorUtil.getCalendar(fromLongDate);
+		Calendar currentMeterReadingDate = calculatorUtil.getCalendar(toLongDate);
+		LocalDate fromDate = LocalDateTime.ofInstant(lastMeterReadingDate.toInstant(), lastMeterReadingDate.getTimeZone().toZoneId()).toLocalDate();
+		LocalDate toDate = LocalDateTime.ofInstant(currentMeterReadingDate.toInstant(), currentMeterReadingDate.getTimeZone().toZoneId()).toLocalDate();
+		Period diff = Period.between(fromDate.withDayOfMonth(1), toDate.withDayOfMonth(1));
+		return diff.getMonths();
 	}
 	
 	private BigDecimal calculateDiameterFixedCharge(Object additionalDetails) {
@@ -1273,5 +1308,4 @@ public class EstimationService {
 		int maxDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 		return BigDecimal.valueOf(maxDays);
 	}
-	
 }

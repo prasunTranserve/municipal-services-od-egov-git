@@ -133,6 +133,7 @@ public class MDMSValidator {
 			errorMap.put("INVALID_WATER_CONNECTION_TYPE", messageBuilder.toString());
 		}
 		if (!StringUtils.isEmpty(waterConnection.getWaterSource())
+				&& !WCConstants.SERVICE_SEWERAGE.equalsIgnoreCase(waterConnection.getConnectionFacility())
 				&& !codes.get(WCConstants.MDMS_WC_WATER_SOURCE).contains(waterConnection.getWaterSource())) {
 			messageBuilder = new StringBuilder();
 			messageBuilder.append("Water Source / Water Sub Source value is invalid, please enter proper value! ");

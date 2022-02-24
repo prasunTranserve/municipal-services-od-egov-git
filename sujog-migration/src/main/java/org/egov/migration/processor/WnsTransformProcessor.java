@@ -59,10 +59,12 @@ public class WnsTransformProcessor implements ItemProcessor<WnsConnection, Conne
 				return null;
 			}
 			if(connection.getConnectionFacility()==null) {
-				MigrationUtility.addError(connection.getConnectionNo(), "Not able to determine connection Facility");
-			} else {
-				return transformConnection(connection);
+//				MigrationUtility.addError(connection.getConnectionNo(), "Not able to determine connection Facility");
+				connection.setConnectionFacility(MigrationConst.CONNECTION_WATER);
 			}
+			
+			return transformConnection(connection);
+			
 		}
 		return null;
 	}

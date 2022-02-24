@@ -6,6 +6,7 @@ import java.util.List;
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.service.WnsService;
+import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,24 @@ public class SwItemWriter implements ItemWriter<ConnectionDTO> {
 		items.forEach(conn -> {
 			try {
 				wnsService.migrateSewerageConnection(conn);
+			} catch (Exception e) {
+				log.error("Exception in demand migration: " + e.getMessage());
+				MigrationUtility.addError(conn.getWaterConnection().getOldConnectionNo(), e.getMessage());
+			}
+		});
+		
+		try {
+			Thread.sleep(3000);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		// Demand migration
+		items.forEach(conn -> {
+			try {
+				if(MigrationConst.SERVICE_SEWERAGE.equalsIgnoreCase(conn.getWaterConnection().getConnectionFacility())) {
+					wnsService.migrateDemands(conn);
+				}
 			} catch (Exception e) {
 				log.error("Exception in demand migration: " + e.getMessage());
 				MigrationUtility.addError(conn.getWaterConnection().getOldConnectionNo(), e.getMessage());

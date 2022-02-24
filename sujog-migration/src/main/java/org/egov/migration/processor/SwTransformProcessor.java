@@ -1,12 +1,15 @@
 package org.egov.migration.processor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.ConnectionHolderDTO;
+import org.egov.migration.business.model.DemandDTO;
+import org.egov.migration.business.model.DemandDetailDTO;
 import org.egov.migration.business.model.ProcessInstance;
 import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.config.SystemProperties;
@@ -58,14 +61,18 @@ public class SwTransformProcessor implements ItemProcessor<WnsConnection, Connec
 				return null;
 			}
 			if(connection.getConnectionFacility()==null) {
-				MigrationUtility.addError(connection.getConnectionNo(), "Not able to determine connection Facility");
-			} else {
-				ConnectionDTO connectionDTO = transformConnection(connection);
-				if(MigrationConst.SERVICE_SEWERAGE.equalsIgnoreCase(connectionDTO.getWaterConnection().getConnectionFacility())) {
-					return connectionDTO;
-				} else if(MigrationConst.SERVICE_WATER_SEWERAGE.equalsIgnoreCase(connectionDTO.getWaterConnection().getConnectionFacility())) {
-					return updateJointConnection(connectionDTO);
-				}
+//				MigrationUtility.addError(connection.getConnectionNo(), "Not able to determine connection Facility");
+				connection.setConnectionFacility(MigrationConst.CONNECTION_WATER);
+			}
+
+			ConnectionDTO connectionDTO = transformConnection(connection);
+			if(MigrationConst.SERVICE_SEWERAGE.equalsIgnoreCase(connectionDTO.getWaterConnection().getConnectionFacility())) {
+				// Enrich connection type to Non metered for pure sewerage connection
+				connectionDTO.getWaterConnection().setConnectionType(MigrationConst.CONNECTION_NON_METERED);
+				connectionDTO.getWaterConnection().setWaterSource(null);
+				return connectionDTO;
+			} else if(MigrationConst.SERVICE_WATER_SEWERAGE.equalsIgnoreCase(connectionDTO.getWaterConnection().getConnectionFacility())) {
+				return updateJointConnection(connectionDTO);
 			}
 		}
 		return null;
@@ -184,7 +191,9 @@ public class SwTransformProcessor implements ItemProcessor<WnsConnection, Connec
 		try {
 			ConnectionDTO connectionDTO = new ConnectionDTO();
 			transformWnSConnection(connectionDTO, connection);
-//			transformDemandV4(connectionDTO, connection);
+			if(MigrationConst.SERVICE_SEWERAGE.equalsIgnoreCase(connectionDTO.getWaterConnection().getConnectionFacility())) {
+				transformDemandV4(connectionDTO, connection);
+			}
 			return connectionDTO;
 		} catch (Exception e) {
 			MigrationUtility.addError(connection.getConnectionNo(), e.getLocalizedMessage());
@@ -365,6 +374,75 @@ public class SwTransformProcessor implements ItemProcessor<WnsConnection, Connec
 	private void transformWaterConnection(WaterConnectionDTO waterConnectionDTO, WnsConnection connection) {
 		waterConnectionDTO.setTenantId(this.tenantId);
 		waterConnectionDTO.setOldConnectionNo(MigrationUtility.addLeadingZeros(connection.getConnectionNo()));
+	}
+	
+	private void transformDemandV4(ConnectionDTO connectionDTO, WnsConnection connection) {
+		List<WnsDemand> demands = connection.getDemands();
+		if(demands==null || demands.isEmpty())
+			return;
+		
+		// get the latest demand
+		WnsDemand demand = demands.stream()
+				.sorted((d1,d2) -> MigrationUtility.getLongDate(d2.getBillingPeriodTo(), dateFormat).compareTo(MigrationUtility.getLongDate(d1.getBillingPeriodTo(), dateFormat)))
+				.findFirst().orElse(null);
+		
+		if(demand == null) {
+			return;
+		}
+		
+		boolean isArrearDemandRequired = false;
+		
+		BigDecimal totalArrearOutStanding = BigDecimal.ZERO;
+		BigDecimal arrearAmount =  MigrationUtility.convertToBigDecimal(demand.getArrear());
+		BigDecimal collectedAmount = MigrationUtility.convertToBigDecimal(demand.getCollectedAmount());
+
+		totalArrearOutStanding = arrearAmount.subtract(collectedAmount);
+		
+		if(totalArrearOutStanding.compareTo(BigDecimal.ZERO) != 0) {
+			isArrearDemandRequired = true;
+		}
+		
+		if(isArrearDemandRequired) {
+			List<DemandDTO> demandDTOs = new ArrayList<DemandDTO>();
+			if(totalArrearOutStanding.compareTo(BigDecimal.ZERO) > 0) {
+				// Have due
+				DemandDTO arrearDemandDTO = new DemandDTO();
+				arrearDemandDTO.setTenantId(connectionDTO.getWaterConnection().getTenantId());
+				arrearDemandDTO.setTaxPeriodFrom(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodFrom(), dateFormat));
+				arrearDemandDTO.setTaxPeriodTo(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodTo(), dateFormat));
+				
+				DemandDetailDTO arrearDemandDetailDTO = new DemandDetailDTO();
+				arrearDemandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+				arrearDemandDetailDTO.setTaxAmount(arrearAmount);
+				arrearDemandDetailDTO.setCollectionAmount(collectedAmount);
+				
+				arrearDemandDTO.setDemandDetails(Arrays.asList(arrearDemandDetailDTO));
+				demandDTOs.add(arrearDemandDTO);
+				connectionDTO.setWaterDemands(demandDTOs);
+			} else if(totalArrearOutStanding.compareTo(BigDecimal.ZERO) < 0) {
+				// have advance
+				DemandDTO arrearDemandDTO = new DemandDTO();
+				arrearDemandDTO.setTenantId(connectionDTO.getWaterConnection().getTenantId());
+				arrearDemandDTO.setTaxPeriodFrom(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodFrom(), dateFormat));
+				arrearDemandDTO.setTaxPeriodTo(MigrationUtility.getPreviousMonthLongDate(demand.getBillingPeriodTo(), dateFormat));
+				
+				List<DemandDetailDTO> demanddetails = new ArrayList<>();
+				DemandDetailDTO arrearDemandDetailDTO = new DemandDetailDTO();
+				arrearDemandDetailDTO.setTaxHeadMasterCode("SW_CHARGE");
+				arrearDemandDetailDTO.setTaxAmount(arrearAmount);
+				arrearDemandDetailDTO.setCollectionAmount(arrearAmount);
+				demanddetails.add(arrearDemandDetailDTO);
+				
+				DemandDetailDTO advanceDemandDetailDTO = new DemandDetailDTO();
+				advanceDemandDetailDTO.setTaxHeadMasterCode("SW_ADVANCE_CARRYFORWARD");
+				advanceDemandDetailDTO.setTaxAmount(totalArrearOutStanding);
+				advanceDemandDetailDTO.setCollectionAmount(BigDecimal.ZERO);
+				demanddetails.add(advanceDemandDetailDTO);
+				arrearDemandDTO.setDemandDetails(demanddetails);
+				demandDTOs.add(arrearDemandDTO);
+				connectionDTO.setWaterDemands(demandDTOs);
+			}
+		}
 	}
 
 }

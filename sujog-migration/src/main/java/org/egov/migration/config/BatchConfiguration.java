@@ -127,7 +127,7 @@ public class BatchConfiguration {
     @Bean(name = "stepSwMigrate")
     protected Step stepSwMigrate() throws EncryptedDocumentException, IOException, Exception {
         return stepBuilderFactory.get("stepSwMigrate").<WnsConnection, ConnectionDTO> chunk(100)
-          .reader(getSwReader())
+          .reader(getWnsReader())
           .processor(getSwProcessor())
           .writer(getSwWriter()).build();
     }

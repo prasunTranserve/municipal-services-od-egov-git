@@ -85,8 +85,6 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			//Calculate and create demand for connection
 			masterMap = masterDataService.loadMasterData(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
-			masterDataService.loadMeterReadingMasterData(request.getRequestInfo(),
-					request.getCalculationCriteria().get(0).getTenantId(), masterMap);
 			calculations = getCalculations(request, masterMap);
 		} else {
 			//Calculate and create demand for application
