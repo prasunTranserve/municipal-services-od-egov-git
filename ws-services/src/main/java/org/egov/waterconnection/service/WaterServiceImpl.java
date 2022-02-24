@@ -2,7 +2,9 @@ package org.egov.waterconnection.service;
 
 import static org.egov.waterconnection.constants.WCConstants.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class WaterServiceImpl implements WaterService {
@@ -75,6 +79,9 @@ public class WaterServiceImpl implements WaterService {
 
 	@Autowired
 	private WaterServicesUtil wsUtil;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	/**
 	 * 
@@ -186,6 +193,10 @@ public class WaterServiceImpl implements WaterService {
 	public List<WaterConnection> updateWaterConnection(WaterConnectionRequest waterConnectionRequest) {
 		if (waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.LINK_MOBILE_NUMBER)) {
 			return linkMobileWithWaterConnection(waterConnectionRequest);
+		}
+		if (waterConnectionRequest.getWaterConnection().getApplicationType()
+				.equalsIgnoreCase(WCConstants.APPL_TYPE_UPDATE_VOLUMETRIC)) {
+			return updateVolumetricCharges(waterConnectionRequest);
 		}
 		if (wsUtil.isModifyConnectionRequest(waterConnectionRequest)) {
 			// Received request to update the connection for modifyConnection WF
@@ -449,5 +460,45 @@ public class WaterServiceImpl implements WaterService {
 			waterConnectionRequest.getWaterConnection().setOldApplication(Boolean.TRUE);
 		}
 
+	}
+
+	/**
+	 * Update volumetric charges in additionalDetails
+	 * @param waterConnectionRequest
+	 * @return
+	 */
+	private List<WaterConnection> updateVolumetricCharges(WaterConnectionRequest waterConnectionRequest) {
+		WaterConnection searchResult = getConnectionForUpdateRequest(
+				waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
+
+		HashMap<String, Object> additionalDetailsFromDb = mapper.convertValue(searchResult.getAdditionalDetails(),
+				HashMap.class);
+		HashMap<String, Object> additionalDetailsFromRequest = mapper
+				.convertValue(waterConnectionRequest.getWaterConnection().getAdditionalDetails(), HashMap.class);
+		switch (searchResult.getConnectionFacility()) {
+		case SERVICE_WATER:
+			additionalDetailsFromDb.put(WCConstants.ADDITIONAL_DETAIL_VOLUMETRIC_WATER_CHARGE,
+					additionalDetailsFromRequest.get(WCConstants.ADDITIONAL_DETAIL_VOLUMETRIC_WATER_CHARGE));
+			break;
+		case SERVICE_SEWERAGE:
+			additionalDetailsFromDb.put(ADDITIONAL_DETAIL_MIGRATED_SEWERAGE_FEE,
+					additionalDetailsFromRequest.get(ADDITIONAL_DETAIL_MIGRATED_SEWERAGE_FEE));
+			break;
+		case SERVICE_WATER_SEWERAGE:
+			additionalDetailsFromDb.put(WCConstants.ADDITIONAL_DETAIL_VOLUMETRIC_WATER_CHARGE,
+					additionalDetailsFromRequest.get(WCConstants.ADDITIONAL_DETAIL_VOLUMETRIC_WATER_CHARGE));
+			additionalDetailsFromDb.put(ADDITIONAL_DETAIL_MIGRATED_SEWERAGE_FEE,
+					additionalDetailsFromRequest.get(ADDITIONAL_DETAIL_MIGRATED_SEWERAGE_FEE));
+			break;
+		}
+		// push to DB-
+		searchResult.setAdditionalDetails(additionalDetailsFromDb);
+		waterConnectionRequest.setWaterConnection(searchResult);
+		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
+		waterDao.updateWaterConnection(waterConnectionRequest, true);
+
+		List<WaterConnection> returnList = new ArrayList<>();
+		returnList.add(searchResult);
+		return returnList;
 	}
 }
