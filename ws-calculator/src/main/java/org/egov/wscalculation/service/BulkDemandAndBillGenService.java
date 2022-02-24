@@ -63,8 +63,6 @@ public class BulkDemandAndBillGenService {
 
 		Map<String, Object> masterMap = mDataService.loadMasterData(request.getRequestInfo(),
 				request.getCalculationCriteria().get(0).getTenantId());
-		mDataService.loadMeterReadingMasterData(request.getRequestInfo(),
-				request.getCalculationCriteria().get(0).getTenantId(), masterMap);
 		List<Calculation> calculations = wsCalculationService.getCalculations(request, masterMap);
 		BulkBillGenerator bulkBillGenerator = generateDemandInBulk(request.getRequestInfo(), calculations, masterMap,
 				true);

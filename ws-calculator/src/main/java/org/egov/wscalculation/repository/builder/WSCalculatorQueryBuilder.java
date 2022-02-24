@@ -33,11 +33,7 @@ public class WSCalculatorQueryBuilder {
 
 	private static final String distinctTenantIdsCriteria = "SELECT distinct(tenantid) FROM eg_ws_connection ws";
 	
-	/* only considering non-metered connection */
-//	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and wc.connectiontype ='Non Metered' and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)";
-	
-	/* Considering metered connection */
-	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc ON wc.connection_id = conn.id where conn.tenantid = ? and conn.connectionno is not null and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?) and wc.connectionexecutiondate <= ?";
+	private  static final String countQuery = "select count(distinct(conn.connectionno)) from eg_ws_connection conn inner join eg_ws_service wc on conn.id=wc.connection_id where conn.tenantid = ? and conn.applicationstatus = 'CONNECTION_ACTIVATED' and conn.isoldapplication = false and wc.connectiontype ='Non Metered' and conn.connectionno is not null and wc.connectionexecutiondate <= ? and conn.connectionno not in (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid = ?)"; //  and wc.connectionexecutiondate <= ?
 
 	private static String holderSelectValues = "connectionholder.tenantid as holdertenantid, connectionholder.connectionid as holderapplicationId, userid, connectionholder.status as holderstatus, isprimaryholder, connectionholdertype, holdershippercentage, connectionholder.relationship as holderrelationship, connectionholder.createdby as holdercreatedby, connectionholder.createdtime as holdercreatedtime, connectionholder.lastmodifiedby as holderlastmodifiedby, connectionholder.lastmodifiedtime as holderlastmodifiedtime";
 
@@ -262,18 +258,43 @@ public class WSCalculatorQueryBuilder {
 		//StringBuilder query = new StringBuilder(connectionNoListQuery);
 
 		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
-		// Add connection type
-		if(!StringUtils.isEmpty(connectionType)) {
-			addClauseIfRequired(preparedStatement, query);
-			query.append(" wc.connectiontype = ? ");
-			preparedStatement.add(connectionType);
-		}
+
 		// add tenantid
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.tenantid = ? ");
 		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.applicationstatus = 'CONNECTION_ACTIVATED'");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.isoldapplication = false");
+		
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno is not null");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectiontype = ? ");
+		preparedStatement.add(connectionType);
+		
+		// remove the connection which was created after billing period
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectionexecutiondate <= ?");
+		preparedStatement.add(toDate);
+		
+		// added for connection wise bill generation
+//		if(!connectionNos.isEmpty()) {
+//			addClauseIfRequired(preparedStatement, query);
+//			query.append(" conn.connectionno in (");
+//			int length = connectionNos.size();
+//			for (int i = 0; i < length; i++) {
+//				query.append(" ?");
+//				if (i != length - 1)
+//					query.append(",");
+//				preparedStatement.add(connectionNos.get(i));
+//			}
+//			query.append(")");
+//		}
 
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
@@ -281,32 +302,12 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantId);
 
-		addClauseIfRequired(preparedStatement, query);
-		String orderbyClause = " conn.connectionno IN (select connectionno FROM eg_ws_connection where tenantid=? and connectionno is not null ORDER BY connectionno OFFSET ? LIMIT ?)";
-		preparedStatement.add(tenantId);
+//		addClauseIfRequired(preparedStatement, query);
+		String orderbyClause = " order by conn.connectionno OFFSET ? LIMIT ?";
 		preparedStatement.add(batchOffset);
 		preparedStatement.add(batchsize);
 		query.append(orderbyClause);
 		
-		// remove the connection which was created after billing period
-		addClauseIfRequired(preparedStatement, query);
-		query.append(" wc.connectionexecutiondate <= ? ");
-		preparedStatement.add(toDate);
-		
-		// added for connection wise bill generation
-		if(!connectionNos.isEmpty()) {
-			addClauseIfRequired(preparedStatement, query);
-			query.append(" conn.connectionno in (");
-			int length = connectionNos.size();
-			for (int i = 0; i < length; i++) {
-				query.append(" ?");
-				if (i != length - 1)
-					query.append(",");
-				preparedStatement.add(connectionNos.get(i));
-			}
-			query.append(")");
-		}
-
 		return query.toString();
 		
 	}

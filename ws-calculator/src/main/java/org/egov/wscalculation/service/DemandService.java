@@ -748,7 +748,7 @@ public class DemandService {
 			if(count>0) {
 				while (batchOffset < count) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
-							null, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
+							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
 					String assessmentYear = estimationService.getAssessmentYear();
 					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
 
