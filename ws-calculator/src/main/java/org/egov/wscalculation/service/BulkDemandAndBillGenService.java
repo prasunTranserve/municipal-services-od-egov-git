@@ -1,11 +1,13 @@
 package org.egov.wscalculation.service;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.function.Function;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.kafka.CustomKafkaTemplate;
@@ -19,13 +21,14 @@ import org.egov.wscalculation.web.models.Demand;
 import org.egov.wscalculation.web.models.Demand.StatusEnum;
 import org.egov.wscalculation.web.models.DemandDetail;
 import org.egov.wscalculation.web.models.GetBillCriteria;
-import org.egov.wscalculation.web.models.Property;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -63,8 +66,6 @@ public class BulkDemandAndBillGenService {
 
 		Map<String, Object> masterMap = mDataService.loadMasterData(request.getRequestInfo(),
 				request.getCalculationCriteria().get(0).getTenantId());
-		mDataService.loadMeterReadingMasterData(request.getRequestInfo(),
-				request.getCalculationCriteria().get(0).getTenantId(), masterMap);
 		List<Calculation> calculations = wsCalculationService.getCalculations(request, masterMap);
 		BulkBillGenerator bulkBillGenerator = generateDemandInBulk(request.getRequestInfo(), calculations, masterMap,
 				true);
