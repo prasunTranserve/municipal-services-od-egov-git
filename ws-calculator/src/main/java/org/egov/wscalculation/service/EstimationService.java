@@ -293,6 +293,14 @@ public class EstimationService {
 				// sewerage_charge
 				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
 						.estimateAmount(SewerageCharge.setScale(2, 2)).build());
+		} else if(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+					&& WSCalculationConstant.MDMS_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
+					&& billingPeriodTo.getTime().before(configs.getSwApplicableForNonMeter())){
+			SewerageCharge = BigDecimal.ZERO;
+			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
+					.estimateAmount(SewerageCharge.setScale(2, 2)).build());
+		} else {
+			SewerageCharge = BigDecimal.ZERO;
 		}
 
 		BigDecimal totalCharge = waterCharge.add(SewerageCharge);

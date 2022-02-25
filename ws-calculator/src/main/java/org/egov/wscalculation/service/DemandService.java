@@ -746,7 +746,7 @@ public class DemandService {
 			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate);
 			log.info("Connection Count: "+count);
 			if(count>0) {
-				while (batchOffset < count) {
+				while (batchOffset <= count) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
 							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
 					String assessmentYear = estimationService.getAssessmentYear();
