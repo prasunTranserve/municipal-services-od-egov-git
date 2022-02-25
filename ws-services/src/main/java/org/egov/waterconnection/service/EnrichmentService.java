@@ -272,8 +272,10 @@ public class EnrichmentService {
 						.tenantId(waterConnectionrequest.getWaterConnection().getTenantId())
 						.connectionNumber(waterConnectionrequest.getWaterConnection().getConnectionNo()).build();
 				List<WaterConnection> connections = waterService.search(criteria, waterConnectionrequest.getRequestInfo());
+				//sort the connections on basis of applicationno desc alphabetically as not coming sorted on basis of appcreateddate-
+				connections.sort((a,b)->b.getApplicationNo().compareTo(a.getApplicationNo()));
 				if (!CollectionUtils.isEmpty(connections)) {
-					WaterConnection connection = connections.get(connections.size() - 1);
+					WaterConnection connection = connections.get(1);
 					if (!connection.getConnectionType().equals(WCConstants.METERED_CONNECTION)) {
 						waterDao.postForMeterReading(waterConnectionrequest);
 					}
