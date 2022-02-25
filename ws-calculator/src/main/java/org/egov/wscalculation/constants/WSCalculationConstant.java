@@ -274,6 +274,30 @@ public class WSCalculationConstant {
 	public static final String LABOURFEE_TOTALAMOUNT = "totalAmount";
 	
 	public static final String WS_LABOUR_FEE = "WS_LABOUR_FEE";
+	
+	public static final String ADHOC_PENALTY_REASON = "adhocPenaltyReason";
+
+	public static final String ADHOC_PENALTY_COMMENT = "adhocPenaltyComment";
+
+	public static final String ADHOC_REBATE_REASON = "adhocRebateReason";
+
+	public static final String ADHOC_REBATE_COMMENT = "adhocRebateComment";
+
+	public static final String INITIAL_METER_READING_CONST = "initialMeterReading";
+
+	public static final String SUBMIT_APPLICATION_CONST = "SUBMIT_APPLICATION";
+
+	public static final String DETAILS_PROVIDED_BY = "detailsProvidedBy";
+
+	public static final String APP_CREATED_DATE = "appCreatedDate";
+
+	public static final String ESTIMATION_FILESTORE_ID = "estimationFileStoreId";
+
+	public static final String SANCTION_LETTER_FILESTORE_ID = "sanctionFileStoreId";
+
+	public static final String ESTIMATION_DATE_CONST = "estimationLetterDate";
+
+	public static final String LOCALITY = "locality";
 
 
 	public static final String WS_UC_COMMERCIAL = "COMMERCIAL";

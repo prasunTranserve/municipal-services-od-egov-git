@@ -55,7 +55,11 @@ public class CalculationReq  {
         @NotNull
         @JsonProperty("CalculationCriteria")
         private List<CalculationCriteria> calculationCriteria;
-
+        
+        /*
+         * Used by the bulk bill generator to send batch information through kafka
+         */
+        private MigrationCount migrationCount;
 
         public CalculationReq addCalulationCriteriaItem(CalculationCriteria calulationCriteriaItem) {
         this.calculationCriteria.add(calulationCriteriaItem);

@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.config.WSCalculationConfiguration;
 import org.egov.wscalculation.constants.WSCalculationConstant;
@@ -284,5 +285,28 @@ public class WSCalculationUtil {
 		monthEndDate.set(Calendar.MILLISECOND, 0);
 		
 		return monthEndDate.getTimeInMillis();
+	}
+
+	/**
+	 * 
+	 * @param waterConnectionRequest
+	 *            WaterConnectionRequest containing property
+	 * @return List of Property
+	 */
+	public List<Property> propertySearch(RequestInfo requestInfo, Set<String> propertyUuids, String tenantId) {
+		
+		PropertyCriteria propertyCriteria = PropertyCriteria.builder()
+				.uuids(propertyUuids)
+				.tenantId(tenantId)
+				.build();
+		
+		StringBuilder url = getPropertyURL(propertyCriteria);
+		RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder()
+				.requestInfo(requestInfo)
+				.build();
+		
+		Object result = serviceRequestRepository.fetchResult(url, requestInfoWrapper);
+		List<Property> propertyList = getPropertyDetails(result);
+		return propertyList;
 	}
 }
