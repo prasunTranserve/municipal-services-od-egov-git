@@ -303,7 +303,10 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(tenantId);
 
 //		addClauseIfRequired(preparedStatement, query);
-		String orderbyClause = " order by conn.connectionno OFFSET ? LIMIT ?";
+		String orderbyClause = " and conn.connectionno in (select ewc.connectionno from eg_ws_connection ewc inner join eg_ws_service ews on ews.connection_id = ewc.id where ewc.tenantid = ? and ewc.applicationstatus = 'CONNECTION_ACTIVATED' and ewc.isoldapplication = false and ewc.connectionno is not null and ews.connectiontype = ? and ews.connectionexecutiondate <= ? order by ewc.connectionno offset ? limit ?)";
+		preparedStatement.add(tenantId);
+		preparedStatement.add(connectionType);
+		preparedStatement.add(toDate);
 		preparedStatement.add(batchOffset);
 		preparedStatement.add(batchsize);
 		query.append(orderbyClause);
