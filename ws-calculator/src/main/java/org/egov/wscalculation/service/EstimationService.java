@@ -173,19 +173,19 @@ public class EstimationService {
 			}
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			if(additionalDetails.containsKey(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION)) {
-				isVolumetricConnection = additionalDetails.get(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION).toString();
+				isVolumetricConnection = StringUtils.isEmpty(additionalDetails.get(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION)) ? WSCalculationConstant.NO : additionalDetails.get(WSCalculationConstant.IS_VOLUMETRIC_CONNECTION).toString();
 			}
 			if(additionalDetails.containsKey(WSCalculationConstant.IS_DAILY_CONSUMPTION)) {
-				isDailyConsumption = additionalDetails.get(WSCalculationConstant.IS_DAILY_CONSUMPTION).toString();
+				isDailyConsumption = StringUtils.isEmpty(additionalDetails.get(WSCalculationConstant.IS_DAILY_CONSUMPTION)) ? WSCalculationConstant.NO : additionalDetails.get(WSCalculationConstant.IS_DAILY_CONSUMPTION).toString();
 			}
 			if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_CONSUMPTION)) {
-				volumetricConsumption = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_CONSUMPTION).toString();
+				volumetricConsumption = StringUtils.isEmpty(additionalDetails.get(WSCalculationConstant.VOLUMETRIC_CONSUMPTION)) ? "0" :additionalDetails.get(WSCalculationConstant.VOLUMETRIC_CONSUMPTION).toString();
 			}
 			if(isVolumetricConnection != null && WSCalculationConstant.YES.equalsIgnoreCase(isVolumetricConnection)) {
 				BigDecimal volumetricWaterCharge = BigDecimal.ZERO;
 				if(isMigratedConnection) {
 					if(additionalDetails.containsKey(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE)) {
-						String amount = additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE).toString();
+						String amount = StringUtils.isEmpty(additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE)) ? "0": additionalDetails.get(WSCalculationConstant.VOLUMETRIC_WATER_CHARGE).toString();
 						if(StringUtils.hasText(amount.trim())) {
 							volumetricWaterCharge = new BigDecimal(amount.trim());
 						}
@@ -1247,7 +1247,7 @@ public class EstimationService {
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
-				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
+				migratedSewerageFee = StringUtils.isEmpty(additionalDetails.get("migratedSewerageFee")) ? BigDecimal.ZERO : new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
 //				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
 			return migratedSewerageFee.multiply(monthsApplicable);
