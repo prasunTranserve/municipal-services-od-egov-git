@@ -80,6 +80,7 @@ public class DemandGenerationConsumer {
 			 */
 			log.error("Failed in DemandGenerationConsumer with error : " + ex.getMessage());
 			request.getMigrationCount().setMessage("Failed in DemandGenerationConsumer with error : " + ex.getMessage());
+			request.getMigrationCount().setAuditTime(System.currentTimeMillis());
 			producer.push(bulkBillGenAuditTopic, request.getMigrationCount());
 		}
 	}
