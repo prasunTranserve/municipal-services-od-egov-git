@@ -442,6 +442,8 @@ public class DemandService {
 		//Checks if the current date id within demand from and to date 
 		if((demand.getTaxPeriodFrom()<= System.currentTimeMillis() && demand.getTaxPeriodTo() >= System.currentTimeMillis()))
 			isCurrentDemand = true;
+		
+		log.debug("isCurrentDemand ["+isCurrentDemand+"]");
 		/*
 		 * method to get the latest collected time from the receipt service
 		 */
@@ -476,6 +478,8 @@ public class DemandService {
 			penalty = payService.applyPenalty(taxAmtForPenalty,collectedPtTax,
 	                taxPeriod.getFinancialYear(), timeBasedExmeptionMasterMap,payments,taxPeriod);
 		}
+		
+		log.debug("Penalty Amount ["+penalty+"]");
 		
 		rebate = payService.applyRebate(taxAmt, collectedPtTax, taxPeriod.getFinancialYear(),
 				timeBasedExmeptionMasterMap, payments, taxPeriod);
