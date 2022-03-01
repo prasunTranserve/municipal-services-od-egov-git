@@ -135,6 +135,10 @@ public class CalculatorConstants {
 	public static final String CANCER_CESS_MASTER = "CancerCess";
 
 	public static final String INTEREST_MASTER = "Interest";
+	
+	public static final String MUTATION_PENANLTY_MASTER = "MutationPenalty";
+	
+	public static final String MUTATION_REBATE_MASTER = "MutationRebate";
 
 	public static final List<String> PROPERTY_BASED_EXEMPTION_MASTERS = Collections.unmodifiableList(Arrays.asList(
 			USAGE_MAJOR_MASTER, USAGE_MINOR_MASTER, USAGE_SUB_MINOR_MASTER, USAGE_DETAIL_MASTER, OWNER_TYPE_MASTER));
