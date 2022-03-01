@@ -1,5 +1,6 @@
 package org.egov.pt.validator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -838,6 +839,14 @@ public class PropertyValidator {
 			errorMap.put("EG_PT_MUTATION_WF_FIELDS_ERROR", "mandatory fields Missing in workflow Object for Mutation please provide the following information : "
 					+ "action, moduleName and BusinessService");
 
+		if(configs.getIsMutationWorkflowEnabled() && PTConstants.ACTION_PAY.equalsIgnoreCase(workFlow.getAction())) {
+			if(!Objects.isNull(additionalDetails.get(PTConstants.MUTATION_CHARGE))) {
+				BigDecimal mutationCharge = new BigDecimal(additionalDetails.get(PTConstants.MUTATION_CHARGE).toString());
+				if(mutationCharge.compareTo(BigDecimal.ZERO) > 0 ) {
+					errorMap.put("EG_PT_MUTATION_WF_FIELDS_ERROR", "Invalid action, cannot skip payment if mutaion charge is greater than 0 ");
+				}
+			}
+		}
 		List<String> masterNames = new ArrayList<>(Arrays.asList(PTConstants.MDMS_PT_MUTATIONREASON));
 		Map<String, List<String>> codes = propertyUtil.getAttributeValues(property.getTenantId(), PTConstants.MDMS_PT_MOD_NAME,
 				masterNames, "$.*.code", PTConstants.JSONPATH_CODES, request.getRequestInfo());
