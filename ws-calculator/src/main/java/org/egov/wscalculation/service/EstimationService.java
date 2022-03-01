@@ -122,7 +122,7 @@ public class EstimationService {
 		
 		ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterData
 				.get(WSCalculationConstant.Billing_Period_Master);
-		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData);
+		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData, WSCalculationConstant.nonMeterdConnection);
 		// mDataService.setWaterConnectionMasterValues(requestInfo, tenantId,
 		// billingSlabMaster,
 		// timeBasedExemptionMasterMap);
@@ -248,7 +248,7 @@ public class EstimationService {
 			LinkedHashMap additionalDetails = (LinkedHashMap)criteria.getWaterConnection().getAdditionalDetails();
 			BigDecimal migratedSewerageFee = BigDecimal.ZERO;
 			if(additionalDetails.containsKey("migratedSewerageFee")) {
-				migratedSewerageFee = new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
+				migratedSewerageFee = StringUtils.isEmpty(additionalDetails.get("migratedSewerageFee")) ? BigDecimal.ZERO : new BigDecimal(additionalDetails.get("migratedSewerageFee").toString());
 //				log.info("Migrated sewerage amount: " + migratedSewerageFee.toString());
 			}
 			return migratedSewerageFee.multiply(monthsApplicable);
@@ -304,6 +304,8 @@ public class EstimationService {
 			Map<String, JSONArray> timeBasedExemptionsMasterMap, RequestInfoWrapper requestInfoWrapper,
 			Map<String, Object> masterData) {
 		WaterConnection connection = criteria.getWaterConnection();
+		
+		
 		@SuppressWarnings("unchecked")
 		Map<String, Object> financialYearMaster =  (Map<String, Object>) masterData
 				.get(WSCalculationConstant.BILLING_PERIOD);
@@ -311,26 +313,35 @@ public class EstimationService {
 		Calendar billingPeriodTo = calculatorUtil.getCalendar(toDate);
 		
 		List<TaxHeadEstimate> estimates = new ArrayList<>();
+		
 		if(WSCalculationConstant.MDMS_WATER_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
 				|| WSCalculationConstant.MDMS_WATER_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())) {
 			// water_charge
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_CHARGE)
 					.estimateAmount(waterCharge.setScale(2, 2)).build());
 		}
-		
+
 		if(((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
 				&& !billingPeriodTo.getTime().before(configs.getSwApplicableForMeter()))
 			||(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
 						&& !billingPeriodTo.getTime().before(configs.getSwApplicableForNonMeter())))
 			&& (WSCalculationConstant.MDMS_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
 					|| WSCalculationConstant.MDMS_WATER_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility()))) {
-			// sewerage_charge
+				// sewerage_charge
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
+						.estimateAmount(SewerageCharge.setScale(2, 2)).build());
+		} else if(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
+					&& WSCalculationConstant.MDMS_SEWERAGE_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())
+					&& billingPeriodTo.getTime().before(configs.getSwApplicableForNonMeter())){
+			SewerageCharge = BigDecimal.ZERO;
 			estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.SW_CHARGE)
 					.estimateAmount(SewerageCharge.setScale(2, 2)).build());
+		} else {
+			SewerageCharge = BigDecimal.ZERO;
 		}
-		
+
 		BigDecimal totalCharge = waterCharge.add(SewerageCharge);
-		
+
 		// water timebase Rebate
 //		BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
 //		if(timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
@@ -387,7 +398,7 @@ public class EstimationService {
 				}
 			}
 		}
-
+		
 		// Water_cess
 		if (timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_WATER_CESS_MASTER) != null
 				&& (WSCalculationConstant.MDMS_WATER_CONNECTION.equalsIgnoreCase(connection.getConnectionFacility())

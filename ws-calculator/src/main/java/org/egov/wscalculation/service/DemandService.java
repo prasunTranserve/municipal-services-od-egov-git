@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,7 @@ import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
@@ -43,6 +45,7 @@ import org.egov.wscalculation.web.models.DemandDetailAndCollection;
 import org.egov.wscalculation.web.models.DemandRequest;
 import org.egov.wscalculation.web.models.DemandResponse;
 import org.egov.wscalculation.web.models.GetBillCriteria;
+import org.egov.wscalculation.web.models.MigrationCount;
 import org.egov.wscalculation.web.models.RequestInfoWrapper;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxPeriod;
@@ -282,7 +285,7 @@ public class DemandService {
 	 * @param demandDetails
 	 *            The list of demandDetail
 	 */
-	private void addRoundOffTaxHead(String tenantId, List<DemandDetail> demandDetails) {
+	public void addRoundOffTaxHead(String tenantId, List<DemandDetail> demandDetails) {
 		BigDecimal totalTax = BigDecimal.ZERO;
 
 		BigDecimal previousRoundOff = BigDecimal.ZERO;
@@ -434,7 +437,7 @@ public class DemandService {
 		}
 		return url;
 	}
-
+	
 	/**
 	 * 
 	 * @param getBillCriteria Bill Criteria
@@ -481,12 +484,11 @@ public class DemandService {
 					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
 				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
 						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
-			if (demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.isDemandEligibleForRebateAndPenalty(latestDemandPeriodTo)) {
+			if(demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.isDemandEligibleForRebateAndPenalty(latestDemandPeriodTo)) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
 			} else {
 				resetTimeBasedApplicablesForArear(demand);
 			}
-			
 			addRoundOffTaxHead(tenantId, demand.getDemandDetails());
 			demandsToBeUpdated.add(demand);
 		});
@@ -496,6 +498,61 @@ public class DemandService {
 		repository.fetchResult(utils.getUpdateDemandUrl(), request);
 		return res.getDemands();
 
+	}
+
+	/**
+	 * 
+	 * @param getBillCriteria Bill Criteria
+	 * @param requestInfoWrapper contains request info wrapper
+	 * @return updated demand response
+	 */
+	public List<Demand> updateDemands(GetBillCriteria getBillCriteria, RequestInfoWrapper requestInfoWrapper, Boolean isCallFromBulkGen) {
+
+		if (getBillCriteria.getAmountExpected() == null)
+			getBillCriteria.setAmountExpected(BigDecimal.ZERO);
+		RequestInfo requestInfo = requestInfoWrapper.getRequestInfo();
+		Map<String, JSONArray> billingSlabMaster = new HashMap<>();
+
+		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
+		mstrDataService.setWaterConnectionMasterValues(requestInfo, getBillCriteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
+
+		
+		if (CollectionUtils.isEmpty(getBillCriteria.getConsumerCodes()))
+			getBillCriteria.setConsumerCodes(Collections.singletonList(getBillCriteria.getConnectionNumber()));
+
+		DemandResponse res = mapper.convertValue(
+				repository.fetchResult(utils.getDemandSearchUrl(getBillCriteria), requestInfoWrapper),
+				DemandResponse.class);
+		if (CollectionUtils.isEmpty(res.getDemands())) {
+			return Collections.emptyList();
+		}
+
+
+		// Loop through the consumerCodes and re-calculate the time base applicable
+		Map<String, Demand> consumerCodeToDemandMap = res.getDemands().stream()
+				.collect(Collectors.toMap(Demand::getId, Function.identity()));
+		List<Demand> demandsToBeUpdated = new LinkedList<>();
+
+		String tenantId = getBillCriteria.getTenantId();
+
+		List<TaxPeriod> taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), tenantId, WSCalculationConstant.SERVICE_FIELD_VALUE_WS);
+		
+		consumerCodeToDemandMap.forEach((id, demand) ->{
+			if (demand.getStatus() != null
+					&& WSCalculationConstant.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
+				throw new CustomException(WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR,
+						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
+			applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
+			addRoundOffTaxHead(tenantId, demand.getDemandDetails());
+			demandsToBeUpdated.add(demand);
+		});
+
+		//Call demand update in bulk to update the interest or penalty
+		DemandRequest request = DemandRequest.builder().demands(demandsToBeUpdated).requestInfo(requestInfo).build();
+		if(!isCallFromBulkGen)
+		repository.fetchResult(utils.getUpdateDemandUrl(), request);
+		return demandsToBeUpdated;
 	}
 	
 	private void resetTimeBasedApplicablesForArear(Demand demand) {
@@ -698,10 +755,9 @@ public class DemandService {
 	 * @param tenantId
 	 *            TenantId for getting master data.
 	 */
-	public void generateDemandForTenantId(String tenantId, RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
+	public void generateDemandForTenantId(String tenantId, RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
 		requestInfo.getUserInfo().setTenantId(tenantId);
-		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
-		generateDemandForULB(billingMasterData, requestInfo, tenantId, billCriteria);
+		generateDemandForULB(requestInfo, tenantId, bulkBillCriteria);
 	}
 
 	/**
@@ -710,30 +766,76 @@ public class DemandService {
 	 * @param requestInfo Request Info
 	 * @param tenantId Tenant Id
 	 */
-	public void generateDemandForULB(Map<String, Object> master, RequestInfo requestInfo, String tenantId, BillSchedulerCriteria billCriteria) {
-		log.info("Billing master data values for non metered connection:: {}", master);
-		long startDay = (((int) master.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
-		if(isCurrentDateIsMatching((String) master.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
-//			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId,
-//					WSCalculationConstant.nonMeterdConnection, billCriteria);
-//			List<String> connectionNos = waterCalculatorDao.getConnectionsNoList(tenantId, null, billCriteria);
-			log.info("Proposed Connections: "+billCriteria.getConnectionNos());
-			List<WaterConnection> ConnectionList = waterCalculatorDao.getConnectionsNoList(tenantId, WSCalculationConstant.nonMeterdConnection, billCriteria);
-			List<String> connectionNos = wsCalculationUtil.getFilteredConnections(ConnectionList);
-			log.info("Actual Connections: "+connectionNos.toString());
-			String assessmentYear = estimationService.getAssessmentYear();
-			for (String connectionNo : connectionNos) {
-				CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
-						.assessmentYear(assessmentYear).connectionNo(connectionNo).build();
-				List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
-				calculationCriteriaList.add(calculationCriteria);
-				CalculationReq calculationReq = CalculationReq.builder().calculationCriteria(calculationCriteriaList)
-						.requestInfo(requestInfo).isconnectionCalculation(true).build();
-				log.info(String.format("Pushed for demand generation for tenant: %s, connectionNo: %s", tenantId, connectionNo));
-				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
-				// log.info("Prepared Statement" + calculationRes.toString());
+	public void generateDemandForULB(RequestInfo requestInfo, String tenantId, BulkBillCriteria bulkBillCriteria) {
+		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
+		log.info("Billing master data values for non metered connection:: {}", billingMasterData);
 
+		long startDay = (((int) billingMasterData.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
+		if(isCurrentDateIsMatching((String) billingMasterData.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
+
+			Integer batchsize = configs.getBatchSize();
+			Integer batchOffset = configs.getBatchOffset();
+
+			if(bulkBillCriteria.getLimit() != null)
+				batchsize = Math.toIntExact(bulkBillCriteria.getLimit());
+
+			if(bulkBillCriteria.getOffset() != null)
+				batchOffset = Math.toIntExact(bulkBillCriteria.getOffset());
+
+
+			Map<String, Object> masterMap = mstrDataService.loadMasterData(requestInfo, tenantId);
+
+			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
+					.get(WSCalculationConstant.Billing_Period_Master);
+			mstrDataService.enrichBillingPeriod(null, billingFrequencyMap, masterMap, WSCalculationConstant.nonMeterdConnection);
+
+			Map<String, Object> financialYearMaster =  (Map<String, Object>) masterMap
+					.get(WSCalculationConstant.BILLING_PERIOD);
+
+			Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
+			Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+
+			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate);
+			log.info("Connection Count: "+count);
+			if(count>0) {
+				while (batchOffset <= count) {
+					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
+							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
+					String assessmentYear = estimationService.getAssessmentYear();
+					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
+
+					if (connections.size() > 0) {
+						List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
+						for (WaterConnection connectionNo : connections) {
+							CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
+									.assessmentYear(assessmentYear).connectionNo(connectionNo.getConnectionNo())
+									.waterConnection(connectionNo).build();
+							calculationCriteriaList.add(calculationCriteria);
+						}
+						MigrationCount migrationCount = MigrationCount.builder()
+								.tenantid(tenantId)
+								.businessService("WS")
+								.limit(Long.valueOf(batchsize))
+								.id(UUID.randomUUID().toString())
+								.offset(Long.valueOf(batchOffset))
+								.createdTime(System.currentTimeMillis())								
+								.recordCount(Long.valueOf(connections.size()))
+								.build();
+
+						CalculationReq calculationReq = CalculationReq.builder()
+								.calculationCriteria(calculationCriteriaList)
+								.requestInfo(requestInfo)
+								.isconnectionCalculation(true)
+								.migrationCount(migrationCount).build();
+
+						wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
+						log.info("Bulk bill Gen batch info : " + migrationCount);
+						calculationCriteriaList.clear();
+					}
+					batchOffset = batchOffset + batchsize;
+				}
 			}
+
 		}
 	}
 
@@ -846,12 +948,62 @@ public class DemandService {
 		return calculations;
 	}
 	
-	public void generateDemandForConnections(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
-		String tenantId = billCriteria.getTenants().get(0);
+	public void generateDemandForConnections(RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
+		String tenantId = bulkBillCriteria.getTenantIds().get(0);
 		requestInfo.getUserInfo().setTenantId(tenantId);
+		
 		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
-//		generateDemandForConnection(billingMasterData, requestInfo, tenantId, billCriteria);
-		generateDemandForULB(billingMasterData, requestInfo, tenantId, billCriteria);
+		log.info("Billing master data values for non metered connection:: {}", billingMasterData);
+		
+		long startDay = (((int) billingMasterData.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
+		if(isCurrentDateIsMatching((String) billingMasterData.get(WSCalculationConstant.Billing_Cycle_String), startDay)) { 
+			Map<String, Object> masterMap = mstrDataService.loadMasterData(requestInfo, tenantId);
+
+			Integer batchsize = configs.getBatchSize();
+			Integer batchOffset = configs.getBatchOffset();
+			
+			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
+					.get(WSCalculationConstant.Billing_Period_Master);
+			mstrDataService.enrichBillingPeriod(null, billingFrequencyMap, masterMap, WSCalculationConstant.nonMeterdConnection);
+
+			Map<String, Object> financialYearMaster =  (Map<String, Object>) masterMap
+					.get(WSCalculationConstant.BILLING_PERIOD);
+
+			Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
+			Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
+			
+			List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
+					null, 0, 100, fromDate, toDate, bulkBillCriteria.getConnectionNos());
+			String assessmentYear = estimationService.getAssessmentYear();
+			
+			if (connections.size() > 0) {
+				List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
+				for (WaterConnection connectionNo : connections) {
+					CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
+							.assessmentYear(assessmentYear).connectionNo(connectionNo.getConnectionNo())
+							.waterConnection(connectionNo).build();
+					calculationCriteriaList.add(calculationCriteria);
+				}
+				
+				MigrationCount migrationCount = MigrationCount.builder()
+						.tenantid(tenantId)
+						.businessService("WS")
+						.limit(Long.valueOf(batchsize))
+						.id(UUID.randomUUID().toString())
+						.offset(Long.valueOf(batchOffset))
+						.createdTime(System.currentTimeMillis())								
+						.recordCount(Long.valueOf(connections.size()))
+						.build();
+				
+				CalculationReq calculationReq = CalculationReq.builder()
+						.calculationCriteria(calculationCriteriaList)
+						.requestInfo(requestInfo)
+						.isconnectionCalculation(true)
+						.migrationCount(migrationCount).build();
+				
+				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
+			}
+		}
 	}
 
 //	private void generateDemandForConnection(Map<String, Object> master, RequestInfo requestInfo,
