@@ -18,10 +18,14 @@ import org.egov.migration.processor.PropertyTransformProcessorForUser;
 import org.egov.migration.processor.SwItemReader;
 import org.egov.migration.processor.SwItemWriter;
 import org.egov.migration.processor.SwTransformProcessor;
+import org.egov.migration.processor.WnsFetchbillItemReader;
+import org.egov.migration.processor.WnsFetchbillItemWriter;
+import org.egov.migration.processor.WnsFetchbillTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
 import org.egov.migration.processor.WnsTransformProcessor;
 import org.egov.migration.reader.model.Property;
+import org.egov.migration.reader.model.WSConnection;
 import org.egov.migration.reader.model.WnsConnection;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -131,7 +135,33 @@ public class BatchConfiguration {
           .processor(getSwProcessor())
           .writer(getSwWriter()).build();
     }
+    
+    @Bean(name = "stepWSFetchbill")
+    protected Step stepWSFetchbill() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepWSFetchbill").<WSConnection, WSConnection> chunk(100)
+          .reader(getWSReader())
+          .processor(getWSProcessor())
+          .writer(getWSWriter()).build();
+    }
 	
+    @Bean
+    public ItemProcessor<? super WSConnection, ? extends WSConnection> getWSProcessor() {
+		return new WnsFetchbillTransformProcessor();
+	}
+
+    @Bean
+	public WnsFetchbillItemWriter getWSWriter() {
+		return new WnsFetchbillItemWriter();
+	}
+
+	@Bean
+    @StepScope
+	public ItemReader<? extends WSConnection> getWSReader() throws EncryptedDocumentException, IOException, Exception {
+		WnsFetchbillItemReader wnsItemReader = new WnsFetchbillItemReader();
+    	wnsItemReader.setSkipRecord(1);
+    	return wnsItemReader;
+	}
+
 	@Bean
     @StepScope
     public ItemReader<Property> getPropertyFetchbillReader() throws EncryptedDocumentException, IOException, Exception {
