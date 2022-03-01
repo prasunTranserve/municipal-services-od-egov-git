@@ -211,7 +211,9 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	 */
 	List<Calculation> getCalculations(CalculationReq request, Map<String, Object> masterMap) {
 		List<Calculation> calculations = new ArrayList<>(request.getCalculationCriteria().size());
+		log.info("Calculation Started");
 		for (CalculationCriteria criteria : request.getCalculationCriteria()) {
+			log.info("Calculating for connection: " + criteria.getConnectionNo());
 			Map<String, List> estimationMap = estimationService.getEstimationMap(criteria, request.getRequestInfo(),
 					masterMap);
 //			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
@@ -220,6 +222,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			Calculation calculation = getCalculation(request.getRequestInfo(), criteria, estimationMap, masterMap, true);
 			calculations.add(calculation);
 		}
+		log.info("Calculation successful for this batch");
 		return calculations;
 	}
 
