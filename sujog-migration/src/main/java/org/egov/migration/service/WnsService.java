@@ -23,6 +23,7 @@ import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.common.model.RequestInfo;
 import org.egov.migration.config.PropertiesData;
+import org.egov.migration.reader.model.WSConnection;
 import org.egov.migration.util.MigrationConst;
 import org.egov.migration.util.MigrationUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -502,5 +503,69 @@ public class WnsService {
 		return true;
 	}
 
+	public void callFetchbill(WSConnection conn) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getBillingServiceHost()).append(properties.getFetchBillEndpoint())
+				.append("?").append("tenantId=").append(conn.getTenantId())
+				.append("&consumerCode=").append(conn.getConnectionNo())
+				.append("&businessService=").append(conn.getBusinessservice());
+		
+		Map<String, Object> fetchbillRequest = prepareWSFetchbillRequest();
+		Object response = remoteService.fetchResult(uri, fetchbillRequest);
+		
+	}
+	
+	private Map<String, Object> prepareWSFetchbillRequest() {
+		Map<String, Object> fetchbillRequest = new HashMap<>();
+		fetchbillRequest.put("RequestInfo", prepareRequestInfo());
+		return fetchbillRequest;
+	}
+	
+	public void writeFetchbillSuccess() throws IOException {
+		String fileName = recordStatistic.getSuccessFile();
+		boolean isNewlyCreated = false;
+		File file = new File(fileName);
+		if (!file.exists()) {
+			file.createNewFile();
+			isNewlyCreated = true;
+		}
+		FileInputStream inputStream = new FileInputStream(file);
 
+		int rownum = 0;
+		try {
+			Workbook workbook;
+			Sheet sheet;
+			if (!isNewlyCreated) {
+				workbook = new XSSFWorkbook(inputStream);
+				sheet = workbook.getSheet("SUCCESS_RECORD");
+			} else {
+				workbook = new XSSFWorkbook();
+				sheet = workbook.createSheet("SUCCESS_RECORD");
+			}
+
+			rownum = sheet.getLastRowNum() + 1;
+
+			if (rownum == 0) {
+				int cellnum = 0;
+				Row headerRow = sheet.createRow(rownum++);
+				Cell headerCellConnection = headerRow.createCell(cellnum++);
+				headerCellConnection.setCellValue("CONNECTION_NO");
+			}
+
+			for (String connectionNo : recordStatistic.getFetchbillSuccessRecords()) {
+				Row row = sheet.createRow(rownum++);
+				int cellnum = 0;
+				Cell cellConnection = row.createCell(cellnum++);
+				cellConnection.setCellValue(connectionNo);
+			}
+
+			FileOutputStream fos = new FileOutputStream(new File(fileName));
+			workbook.write(fos);
+			workbook.close();
+			fos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
 }

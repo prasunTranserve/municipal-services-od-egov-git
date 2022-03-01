@@ -1,5 +1,6 @@
 package org.egov.migration.common.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ public class RecordStatistic {
 	private Map<String, Map<String, String>> successRecords = new HashMap<>();
 	
 	private Map<String, String> fileNotProcessed = new HashMap<>();
+	
+	private List<String> fetchbillSuccessRecords = new ArrayList<>();
 	
 	private String successFile;
 	
