@@ -11,6 +11,7 @@ import org.egov.wscalculation.service.WSCalculationServiceImpl;
 import org.egov.wscalculation.util.ResponseInfoFactory;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.BillSchedulerWrapper;
+import org.egov.wscalculation.web.models.BulkBillCriteriaWrapper;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.CalculationRes;
@@ -85,8 +86,8 @@ public class CalculatorController {
 
 
 	@PostMapping("/_jobscheduler")
-	public void jobscheduler(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
-		wSCalculationService.generateDemandBasedOnTimePeriod(requestInfoWrapper.getRequestInfo());
+	public void jobscheduler(@Valid @RequestBody BulkBillCriteriaWrapper bulkBillCriteriaWrapper) {
+		wSCalculationService.generateDemandBasedOnTimePeriod(bulkBillCriteriaWrapper.getRequestInfo(), bulkBillCriteriaWrapper.getBulkBillCriteria());
 	}
 	
 	@PostMapping("/_applyAdhocTax")
@@ -98,14 +99,9 @@ public class CalculatorController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
-	
-	@PostMapping("/_billscheduler")
-	public void billScheduler(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
-		wSCalculationService.generateDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
-	}
-	
-	@PostMapping("/generate/_bill")
-	public void generateBill(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
-		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
-	}
+
+//	@PostMapping("/generate/_bill")
+//	public void generateBill(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
+//		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
+//	}
 }

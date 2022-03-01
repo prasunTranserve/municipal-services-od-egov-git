@@ -21,6 +21,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
@@ -210,13 +211,16 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	 */
 	List<Calculation> getCalculations(CalculationReq request, Map<String, Object> masterMap) {
 		List<Calculation> calculations = new ArrayList<>(request.getCalculationCriteria().size());
+		log.info("Calculation Started");
 		for (CalculationCriteria criteria : request.getCalculationCriteria()) {
+			log.info("Calculating for connection: " + criteria.getConnectionNo());
 			Map<String, List> estimationMap = estimationService.getEstimationMap(criteria, request.getRequestInfo(),
 					masterMap);
 //			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
 //					.get(WSCalculationConstant.Billing_Period_Master);
 //			masterDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterMap);
 			Calculation calculation = getCalculation(request.getRequestInfo(), criteria, estimationMap, masterMap, true);
+			log.info("Calculation successful for this batch");
 			calculations.add(calculation);
 		}
 		return calculations;
@@ -380,124 +384,109 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	}
 	
 	@Override
-	public void generateDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
-		ValidateRequest(billCriteria);
-		enrichRequest(billCriteria);
-		enrichConfiguration(billCriteria);
-
+	public void generateDemandBasedOnTimePeriod(RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
+		ValidateRequest(bulkBillCriteria);
+		enrichRequest(bulkBillCriteria);
+		enrichConfiguration(bulkBillCriteria);
+		
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		LocalDateTime date = LocalDateTime.now();
 		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
+		
 		List<String> tenantIds = new ArrayList<>();
-		boolean isAll = billCriteria.getTenants().stream().filter(tenant -> tenant.equalsIgnoreCase("ALL")).findAny().orElse(null) == null ? false : true;
-		if(isAll) {
-			log.info("Processing for all tenants");
+		boolean isAll = bulkBillCriteria.getTenantIds().stream().filter(tenant -> tenant.equalsIgnoreCase("ALL")).findAny().orElse(null) == null ? false : true;
+		if(isAll){
 			tenantIds = wSCalculationDao.getTenantId();
-		} else {
-			log.info("Processing for specific tenants");
-			tenantIds = billCriteria.getTenants();
 		}
-
-		boolean isNone = billCriteria.getSkipTenants().stream().filter(tenant -> tenant.equalsIgnoreCase("NONE")).findAny().orElse(null) == null ? false : true;
+		else
+			tenantIds = bulkBillCriteria.getTenantIds();
+		
+		boolean isNone = bulkBillCriteria.getSkipTenantIds().stream().filter(tenant -> tenant.equalsIgnoreCase("NONE")).findAny().orElse(null) == null ? false : true;
 		if(!isNone) {
-			log.info("Skip tenants: " + billCriteria.getSkipTenants());
-			tenantIds = tenantIds.stream().filter(tenant -> !billCriteria.getSkipTenants().contains(tenant)).collect(Collectors.toList());
-		}
-		if (tenantIds.isEmpty()) {
-			log.info("Effective processing tenant Ids : " + tenantIds.toString());
-			return;
+			log.info("Skip tenants: " + bulkBillCriteria.getSkipTenantIds());
+			tenantIds = tenantIds.stream().filter(tenant -> !bulkBillCriteria.getSkipTenantIds().contains(tenant)).collect(Collectors.toList());
 		}
 
 		log.info("Effective processing tenant Ids : " + tenantIds.toString());
+		if (tenantIds.isEmpty())
+			return;
+		
 		tenantIds.forEach(tenantId -> {
-			demandService.generateDemandForTenantId(tenantId, requestInfo, billCriteria);
+			tenantId = tenantId.trim();
+			demandService.generateDemandForTenantId(tenantId, requestInfo, bulkBillCriteria);
 		});
-
-
 	}
 
-	private void ValidateRequest(BillSchedulerCriteria billCriteria) {
-
-		if(billCriteria.getTenants()==null || billCriteria.getTenants().isEmpty()) {
-			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty");
+	private void ValidateRequest(BulkBillCriteria bulkBillCriteria) {
+		
+		if(bulkBillCriteria.getTenantIds()==null || bulkBillCriteria.getTenantIds().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty. If want to process for all tenants use ALL");
 		}
-
-		if(billCriteria.getSkipTenants()==null || billCriteria.getSkipTenants().isEmpty()) {
-			throw new CustomException("INVALID_REQUEST", "Skip tenants are missing or empty");
+		
+		if(bulkBillCriteria.getSkipTenantIds()==null || bulkBillCriteria.getSkipTenantIds().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Skip tenants are missing or empty. If don't wat to skip anything use NONE");
 		}
-
-		if(billCriteria.isSpecificMonth()) {
-			if(billCriteria.getDemandMonth() <= 0) {
-				throw new CustomException("INVALID_REQUEST", "Demand month should be present with positive value");
+		
+		if(bulkBillCriteria.isSpecificMonth()) {
+			if(bulkBillCriteria.getDemandMonth() < 1 && bulkBillCriteria.getDemandMonth() > 12) {
+				throw new CustomException("INVALID_REQUEST", "Invalid demand month");
 			}
-
-			if(billCriteria.getDemandYear() <= 0) {
-				throw new CustomException("INVALID_REQUEST", "Demand year should be present with positive value");
-			}
-		}
-
-		if(billCriteria.getWards() != null && !billCriteria.getWards().isEmpty()) {
-			for (DemandWard ward : billCriteria.getWards()) {
-				if(!StringUtils.hasText(ward.getTenant())) {
-					throw new CustomException("INVALID_REQUEST", "Tenant is not present in specificWards section");
-				}
-
-				if(ward.getWards() == null ) {
-					throw new CustomException("INVALID_REQUEST", "wards can not be empty");
-				}
+			
+			if(bulkBillCriteria.getDemandYear() < 2021 || String.valueOf(bulkBillCriteria.getDemandYear()).length() != 4) {
+				throw new CustomException("INVALID_REQUEST", "Invalid demand year. Demand year greater than or quals to 2021");
 			}
 		}
 	}
 
-	private void enrichRequest(BillSchedulerCriteria billCriteria) {
-		billCriteria.setTenants(billCriteria.getTenants().stream().map(String::trim).collect(Collectors.toList()));
-		billCriteria.setSkipTenants(billCriteria.getSkipTenants().stream().map(String::trim).collect(Collectors.toList()));
-		billCriteria.setConnectionNos(new ArrayList<>());
+	private void enrichRequest(BulkBillCriteria bulkBillCriteria) {
+		bulkBillCriteria.setTenantIds(bulkBillCriteria.getTenantIds().stream().map(String::trim).collect(Collectors.toList()));
+		bulkBillCriteria.setSkipTenantIds(bulkBillCriteria.getSkipTenantIds().stream().map(String::trim).collect(Collectors.toList()));
+		bulkBillCriteria.setConnectionNos(new ArrayList<>());
 	}
 
-	private void enrichConfiguration(BillSchedulerCriteria billCriteria) {
-		wsCalculationConfiguration.setDemandStartEndDateManuallyConfigurable(billCriteria.isSpecificMonth());
-		wsCalculationConfiguration.setDemandManualMonthNo(billCriteria.getDemandMonth());
-		wsCalculationConfiguration.setDemandManualYear(billCriteria.getDemandYear());
-		if(billCriteria.getSpecialRebateMonths() != null) {
-			wsCalculationConfiguration.setSpecialRebateMonths(billCriteria.getSpecialRebateMonths().stream().map(String::valueOf).collect(Collectors.joining(",")));
+	private void enrichConfiguration(BulkBillCriteria bulkBillCriteria) {
+		wsCalculationConfiguration.setDemandStartEndDateManuallyConfigurable(bulkBillCriteria.isSpecificMonth());
+		wsCalculationConfiguration.setDemandManualMonthNo(bulkBillCriteria.getDemandMonth());
+		wsCalculationConfiguration.setDemandManualYear(bulkBillCriteria.getDemandYear());
+		if(bulkBillCriteria.getSpecialRebateMonths() != null) {
+			wsCalculationConfiguration.setSpecialRebateMonths(bulkBillCriteria.getSpecialRebateMonths().stream().map(String::valueOf).collect(Collectors.joining(",")));
 		} else {
 			wsCalculationConfiguration.setSpecialRebateMonths(null);
 		}
-
-		wsCalculationConfiguration.setSpecialRebateYear(String.valueOf(billCriteria.getSpecialRebateYear()));
+		
+		wsCalculationConfiguration.setSpecialRebateYear(String.valueOf(bulkBillCriteria.getSpecialRebateYear()));
 	}
 	
 	@Override
-	public void generateConnectionDemandBasedOnTimePeriod(RequestInfo requestInfo, BillSchedulerCriteria billCriteria) {
-		ValidateConnectionRequest(billCriteria);
-		enrichConfiguration(billCriteria);
-
+	public void generateConnectionDemandBasedOnTimePeriod(RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
+		ValidateConnectionRequest(bulkBillCriteria);
+		enrichConfiguration(bulkBillCriteria);
+		
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		LocalDateTime date = LocalDateTime.now();
 		log.info("Time schedule start for water demand generation on : " + date.format(dateTimeFormatter));
-		demandService.generateDemandForConnections(requestInfo, billCriteria);
+		demandService.generateDemandForConnections(requestInfo, bulkBillCriteria);
 	}
 
-	private void ValidateConnectionRequest(BillSchedulerCriteria billCriteria) {
-		if(billCriteria.getTenants()==null || billCriteria.getTenants().isEmpty()) {
-			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty");
+	private void ValidateConnectionRequest(BulkBillCriteria bulkBillCriteria) {
+		if(bulkBillCriteria.getTenantIds()==null || bulkBillCriteria.getTenantIds().isEmpty()) {
+			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty. If want to process for all tenants use ALL");
 		}
-
-		if(billCriteria.isSpecificMonth()) {
-			if(billCriteria.getDemandMonth() <= 0) {
-				throw new CustomException("INVALID_REQUEST", "Demand month should be present with positive value");
+		
+		if(bulkBillCriteria.isSpecificMonth()) {
+			if(bulkBillCriteria.getDemandMonth() < 1 && bulkBillCriteria.getDemandMonth() > 12) {
+				throw new CustomException("INVALID_REQUEST", "Invalid demand month");
 			}
-
-			if(billCriteria.getDemandYear() <= 0) {
-				throw new CustomException("INVALID_REQUEST", "Demand year should be present with positive value");
+			
+			if(bulkBillCriteria.getDemandYear() < 2021 || String.valueOf(bulkBillCriteria.getDemandYear()).length() != 4) {
+				throw new CustomException("INVALID_REQUEST", "Invalid demand year. Demand year greater than or quals to 2021");
 			}
 		}
-
-		if(billCriteria.getConnectionNos() == null || billCriteria.getConnectionNos().isEmpty()) {
+		
+		if(bulkBillCriteria.getConnectionNos() == null || bulkBillCriteria.getConnectionNos().isEmpty()) {
 			throw new CustomException("INVALID_REQUEST", "No connection specified for bill generation");
 		}
-
+		
 	}
 	
 }
