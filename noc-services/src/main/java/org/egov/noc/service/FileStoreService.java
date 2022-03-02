@@ -1,5 +1,7 @@
 package org.egov.noc.service;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -10,7 +12,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.ServiceRequestRepository;
 import org.egov.noc.util.NOCConstants;
@@ -125,6 +132,33 @@ public class FileStoreService {
 			FileUtils.copyURLToFile(new URL(downloadableLink), file);
 			byte[] fileContent;
 			fileContent = Files.readAllBytes(file.toPath());
+			String binaryEncodedContent= Base64.getEncoder().encodeToString(fileContent);
+			FileUtils.forceDelete(file);
+			return binaryEncodedContent;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new CustomException(NOCConstants.FILE_STORE_ERROR, "error while binary encoding document");
+		}
+	}
+	
+	public String getBinaryEncodedDocumentAfterPdfToJpg(String tenantId, String fileStoreIds) {
+		try {
+			String downloadableLink=getFileStorePath(tenantId, fileStoreIds);
+			File file=new File("tempfile-update.pdf");
+			FileUtils.copyURLToFile(new URL(downloadableLink), file);
+			PDDocument document = PDDocument.load(file);
+			PDFRenderer pdfRenderer = new PDFRenderer(document);
+			int pageNo=0;
+			BufferedImage bim = pdfRenderer.renderImageWithDPI(
+			          pageNo, 300, ImageType.RGB);
+			// uncomment if needed to write image for test purpose-
+			// ImageIOUtil.writeImage(bim, String.format("pdf-%d.%s", pageNo + 1, "jpg"), 300);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ImageIO.write(bim, "jpg", bos);
+			document.close();
+			byte[] fileContent;
+			fileContent = bos.toByteArray();
 			String binaryEncodedContent= Base64.getEncoder().encodeToString(fileContent);
 			FileUtils.forceDelete(file);
 			return binaryEncodedContent;
