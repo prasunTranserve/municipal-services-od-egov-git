@@ -1079,12 +1079,12 @@ public class DemandService {
 				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for Number: "
 						+ consumerCodes.toString());
 			
-			oldDemand = searchResult.get(0);
-			
-			if(oldDemand.getIsPaymentCompleted()) {
-				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
-						+ consumerCodes.toString());
-			}
+//			oldDemand = searchResult.get(0);
+//			
+//			if(oldDemand.getIsPaymentCompleted()) {
+//				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
+//						+ consumerCodes.toString());
+//			}
 		}
 	}
 
