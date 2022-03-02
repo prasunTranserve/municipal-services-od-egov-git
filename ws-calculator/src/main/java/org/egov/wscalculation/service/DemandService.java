@@ -798,7 +798,8 @@ public class DemandService {
 			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate);
 			log.info("Connection Count: "+count);
 			if(count>0) {
-				while (batchOffset <= count) {
+//				while (batchOffset <= count) {
+				while (count>0) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
 							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
 					String assessmentYear = estimationService.getAssessmentYear();
@@ -831,8 +832,10 @@ public class DemandService {
 						wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
 						log.info("Bulk bill Gen batch info : " + migrationCount);
 						calculationCriteriaList.clear();
+						count = count - connections.size();
 					}
 					batchOffset = batchOffset + batchsize;
+					log.info("Pending connection count "+ count +" for tenant: "+ tenantId);
 				}
 			}
 
