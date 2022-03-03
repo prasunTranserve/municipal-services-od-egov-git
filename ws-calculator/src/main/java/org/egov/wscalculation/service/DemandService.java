@@ -486,7 +486,7 @@ public class DemandService {
 						WSCalculationConstant.EG_WS_INVALID_DEMAND_ERROR_MSG);
 			if(demand.getTaxPeriodTo() == latestDemandPeriodTo && utils.isDemandEligibleForRebateAndPenalty(latestDemandPeriodTo)) {
 				applyTimeBasedApplicables(demand, requestInfoWrapper, timeBasedExemptionMasterMap, taxPeriods);
-			} else {
+			} else if(!demand.getIsPaymentCompleted()) {
 				resetTimeBasedApplicablesForArear(demand);
 			}
 			addRoundOffTaxHead(tenantId, demand.getDemandDetails());
