@@ -59,17 +59,11 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 	@Autowired
 	NOCUtil nocUtil;
 
-	private static final String GET_DISTRICTS_ENDPOINT = "/fire_safety/webservices/getFiredistricts";
-	private static final String GET_FIRESTATIONS_ENDPOINT = "/fire_safety/webservices/getFirestations";
-	private static final String SUBMIT_FIRE_NOC_APPL_ENDPOINT = "/fire_safety/webservices/recommendationApi";
-	private static final String FETCH_FIRE_NOC_STATUS_ENDPOINT = "/fire_safety/webservices/recommendationStatus";
-	private static final String FETCH_APPLICATION_IDS_ENDPOINT = "/fire_safety/webservices/recommendationID";
-
 	@Override
 	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
 		// submit fire noc application -
 		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
-		submitFireNocUrl.append(SUBMIT_FIRE_NOC_APPL_ENDPOINT);
+		submitFireNocUrl.append(config.getRecommendationApiEndpoint());
 		DocumentContext edcrDetail = infoWrapper.getEdcr();
 		Map<String, String> paramMap = getParamsFromEdcr(edcrDetail);
 
@@ -177,9 +171,10 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		//step2. if applicationId is there, then call status API below-
 		// recommendationStatus API--
 		StringBuilder fetchStatusUrl = new StringBuilder(config.getFireNocHost());
-		fetchStatusUrl.append(FETCH_FIRE_NOC_STATUS_ENDPOINT);
+		fetchStatusUrl.append(config.getRecommendationStatusEndpoint());
+		String fireApplicationId=additionalDetails.get("applicationId");
 		Object fetchStatusResponse = serviceRequestRepository.fetchResult(fetchStatusUrl,
-				new FetchRecommendationStatusContract(config.getFireNocToken(), null));
+				new FetchRecommendationStatusContract(config.getFireNocToken(), fireApplicationId));
 		String applicationStatus = "";
 		if (fetchStatusResponse instanceof Map) {
 			Map<String, Object> statusResponse = (Map<String, Object>) fetchStatusResponse;
@@ -204,7 +199,7 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			//two scenarios in in response of fetchapplicationId api- it returns non-null applicationid then set it in db.it returns null then set comment
 			//and status=submit
 			StringBuilder fetchApplicationIdsUrl = new StringBuilder(config.getFireNocHost());
-			fetchApplicationIdsUrl.append(FETCH_APPLICATION_IDS_ENDPOINT);
+			fetchApplicationIdsUrl.append(config.getRecommendationIdEndpoint());
 			Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
 					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getNoc().getApplicationNo()));
 			//String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";
