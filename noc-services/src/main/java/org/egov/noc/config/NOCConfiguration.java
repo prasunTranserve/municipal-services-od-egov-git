@@ -168,4 +168,13 @@ public class NOCConfiguration {
 	
 	@Value("${fire.noc.getBuildingtypes.endpoint}")
 	private String getBuildingtypesEndpoint;
+	
+	@Value("${fire.noc.recommendationApi.endpoint}")
+	private String recommendationApiEndpoint;
+	
+	@Value("${fire.noc.recommendationStatus.endpoint}")
+	private String recommendationStatusEndpoint;
+	
+	@Value("${fire.noc.recommendationId.endpoint}")
+	private String recommendationIdEndpoint;
 }
