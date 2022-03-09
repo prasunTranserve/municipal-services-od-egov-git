@@ -341,4 +341,14 @@ public class WSCalculationConstant {
 	
 	public static final String SW_SPECIAL_REBATE = "SW_SPECIAL_REBATE";
 	
+	public static final String CONNECTION_TEMPORARY = "TEMPORARY";
+	public static final String CONNECTION_PERMANENT = "PERMANENT";
+	
+	// Installment
+	public static final String IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE = "isInstallmentApplicableForScrutinyFee";
+	public static final String NO_OF_SCRUTINY_FEE_INSTALLMENTS = "noOfScrutinyFeeInstallments";
+	public static final String NO_OF_LABOUR_FEE_INSTALLMENTS = "noOfLabourFeeInstallments";
+	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
+	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
+	
 }
