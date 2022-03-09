@@ -676,4 +676,22 @@ public class PropertyService {
 		
 	}
 	
+	public PropertyDTO searchPropertyByPropertyId(PropertyDetailDTO propertyDetail) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getPtSearchEndpoint())
+				.append("?").append("propertyIds=").append(propertyDetail.getProperty().getPropertyId())
+				.append("&tenantId=").append(propertyDetail.getProperty().getTenantId());
+
+		Map<String, Object> propertySearchRequest = prepareSearchPropertyRequest(propertyDetail);
+		Object response = remoteService.fetchResult(uri, propertySearchRequest);
+		if (response == null) {
+			return null;
+		} else {
+			PropertyResponse propertyResponse = mapper.convertValue(response, PropertyResponse.class);
+			if (propertyResponse.getProperties().isEmpty())
+				return null;
+
+			return propertyResponse.getProperties().get(0);
+		}
+	}
+	
 }
