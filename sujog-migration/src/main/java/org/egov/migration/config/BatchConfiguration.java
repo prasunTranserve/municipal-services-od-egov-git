@@ -15,6 +15,9 @@ import org.egov.migration.processor.PropertyReaderForUser;
 import org.egov.migration.processor.PropertySearchTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessorForUser;
+import org.egov.migration.processor.PtFetchbillItemReader;
+import org.egov.migration.processor.PtFetchbillWriter;
+import org.egov.migration.processor.PtSearchTransformProcessor;
 import org.egov.migration.processor.SwItemReader;
 import org.egov.migration.processor.SwItemWriter;
 import org.egov.migration.processor.SwTransformProcessor;
@@ -214,5 +217,31 @@ public class BatchConfiguration {
     @Bean
     public ItemWriter<ConnectionDTO> getSwWriter() {
 		return new SwItemWriter();
+	}
+    
+    @Bean(name = "stepPtFetchbill")
+    protected Step stepPtFetchbill() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepPtFetchbill").<Property, PropertyDetailDTO> chunk(100)
+          .reader(getPTFetchBillReader())
+          .processor(getPTFetchbillProcessor())
+          .writer(getPTFetchbillWriter()).build();
+    }
+    
+    @Bean
+    public ItemProcessor<Property, PropertyDetailDTO> getPTFetchbillProcessor() {
+		return new PtSearchTransformProcessor();
+	}
+    
+    @Bean
+    @StepScope
+	public ItemReader<? extends Property> getPTFetchBillReader() throws EncryptedDocumentException, IOException, Exception {
+    	PtFetchbillItemReader ptItemReader = new PtFetchbillItemReader();
+		ptItemReader.setSkipRecord(1);
+    	return ptItemReader;
+	}
+    
+    @Bean
+    public ItemWriter<PropertyDetailDTO> getPTFetchbillWriter() {
+		return new PtFetchbillWriter();
 	}
 }
