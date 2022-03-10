@@ -254,7 +254,54 @@ public class WSCalculatorQueryBuilder {
 		return countQuery;
 	}
 	
-	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos) {
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
+		//StringBuilder query = new StringBuilder(connectionNoListQuery);
+
+		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
+
+		// add tenantid
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.tenantid = ? ");
+		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.applicationstatus = 'CONNECTION_ACTIVATED'");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.isoldapplication = false");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno is not null");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectiontype = ? ");
+		preparedStatement.add(connectionType);
+		
+		// remove the connection which was created after billing period
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectionexecutiondate <= ?");
+		preparedStatement.add(toDate);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
+		preparedStatement.add(fromDate);
+		preparedStatement.add(toDate);
+		preparedStatement.add(tenantId);
+
+//		addClauseIfRequired(preparedStatement, query);
+		String orderbyClause = " and conn.connectionno in (select ewc.connectionno from eg_ws_connection ewc inner join eg_ws_service ews on ews.connection_id = ewc.id where ewc.tenantid = ? and ewc.applicationstatus = 'CONNECTION_ACTIVATED' and ewc.isoldapplication = false and ewc.connectionno is not null and ews.connectiontype = ? and ews.connectionexecutiondate <= ? order by ewc.connectionno offset ? limit ?)";
+		preparedStatement.add(tenantId);
+		preparedStatement.add(connectionType);
+		preparedStatement.add(toDate);
+		preparedStatement.add(batchOffset);
+		preparedStatement.add(batchsize);
+		query.append(orderbyClause);
+		
+		return query.toString();
+		
+	}
+	
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Long fromDate, Long toDate, List<String> connectionNos) {
 		//StringBuilder query = new StringBuilder(connectionNoListQuery);
 
 		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
@@ -283,18 +330,18 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(toDate);
 		
 		// added for connection wise bill generation
-//		if(!connectionNos.isEmpty()) {
-//			addClauseIfRequired(preparedStatement, query);
-//			query.append(" conn.connectionno in (");
-//			int length = connectionNos.size();
-//			for (int i = 0; i < length; i++) {
-//				query.append(" ?");
-//				if (i != length - 1)
-//					query.append(",");
-//				preparedStatement.add(connectionNos.get(i));
-//			}
-//			query.append(")");
-//		}
+		if(!connectionNos.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.connectionno in (");
+			int length = connectionNos.size();
+			for (int i = 0; i < length; i++) {
+				query.append(" ?");
+				if (i != length - 1)
+					query.append(",");
+				preparedStatement.add(connectionNos.get(i));
+			}
+			query.append(")");
+		}
 
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
@@ -302,15 +349,6 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantId);
 
-//		addClauseIfRequired(preparedStatement, query);
-		String orderbyClause = " and conn.connectionno in (select ewc.connectionno from eg_ws_connection ewc inner join eg_ws_service ews on ews.connection_id = ewc.id where ewc.tenantid = ? and ewc.applicationstatus = 'CONNECTION_ACTIVATED' and ewc.isoldapplication = false and ewc.connectionno is not null and ews.connectiontype = ? and ews.connectionexecutiondate <= ? order by ewc.connectionno offset ? limit ?)";
-		preparedStatement.add(tenantId);
-		preparedStatement.add(connectionType);
-		preparedStatement.add(toDate);
-		preparedStatement.add(batchOffset);
-		preparedStatement.add(batchsize);
-		query.append(orderbyClause);
-		
 		return query.toString();
 		
 	}
