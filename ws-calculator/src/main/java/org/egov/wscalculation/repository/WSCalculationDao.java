@@ -3,7 +3,6 @@ package org.egov.wscalculation.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.kafka.common.protocol.types.Field.Str;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
