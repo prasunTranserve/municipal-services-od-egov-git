@@ -806,13 +806,13 @@ public class DemandService {
 			Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
 			Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
 
-			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate);
+			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate, false, null);
 			log.info("Connection Count: "+count);
 			if(count>0) {
 //				while (batchOffset <= count) {
 				while (count>0) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
-							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate, bulkBillCriteria.getConnectionNos());
+							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate);
 					String assessmentYear = estimationService.getAssessmentYear();
 					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
 
@@ -964,18 +964,24 @@ public class DemandService {
 	
 	public void generateDemandForConnections(RequestInfo requestInfo, BulkBillCriteria bulkBillCriteria) {
 		String tenantId = bulkBillCriteria.getTenantIds().get(0);
-		requestInfo.getUserInfo().setTenantId(tenantId);
-		
 		Map<String, Object> billingMasterData = calculatorUtils.loadBillingFrequencyMasterData(requestInfo, tenantId);
 		log.info("Billing master data values for non metered connection:: {}", billingMasterData);
-		
+
 		long startDay = (((int) billingMasterData.get(WSCalculationConstant.Demand_Generate_Date_String)) / 86400000);
-		if(isCurrentDateIsMatching((String) billingMasterData.get(WSCalculationConstant.Billing_Cycle_String), startDay)) { 
-			Map<String, Object> masterMap = mstrDataService.loadMasterData(requestInfo, tenantId);
+		if(isCurrentDateIsMatching((String) billingMasterData.get(WSCalculationConstant.Billing_Cycle_String), startDay)) {
 
 			Integer batchsize = configs.getBatchSize();
 			Integer batchOffset = configs.getBatchOffset();
-			
+
+			if(bulkBillCriteria.getLimit() != null)
+				batchsize = Math.toIntExact(bulkBillCriteria.getLimit());
+
+			if(bulkBillCriteria.getOffset() != null)
+				batchOffset = Math.toIntExact(bulkBillCriteria.getOffset());
+
+
+			Map<String, Object> masterMap = mstrDataService.loadMasterData(requestInfo, tenantId);
+
 			ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterMap
 					.get(WSCalculationConstant.Billing_Period_Master);
 			mstrDataService.enrichBillingPeriod(null, billingFrequencyMap, masterMap, WSCalculationConstant.nonMeterdConnection);
@@ -985,38 +991,57 @@ public class DemandService {
 
 			Long fromDate = (Long) financialYearMaster.get(WSCalculationConstant.STARTING_DATE_APPLICABLES);
 			Long toDate = (Long) financialYearMaster.get(WSCalculationConstant.ENDING_DATE_APPLICABLES);
-			
-			List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
-					null, 0, 100, fromDate, toDate, bulkBillCriteria.getConnectionNos());
-			String assessmentYear = estimationService.getAssessmentYear();
-			
-			if (connections.size() > 0) {
-				List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
-				for (WaterConnection connectionNo : connections) {
-					CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
-							.assessmentYear(assessmentYear).connectionNo(connectionNo.getConnectionNo())
-							.waterConnection(connectionNo).build();
-					calculationCriteriaList.add(calculationCriteria);
+
+			long count = waterCalculatorDao.getConnectionCount(tenantId, fromDate, toDate, true, bulkBillCriteria.getConnectionNos());
+			log.info("Connection Count: "+count);
+			if(count>0) {
+				List<WaterConnection> connectionList = waterCalculatorDao.getConnectionsNoList(tenantId,
+						WSCalculationConstant.nonMeterdConnection, fromDate, toDate, bulkBillCriteria.getConnectionNos());
+				String assessmentYear = estimationService.getAssessmentYear();
+				
+				while (count>0) {
+					// Taking connctions in batch
+					List<WaterConnection> connections = new ArrayList<>();
+					for (int index=batchOffset; index < batchOffset+batchsize && index < connectionList.size() ; index++) {
+						connections.add(connectionList.get(index));
+					}
+					
+					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
+
+					if (connections.size() > 0) {
+						List<CalculationCriteria> calculationCriteriaList = new ArrayList<>();
+						for (WaterConnection connectionNo : connections) {
+							CalculationCriteria calculationCriteria = CalculationCriteria.builder().tenantId(tenantId)
+									.assessmentYear(assessmentYear).connectionNo(connectionNo.getConnectionNo())
+									.waterConnection(connectionNo).build();
+							calculationCriteriaList.add(calculationCriteria);
+						}
+						MigrationCount migrationCount = MigrationCount.builder()
+								.tenantid(tenantId)
+								.businessService("WS")
+								.limit(Long.valueOf(batchsize))
+								.id(UUID.randomUUID().toString())
+								.offset(Long.valueOf(batchOffset))
+								.createdTime(System.currentTimeMillis())								
+								.recordCount(Long.valueOf(connections.size()))
+								.build();
+
+						CalculationReq calculationReq = CalculationReq.builder()
+								.calculationCriteria(calculationCriteriaList)
+								.requestInfo(requestInfo)
+								.isconnectionCalculation(true)
+								.migrationCount(migrationCount).build();
+
+						wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
+						log.info("Bulk bill Gen batch info : " + migrationCount);
+						calculationCriteriaList.clear();
+						count = count - connections.size();
+					}
+					batchOffset = batchOffset + batchsize;
+					log.info("Pending connection count "+ count +" for tenant: "+ tenantId);
 				}
-				
-				MigrationCount migrationCount = MigrationCount.builder()
-						.tenantid(tenantId)
-						.businessService("WS")
-						.limit(Long.valueOf(batchsize))
-						.id(UUID.randomUUID().toString())
-						.offset(Long.valueOf(batchOffset))
-						.createdTime(System.currentTimeMillis())								
-						.recordCount(Long.valueOf(connections.size()))
-						.build();
-				
-				CalculationReq calculationReq = CalculationReq.builder()
-						.calculationCriteria(calculationCriteriaList)
-						.requestInfo(requestInfo)
-						.isconnectionCalculation(true)
-						.migrationCount(migrationCount).build();
-				
-				wsCalculationProducer.push(configs.getCreateDemand(), calculationReq);
 			}
+
 		}
 	}
 
