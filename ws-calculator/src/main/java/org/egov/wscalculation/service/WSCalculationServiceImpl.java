@@ -19,20 +19,17 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
-import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
-import org.egov.wscalculation.web.models.DemandWard;
+import org.egov.wscalculation.web.models.Demand;
 import org.egov.wscalculation.web.models.TaxHeadCategory;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -65,11 +62,18 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	
 	@Autowired
 	private WSCalculationConfiguration wsCalculationConfiguration;
+	
+	@Autowired
+	private InstallmentService installmentService;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Water Charge And Estimation Charge
 	 */
 	public List<Calculation> getCalculation(CalculationReq request) {
+		
+		boolean isInstallmentUpdateApplicable = false;
+		boolean isForApplication = false;
+		
 		List<Calculation> calculations;
 
 		Map<String, Object> masterMap;
@@ -86,13 +90,22 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			masterMap = masterDataService.loadMasterData(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
 			calculations = getCalculations(request, masterMap);
+			isInstallmentUpdateApplicable = true;
 		} else {
 			//Calculate and create demand for application
 			masterMap = masterDataService.loadExemptionMaster(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
-			calculations = getFeeCalculation(request, masterMap);
+			calculations = getFeeCalculation(request, masterMap, false);
+			isInstallmentUpdateApplicable = true;
+			isForApplication = true;
 		}
-		demandService.generateDemand(request.getRequestInfo(), calculations, masterMap, request.getIsconnectionCalculation());
+		List<Demand> demands = demandService.generateDemand(request.getRequestInfo(), calculations, masterMap, request.getIsconnectionCalculation());
+
+		if(isInstallmentUpdateApplicable) {
+			//Update demand id in case of installment for new approved connection
+			installmentService.updateInstallmentsWithDemands(request.getRequestInfo(), demands, isForApplication);
+		}
+		
 		unsetWaterConnection(calculations);
 		return calculations;
 	}
@@ -117,7 +130,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	public List<Calculation> getEstimation(CalculationReq request) {
 		Map<String, Object> masterData = masterDataService.loadExemptionMaster(request.getRequestInfo(),
 				request.getCalculationCriteria().get(0).getTenantId());
-		List<Calculation> calculations = getFeeCalculation(request, masterData);
+		List<Calculation> calculations = getFeeCalculation(request, masterData, true);
 		unsetWaterConnection(calculations);
 		return calculations;
 	}
@@ -324,11 +337,11 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	 * @param masterMap - Master MDMS Data
 	 * @return list of calculation based on estimation criteria
 	 */
-	List<Calculation> getFeeCalculation(CalculationReq request, Map<String, Object> masterMap) {
+	List<Calculation> getFeeCalculation(CalculationReq request, Map<String, Object> masterMap, boolean isEstimate) {
 		List<Calculation> calculations = new ArrayList<>(request.getCalculationCriteria().size());
 		for (CalculationCriteria criteria : request.getCalculationCriteria()) {
 			Map<String, List> estimationMap = estimationService.getFeeEstimation(criteria, request.getRequestInfo(),
-					masterMap);
+					masterMap, isEstimate);
 			masterDataService.enrichBillingPeriodForFee(masterMap);
 			Calculation calculation = getCalculation(request.getRequestInfo(), criteria, estimationMap, masterMap, false);
 			calculations.add(calculation);

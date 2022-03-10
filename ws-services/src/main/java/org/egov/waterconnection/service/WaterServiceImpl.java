@@ -13,6 +13,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.config.WSConfiguration;
 import org.egov.waterconnection.constants.WCConstants;
+import org.egov.waterconnection.producer.WaterConnectionProducer;
 import org.egov.waterconnection.repository.WaterDao;
 import org.egov.waterconnection.repository.WaterDaoImpl;
 import org.egov.waterconnection.util.WaterServicesUtil;
@@ -21,6 +22,8 @@ import org.egov.waterconnection.validator.MDMSValidator;
 import org.egov.waterconnection.validator.ValidateProperty;
 import org.egov.waterconnection.validator.WaterConnectionValidator;
 import org.egov.waterconnection.web.models.Connection.StatusEnum;
+import org.egov.waterconnection.web.models.Installments;
+import org.egov.waterconnection.web.models.InstallmentsRequest;
 import org.egov.waterconnection.web.models.Property;
 import org.egov.waterconnection.web.models.SearchCriteria;
 import org.egov.waterconnection.web.models.WaterConnection;
@@ -82,6 +85,9 @@ public class WaterServiceImpl implements WaterService {
 	
 	@Autowired
 	private ObjectMapper mapper;
+	
+	@Autowired
+	private WaterConnectionProducer waterConnectionProducer;
 
 	/**
 	 * 
@@ -234,6 +240,9 @@ public class WaterServiceImpl implements WaterService {
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
 		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
 		enrichmentService.postForMeterReading(waterConnectionRequest, WCConstants.UPDATE_APPLICATION);
+		
+		//TODO update installment table into enrichmentService
+		updateInstallmentsWithConsumerNo(waterConnectionRequest);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
 
@@ -526,5 +535,24 @@ public class WaterServiceImpl implements WaterService {
 		List<WaterConnection> returnList = new ArrayList<>();
 		returnList.add(searchResult);
 		return returnList;
+	}
+	
+	/**
+	 * Update eg_ws_installment table with connection no once the connection has been activated
+	 * @param waterConnectionRequest
+	 */
+	private void updateInstallmentsWithConsumerNo(WaterConnectionRequest waterConnectionRequest) {
+		if (WCConstants.ACTIVATE_CONNECTION
+				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			WaterConnection waterConnection = waterConnectionRequest.getWaterConnection();
+			List<Installments> installments = waterDao.getAllInstallmentsByApplicationNo(waterConnection.getTenantId(), waterConnection.getApplicationNo());
+			for(Installments installment : installments) {
+				installment.setConsumerNo(waterConnection.getConnectionNo());
+				installment.getAuditDetails().setLastModifiedBy(waterConnectionRequest.getRequestInfo().getUserInfo().getUuid());
+				installment.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+			}
+			waterConnectionProducer.push(config.getWsUpdateInstallmentTopic(), InstallmentsRequest.builder()
+					.requestInfo(waterConnectionRequest.getRequestInfo()).installments(installments).build());
+		}
 	}
 }

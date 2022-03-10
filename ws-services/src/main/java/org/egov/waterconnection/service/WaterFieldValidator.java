@@ -1,12 +1,19 @@
 package org.egov.waterconnection.service;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.web.models.RoadCuttingInfo;
 import org.egov.waterconnection.web.models.ValidatorResult;
+import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -88,6 +95,9 @@ public class WaterFieldValidator implements WaterActionValidator {
 				}
 			}
 		}
+		
+		//Validate Installment Related Additional Details
+//		validateInstallmentDetails(waterConnectionRequest, errorMap);
 	}
 	
 	private void handleModifyConnectionRequest(WaterConnectionRequest waterConnectionRequest, Map<String, String> errorMap){
