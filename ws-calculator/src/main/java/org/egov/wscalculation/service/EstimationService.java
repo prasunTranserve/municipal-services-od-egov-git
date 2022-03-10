@@ -122,7 +122,7 @@ public class EstimationService {
 		
 		ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterData
 				.get(WSCalculationConstant.Billing_Period_Master);
-		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData, WSCalculationConstant.nonMeterdConnection);
+		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData, criteria.getWaterConnection().getConnectionType());
 		// mDataService.setWaterConnectionMasterValues(requestInfo, tenantId,
 		// billingSlabMaster,
 		// timeBasedExemptionMasterMap);
