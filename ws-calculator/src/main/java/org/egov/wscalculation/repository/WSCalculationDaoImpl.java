@@ -177,7 +177,7 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	}
 	
 	@Override
-	public long getConnectionCount(String tenantid, Long fromDate, Long toDate){
+	public long getConnectionCount(String tenantid, Long fromDate, Long toDate, boolean connectionWise, List<String> connectionNos){
 		List<Object> preparedStatement = new ArrayList<>();
 		String query = queryBuilder.getCountQuery();
 		preparedStatement.add(tenantid);
@@ -185,16 +185,40 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		preparedStatement.add(fromDate);
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantid);
+		
+		StringBuilder queryBuilder = new StringBuilder(query);
+		
+		if(connectionWise) {
+			// added for connection wise bill generation
+			if(!connectionNos.isEmpty()) {
+				queryBuilder.append(" and conn.connectionno in (");
+				int length = connectionNos.size();
+				for (int i = 0; i < length; i++) {
+					queryBuilder.append(" ?");
+					if (i != length - 1)
+						queryBuilder.append(",");
+					preparedStatement.add(connectionNos.get(i));
+				}
+				queryBuilder.append(")");
+			}
+		}
 
-		long count = jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+		long count = jdbcTemplate.queryForObject(queryBuilder.toString(), preparedStatement.toArray(), Integer.class);
 		return count;
 	}
 	
 	@Override
-	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate,
-			List<String> connectionNos) {
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
 		List<Object> preparedStatement = new ArrayList<>();
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate, connectionNos);
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate);
+		log.info("connection " + connectionType + " connection list : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
+	}
+	
+	@Override
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Long fromDate, Long toDate, List<String> connectionNos) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, fromDate, toDate, connectionNos);
 		log.info("connection " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
 	}

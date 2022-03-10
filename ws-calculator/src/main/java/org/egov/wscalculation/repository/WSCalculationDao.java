@@ -31,9 +31,11 @@ public interface WSCalculationDao {
 	
 	void updateMeterReading(MeterConnectionRequest meterConnectionRequest);
 
-	long getConnectionCount(String tenantId, Long fromDate, Long toDate);
+	long getConnectionCount(String tenantId, Long fromDate, Long toDate, boolean connectionWise, List<String> connectionNos);
 
 	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Integer batchOffset,
-			Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos);
+			Integer batchsize, Long fromDate, Long toDate);
+	
+	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
 
 }
