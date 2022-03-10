@@ -473,6 +473,10 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty. If want to process for all tenants use ALL");
 		}
 		
+		if(bulkBillCriteria.getTenantIds().size() > 1) {
+			throw new CustomException("INVALID_REQUEST", "Multiple Tenants not allowed");
+		}
+		
 		if(bulkBillCriteria.isSpecificMonth()) {
 			if(bulkBillCriteria.getDemandMonth() < 1 && bulkBillCriteria.getDemandMonth() > 12) {
 				throw new CustomException("INVALID_REQUEST", "Invalid demand month");

@@ -100,8 +100,8 @@ public class CalculatorController {
 
 	}
 
-//	@PostMapping("/generate/_bill")
-//	public void generateBill(@Valid @RequestBody BillSchedulerWrapper billSchedulerWrapper) {
-//		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(billSchedulerWrapper.getRequestInfo(), billSchedulerWrapper.getBillCriteria());
-//	}
+	@PostMapping("/generate/_bill")
+	public void generateBill(@Valid @RequestBody BulkBillCriteriaWrapper bulkBillCriteriaWrapper) {
+		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(bulkBillCriteriaWrapper.getRequestInfo(), bulkBillCriteriaWrapper.getBulkBillCriteria());
+	}
 }
