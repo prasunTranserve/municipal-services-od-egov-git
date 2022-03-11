@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.pt.calculator.repository.Repository;
@@ -16,8 +18,10 @@ import org.egov.pt.calculator.web.models.collections.Payment;
 import org.egov.pt.calculator.web.models.demand.*;
 import org.egov.pt.calculator.web.models.property.OwnerInfo;
 import org.egov.pt.calculator.web.models.property.Property;
+import org.egov.pt.calculator.web.models.property.PropertyCriteria;
 import org.egov.pt.calculator.web.models.property.PropertyDetail;
 import org.egov.pt.calculator.web.models.property.RequestInfoWrapper;
+import org.egov.pt.calculator.web.models.propertyV2.PropertyV2;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +76,9 @@ public class DemandService {
 
 	@Autowired
     private PaymentService paymentService;
+	
+	@Autowired
+	private PropertyService propertyService; 
 
 	/**
 	 * Generates and persists the demand to billing service for the given property
@@ -690,5 +697,300 @@ public class DemandService {
 		BigDecimal newTaxAmountForLatestDemandDetail = latestDetailInfo.getLatestDemandDetail().getTaxAmount().add(diff);
 		latestDetailInfo.getLatestDemandDetail().setTaxAmount(newTaxAmountForLatestDemandDetail);
 	}
+	
+		public List<Demand> modifyDemands(@Valid DemandRequest demandRequest) {
+		log.info("modifyDemands >> ");
+		List<Demand> demandsToBeUpdated = demandRequest.getDemands();
+		List<Demand> demandRes = new LinkedList<>();
+		List<TaxHeadEstimate> taxHeadEstimates = null;
+		List<Calculation> calculations = null;
+		
+		List<Demand> demands = new LinkedList<>();
+		
+		Map<String, Property> propertyMap = null;
+		validateDemandUpdateRquest(demandsToBeUpdated, demandRequest.getRequestInfo());
+		Property property = null;
+		
+		PropertyCriteria propertyCriteria = null;
+		
+		RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(demandRequest.getRequestInfo()).build();
+		
+		Map<String, Map<String, List<Object>>> propertyBasedExemptionMasterMap = new HashMap<>();
+		Map<String, JSONArray> timeBasedExmeptionMasterMap = new HashMap<>();
+		List<TaxPeriod> taxPeriods = null;
+		
+		for( Demand demand : demandsToBeUpdated ) {
+			calculations = new ArrayList<>();
+			
+			propertyCriteria = PropertyCriteria.builder().tenantId(demand.getTenantId())
+					.propertyIds(Collections.singleton(demand.getConsumerCode())).build();
+			propertyMap = propertyService.getPropertyMap(requestInfoWrapper, propertyCriteria);
+			
+			if(Objects.isNull(propertyMap) || propertyMap.isEmpty() || Objects.isNull(propertyMap.get(demand.getConsumerCode()))) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for consumer code: "
+						+ demand.getConsumerCode());
+					
+			}
+			
+			property = propertyMap.get(demand.getConsumerCode());
+			
+			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(),demand.getBusinessService(), demandRequest.getRequestInfo());
+			Demand oldDemand = searchResult.get(0);
+			demand.setDemandDetails(getUpdatedDemandDetails(demand.getDemandDetails(), oldDemand, demandRequest.getRequestInfo()));
+			
+			if (demand.getStatus() != null
+					&& CalculatorConstants.DEMAND_CANCELLED_STATUS.equalsIgnoreCase(demand.getStatus().toString()))
+				throw new CustomException(CalculatorConstants.EG_PT_INVALID_DEMAND_ERROR,
+						CalculatorConstants.EG_PT_INVALID_DEMAND_ERROR_MSG);
+
+			mstrDataService.setPropertyMasterValues(demandRequest.getRequestInfo(), demand.getTenantId(),
+					propertyBasedExemptionMasterMap, timeBasedExmeptionMasterMap);
+			
+			taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), demand.getTenantId());
+			
+			applytimeBasedApplicables(demand, requestInfoWrapper, timeBasedExmeptionMasterMap,taxPeriods);
+			
+			//round off demand details
+			roundOffDecimalForDemand(demand, requestInfoWrapper);
+			
+			demands.add(demand);
+			
+		}
+		
+		return updateDemand(demandRequest.getRequestInfo(), demands);
+	}
+	
+	private void validateDemandUpdateRquest(List<Demand> demandsToBeUpdated,RequestInfo requestInfo) {
+		Demand oldDemand = null;
+		for( Demand demand : demandsToBeUpdated ) {
+			Set<String> consumerCodes = Collections.singleton(demand.getConsumerCode());
+			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
+					demand.getTaxPeriodTo(),demand.getBusinessService(), requestInfo);
+			if (CollectionUtils.isEmpty(searchResult))
+				throw new CustomException("INVALID_DEMAND_UPDATE", "No demand exists for Number: "
+						+ consumerCodes.toString());
+			
+			oldDemand = searchResult.get(0);
+			
+			if(oldDemand.getIsPaymentCompleted()) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
+						+ consumerCodes.toString());
+			}
+			
+			
+			BigDecimal totalNewTaxAmount = BigDecimal.ZERO;
+			
+			boolean isExistingDemandDetails = false;
+			
+			for(DemandDetail newDemandDetail :  demand.getDemandDetails()) {
+				isExistingDemandDetails = false;
+				for(DemandDetail oldDemandDetail :  oldDemand.getDemandDetails()) {
+					if(!Objects.isNull(newDemandDetail.getId()) && oldDemandDetail.getId().equals(newDemandDetail.getId())) {
+						isExistingDemandDetails = true;
+						if(oldDemandDetail.getCollectionAmount().compareTo(newDemandDetail.getCollectionAmount()) != 0) {
+							throw new CustomException("INVALID_DEMAND_UPDATE", "Collected amount cannot be modified");
+						}else if(oldDemandDetail.getTaxAmount().compareTo(newDemandDetail.getTaxAmount()) != 0) {
+							throw new CustomException("INVALID_DEMAND_UPDATE",
+									"Existing tax amount cannot be modified please provide separate line item");
+						}
+						break;
+					}
+				}
+				if(!isExistingDemandDetails && !Objects.isNull(newDemandDetail.getId())) {
+					throw new CustomException("INVALID_DEMAND_UPDATE",
+							"Invalid Demand details. No demand existed with id [" + newDemandDetail.getId() + "]");
+				}else if(!isExistingDemandDetails 
+						&& !(Objects.isNull(newDemandDetail.getCollectionAmount())
+								|| newDemandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) == 0)) {
+					throw new CustomException("INVALID_DEMAND_UPDATE",
+							"Collection amount not allowed for new tax head");
+				}
+				/*if(newDemandDetail.getTaxAmount().compareTo(newDemandDetail.getCollectionAmount()) < 0) {
+					throw new CustomException("INVALID_DEMAND_UPDATE", "Collected amount is less than tax amount for tax head "
+							+ newDemandDetail.getTaxHeadMasterCode());
+				}*/
+				totalNewTaxAmount = totalNewTaxAmount.add(newDemandDetail.getTaxAmount());
+			}
+			
+			BigDecimal totalOldCollectedAmount = oldDemand.getDemandDetails().stream().map(DemandDetail::getCollectionAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
+			
+			if(totalNewTaxAmount.compareTo(totalOldCollectedAmount) < 0) {
+				throw new CustomException("INVALID_DEMAND_UPDATE",
+						"Total tax amount cannot be greater than total collected amount");
+			}
+			
+		}
+		
+		
+	}
+	
+	/**
+	 * Searches demand for the given consumerCode and tenantIDd
+	 * 
+	 * @param tenantId
+	 *            The tenantId of the tradeLicense
+	 * @param consumerCodes
+	 *            The set of consumerCode of the demands
+	 * @param requestInfo
+	 *            The RequestInfo of the incoming request
+	 * @return Lis to demands for the given consumerCode
+	 */
+	private List<Demand> searchDemand(String tenantId, Set<String> consumerCodes, Long taxPeriodFrom, Long taxPeriodTo,
+			String businessService, RequestInfo requestInfo) {
+        
+		Object result = repository.fetchResult(
+				utils.getDemandSearchURL(tenantId, consumerCodes, taxPeriodFrom, taxPeriodTo, businessService),
+				RequestInfoWrapper.builder().requestInfo(requestInfo).build());
+		try {
+			return mapper.convertValue(result, DemandResponse.class).getDemands();
+		} catch (IllegalArgumentException e) {
+			throw new CustomException("PARSING_ERROR", "Failed to parse response from Demand Search");
+		}
+
+	}
+	
+	/**
+	 * Returns the list of new DemandDetail to be added for updating the demand
+	 * 
+	 * @param calculation
+	 *            The calculation object for the update request
+	 * @param oldDemandDetails
+	 *            The list of demandDetails from the existing demand
+	 * @return The list of new DemandDetails
+	 */
+	private List<DemandDetail> getUpdatedDemandDetails(List<DemandDetail> updatedDemandDetails, Demand oldDemand, RequestInfo requestInfo) {
+
+		List<DemandDetail> oldDemandDetails = oldDemand.getDemandDetails();
+		List<DemandDetail> newDemandDetails = new ArrayList<>();
+		Map<String, List<DemandDetail>> taxHeadToDemandDetail = new HashMap<>();
+		
+
+		oldDemandDetails.forEach(demandDetail -> {
+			if (!taxHeadToDemandDetail.containsKey(demandDetail.getTaxHeadMasterCode())) {
+				List<DemandDetail> demandDetailList = new LinkedList<>();
+				demandDetailList.add(demandDetail);
+				taxHeadToDemandDetail.put(demandDetail.getTaxHeadMasterCode(), demandDetailList);
+			} else
+				taxHeadToDemandDetail.get(demandDetail.getTaxHeadMasterCode()).add(demandDetail);
+		});
+
+		List<DemandDetail> demandDetailList;
+		BigDecimal total;
+		BigDecimal totalCollected;
+		BigDecimal totalDue;
+
+		for (DemandDetail updatedDemandDetail : updatedDemandDetails) {
+			if (!taxHeadToDemandDetail.containsKey(updatedDemandDetail.getTaxHeadMasterCode()))
+				newDemandDetails.add(DemandDetail.builder().taxAmount(updatedDemandDetail.getTaxAmount())
+						.taxHeadMasterCode(updatedDemandDetail.getTaxHeadMasterCode()).tenantId(updatedDemandDetail.getTenantId())
+						.collectionAmount(BigDecimal.ZERO).build());
+			else {
+				demandDetailList = taxHeadToDemandDetail.get(updatedDemandDetail.getTaxHeadMasterCode());
+				total = demandDetailList.stream().map(DemandDetail::getTaxAmount).reduce(BigDecimal.ZERO,
+						BigDecimal::add);
+				totalCollected = demandDetailList.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO,
+						BigDecimal::add);
+				//diffInTaxAmount = updatedDemandDetail.getTaxAmount().subtract(total);
+				totalDue = total.subtract(totalCollected);
+				if(totalDue.compareTo(BigDecimal.ZERO) < 0) {
+					throw new CustomException("INVALID_DEMAND_UPDATE",
+							"Negative Tax amount not allowed for taxhead ["+updatedDemandDetail.getTaxHeadMasterCode()+"]");
+				}
+				if (Objects.isNull(updatedDemandDetail.getId()) && totalDue.compareTo(BigDecimal.ZERO) >= 0) {
+					newDemandDetails.add(DemandDetail.builder().taxAmount(updatedDemandDetail.getTaxAmount())
+							.taxHeadMasterCode(updatedDemandDetail.getTaxHeadMasterCode()).tenantId(updatedDemandDetail.getTenantId())
+							.collectionAmount(BigDecimal.ZERO).build());
+				}
+			}
+		}
+		List<DemandDetail> combinedBillDetails = new LinkedList<>(oldDemandDetails);
+		combinedBillDetails.addAll(newDemandDetails);
+		
+		BigDecimal diffInCollectedAmount = BigDecimal.ZERO;
+		
+		Map<String, List<DemandDetail>> newTaxHeadToDemandDetail = new HashMap<>();
+		
+		combinedBillDetails.forEach(demandDetail -> {
+			if (!newTaxHeadToDemandDetail.containsKey(demandDetail.getTaxHeadMasterCode())) {
+				List<DemandDetail> demandDetails = new LinkedList<>();
+				demandDetails.add(demandDetail);
+				newTaxHeadToDemandDetail.put(demandDetail.getTaxHeadMasterCode(), demandDetails);
+			} else
+				newTaxHeadToDemandDetail.get(demandDetail.getTaxHeadMasterCode()).add(demandDetail);
+		});
+		
+		BigDecimal totalTaxAmntTaxHeadWise = BigDecimal.ZERO;
+		BigDecimal totalCollectedAmntTaxHeadWise = BigDecimal.ZERO;
+		
+		/**
+		 * Get total difference in collected amount if the tax amount has been reduced 
+		 * from collected amount for a particular taxhead and
+		 * adjust collected amount by reducting it upto tax amount
+		 */
+		for(DemandDetail updatedDemandDetail : combinedBillDetails) {
+			
+			demandDetailList = newTaxHeadToDemandDetail.get(updatedDemandDetail.getTaxHeadMasterCode());
+			totalTaxAmntTaxHeadWise = demandDetailList.stream().map(DemandDetail::getTaxAmount).reduce(BigDecimal.ZERO,
+					BigDecimal::add);
+			totalCollectedAmntTaxHeadWise = demandDetailList.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO,
+					BigDecimal::add);
+			
+			if(updatedDemandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0
+					&& updatedDemandDetail.getTaxAmount().compareTo(BigDecimal.ZERO) >= 0
+					&& totalTaxAmntTaxHeadWise.compareTo(totalCollectedAmntTaxHeadWise) < 0) {
+				diffInCollectedAmount = diffInCollectedAmount
+						.add(totalCollectedAmntTaxHeadWise.subtract(totalTaxAmntTaxHeadWise));
+				if(!Objects.isNull(updatedDemandDetail.getId())) {
+					updatedDemandDetail.setCollectionAmount(updatedDemandDetail.getCollectionAmount().subtract(diffInCollectedAmount));
+				}
+			}
+		}
+		
+		BigDecimal carryForwardAmount = diffInCollectedAmount;
+		BigDecimal dueAmount = BigDecimal.ZERO;
+		
+		//Adjust colllected amount from diffInCollectedAmount
+		
+		if(diffInCollectedAmount.compareTo(BigDecimal.ZERO) > 0) {
+			for(DemandDetail updatedDemandDetail : combinedBillDetails) {
+				demandDetailList = newTaxHeadToDemandDetail.get(updatedDemandDetail.getTaxHeadMasterCode());
+				totalTaxAmntTaxHeadWise = demandDetailList.stream().map(DemandDetail::getTaxAmount).reduce(BigDecimal.ZERO,
+						BigDecimal::add);
+				totalCollectedAmntTaxHeadWise = demandDetailList.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO,
+						BigDecimal::add);
+				dueAmount = totalTaxAmntTaxHeadWise.subtract(totalCollectedAmntTaxHeadWise);
+				if(carryForwardAmount.compareTo(BigDecimal.ZERO) > 0) {
+					if(updatedDemandDetail.getTaxAmount().compareTo(updatedDemandDetail.getCollectionAmount()) > 0 
+							&& dueAmount.compareTo(BigDecimal.ZERO) > 0) {
+						//adjust the amount from the total extra collected amount
+						if(dueAmount.compareTo(carryForwardAmount) > 0) {
+							//add remaining collected amount into any of the existing taxheads
+							updatedDemandDetail.setCollectionAmount(updatedDemandDetail.getCollectionAmount().add(carryForwardAmount));
+						}else {
+							updatedDemandDetail.setCollectionAmount(updatedDemandDetail.getCollectionAmount().add(dueAmount));
+						}
+						carryForwardAmount = carryForwardAmount.subtract(dueAmount);
+					}
+				}
+			}
+		}
+		
+		return combinedBillDetails;
+	}
+	
+	public List<Demand> updateDemand(RequestInfo requestInfo, List<Demand> demands){
+        StringBuilder url = new StringBuilder(configs.getBillingServiceHost());
+        url.append(configs.getDemandUpdateEndPoint());
+        DemandRequest request = new DemandRequest(requestInfo,demands);
+        Object result = repository.fetchResult(url, request);
+        try{
+            return mapper.convertValue(result,DemandResponse.class).getDemands();
+        }
+        catch(IllegalArgumentException e){
+            throw new CustomException("PARSING_ERROR","Failed to parse response of update demand");
+        }
+    }
 
 }

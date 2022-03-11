@@ -372,5 +372,6 @@ public class CalculatorConstants {
 			.asList("od.cuttack"));
     public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
 			.asList(PT_TIME_PENALTY));
+    public static final String PROPERTYID_FIELD_SEARCH = "propertyDetailids=";
 	
 }
