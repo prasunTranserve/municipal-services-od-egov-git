@@ -827,7 +827,7 @@ public class CalculatorUtils {
         }
         
         //Penalty will not be calculated if the amount has already been collected
-        if(collectedAmt == taxAmt) {
+        if(taxAmt.compareTo(collectedAmt) == 0) {
         	taxAmt = BigDecimal.ZERO;
         }
         
