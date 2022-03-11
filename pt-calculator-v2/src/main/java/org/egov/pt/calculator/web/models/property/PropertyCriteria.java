@@ -26,4 +26,8 @@ public class PropertyCriteria {
 	private Set<String> documentids;
 
 	private Set<String> ownerids;
+	
+	private Set<String> propertyIds;
+	
+	private String mobileNumber;
 }

@@ -9,6 +9,7 @@ import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_ID_SEARCH_F
 import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_START_DATE_PARAM;
 import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_STATUS_ACTIVE;
 import static org.egov.pt.calculator.util.CalculatorConstants.DEMAND_STATUS_PARAM;
+import static org.egov.pt.calculator.util.CalculatorConstants.PROPERTYID_FIELD_SEARCH;
 import static org.egov.pt.calculator.util.CalculatorConstants.PROPERTY_TAX_SERVICE_CODE;
 import static org.egov.pt.calculator.util.CalculatorConstants.PT_ADVANCE_CARRYFORWARD;
 import static org.egov.pt.calculator.util.CalculatorConstants.RECEIPT_END_DATE_PARAM;
@@ -60,6 +61,7 @@ import org.egov.pt.calculator.web.models.demand.*;
 import org.egov.pt.calculator.web.models.property.AuditDetails;
 import org.egov.pt.calculator.web.models.property.OwnerInfo;
 import org.egov.pt.calculator.web.models.property.Property;
+import org.egov.pt.calculator.web.models.property.PropertyCriteria;
 import org.egov.pt.calculator.web.models.property.PropertyRequest;
 import org.egov.pt.calculator.web.models.property.PropertyResponse;
 import org.egov.pt.calculator.web.models.property.RequestInfoWrapper;
@@ -827,11 +829,82 @@ public class CalculatorUtils {
         }
         
         //Penalty will not be calculated if the amount has already been collected
-        if(collectedAmt == taxAmt) {
+        if(taxAmt.compareTo(collectedAmt) == 0) {
         	taxAmt = BigDecimal.ZERO;
         }
         
         return taxAmt;
     }
+    
+    /**
+	 * Creates demand Search url based on tenantId,businessService, period from, period to and
+	 * ConsumerCode 
+	 * 
+	 * @return demand search url
+	 */
+    public StringBuilder getDemandSearchURL(String tenantId, Set<String> consumerCodes, Long taxPeriodFrom, Long taxPeriodTo, String businessService) {
+		StringBuilder url = new StringBuilder(configurations.getBillingServiceHost());
+		url.append(configurations.getDemandSearchEndPoint());
+		url.append("?");
+		url.append("tenantId=");
+		url.append(tenantId);
+		url.append("&");
+		url.append("businessService=");
+		url.append(businessService);
+		url.append("&");
+		url.append("consumerCode=");
+		url.append(StringUtils.join(consumerCodes, ','));
+		if (taxPeriodFrom != null) {
+			url.append("&");
+			url.append("periodFrom=");
+			url.append(taxPeriodFrom.toString());
+		}
+		if (taxPeriodTo != null) {
+			url.append("&");
+			url.append("periodTo=");
+			url.append(taxPeriodTo.toString());
+		}
+		return url;
+	}
+    
+    
+    /**
+	 * 
+	 * @param criteria - Property Search Criteria
+	 * @return URL to Search Property
+	 */
+	public StringBuilder getPropertySearchQuery(PropertyCriteria criteria) {
+		StringBuilder url = new StringBuilder(configurations.getPropertyServicesHost());
+		url.append(configurations.getPropertyServicesSearchEndpoint());
+		
+		boolean isAnyParameterMatch = false;
+		url.append("?");
+		if (!StringUtils.isEmpty(criteria.getTenantId())) {
+			isAnyParameterMatch = true;
+			url.append("tenantId=").append(criteria.getTenantId());
+		}
+		if (!CollectionUtils.isEmpty(criteria.getPropertyIds())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			isAnyParameterMatch = true;
+			String propertyIdsString = criteria.getPropertyIds().stream().map(propertyId -> propertyId)
+					.collect(Collectors.toSet()).stream().collect(Collectors.joining(","));
+			url.append("propertyIds=").append(propertyIdsString);
+		}
+		if (!StringUtils.isEmpty(criteria.getMobileNumber())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			isAnyParameterMatch = true;
+			url.append("mobileNumber=").append(criteria.getMobileNumber());
+		}
+		if (!CollectionUtils.isEmpty(criteria.getOwnerids())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			String uuidString = criteria.getOwnerids().stream().map(uuid -> uuid).collect(Collectors.toSet()).stream()
+					.collect(Collectors.joining(","));
+			url.append("uuids=").append(uuidString);
+		}
+		return url;
+	}
 
 }

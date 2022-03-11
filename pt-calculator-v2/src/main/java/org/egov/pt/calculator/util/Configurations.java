@@ -80,6 +80,10 @@ public class Configurations {
 	@Value("${egov.payment.search.endpoint}")
 	private String	PaymentSearchEndpoint;
 	
+	
+	@Value("${egov.payment.search.employee.endpoint}")
+	private String	paymentEmployeeSearchEndpoint;
+	
 	// billing slab configs
 		
 	@Value("${billingslab.value.all}")
@@ -142,6 +146,12 @@ public class Configurations {
 	
 	@Value("${pt.module.minpayable.percentage}")
 	private BigDecimal ptMinAmountPayablePercentage;
+	
+	@Value("${egov.pt.registry.host}")
+	private String propertyServicesHost;
+	
+	@Value("${egov.pt.registry.search}")
+	private String propertyServicesSearchEndpoint;
 	
 
 
