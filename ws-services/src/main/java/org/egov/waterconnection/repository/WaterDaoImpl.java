@@ -10,7 +10,9 @@ import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.waterconnection.config.WSConfiguration;
 import org.egov.waterconnection.constants.WCConstants;
+import org.egov.waterconnection.repository.rowmapper.InstallmentRowMapper;
 import org.egov.waterconnection.repository.rowmapper.OpenWaterRowMapper;
+import org.egov.waterconnection.web.models.Installments;
 import org.egov.waterconnection.web.models.SearchCriteria;
 import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
@@ -47,6 +49,9 @@ public class WaterDaoImpl implements WaterDao {
 	
 	@Autowired
 	private WSConfiguration wsConfiguration;
+	
+	@Autowired
+	private InstallmentRowMapper installmentRowMapper;
 
 	@Value("${egov.waterservice.createwaterconnection.topic}")
 	private String createWaterConnection;
@@ -135,6 +140,14 @@ public class WaterDaoImpl implements WaterDao {
 
 		return userInfo.getType().equalsIgnoreCase("SYSTEM")
 				&& userInfo.getRoles().stream().map(Role::getCode).collect(Collectors.toSet()).contains("ANONYMOUS");
+	}
+	
+	@Override
+	public List<Installments> getAllInstallmentsByApplicationNo(String tenantId, String applicationNo) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = wsQueryBuilder.getAllInstallmentDetails(tenantId, applicationNo, preparedStatement);
+		log.info(" getAllInstallmentsByApplicationNo query : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), installmentRowMapper);
 	}
 
 }

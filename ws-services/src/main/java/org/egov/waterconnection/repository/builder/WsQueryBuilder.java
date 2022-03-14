@@ -68,6 +68,9 @@ public class WsQueryBuilder {
             "WHERE offset_ > ? AND offset_ <= ?";
 	
 	private static final String ORDER_BY_CLAUSE= " ORDER BY wc.appCreatedDate DESC";
+	
+	private static final String GET_INSTALLMENT_DETAILS = "SELECT * FROM eg_ws_installment ewi ";
+	
 	/**
 	 * 
 	 * @param criteria
@@ -269,4 +272,21 @@ public class WsQueryBuilder {
 			queryString.append(" OR");
 		}
 	}
+	
+	public String getAllInstallmentDetails(String tenantId, String applicationNo, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(GET_INSTALLMENT_DETAILS);
+		if(!StringUtils.isEmpty(tenantId)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.tenantid= ? ");
+			preparedStatement.add(tenantId);
+		}
+		if(!StringUtils.isEmpty(applicationNo)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.applicationno= ? ");
+			preparedStatement.add(applicationNo);
+		}
+
+		return query.toString();
+	}
+	
 }
