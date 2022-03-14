@@ -65,6 +65,11 @@ public class WSCalculatorQueryBuilder {
 			+  LEFT_OUTER_JOIN_STRING
 			+ "eg_ws_roadcuttinginfo roadcuttingInfo ON roadcuttingInfo.wsid = conn.id ";
 
+	private static final String GET_INSTALLMENT_DETAILS_BY_CONSUMER_NO = "select ewi.* from eg_ws_installment ewi inner join (select feetype, min(installmentno) as installmentNo from eg_ws_installment where consumerno = ? and demandid is null group by feetype) ewi2 on ewi2.feetype = ewi.feetype and ewi2.installmentNo = ewi.installmentno where ewi.tenantid = ? and ewi.consumerno = ? and demandid is null";
+
+	private static final String NO_OF_INSTALLMENT_PRESENT_BY_APPLICATIONNO_AND_FEETYPE = "SELECT count(*) FROM eg_ws_installment ewi ";
+	
+	private static final String GET_INSTALLMENT_DETAILS_BY_APPLICATION_NO = "select * from eg_ws_installment ewi ";
 
 	public String getDistinctTenantIds() {
 		return distinctTenantIdsCriteria;
@@ -301,6 +306,52 @@ public class WSCalculatorQueryBuilder {
 		
 	}
 	
+	public String getInstallmentByConsumerNo(String tenantId, String consumerNo, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(GET_INSTALLMENT_DETAILS_BY_CONSUMER_NO);
+		preparedStatement.add(consumerNo);
+		preparedStatement.add(tenantId);
+		preparedStatement.add(consumerNo);
+		return query.toString();
+	}
+
+	public String getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(NO_OF_INSTALLMENT_PRESENT_BY_APPLICATIONNO_AND_FEETYPE);
+		if(!StringUtils.isEmpty(tenantId)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.tenantId= ? ");
+			preparedStatement.add(tenantId);
+		}
+		if(!StringUtils.isEmpty(applicationNo)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.applicationno= ? ");
+			preparedStatement.add(applicationNo);
+		}
+		if(!StringUtils.isEmpty(feeType)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.feetype= ? ");
+			preparedStatement.add(feeType);
+		}
+
+		return query.toString();
+	}
+	
+	public String getInstallmentByApplicationNo(String tenantId, String applicationNo, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(GET_INSTALLMENT_DETAILS_BY_APPLICATION_NO);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" tenantid = ? ");
+		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" applicationno = ? ");
+		preparedStatement.add(applicationNo);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" installmentno = 1 ");
+		
+		return query.toString();
+  }
+
 	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Long fromDate, Long toDate, List<String> connectionNos) {
 		//StringBuilder query = new StringBuilder(connectionNoListQuery);
 

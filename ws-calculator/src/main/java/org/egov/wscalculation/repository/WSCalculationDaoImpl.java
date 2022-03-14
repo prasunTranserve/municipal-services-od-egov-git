@@ -11,10 +11,12 @@ import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.producer.WSCalculationProducer;
 import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
+import org.egov.wscalculation.repository.rowmapper.InstallmentRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.WaterRowMapper;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.Installments;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -50,6 +52,9 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	
 	@Autowired
 	private WaterRowMapper waterRowMapper;
+	
+	@Autowired
+	private InstallmentRowMapper installmentRowMapper;
 	
 
 	@Value("${egov.meterservice.createmeterconnection}")
@@ -221,5 +226,29 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, fromDate, toDate, connectionNos);
 		log.info("connection " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
+	}
+	
+	@Override
+	public List<Installments> getApplicableInstallmentsByConsumerNo(String tenantId, String consumerNo) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentByConsumerNo(tenantId, consumerNo, preparedStatement);
+		log.info(" getAllInstallmentsByConsumerNo query : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), installmentRowMapper);
+	}
+	
+	@Override
+	public List<Installments> getApplicableInstallmentsByApplicationNo(String tenantId, String applicationNo) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentByApplicationNo(tenantId, applicationNo, preparedStatement);
+		log.info(" getAllInstallmentsByApplicationNo query : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), installmentRowMapper);
+	}
+
+	@Override
+	public int getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentCountByApplicationNoAndFeeType(tenantId, applicationNo, feeType, preparedStatement);
+		log.info(" getAllInstallmentsByApplicationNoAndFeeType query : " + query);
+		return jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
 	}
 }

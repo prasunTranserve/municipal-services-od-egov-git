@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.Installments;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -36,6 +37,12 @@ public interface WSCalculationDao {
 	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Integer batchOffset,
 			Integer batchsize, Long fromDate, Long toDate);
 	
-	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
+	List<Installments> getApplicableInstallmentsByConsumerNo(String tenantId, String consumerNo);
+
+	int getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType);
+
+	List<Installments> getApplicableInstallmentsByApplicationNo(String tenantId, String consumerNo);
+
+  List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
 
 }

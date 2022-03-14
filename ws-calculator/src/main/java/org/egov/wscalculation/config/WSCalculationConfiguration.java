@@ -307,4 +307,13 @@ public class WSCalculationConfiguration {
 	@Value("${bulk.demand.offset.value}")
 	private Integer batchOffset;
 
+	@Value("${kafka.waterservice.create.installment.topic}")
+    private String wsCreateInstallmentTopic;
+
+	@Value("${kafka.waterservice.update.installment.topic}")
+    private String wsUpdateInstallmentTopic;
+	
+	@Value("${kafka.topic.ws.installment.update}")
+    private String wsInstallmentUpdateTopic;
+	
 }
