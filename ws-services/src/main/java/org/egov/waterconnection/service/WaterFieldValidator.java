@@ -95,9 +95,6 @@ public class WaterFieldValidator implements WaterActionValidator {
 				}
 			}
 		}
-		
-		//Validate Installment Related Additional Details
-//		validateInstallmentDetails(waterConnectionRequest, errorMap);
 	}
 	
 	private void handleModifyConnectionRequest(WaterConnectionRequest waterConnectionRequest, Map<String, String> errorMap){

@@ -43,6 +43,6 @@ public interface WSCalculationDao {
 
 	List<Installments> getApplicableInstallmentsByApplicationNo(String tenantId, String consumerNo);
 
-  List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
+	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
 
 }
