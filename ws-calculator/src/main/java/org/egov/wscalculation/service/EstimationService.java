@@ -135,7 +135,7 @@ public class EstimationService {
 		
 		ArrayList<?> billingFrequencyMap = (ArrayList<?>) masterData
 				.get(WSCalculationConstant.Billing_Period_Master);
-		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData, WSCalculationConstant.nonMeterdConnection);
+		mDataService.enrichBillingPeriod(criteria, billingFrequencyMap, masterData, criteria.getWaterConnection().getConnectionType());
 		// mDataService.setWaterConnectionMasterValues(requestInfo, tenantId,
 		// billingSlabMaster,
 		// timeBasedExemptionMasterMap);
@@ -798,7 +798,7 @@ public class EstimationService {
 				if(WSCalculationConstant.WS_UC_DOMESTIC.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
 					scrutinyFee = BigDecimal.valueOf(3000);
 					securityCharge = BigDecimal.valueOf(60);
-				} else if(WSCalculationConstant.WS_UC_BPL.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
+				} else if(WSCalculationConstant.WS_UC_ROADSIDEEATERS.equals(criteria.getWaterConnection().getUsageCategory().toUpperCase())) {
 					scrutinyFee = BigDecimal.valueOf(500);
 					securityCharge = BigDecimal.valueOf(60);
 				}

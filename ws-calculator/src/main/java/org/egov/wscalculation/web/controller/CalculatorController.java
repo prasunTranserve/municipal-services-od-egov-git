@@ -111,8 +111,8 @@ public class CalculatorController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-//	@PostMapping("/generate/_bill")
-//	public void generateBill(@Valid @RequestBody BulkBillCriteriaWrapper bulkBillCriteriaWrapper) {
-//		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(bulkBillCriteriaWrapper.getRequestInfo(), bulkBillCriteriaWrapper.getBulkBillCriteria());
-//	}
+	@PostMapping("/generate/_bill")
+	public void generateBill(@Valid @RequestBody BulkBillCriteriaWrapper bulkBillCriteriaWrapper) {
+		wSCalculationService.generateConnectionDemandBasedOnTimePeriod(bulkBillCriteriaWrapper.getRequestInfo(), bulkBillCriteriaWrapper.getBulkBillCriteria());
+	}
 }
