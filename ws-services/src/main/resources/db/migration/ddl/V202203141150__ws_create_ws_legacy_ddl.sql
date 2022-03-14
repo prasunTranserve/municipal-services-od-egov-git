@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS eg_ws_legacybillhistory (
 	total_unit_consumed varchar(32767)
 );
 
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacybillhistory_ulb_name ON eg_ws_legacybillhistory (ulb_name);
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacybillhistory_connection_no ON eg_ws_legacybillhistory (connection_no);
 
 CREATE TABLE IF NOT EXISTS eg_ws_legacypaymenthistory (
 	ulb_name varchar(32767),
@@ -33,3 +35,6 @@ CREATE TABLE IF NOT EXISTS eg_ws_legacypaymenthistory (
 	payment_approval_status varchar(32767),
 	counter_name varchar(32767)
 );
+
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacypaymenthistory_ulb_name ON eg_ws_legacypaymenthistory (ulb_name);
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacypaymenthistory_connection_no ON eg_ws_legacypaymenthistory (connection_no);
