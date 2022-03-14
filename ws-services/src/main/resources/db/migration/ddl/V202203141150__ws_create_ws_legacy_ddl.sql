@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS eg_ws_legacybillhistory (
 
 CREATE INDEX IF NOT EXISTS index_eg_ws_legacybillhistory_ulb_name ON eg_ws_legacybillhistory (ulb_name);
 CREATE INDEX IF NOT EXISTS index_eg_ws_legacybillhistory_connection_no ON eg_ws_legacybillhistory (connection_no);
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacybillhistory_bill_number ON eg_ws_legacybillhistory (bill_number);
 
 CREATE TABLE IF NOT EXISTS eg_ws_legacypaymenthistory (
 	ulb_name varchar(32767),
@@ -38,3 +39,4 @@ CREATE TABLE IF NOT EXISTS eg_ws_legacypaymenthistory (
 
 CREATE INDEX IF NOT EXISTS index_eg_ws_legacypaymenthistory_ulb_name ON eg_ws_legacypaymenthistory (ulb_name);
 CREATE INDEX IF NOT EXISTS index_eg_ws_legacypaymenthistory_connection_no ON eg_ws_legacypaymenthistory (connection_no);
+CREATE INDEX IF NOT EXISTS index_eg_ws_legacypaymenthistory_receipt_no ON eg_ws_legacypaymenthistory (receipt_no);
