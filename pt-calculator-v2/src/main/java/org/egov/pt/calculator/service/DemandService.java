@@ -762,15 +762,11 @@ public class DemandService {
 	public List<Demand> modifyDemands(@Valid DemandRequest demandRequest) {
 		log.info("modifyDemands >> ");
 		List<Demand> demandsToBeUpdated = demandRequest.getDemands();
-		List<Demand> demandRes = new LinkedList<>();
-		List<TaxHeadEstimate> taxHeadEstimates = null;
-		List<Calculation> calculations = null;
 		
 		List<Demand> demands = new LinkedList<>();
 		
 		Map<String, Property> propertyMap = null;
 		validateDemandUpdateRquest(demandsToBeUpdated, demandRequest.getRequestInfo());
-		Property property = null;
 		
 		PropertyCriteria propertyCriteria = null;
 		
@@ -781,7 +777,12 @@ public class DemandService {
 		List<TaxPeriod> taxPeriods = null;
 		
 		for( Demand demand : demandsToBeUpdated ) {
-			calculations = new ArrayList<>();
+			
+			//Checks if the current date id within demand from and to date 
+			if((demand.getTaxPeriodFrom()<= System.currentTimeMillis() && demand.getTaxPeriodTo() >= System.currentTimeMillis())) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand for current financial year cannot be modified"
+						+ demand.getConsumerCode());
+			}
 			
 			propertyCriteria = PropertyCriteria.builder().tenantId(demand.getTenantId())
 					.propertyIds(Collections.singleton(demand.getConsumerCode())).build();
@@ -792,8 +793,6 @@ public class DemandService {
 						+ demand.getConsumerCode());
 					
 			}
-			
-			property = propertyMap.get(demand.getConsumerCode());
 			
 			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
 					demand.getTaxPeriodTo(),demand.getBusinessService(), demandRequest.getRequestInfo());

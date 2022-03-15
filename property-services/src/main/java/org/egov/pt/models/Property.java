@@ -49,6 +49,10 @@ public class Property extends PropertyInfo {
 	@JsonProperty("owners")
 	@Valid
 	private List<OwnerInfo> owners;
+	
+	@JsonProperty("alternateMobileNumberDetails")
+	@Valid
+	private List<AlternateMobileNumber> alternateMobileNumberDetails;
 
 	@JsonProperty("institution")
 	private Institution institution;
