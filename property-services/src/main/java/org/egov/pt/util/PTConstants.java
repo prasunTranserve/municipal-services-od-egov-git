@@ -354,5 +354,18 @@ public class PTConstants {
     public static final String MUTATION_CHARGE = "mutationCharge";
     
     public static final String DECIMAL_REGEX = "^\\d*\\.?\\d+$";
+    
+    public static final String PT_UPDATE_OWNER_NUMBER = "PT_UPDATE_OWNER_NUMBER";
+	
+	public static final String PT_UPDATE_ALTERNATE_NUMBER = "PT_UPDATE_ALTERNATE_NUMBER";
+	
+	public static final String PT_OWNER_NAME = "{ownername}";
+    
+    public static final String PT_ALTERNATE_NUMBER = "{alternatenumber}";
+    
+    public static final String PT_OLD_MOBILENUMBER = "{oldmobilenumber}";
+    
+    public static final String PT_NEW_MOBILENUMBER = "{newmobilenumber}";
+    
 }
 

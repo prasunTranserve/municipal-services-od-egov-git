@@ -1,6 +1,7 @@
 package org.egov.pt.repository.builder;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.time.Instant;
 import org.egov.pt.config.PropertyConfiguration;
@@ -119,10 +120,30 @@ public class PropertyQueryBuilder {
 
 			+ " WHERE ";
 
+	private static final String DISTINCT_TENANTIDS_CRITERIA = "SELECT distinct(tenantid) FROM eg_pt_property epp";
 
 	private final String paginationWrapper = "SELECT * FROM "
 			+ "(SELECT *, DENSE_RANK() OVER (ORDER BY plastmodifiedtime DESC, pid) offset_ FROM " + "({})" + " result) result_offset "
 			+ "WHERE offset_ > ? AND offset_ <= ?";
+	
+	private static String propertySelectColumns = "property.id as pid, property.propertyid, property.tenantid as ptenantid, property.surveyid, property.accountid, property.oldpropertyid, property.status as propertystatus, property.acknowldgementnumber, property.propertytype, property.ownershipcategory,property.usagecategory as pusagecategory, property.creationreason, property.nooffloors, property.landarea, property.superbuiltuparea as propertysbpa, property.linkedproperties, property.source, property.channel, property.createdby as pcreatedby, property.lastmodifiedby as plastmodifiedby, property.createdtime as pcreatedtime,"
+			+ " property.lastmodifiedtime as plastmodifiedtime, property.additionaldetails as padditionaldetails, (CASE WHEN property.status='ACTIVE' then 0 WHEN property.status='INWORKFLOW' then 1 WHEN property.status='INACTIVE' then 2 ELSE 3 END) as statusorder ";
+	
+	private static final String ACTIVE_ASSESMENT_FOR_CURRENT_FINYEAR_QUERY = SELECT 
+			+ "assessment.propertyid, assessment.status"
+			+ " FROM EG_PT_ASMT_ASSESSMENT assessment "
+			+ " WHERE assessment.assessmentdate = (SELECT MAX(assessment2.assessmentdate) " 
+			+ " FROM EG_PT_ASMT_ASSESSMENT assessment2 "
+			+ " WHERE assessment2.propertyid = assessment.propertyid and assessment2.status = 'ACTIVE') " 
+			+ " and assessment.status = 'ACTIVE' and assessment.financialyear = ? ";
+	
+	private static final String ACTIVE_PROPERTY_ASSESMENT__FOR_CURRENT_FINYEAR_QUERY = SELECT 
+			+ propertySelectColumns
+			+   " FROM EG_PT_PROPERTY property " 
+			+   INNER_JOIN 
+			+ "("+ ACTIVE_ASSESMENT_FOR_CURRENT_FINYEAR_QUERY +") assessment ON property.propertyid = assessment.propertyid ";
+	
+	private final String COUNT_NOOF_ACTIVE_PROPERTY_BY_TENATID = "select count(property) FROM EG_PT_PROPERTY property  where property.status IN ('ACTIVE')";
 
 	private String addPaginationWrapper(String query, List<Object> preparedStmtList, PropertyCriteria criteria) {
 		
@@ -503,5 +524,78 @@ public class PropertyQueryBuilder {
 	public String getpropertyAuditQuery() {
 		return PROEPRTY_AUDIT_QUERY;
 	}
+	
+
+	public String getDistinctTenantIds() {
+		return DISTINCT_TENANTIDS_CRITERIA;
+	}
+	
+	
+	/**
+	 * 
+	 * @param criteria
+	 * @param preparedStmtList
+	 * @return
+	 */
+	public String getActivePropertyWithActiveCurrentFinYearAssesmentSearchQuery(PropertyCriteria criteria,String financialYear, List<Object> preparedStmtList) {
+		
+		if(Objects.isNull(financialYear))
+			throw new CustomException("EG_PT_SEARCH_ERROR","Financial year is mandatory for search criteria");
+		
+		Long limit = config.getDefaultLimit();
+		Long offset = config.getDefaultOffset();
+		
+		StringBuilder builder = new StringBuilder(ACTIVE_PROPERTY_ASSESMENT__FOR_CURRENT_FINYEAR_QUERY);
+		
+		preparedStmtList.add(financialYear);
+		
+		if(criteria.getTenantId()!=null)
+		{
+			builder.append(" WHERE property.tenantid=?");
+			preparedStmtList.add(criteria.getTenantId());
+		}
+		
+		builder.append(AND_QUERY);
+		builder.append(" property.status IN ('ACTIVE')");
+		
+		builder.append(AND_QUERY);
+		builder.append(" assessment.status IN ('ACTIVE')");
+		
+		builder.append(" order by property.propertyid");
+		
+		if (criteria.getOffset() != null) {
+			builder.append(" offset ? ");
+			offset = criteria.getOffset();
+			preparedStmtList.add(offset);
+		}
+		
+		if (criteria.getLimit() != null ) {
+			builder.append(" limit ? ");
+			limit = criteria.getLimit();
+			preparedStmtList.add(limit);
+		}
+		
+		return builder.toString();
+	}
+	
+	/**
+	 * 
+	 * @param criteria
+	 * @param preparedStmtList
+	 * @return
+	 */
+	public String getCountOfActivePropertyByTenantId(PropertyCriteria criteria, List<Object> preparedStmtList) {
+		StringBuilder builder = new StringBuilder(COUNT_NOOF_ACTIVE_PROPERTY_BY_TENATID);
+		if(criteria.getTenantId()!=null)
+		{
+			builder.append(AND_QUERY);
+			builder.append(" property.tenantid=?");
+			preparedStmtList.add(criteria.getTenantId());
+		}
+		
+		return builder.toString();
+	}
+	
+	
 
 }

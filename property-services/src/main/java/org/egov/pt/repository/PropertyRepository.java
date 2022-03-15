@@ -18,8 +18,10 @@ import org.egov.pt.repository.builder.PropertyQueryBuilder;
 import org.egov.pt.repository.rowmapper.AssessmentPropertyRowMapper;
 import org.egov.pt.repository.rowmapper.OpenPropertyRowMapper;
 import org.egov.pt.repository.rowmapper.PropertyAuditRowMapper;
+import org.egov.pt.repository.rowmapper.PropertyDetailsRowMapper;
 import org.egov.pt.repository.rowmapper.PropertyRowMapper;
 import org.egov.pt.service.UserService;
+import org.egov.pt.util.CommonUtils;
 import org.egov.pt.util.PropertyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -49,6 +51,10 @@ public class PropertyRepository {
 	
 	@Autowired
 	private AssessmentPropertyRowMapper assessRowMapper;
+	
+	@Autowired
+	private PropertyDetailsRowMapper propertyDetailsRowMapper;
+	
 	
 	@Autowired
 	private PropertyUtil util;
@@ -237,5 +243,40 @@ public class PropertyRepository {
 
 		return false;
 	}
+	
+	/**
+	 * Get Distinct Tenant Ids from property table
+	 * @return
+	 */
+	public List<String> getDistinctTenantIds() {
+		String query = queryBuilder.getDistinctTenantIds();
+		return jdbcTemplate.queryForList(query, String.class);
+	}
+	
+	/**
+	 * Get all properties where property and assessment are both in ACTIVE state
+	 * @param criteria
+	 * @return {@link List}
+	 */
+	public List<Property> getActivePropertiesWithActiveAssesmentForCurentFinYear(PropertyCriteria criteria) {
+		String currentFinancialYear = CommonUtils.getFinancialYear();
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getActivePropertyWithActiveCurrentFinYearAssesmentSearchQuery(criteria, currentFinancialYear, preparedStmtList);
+		return jdbcTemplate.query(query, preparedStmtList.toArray(), propertyDetailsRowMapper);
+	}
+	
+	/**
+	 * Get Active Property Count for a given tenant id
+	 * @param criteria
+	 * @return
+	 */
+	public int getCountOfActivePropertyByTenantId(PropertyCriteria criteria) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getCountOfActivePropertyByTenantId(criteria, preparedStmtList);
+		return jdbcTemplate.queryForObject(query, preparedStmtList.toArray(), Integer.class);
+	}
+	
+	
+	
 
 }
