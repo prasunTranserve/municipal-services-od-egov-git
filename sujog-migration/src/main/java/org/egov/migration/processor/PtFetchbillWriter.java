@@ -32,13 +32,13 @@ public class PtFetchbillWriter implements ItemWriter<PropertyDetailDTO> {
 				propertyDTO = propertyService.searchPropertyByPropertyId(propertyDetail);
 				if(!Objects.isNull(propertyDTO)) {
 					propertyService.callFetchBill(propertyDetail);
-					MigrationUtility.addSuccessForPropertyFetchBill(propertyDetail.getProperty());
+					MigrationUtility.addSuccessForPTFetchBill(propertyDetail.getProperty());
 				} else {
-					MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(), "Property Not found");
+					MigrationUtility.addError(propertyDetail.getProperty().getPropertyId(), "Property Not found");
 				}
 			} catch (Exception e) {
-				log.error(String.format("PropertyId: %s, error message: %s", propertyDetail.getProperty().getOldPropertyId(), e.getMessage()));
-				MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),String.format("Fetchbill error: %s",  e.getMessage()));
+				log.error(String.format("PropertyId: %s, error message: %s", propertyDetail.getProperty().getPropertyId(), e.getMessage()));
+				MigrationUtility.addError(propertyDetail.getProperty().getPropertyId(),String.format("Fetchbill error: %s",  e.getMessage()));
 			}
 			
 		});
