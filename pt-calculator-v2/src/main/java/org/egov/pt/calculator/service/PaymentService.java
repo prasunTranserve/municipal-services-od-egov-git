@@ -11,6 +11,7 @@ import static org.egov.pt.calculator.util.CalculatorConstants.URL_PARAMS_SEPARAT
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.egov.pt.calculator.repository.Repository;
@@ -85,7 +86,7 @@ public class PaymentService {
      * @return
      */
     public List<Payment> getPayments(PaymentSearchCriteria criteria, RequestInfoWrapper requestInfoWrapper) {
-        StringBuilder url = getPaymentSearchUrl(criteria);
+        StringBuilder url = getPaymentSearchUrl(criteria, requestInfoWrapper);
         return mapper.convertValue(repository.fetchResult(url, requestInfoWrapper), PaymentResponse.class).getPayments();
     }
     
@@ -96,15 +97,24 @@ public class PaymentService {
      * @param criteria
      * @return
      */
-    public StringBuilder getPaymentSearchUrl(PaymentSearchCriteria criteria) {
-            return new StringBuilder().append(configurations.getCollectionServiceHost())
-                    .append(configurations.getPaymentSearchEndpoint()).append(URL_PARAMS_SEPARATER)
-                    .append(TENANT_ID_FIELD_FOR_SEARCH_URL).append(criteria.getTenantId())
-                    .append(SEPARATER).append(CONSUMER_CODE_SEARCH_FIELD_NAME_PAYMENT)
-                    .append(StringUtils.join(criteria.getConsumerCodes(),","))
-                    .append(CalculatorConstants.SEPARATER).append(STATUS_FIELD_FOR_SEARCH_URL)
-                    .append(ALLOWED_RECEIPT_STATUS);
-   }
+	public StringBuilder getPaymentSearchUrl(PaymentSearchCriteria criteria, RequestInfoWrapper requestInfoWrapper) {
+		StringBuilder url = new StringBuilder().append(configurations.getCollectionServiceHost());
+
+		if (!Objects.isNull(requestInfoWrapper) && !Objects.isNull(requestInfoWrapper.getRequestInfo())
+				&& !Objects.isNull(requestInfoWrapper.getRequestInfo().getUserInfo())
+				&& !Objects.isNull(requestInfoWrapper.getRequestInfo().getUserInfo().getType())
+				&& "Employee".equalsIgnoreCase(requestInfoWrapper.getRequestInfo().getUserInfo().getType())) {
+			url.append(configurations.getPaymentEmployeeSearchEndpoint());
+		}else {
+			url.append(configurations.getPaymentSearchEndpoint());
+		}
+		url.append(URL_PARAMS_SEPARATER)
+				.append(TENANT_ID_FIELD_FOR_SEARCH_URL).append(criteria.getTenantId()).append(SEPARATER)
+				.append(CONSUMER_CODE_SEARCH_FIELD_NAME_PAYMENT)
+				.append(StringUtils.join(criteria.getConsumerCodes(), ",")).append(CalculatorConstants.SEPARATER)
+				.append(STATUS_FIELD_FOR_SEARCH_URL).append(ALLOWED_RECEIPT_STATUS);
+		return url;
+	}
     
 
 }
