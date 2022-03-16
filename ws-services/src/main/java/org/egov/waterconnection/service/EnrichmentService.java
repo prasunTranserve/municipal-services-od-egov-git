@@ -129,7 +129,10 @@ public class EnrichmentService {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CONNECTION_OWNERSHIP_CHANGE);
 		} else if (reqType == WCConstants.CLOSE_CONNECTION) {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.CLOSE_WATER_CONNECTION);
-		} else {
+		} else if (reqType == WCConstants.METER_REPLACE) {
+			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.METER_REPLACEMENT);
+		}
+		else {
 			waterConnectionRequest.getWaterConnection().setApplicationType(WCConstants.NEW_WATER_CONNECTION);
 		}
 	}
@@ -280,6 +283,9 @@ public class EnrichmentService {
 						waterDao.postForMeterReading(waterConnectionrequest);
 					}
 				}
+			} else if(WCConstants.METER_REPLACE == reqType && WCConstants.APPROVE_CONNECTION
+					.equalsIgnoreCase(waterConnectionrequest.getWaterConnection().getProcessInstance().getAction())) {
+				waterDao.postForMeterReading(waterConnectionrequest);
 			}
 		}
 	}

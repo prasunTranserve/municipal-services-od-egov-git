@@ -128,7 +128,7 @@ public class WCConstants {
 	public static final String APPROVE_CLOSE_CONNECTION_STATUS_CODE = "APPROVE_TO_CLOSE_CONNECTION_PENDING_FOR_CLOSE_CONNECTION";
 	
 	public static final String CLOSE_CONNECTION_STATUS_CODE = "CLOSE_CONNECTION_CONNECTION_CLOSED";
-
+	
 	public static final List<String> NOTIFICATION_ENABLE_FOR_STATUS = Collections
 			.unmodifiableList(Arrays.asList(INITIATE_INITIATED, REJECT_REJECTED,
 					SEND_BACK_TO_CITIZEN_PENDING_FOR_CITIZEN_ACTION, SEND_BACK_FOR_DO_PENDING_FOR_DOCUMENT_VERIFICATION,
@@ -192,6 +192,8 @@ public class WCConstants {
 	public static final String ADHOC_REBATE_COMMENT = "adhocRebateComment";
 
 	public static final String INITIAL_METER_READING_CONST = "initialMeterReading";
+	
+	public static final String MAX_METER_DIGIT_CONST = "maxMeterDigit";
 
 	public static final String SUBMIT_APPLICATION_CONST = "SUBMIT_APPLICATION";
 
@@ -210,7 +212,7 @@ public class WCConstants {
 	public static final List<String> ADDITIONAL_OBJ_CONSTANT = Collections
 			.unmodifiableList(Arrays.asList(ADHOC_PENALTY, ADHOC_REBATE, ADHOC_PENALTY_REASON, ADHOC_PENALTY_COMMENT,
 					ADHOC_REBATE_REASON, ADHOC_REBATE_COMMENT, INITIAL_METER_READING_CONST, DETAILS_PROVIDED_BY,
-					APP_CREATED_DATE, ESTIMATION_FILESTORE_ID, SANCTION_LETTER_FILESTORE_ID, ESTIMATION_DATE_CONST));
+					APP_CREATED_DATE, ESTIMATION_FILESTORE_ID, SANCTION_LETTER_FILESTORE_ID, ESTIMATION_DATE_CONST, MAX_METER_DIGIT_CONST));
 
 	public static final List<String> EDIT_NOTIFICATION_STATE = Collections
 			.unmodifiableList(Arrays.asList(ACTION_INITIATE, SUBMIT_APPLICATION_CONST, ACTION_PAY));
@@ -257,6 +259,7 @@ public class WCConstants {
 	public static final int CLOSE_CONNECTION =  4;
 	public static final int RECONNECTION =  5;
 	public static final int OWNERSHIP_CHANGE_CONNECTION =  6;
+	public static final int METER_REPLACE = 7; 
 	
 	public static final String NEW_WATER_CONNECTION = "NEW_CONNECTION";
 
@@ -269,6 +272,8 @@ public class WCConstants {
 	public static final String WATER_RECONNECTION = "RECONNECT_CONNECTION";
 	
 	public static final String CONNECTION_OWNERSHIP_CHANGE = "CONNECTION_OWNERSHIP_CHANGE";
+	
+	public static final String METER_REPLACEMENT = "METER_REPLACEMENT";
 	
 	public static final String WATER_SERVICE_BUSINESS_ID = "WS";
 	

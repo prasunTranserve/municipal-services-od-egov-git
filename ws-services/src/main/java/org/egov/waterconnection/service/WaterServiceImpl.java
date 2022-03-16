@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -138,6 +139,9 @@ public class WaterServiceImpl implements WaterService {
 			case WCConstants.CLOSE_WATER_CONNECTION:
 				reqType = WCConstants.CLOSE_CONNECTION;
 				break;
+			case WCConstants.METER_REPLACEMENT:
+				reqType = WCConstants.METER_REPLACE;
+				break;
 			default:
 				reqType = WCConstants.MODIFY_CONNECTION;
 				break;
@@ -232,7 +236,7 @@ public class WaterServiceImpl implements WaterService {
 		// Call workflow
 		enrichmentService.postStatusEnrichment(waterConnectionRequest);
 		boolean isStateUpdatable = waterServiceUtil.getStatusForUpdate(businessService, previousApplicationStatus);
-		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);
+		waterDao.updateWaterConnection(waterConnectionRequest, isStateUpdatable);		
 		enrichmentService.postForMeterReading(waterConnectionRequest, WCConstants.UPDATE_APPLICATION);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
@@ -287,7 +291,8 @@ public class WaterServiceImpl implements WaterService {
 	}
 
 	private List<WaterConnection> updateWaterConnectionForModifyFlow(WaterConnectionRequest waterConnectionRequest) {
-		waterConnectionValidator.validateWaterConnection(waterConnectionRequest, WCConstants.MODIFY_CONNECTION);
+		int reqType = (WCConstants.METER_REPLACEMENT.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getApplicationType())) ? WCConstants.METER_REPLACE : WCConstants.MODIFY_CONNECTION;
+		waterConnectionValidator.validateWaterConnection(waterConnectionRequest, reqType);
 		mDMSValidator.validateMasterData(waterConnectionRequest, WCConstants.MODIFY_CONNECTION);
 		BusinessService businessService = getBusinessService(waterConnectionRequest);
 		
@@ -318,8 +323,21 @@ public class WaterServiceImpl implements WaterService {
 		markOldApplication(waterConnectionRequest);
 		// check for edit and send edit notification
 		waterDaoImpl.pushForEditNotification(waterConnectionRequest);
-		enrichmentService.postForMeterReading(waterConnectionRequest, WCConstants.MODIFY_CONNECTION);
+		int reqInt = (waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.METER_REPLACEMENT)) ? WCConstants.METER_REPLACE : WCConstants.MODIFY_CONNECTION;
+		//Temporary solution for exectuionDate and meterInstallationDate
+		changeExecutionDate(waterConnectionRequest);
+		enrichmentService.postForMeterReading(waterConnectionRequest, reqInt);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
+	}
+	
+	
+	/**
+	 * Added by kaustubh
+	 * To change the connectionExecutionDate to meterInstallationDate
+	 * This change was necessary as the process under createMeter function takes connectionExecutionDate rather than meterInstallationDate
+	 */
+	private void changeExecutionDate(WaterConnectionRequest waterConnectionRequest) {
+		waterConnectionRequest.getWaterConnection().setConnectionExecutionDate(waterConnectionRequest.getWaterConnection().getMeterInstallationDate());
 	}
 
 	/**
@@ -334,7 +352,10 @@ public class WaterServiceImpl implements WaterService {
 		} else if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
 			waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.CLOSE_CONNECTION);
-		}  else {
+		} else if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(METER_REPLACEMENT)) {
+			waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, METER_REPLACE);
+		} else {
 			waterConnectionValidator.validateUpdate(waterConnectionRequest, searchResult, WCConstants.MODIFY_CONNECTION);
 		}
 	}
@@ -358,6 +379,9 @@ public class WaterServiceImpl implements WaterService {
 		} else if (null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
 			businessServiceName = config.getCloseWSBusinessServiceName();
+		} else if (null !=  waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.METER_REPLACEMENT)) {
+			businessServiceName = config.getWsWorkflowMeterReplacement();
 		} else {
 			businessServiceName = config.getModifyWSBusinessServiceName();
 		}
@@ -386,7 +410,11 @@ public class WaterServiceImpl implements WaterService {
 		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
 				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION)) {
 			businessServiceName = config.getCloseWSBusinessServiceName();
-		} else {
+		} else if(null != waterConnectionRequest.getWaterConnection().getApplicationType() 
+				&& waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.METER_REPLACEMENT) ) {
+			businessServiceName = config.getWsWorkflowMeterReplacement();
+		}
+		else {
 			businessServiceName = config.getModifyWSBusinessServiceName();
 		}
 		
@@ -438,6 +466,10 @@ public class WaterServiceImpl implements WaterService {
 			isApplicable = true;
 		}
 		if(WCConstants.ACTION_CLOSE_CONNECTION.equals(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
+			isApplicable = true;
+		}
+		if(WCConstants.METER_REPLACEMENT.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getApplicationType()) 
+				&& WCConstants.APPROVE_CONNECTION.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			isApplicable = true;
 		}
 		
