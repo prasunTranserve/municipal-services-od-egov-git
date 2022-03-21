@@ -906,5 +906,44 @@ public class CalculatorUtils {
 		}
 		return url;
 	}
+	
+	/**
+     * Returns the applicable total tax amount to be paid on a demand
+     *
+     * @param demand
+     * @return
+     */
+    public BigDecimal getTaxAmtForDemandForRebateGeneration(Demand demand) {
+        BigDecimal taxAmt = BigDecimal.ZERO;
+        BigDecimal collectedAmt = BigDecimal.ZERO;
+        BigDecimal dueAmt = BigDecimal.ZERO;
+        BigDecimal adjustedRebateAmount = BigDecimal.ZERO;
+        
+        for (DemandDetail detail : demand.getDemandDetails()) {
+        	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_REBATE.contains(detail.getTaxHeadMasterCode())) {
+        		collectedAmt = collectedAmt.add(detail.getCollectionAmount());
+            	taxAmt = taxAmt.add(detail.getTaxAmount());
+        	}else if(CalculatorConstants.PT_TIME_REBATE.equalsIgnoreCase(detail.getTaxHeadMasterCode())
+        			&& detail.getCollectionAmount().compareTo(BigDecimal.ZERO) != 0
+        			&& detail.getTaxAmount().subtract(detail.getCollectionAmount()).compareTo(BigDecimal.ZERO) == 0) {
+        		//Add the adjusted previous rebate amount 
+        		adjustedRebateAmount = adjustedRebateAmount.add(detail.getCollectionAmount().negate());
+        	}
+        }
+        
+        dueAmt = taxAmt.subtract(collectedAmt) ;
+        
+        //No rebate allowed for 0 or negative value
+        if(dueAmt.compareTo(BigDecimal.ZERO) <= 0) {
+        	dueAmt = BigDecimal.ZERO;
+        }
+        //In case of partial payment the rebate is nullified and adjusted with existing tax heads
+        if(dueAmt.compareTo(BigDecimal.ZERO) >0 && adjustedRebateAmount.compareTo(BigDecimal.ZERO) > 0) {
+        	dueAmt = dueAmt.add(adjustedRebateAmount);
+        }
+        
+        return dueAmt;
+    }
+    
 
 }

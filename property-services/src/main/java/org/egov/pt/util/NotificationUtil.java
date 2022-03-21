@@ -1,16 +1,7 @@
 package org.egov.pt.util;
 
 
-import static org.egov.pt.util.PTConstants.ASMT_USER_EVENT_PAY;
-import static org.egov.pt.util.PTConstants.NOTIFICATION_LOCALE;
-import static org.egov.pt.util.PTConstants.NOTIFICATION_MODULENAME;
-import static org.egov.pt.util.PTConstants.NOTIFICATION_OWNERNAME;
-import static org.egov.pt.util.PTConstants.PT_BUSINESSSERVICE;
-import static org.egov.pt.util.PTConstants.PT_CORRECTION_PENDING;
-import static org.egov.pt.util.PTConstants.USREVENTS_EVENT_NAME;
-import static org.egov.pt.util.PTConstants.USREVENTS_EVENT_POSTEDBY;
-import static org.egov.pt.util.PTConstants.USREVENTS_EVENT_TYPE;
-import static org.egov.pt.util.PTConstants.VIEW_APPLICATION_CODE;
+import static org.egov.pt.util.PTConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -312,7 +303,15 @@ public class NotificationUtil {
                    ActionItem item = ActionItem.builder().actionUrl(actionLink).code(config.getPayCode()).build();
                    items.add(item);
                }
+               if(msg.contains(PT_ALTERNATE_NUMBER) || msg.contains(PT_OLD_MOBILENUMBER)){
+                   actionLink = config.getViewPropertyLink()
+                           .replace("$propertyId", property.getPropertyId())
+                           .replace("$tenantId", property.getTenantId());
 
+                   actionLink = config.getUiAppHost() + actionLink;
+                   ActionItem item = ActionItem.builder().actionUrl(actionLink).code(VIEW_APPLICATION_CODE).build();
+                   items.add(item);
+               }
 
                action = Action.builder().actionUrls(items).build();
 

@@ -88,15 +88,19 @@ public class PayService {
 	public BigDecimal getRebate(BigDecimal taxAmt, String assessmentYear, JSONArray rebateMasterList) {
 
 		BigDecimal rebateAmt = BigDecimal.ZERO;
-		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+		Map<String, Object> rebate = mDService.getApplicableMasterForRebate(assessmentYear, rebateMasterList);
 
 		if (null == rebate) return rebateAmt;
 
-		String[] time = ((String) rebate.get(CalculatorConstants.ENDING_DATE_APPLICABLES)).split("/");
-		Calendar cal = Calendar.getInstance();
-		setDateToCalendar(assessmentYear, time, cal);
+		String[] starttime = ((String) rebate.get(CalculatorConstants.STARTING_DATE_APPLICABLES)).split("/");
+		Calendar startcal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, starttime, startcal);
+		
+		String[] endtime = ((String) rebate.get(CalculatorConstants.ENDING_DATE_APPLICABLES)).split("/");
+		Calendar endcal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, endtime, endcal);
 
-		if (cal.getTimeInMillis() > System.currentTimeMillis())
+		if (startcal.getTimeInMillis() <= System.currentTimeMillis() && endcal.getTimeInMillis() > System.currentTimeMillis())
 			rebateAmt = mDService.calculateApplicables(taxAmt, rebate);
 
 		return rebateAmt;
