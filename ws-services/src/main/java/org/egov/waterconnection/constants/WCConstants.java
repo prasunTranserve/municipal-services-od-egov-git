@@ -313,9 +313,22 @@ public class WCConstants {
 	public static final String CONNECTION_DOMESTIC = "Domestic";
 	
 	public static final String CONNECTION_BPL = "BPL";
+	public static final String CONNECTION_ROAD_SIDE_EATERS = "ROADSIDEEATERS";
 	
 	public static final String SERVICE_WATER = "WATER";
 	public static final String SERVICE_SEWERAGE = "SEWERAGE";
 	public static final String SERVICE_WATER_SEWERAGE = "WATER-SEWERAGE";
+	
+	//Additional Details for installment
+	public static final String IS_INSTALLMENT_APPLICABLE = "isInstallmentApplicable";
+	public static final String IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE = "isInstallmentApplicableForScrutinyFee";
+	public static final String NO_OF_SCRUTINY_FEE_INSTALLMENTS = "noOfScrutinyFeeInstallments";
+	public static final String NO_OF_LABOUR_FEE_INSTALLMENTS = "noOfLabourFeeInstallments";
+	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
+	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
+
+	public static final String MDMS_WC_INSTALLMENT = "Installment";
+	public static final String WS_SCRUTINY_FEE = "WS_SCRUTINY_FEE";
+	public static final String WS_LABOUR_FEE = "WS_LABOUR_FEE";
 
 }
