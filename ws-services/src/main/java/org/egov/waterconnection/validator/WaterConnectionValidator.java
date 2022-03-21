@@ -84,7 +84,19 @@ public class WaterConnectionValidator {
 		validateAllIds(request.getWaterConnection(), searchResult);
 		validateDuplicateDocuments(request);
 		setFieldsFromSearch(request, searchResult, reqType);
-		
+		if (reqType == WCConstants.METER_REPLACE) {
+			validateMeteredConnection(request, searchResult);
+			}
+	}
+	
+	private void validateMeteredConnection(WaterConnectionRequest request, WaterConnection searchResult) {
+		Map<String, String> errorMap = new HashMap<>();
+		if (!request.getWaterConnection().getConnectionType().equalsIgnoreCase(WCConstants.METERED_CONNECTION)){
+			errorMap.put("INVALID UPDATE", "The Connection no." + searchResult.getConnectionNo() + "Is a Non-Meterd Connection" );
+			if (!CollectionUtils.isEmpty(errorMap)) {
+				throw new CustomException(errorMap);
+			}
+		}
 	}
    
 	/**
@@ -157,6 +169,10 @@ public class WaterConnectionValidator {
 						|| WCConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED.equals(waterConnection.getApplicationStatus()))) {
 				errorMap.put("INVALID APPLICATION", "The connection is either disconnected or already closed");
 			}
+			if(reqType == WCConstants.METER_REPLACE && (WCConstants.MODIFIED_FINAL_STATE_DISCONNECTED.equals(waterConnection.getApplicationStatus())
+					|| WCConstants.MODIFIED_FINAL_STATE_CONNECTION_CLOSED.equals(waterConnection.getApplicationStatus()))) {
+			errorMap.put("INVALID APPLICATION", "The connection is either disconnected or already closed");
+		}
 		}
 		
 		if (!CollectionUtils.isEmpty(errorMap))

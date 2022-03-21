@@ -209,6 +209,9 @@ public class WSConfiguration {
 	@Value("${ownershipChange.ws.workflow.name}")
 	private String wsWorkflowownershipChangeName;
 	
+	@Value("${meter.replacement.workflow.name}")
+	private String wsWorkflowMeterReplacement;
+	
 	@Value("${kafka.waterservice.create.installment.topic}")
     private String wsCreateInstallmentTopic;
 
