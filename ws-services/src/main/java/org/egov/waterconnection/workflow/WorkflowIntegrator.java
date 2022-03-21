@@ -69,6 +69,8 @@ public class WorkflowIntegrator {
 				wfBusinessServiceName = config.getWsWorkflowownershipChangeName();
 			if (waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.CLOSE_WATER_CONNECTION))
 				wfBusinessServiceName = config.getCloseWSBusinessServiceName();
+			if(waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.METER_REPLACEMENT))
+				wfBusinessServiceName = config.getWsWorkflowMeterReplacement();
 		}
 		ProcessInstance processInstance = ProcessInstance.builder()
 				.businessId(waterConnectionRequest.getWaterConnection().getApplicationNo())
