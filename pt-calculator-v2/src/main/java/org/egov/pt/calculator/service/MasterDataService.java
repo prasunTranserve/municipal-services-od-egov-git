@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.jayway.jsonpath.JsonPath;
+
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsCriteriaReq;
 import org.egov.mdms.model.MdmsResponse;
@@ -240,7 +242,7 @@ public class MasterDataService {
 			startTime = date.getTime();
 		}
 		catch (ParseException e) {
-			throw new CustomException("INVALID STARTDAY","The startDate of the penalty cannot be parsed");
+			throw new CustomException("INVALID STARTDAY","The startDate of the configuration cannot be parsed");
 		}
 
 		return startTime;
@@ -331,6 +333,57 @@ public class MasterDataService {
 		masterMap.put(FINANCIALYEAR_MASTER_KEY,financialYearMaster);
 
 		return masterMap;
+	}
+	
+	/**
+	 * Converts endDay to epoch
+	 * @param startDay endDay of applicable
+	 * @return
+	 */
+	private Long getEndDayInMillis(String startDay){
+
+		Long startTime = null;
+		try{
+			SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+			Date date = df.parse(startDay);
+			startTime = date.getTime();
+		}
+		catch (ParseException e) {
+			throw new CustomException("INVALID ENDDAY","The endDay of the configuration cannot be parsed");
+		}
+
+		return startTime;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> getApplicableMasterForRebate(String assessmentYear, List<Object> masterList) {
+
+		Map<String, Object> objToBeReturned = null;
+		String objStartDay = StringUtils.EMPTY;
+		String objEndDay = StringUtils.EMPTY;
+		Long startTime = 0l;
+		Long endTime = 0l;
+		Long currentTime = 0l;
+		for (Object object : masterList) {
+			Map<String, Object> objMap = (Map<String, Object>) object;
+			String objFinYear = ((String) objMap.get(CalculatorConstants.FROMFY_FIELD_NAME)).split("-")[0];
+			if (objFinYear.compareTo(assessmentYear.split("-")[0]) == 0 ) {
+				if(objMap.containsKey(CalculatorConstants.STARTING_DATE_APPLICABLES)){
+					objStartDay = ((String) objMap.get(CalculatorConstants.STARTING_DATE_APPLICABLES));
+					objEndDay = ((String) objMap.get(CalculatorConstants.ENDING_DATE_APPLICABLES));
+					startTime = getStartDayInMillis(objStartDay);
+					endTime = getEndDayInMillis(objEndDay);
+					currentTime = System.currentTimeMillis();
+					if((startTime <= currentTime && endTime >= currentTime)) {
+						objToBeReturned = objMap;
+						break;
+					}
+				}
+			}
+				
+			
+		}
+		return objToBeReturned;
 	}
 	
 }
