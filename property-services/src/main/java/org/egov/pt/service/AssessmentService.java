@@ -2,18 +2,27 @@ package org.egov.pt.service;
 
 import static org.egov.pt.util.PTConstants.ASSESSMENT_BUSINESSSERVICE;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.Assessment;
+import org.egov.pt.models.Assessment.Source;
 import org.egov.pt.models.AssessmentSearchCriteria;
+import org.egov.pt.models.BulkAssesmentCreationCriteria;
+import org.egov.pt.models.BulkAssesmentCreationCriteriaWrapper;
 import org.egov.pt.models.Property;
+import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.CreationReason;
 import org.egov.pt.models.enums.Status;
 import org.egov.pt.models.workflow.BusinessService;
@@ -21,17 +30,24 @@ import org.egov.pt.models.workflow.ProcessInstanceRequest;
 import org.egov.pt.models.workflow.State;
 import org.egov.pt.producer.Producer;
 import org.egov.pt.repository.AssessmentRepository;
+import org.egov.pt.repository.PropertyRepository;
 import org.egov.pt.util.AssessmentUtils;
-import org.egov.pt.util.CommonUtils;
+import org.egov.pt.util.PTConstants;
 import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AssessmentService {
 
@@ -56,12 +72,15 @@ public class AssessmentService {
 	private CalculationService calculationService;
 	
 	private PropertyService propertyService;
+	
+	private PropertyRepository propertyRepository;
 
 
 	@Autowired
 	public AssessmentService(AssessmentValidator validator, Producer producer, PropertyConfiguration props, AssessmentRepository repository,
 							 AssessmentEnrichmentService assessmentEnrichmentService, PropertyConfiguration config, DiffService diffService,
-							 AssessmentUtils utils, WorkflowService workflowService, CalculationService calculationService, PropertyService propertyService) {
+							 AssessmentUtils utils, WorkflowService workflowService, CalculationService calculationService, 
+							 PropertyService propertyService, PropertyRepository propertyRepository) {
 		this.validator = validator;
 		this.producer = producer;
 		this.props = props;
@@ -73,6 +92,7 @@ public class AssessmentService {
 		this.workflowService = workflowService;
 		this.calculationService = calculationService;
 		this.propertyService = propertyService;
+		this.propertyRepository = propertyRepository;
 	}
 
 	/**
@@ -251,9 +271,9 @@ public class AssessmentService {
 
 	}
 
-	public void validateAssessment(PropertyRequest request, String assessmentYear) {
+	/*public void validateAssessment(PropertyRequest request, String assessmentYear) {
 		Map<String, Object> financialYearMaster =utils.getFinancialYear(request.getRequestInfo(), assessmentYear, request.getProperty().getTenantId());
-	}
+	}*/
 	
 	private void updatePropertyAfterAssessmentApproved(RequestInfo requestInfo, Assessment assessment,
 			Property property) {
@@ -267,5 +287,159 @@ public class AssessmentService {
 	}
 
 
+	public void createNewAssesmentFromPropertyForNewFinYear(BulkAssesmentCreationCriteriaWrapper bulkAssesmentCreationCriteriaWrapper) {
+		RequestInfo requestInfo = bulkAssesmentCreationCriteriaWrapper.getRequestInfo();
+		BulkAssesmentCreationCriteria bulkBillCriteria = bulkAssesmentCreationCriteriaWrapper.getBulkAssesmentCreationCriteria();
+		
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime date = LocalDateTime.now();
+		log.info("Time schedule start for property new assesment generation on : " + date.format(dateTimeFormatter));
+		List<String> tenantIds = new ArrayList<>();
+		
+		if(Objects.isNull(bulkBillCriteria)) {
+			throw new CustomException("ASSESSSMENT_CREATION_ERROR","BulkAssesmentCreationCriteria cannot be blank");
+		} else if(Objects.isNull(bulkBillCriteria.getFinancialYear())){
+			throw new CustomException("ASSESSSMENT_CREATION_ERROR","financialYear cannot be blank");
+		}
+		
+		if(!Objects.isNull(bulkBillCriteria.getTenantIds()) && !bulkBillCriteria.getTenantIds().isEmpty()){
+			tenantIds = bulkBillCriteria.getTenantIds();
+		}else {
+			if(StringUtils.hasText(config.getSchedulerTenants()) && config.getSchedulerTenants().trim().equalsIgnoreCase("ALL")) {
+				log.info("Processing for all tenants");
+				tenantIds = propertyRepository.getDistinctTenantIds();
+			} else {
+				String tenants = config.getSchedulerTenants();
+				log.info("Processing for specific tenants: " + tenants);
+				if(StringUtils.hasText(tenants)) {
+					tenantIds = Arrays.asList(tenants.trim().split(","));
+				}
+			}
+		}
+		
+
+		if(StringUtils.hasText(config.getSkipSchedulerTenants()) && !config.getSkipSchedulerTenants().trim().equalsIgnoreCase("NONE")) {
+			log.info("Skip tenants: " + config.getSkipSchedulerTenants());
+			List<String> skipTenants = Arrays.asList(config.getSkipSchedulerTenants().trim().split(","));
+			tenantIds = tenantIds.stream().filter(tenant -> !skipTenants.contains(tenant)).collect(Collectors.toList());
+		}
+		if (tenantIds.isEmpty())
+			return;
+		
+		log.info("Effective processing tenant Ids : " + tenantIds.toString());
+		
+		long count = 0;
+		
+		long batchsize = config.getDefaultLimit();
+		long batchOffset = config.getDefaultOffset();
+
+		if(bulkBillCriteria.getLimit() != null)
+			batchsize = Math.toIntExact(bulkBillCriteria.getLimit());
+
+		if(bulkBillCriteria.getOffset() != null)
+			batchOffset = Math.toIntExact(bulkBillCriteria.getOffset());
+		
+		
+		for(String tenantId : tenantIds) {
+			tenantId = tenantId.trim();
+			count = getCountOfActivePropertyByTenantId(tenantId);
+			if(count>0) {
+				while (count>0) {
+					//Get all active property for tenants
+					log.info("count [ "+count+" ], batchsize [ "+batchsize+" ], batchOffset [ "+batchOffset+" ]");
+					List<Property> properties = getActivePropertiesWithActiveAssesment(tenantId,batchsize, batchOffset);
+					
+					log.info(properties.stream().map(Property::getPropertyId).collect(Collectors.toList()).toString());
+					if (properties.size() > 0) {
+						properties.stream()
+						.filter(property -> "PT-CTC-000014".equalsIgnoreCase(property.getPropertyId()))
+						.forEach(property -> {
+							try {
+								Thread.sleep(5000);
+							} catch (InterruptedException e) { }
+							
+							AssessmentRequest assessmentRequest = prepareAssessmentRequest(PropertyRequest.builder().requestInfo(requestInfo).property(property).build(), bulkBillCriteria.getFinancialYear());
+							createAssessmentForNewFinYear(assessmentRequest, true);
+						});
+						count = count - properties.size();
+					}
+					batchOffset = batchOffset + batchsize;
+					log.info("Pending connection count "+ count +" for tenant: "+ tenantId);
+				}
+			}
+			
+		};
+	}
+	
+	/**
+	 * 
+	 * @param tenantId
+	 * @param limit
+	 * @param offset
+	 * @return
+	 */
+	public List<Property> getActivePropertiesWithActiveAssesment(String tenantId,long limit,long offset) {
+		log.info("getActivePropertiesWithActiveAssesment >>");
+		log.info("Get all properties for tenant Ids : " + tenantId);
+		PropertyCriteria criteria = PropertyCriteria.builder().tenantId(tenantId).limit(limit).offset(offset).build();
+		return propertyRepository.getActivePropertiesWithActiveAssesmentForCurentFinYear(criteria);
+	}
+	
+	public int getCountOfActivePropertyByTenantId(String tenantId) {
+		log.info("getCountOfActivePropertyByTenantId >>");
+		log.info("Get no of property ids for tenant id : " + tenantId);
+		PropertyCriteria criteria = PropertyCriteria.builder().tenantId(tenantId).build();
+		return propertyRepository.getCountOfActivePropertyByTenantId(criteria);
+	}
+	
+	
+	
+	/**
+	 * Prepare {@link AssessmentRequest} from {@link PropertyRequest} for a financialYear
+	 * @param request
+	 * @param financialYear
+	 * @return
+	 */
+	private AssessmentRequest prepareAssessmentRequest(PropertyRequest request, String financialYear) {
+		return AssessmentRequest.builder()
+						.assessment(Assessment.builder()
+								.tenantId(request.getProperty().getTenantId())
+								.propertyId(request.getProperty().getPropertyId())
+								.source(Source.MUNICIPAL_RECORDS)
+								.channel(request.getProperty().getChannel())
+								.assessmentDate((new Date()).getTime())
+								.financialYear(financialYear).build())
+						.requestInfo(request.getRequestInfo()).build();
+	}
+	
+	/**
+	 * Method to create an assessment for new financial year.
+	 *
+	 * @param request
+	 * @return
+	 */
+	private Assessment createAssessmentForNewFinYear(AssessmentRequest request, boolean autoTriggered) {
+		Property property = utils.getPropertyForAssessment(request);
+		validator.validateAssessmentCreate(request, property);
+		assessmentEnrichmentService.enrichAssessmentCreate(request, autoTriggered);
+
+		//Remove OTHER_DUES for new demand creation for new financial year
+		JsonNode additionalDetails = property.getAdditionalDetails();
+		if(additionalDetails.has(PTConstants.OTHER_DUES)  && additionalDetails.get(PTConstants.OTHER_DUES) != null) {
+			((ObjectNode)additionalDetails).put(PTConstants.OTHER_DUES, "0");
+		}
+		property.setAdditionalDetails(additionalDetails);
+		
+		assessmentEnrichmentService.enrichDemand(request, property);
+		calculationService.calculateTax(request, property);
+		
+		producer.push(props.getCreateAssessmentTopic(), request);
+		
+		//Update additional details after assesment creation
+		updatePropertyAfterAssessmentApproved(request.getRequestInfo(), request.getAssessment(), property);
+
+		return request.getAssessment();
+	}
+	
 
 }

@@ -316,4 +316,11 @@ public class PropertyConfiguration {
 
     @Value("${state.level.tenant.id}")
     private String stateLevelTenantId;
+    
+    
+    @Value("${egov.demand.tenants}")
+	private String schedulerTenants;
+
+	@Value("${egov.demand.tenants.skip}")
+	private String skipSchedulerTenants;
 }

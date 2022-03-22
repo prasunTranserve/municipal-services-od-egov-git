@@ -465,6 +465,7 @@ public class DemandService {
 
 		BigDecimal taxAmt = utils.getTaxAmtFromDemandForApplicablesGeneration(demand);
 		BigDecimal taxAmtForPenalty = utils.getTaxAmtForDemandForPenaltyGeneration(demand);
+		BigDecimal taxAmtForRebate = utils.getTaxAmtForDemandForRebateGeneration(demand);
 		
 		BigDecimal collectedPtTax = BigDecimal.ZERO;
 		BigDecimal totalCollectedAmount = BigDecimal.ZERO;
@@ -488,8 +489,12 @@ public class DemandService {
 		
 		log.debug("Penalty Amount ["+penalty+"]");
 		
-		rebate = payService.applyRebate(taxAmt, collectedPtTax, taxPeriod.getFinancialYear(),
-				timeBasedExmeptionMasterMap, payments, taxPeriod);
+		//Rebate is only applicable for current years demand
+		if(isCurrentDemand) {
+			rebate = payService.applyRebate(taxAmtForRebate, collectedPtTax, taxPeriod.getFinancialYear(),
+					timeBasedExmeptionMasterMap, payments, taxPeriod);
+		}
+		
 		
 		interest = payService.applyInterest(taxAmt,collectedPtTax,
                 taxPeriod.getFinancialYear(), timeBasedExmeptionMasterMap,payments,taxPeriod);
@@ -497,22 +502,35 @@ public class DemandService {
 		
 		if(Objects.isNull(penalty) && Objects.isNull(rebate) && Objects.isNull(interest)) return isCurrentDemand;
 		
-		DemandDetailAndCollection latestPenaltyDemandDetail,latestInterestDemandDetail;
+		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
 
 
 		BigDecimal oldRebate = BigDecimal.ZERO;
+		BigDecimal oldCollectedRebate = BigDecimal.ZERO;
+		boolean rebateTaxHeadExists = false;
 		for(DemandDetail demandDetail : details) {
 			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
 				oldRebate = oldRebate.add(demandDetail.getTaxAmount());
+				oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
+				rebateTaxHeadExists = true;
 			}
 		}
-		if(rebate.compareTo(oldRebate)!=0){
-				details.add(DemandDetail.builder().taxAmount(rebate.subtract(oldRebate))
-						.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
-						.build());
+		
+		if(rebateTaxHeadExists) {
+			if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
+				if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
+					adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+				}
+			}
+			
+			resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
+		}else {
+			details.add(DemandDetail.builder().taxAmount(rebate.negate())
+					.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
+					.build());
 		}
-
-
+		
+		
 		if(interest.compareTo(BigDecimal.ZERO)!=0){
 			latestInterestDemandDetail = utils.getLatestDemandDetailByTaxHead(PT_TIME_INTEREST,details);
 			if(latestInterestDemandDetail!=null){
@@ -529,7 +547,7 @@ public class DemandService {
 				isPenaltyUpdated = true;
 			}
 		}
-
+		
 		//Inserts new PT_TIME_PENALTY tax head in demand details if it does not exists
 		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0 && !isCurrentDemand)
 			details.add(DemandDetail.builder().taxAmount(penalty).taxHeadMasterCode(CalculatorConstants.PT_TIME_PENALTY)
@@ -543,7 +561,7 @@ public class DemandService {
 		
 		return isCurrentDemand;
 	}
-
+	
 	/**
 	 * 
 	 * Balances the decimal values in the newly updated demand by performing a roundoff
@@ -551,7 +569,7 @@ public class DemandService {
 	 * @param demand
 	 * @param requestInfoWrapper
 	 */
-	public void roundOffDecimalForDemand(Demand demand, RequestInfoWrapper requestInfoWrapper) {
+	/*public void roundOffDecimalForDemand(Demand demand, RequestInfoWrapper requestInfoWrapper) {
 		
 		List<DemandDetail> details = demand.getDemandDetails();
 		String tenantId = demand.getTenantId();
@@ -564,9 +582,9 @@ public class DemandService {
 		Map<String, Boolean> isTaxHeadDebitMap = mstrDataService.getTaxHeadMasterMap(requestInfoWrapper.getRequestInfo(), tenantId).stream()
 				.collect(Collectors.toMap(TaxHeadMaster::getCode, TaxHeadMaster::getIsDebit));
 
-		/*
+		
 		 * Summing the credit amount and Debit amount in to separate variables(based on the taxhead:isdebit map) to send to roundoffDecimal method
-		 */
+		 
 
 		BigDecimal totalRoundOffAmount = BigDecimal.ZERO;
 		BigDecimal collectedRoundOffAmount = BigDecimal.ZERO;
@@ -582,11 +600,11 @@ public class DemandService {
 			}
 		}
 
-		/*
+		
 		 *  An estimate object will be returned incase if there is a decimal value
 		 *  
 		 *  If no decimal value found null object will be returned 
-		 */
+		 
 		TaxHeadEstimate roundOffEstimate = payService.roundOffDecimals(taxAmount.subtract(collectedAmount),totalRoundOffAmount);
 
 
@@ -612,8 +630,118 @@ public class DemandService {
 		}
 
 
+	}*/
+	
+	public void roundOffDecimalForDemand(Demand demand, RequestInfoWrapper requestInfoWrapper) {
+		List<DemandDetail> demandDetails = demand.getDemandDetails();
+		String tenantId = demand.getTenantId();
+		
+		BigDecimal totalTax = BigDecimal.ZERO;
+
+		BigDecimal previousRoundOff = BigDecimal.ZERO;
+
+		/*
+		 * Sum all taxHeads except RoundOff as new roundOff will be calculated
+		 */
+		for (DemandDetail demandDetail : demandDetails) {
+			if (!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_ROUNDOFF))
+				totalTax = totalTax.add(demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount()));
+			else
+				previousRoundOff = previousRoundOff.add(demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount()));
+		}
+
+		BigDecimal decimalValue = totalTax.remainder(BigDecimal.ONE);
+		BigDecimal midVal = BigDecimal.valueOf(0.5);
+		BigDecimal roundOff = BigDecimal.ZERO;
+
+		/*
+		 * If the decimal amount is greater than 0.5 we subtract it from 1 and
+		 * put it as roundOff taxHead so as to nullify the decimal eg: If the
+		 * tax is 12.64 we will add extra tax roundOff taxHead of 0.36 so that
+		 * the total becomes 13
+		 */
+		if (decimalValue.compareTo(midVal) >= 0)
+			roundOff = BigDecimal.ONE.subtract(decimalValue);
+
+		/*
+		 * If the decimal amount is less than 0.5 we put negative of it as
+		 * roundOff taxHead so as to nullify the decimal eg: If the tax is 12.36
+		 * we will add extra tax roundOff taxHead of -0.36 so that the total
+		 * becomes 12
+		 */
+		if (decimalValue.compareTo(midVal) < 0)
+			roundOff = decimalValue.negate();
+
+		/*
+		 * If roundOff already exists in previous demand create a new roundOff
+		 * taxHead with roundOff amount equal to difference between them so that
+		 * it will be balanced when bill is generated. eg: If the previous
+		 * roundOff amount was of -0.36 and the new roundOff excluding the
+		 * previous roundOff is 0.2 then the new roundOff will be created with
+		 * 0.2 so that the net roundOff will be 0.2 -(-0.36)
+		 */
+		if (previousRoundOff.compareTo(BigDecimal.ZERO) != 0) {
+			roundOff = roundOff.subtract(previousRoundOff);
+		}
+
+		if (roundOff.compareTo(BigDecimal.ZERO) != 0) {
+			DemandDetail roundOffDemandDetail = DemandDetail.builder().taxAmount(roundOff)
+					.taxHeadMasterCode(PT_ROUNDOFF).tenantId(tenantId)
+					.collectionAmount(BigDecimal.ZERO).build();
+			demandDetails.add(roundOffDemandDetail);
+		}
 	}
 
+	/**
+	 * Adjust positive rebate amount for partial payment into existing tax heads tax amount
+	 * @param demandDetails
+	 * @param additionalRebateAmount
+	 * @return
+	 */
+	private List<DemandDetail> adjustRebateAmountFromExistingTaxHeads(Demand demand, BigDecimal additionalRebateAmount) {
+		
+		List<DemandDetail> demandDetails = demand.getDemandDetails();
+		for(DemandDetail demandDetail : demandDetails) {
+			if(!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE) 
+					&& !TAXES_WITH_EXCEMPTION.contains(demandDetail.getTaxHeadMasterCode()) 
+					&& demandDetail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
+					&& demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0
+					&& additionalRebateAmount.compareTo(BigDecimal.ZERO) > 0) {
+				
+				/*
+				 * Adjust the old rebate amount by subtracting the same from the collection amount
+				 * which was added during partial payment
+				 */
+				if(additionalRebateAmount.compareTo(demandDetail.getCollectionAmount()) <= 0) {
+					demandDetail.setCollectionAmount(demandDetail.getCollectionAmount().subtract(additionalRebateAmount));
+					break;
+				}else {
+					additionalRebateAmount = additionalRebateAmount.subtract(demandDetail.getCollectionAmount());
+					demandDetail.setCollectionAmount(BigDecimal.ZERO);
+				}
+			}
+		}
+		
+		return demandDetails;
+	}
+	
+	/**
+	 * Reset existing PT_TIME_REBATE taxhead with new amount
+	 * @param demand
+	 * @param newRebateAmount
+	 * @return
+	 */
+	private List<DemandDetail> resetExistingRebateWithNewAmountTaxHeads(Demand demand, BigDecimal newRebateAmount) {
+		List<DemandDetail> demandDetails = demand.getDemandDetails();
+		for(DemandDetail demandDetail : demandDetails) {
+			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
+				demandDetail.setTaxAmount(newRebateAmount);
+				demandDetail.setCollectionAmount(BigDecimal.ZERO);
+				break;
+			}
+		}
+		return demandDetails;
+	}
 
 	/**
 	 * Creates demandDetails for the new demand by adding all old demandDetails and then adding demandDetails
@@ -701,15 +829,11 @@ public class DemandService {
 		public List<Demand> modifyDemands(@Valid DemandRequest demandRequest) {
 		log.info("modifyDemands >> ");
 		List<Demand> demandsToBeUpdated = demandRequest.getDemands();
-		List<Demand> demandRes = new LinkedList<>();
-		List<TaxHeadEstimate> taxHeadEstimates = null;
-		List<Calculation> calculations = null;
 		
 		List<Demand> demands = new LinkedList<>();
 		
 		Map<String, Property> propertyMap = null;
 		validateDemandUpdateRquest(demandsToBeUpdated, demandRequest.getRequestInfo());
-		Property property = null;
 		
 		PropertyCriteria propertyCriteria = null;
 		
@@ -720,7 +844,6 @@ public class DemandService {
 		List<TaxPeriod> taxPeriods = null;
 		
 		for( Demand demand : demandsToBeUpdated ) {
-			calculations = new ArrayList<>();
 			
 			propertyCriteria = PropertyCriteria.builder().tenantId(demand.getTenantId())
 					.propertyIds(Collections.singleton(demand.getConsumerCode())).build();
@@ -731,8 +854,6 @@ public class DemandService {
 						+ demand.getConsumerCode());
 					
 			}
-			
-			property = propertyMap.get(demand.getConsumerCode());
 			
 			List<Demand> searchResult = searchDemand(demand.getTenantId(), Collections.singleton(demand.getConsumerCode()), demand.getTaxPeriodFrom(),
 					demand.getTaxPeriodTo(),demand.getBusinessService(), demandRequest.getRequestInfo());
@@ -773,6 +894,12 @@ public class DemandService {
 			
 			oldDemand = searchResult.get(0);
 			
+			//Checks if the current date id within demand from and to date 
+			if((demand.getTaxPeriodFrom()<= System.currentTimeMillis() && demand.getTaxPeriodTo() >= System.currentTimeMillis())) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand for current financial year cannot be modified"
+						+ demand.getConsumerCode());
+			}
+			
 			if(oldDemand.getIsPaymentCompleted()) {
 				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
 						+ consumerCodes.toString());
@@ -805,6 +932,10 @@ public class DemandService {
 								|| newDemandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) == 0)) {
 					throw new CustomException("INVALID_DEMAND_UPDATE",
 							"Collection amount not allowed for new tax head");
+				}else if(!isExistingDemandDetails 
+						&& TAXES_NOT_ALLOWED_TO_MODIFY.contains(newDemandDetail.getTaxHeadMasterCode())) {
+					throw new CustomException("INVALID_DEMAND_UPDATE",
+							"Tax amount not allowed to be modified for tax head ["+newDemandDetail.getTaxHeadMasterCode()+"]");
 				}
 				/*if(newDemandDetail.getTaxAmount().compareTo(newDemandDetail.getCollectionAmount()) < 0) {
 					throw new CustomException("INVALID_DEMAND_UPDATE", "Collected amount is less than tax amount for tax head "
@@ -880,6 +1011,7 @@ public class DemandService {
 		BigDecimal total;
 		BigDecimal totalCollected;
 		BigDecimal totalDue;
+		
 
 		for (DemandDetail updatedDemandDetail : updatedDemandDetails) {
 			if (!taxHeadToDemandDetail.containsKey(updatedDemandDetail.getTaxHeadMasterCode()))
@@ -892,13 +1024,36 @@ public class DemandService {
 						BigDecimal::add);
 				totalCollected = demandDetailList.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO,
 						BigDecimal::add);
-				//diffInTaxAmount = updatedDemandDetail.getTaxAmount().subtract(total);
 				totalDue = total.subtract(totalCollected);
-				if(totalDue.compareTo(BigDecimal.ZERO) < 0) {
+				
+				
+					
+				if(!TAXES_WITH_EXCEMPTION.contains(updatedDemandDetail.getTaxHeadMasterCode()) && totalDue.compareTo(BigDecimal.ZERO) < 0) {
 					throw new CustomException("INVALID_DEMAND_UPDATE",
 							"Negative Tax amount not allowed for taxhead ["+updatedDemandDetail.getTaxHeadMasterCode()+"]");
+				}else if(TAXES_WITH_EXCEMPTION.contains(updatedDemandDetail.getTaxHeadMasterCode()) && totalDue.compareTo(BigDecimal.ZERO) > 0) {
+					throw new CustomException("INVALID_DEMAND_UPDATE",
+							"Positive Tax amount not allowed for taxhead ["+updatedDemandDetail.getTaxHeadMasterCode()+"]");
 				}
-				if (Objects.isNull(updatedDemandDetail.getId()) && totalDue.compareTo(BigDecimal.ZERO) >= 0) {
+				
+				//Add new adjusted tax heads
+				if (Objects.isNull(updatedDemandDetail.getId()) && 
+						(!TAXES_WITH_EXCEMPTION.contains(updatedDemandDetail.getTaxHeadMasterCode()) && totalDue.compareTo(BigDecimal.ZERO) >= 0)) {
+					//For tax having that are not of exception total due must always be positive
+					newDemandDetails.add(DemandDetail.builder().taxAmount(updatedDemandDetail.getTaxAmount())
+							.taxHeadMasterCode(updatedDemandDetail.getTaxHeadMasterCode()).tenantId(updatedDemandDetail.getTenantId())
+							.collectionAmount(BigDecimal.ZERO).build());
+				}else if(Objects.isNull(updatedDemandDetail.getId()) && 
+						(TAXES_WITH_EXCEMPTION.contains(updatedDemandDetail.getTaxHeadMasterCode()) && totalDue.compareTo(BigDecimal.ZERO) <= 0)) {
+					
+					if(updatedDemandDetail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0 && 
+							(totalDue.compareTo(BigDecimal.ZERO) == 0 
+								|| updatedDemandDetail.getTaxAmount().add(totalDue).compareTo(BigDecimal.ZERO) > 0 ) ) {
+						throw new CustomException("INVALID_DEMAND_UPDATE",
+								"Positive Tax amount not allowed for taxhead ["+updatedDemandDetail.getTaxHeadMasterCode()+"]");
+					}
+					
+					//For tax having exception total due must always be negative
 					newDemandDetails.add(DemandDetail.builder().taxAmount(updatedDemandDetail.getTaxAmount())
 							.taxHeadMasterCode(updatedDemandDetail.getTaxHeadMasterCode()).tenantId(updatedDemandDetail.getTenantId())
 							.collectionAmount(BigDecimal.ZERO).build());
@@ -917,8 +1072,9 @@ public class DemandService {
 				List<DemandDetail> demandDetails = new LinkedList<>();
 				demandDetails.add(demandDetail);
 				newTaxHeadToDemandDetail.put(demandDetail.getTaxHeadMasterCode(), demandDetails);
-			} else
+			} else {
 				newTaxHeadToDemandDetail.get(demandDetail.getTaxHeadMasterCode()).add(demandDetail);
+			}
 		});
 		
 		BigDecimal totalTaxAmntTaxHeadWise = BigDecimal.ZERO;
