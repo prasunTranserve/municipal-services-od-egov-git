@@ -208,6 +208,10 @@ public class WaterServiceImpl implements WaterService {
 				.equalsIgnoreCase(WCConstants.APPL_TYPE_UPDATE_VOLUMETRIC)) {
 			return updateVolumetricCharges(waterConnectionRequest);
 		}
+		if(waterConnectionRequest.getWaterConnection().getApplicationType()
+				.equalsIgnoreCase(WCConstants.APPL_TYPE_UPDATE_MAX_METER_DIGITS)) {
+			return updateMaxMeterDigits(waterConnectionRequest);
+		}
 		if (wsUtil.isModifyConnectionRequest(waterConnectionRequest)) {
 			// Received request to update the connection for modifyConnection WF
 			return updateWaterConnectionForModifyFlow(waterConnectionRequest);
@@ -541,6 +545,29 @@ public class WaterServiceImpl implements WaterService {
 		List<WaterConnection> returnList = new ArrayList<>();
 		returnList.add(searchResult);
 		return returnList;
+	}
+	
+	
+	//To update max meter digits
+	private List<WaterConnection> updateMaxMeterDigits(WaterConnectionRequest waterConnectionRequest){
+		WaterConnection searchResult = getConnectionForUpdateRequest(
+				waterConnectionRequest.getWaterConnection().getId(), waterConnectionRequest.getRequestInfo());
+		HashMap<String, Object> additionalDetailsFromDb = mapper.convertValue(searchResult.getAdditionalDetails(),
+				HashMap.class);
+		HashMap<String, Object> additionalDetailsFromRequest = mapper
+				.convertValue(waterConnectionRequest.getWaterConnection().getAdditionalDetails(), HashMap.class);
+		additionalDetailsFromDb.put(WCConstants.MAX_METER_DIGITS_CONST, additionalDetailsFromRequest.get(WCConstants.MAX_METER_DIGITS_CONST));
+		
+		//push to db
+		searchResult.setAdditionalDetails(additionalDetailsFromDb);
+		waterConnectionRequest.setWaterConnection(searchResult);
+		enrichmentService.enrichUpdateWaterConnection(waterConnectionRequest);
+		waterDao.updateWaterConnection(waterConnectionRequest, true);
+		
+		List<WaterConnection> returnList = new ArrayList<>();
+		returnList.add(searchResult);
+		return returnList;
+		
 	}
 	
 	/**
