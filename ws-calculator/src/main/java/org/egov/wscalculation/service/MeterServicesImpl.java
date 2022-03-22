@@ -89,14 +89,14 @@ public class MeterServicesImpl implements MeterService {
 		return meterReadingsList;
 	}
 
-	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo, int maxMeterNumber) {
+	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo, int maxMeterReading) {
 		List<CalculationCriteria> criteriaList = new ArrayList<>();
 		meterReadingsList.forEach(reading -> {
 			CalculationCriteria criteria = new CalculationCriteria();
 			criteria.setTenantId(reading.getTenantId());
 			criteria.setAssessmentYear(estimationService.getAssessmentYear());
 			if(reading.getMeterStatus() == MeterStatusEnum.RESET) {
-				criteria.setCurrentReading(maxMeterNumber + reading.getCurrentReading());
+				criteria.setCurrentReading(maxMeterReading + reading.getCurrentReading());
 			}
 			else {
 			criteria.setCurrentReading(reading.getCurrentReading());
@@ -143,6 +143,7 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
 		Boolean genratedemand = true;
+		int maxMeterReading = 0;
 		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
@@ -153,7 +154,7 @@ public class MeterServicesImpl implements MeterService {
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.updateMeterReading(meterConnectionRequest);
 		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
-			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo(),maxMeterReading);
 		}
 		return meterReadingsList;
 	}

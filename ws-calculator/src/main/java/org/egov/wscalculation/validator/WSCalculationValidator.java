@@ -82,13 +82,13 @@ public class WSCalculationValidator {
 		List<MeterReading> previousMeterReading = wSCalculationDao.searchCurrentMeterReadings(criteria);
 		if (!CollectionUtils.isEmpty(previousMeterReading)) {
 			Double currentMeterReading = previousMeterReading.get(0).getCurrentReading();
-			if (meterReading.getCurrentReading() < currentMeterReading && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET) {
+			if (meterReading.getCurrentReading() < currentMeterReading && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 				errorMap.put("INVALID_METER_READING_CONNECTION_NUMBER",
 						"Current meter reading has to be greater than the past last readings in the meter reading!");
 			}
 		}
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}
@@ -193,7 +193,7 @@ public class WSCalculationValidator {
 		Set<String> connectionNos = new HashSet<>();
 		connectionNos.add(meterReading.getConnectionNo());
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}
