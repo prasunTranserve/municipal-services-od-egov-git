@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -29,7 +29,11 @@ public class WSCalculationWorkflowValidator {
 	private CalculatorUtil util;
 
 	@Autowired
+	private ObjectMapper mapper;
+
+	@Autowired
 	private MDMSValidator mdmsValidator;
+
 
 	 public Boolean applicationValidation(RequestInfo requestInfo,String tenantId,String connectionNo, Boolean genratedemand){
 	    Map<String,String> errorMap = new HashMap<>();
@@ -42,7 +46,11 @@ public class WSCalculationWorkflowValidator {
 			 String waterApplicationNumber = waterConnection.getApplicationNo();
 			 String waterApplicationStatus = waterConnection.getApplicationStatus();
 			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus, errorMap);
-
+			 HashMap<String, Object> addDetail = mapper
+						.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
+					if(addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST) == null || addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST).equals("")) {
+						throw new CustomException("Invalid_Max_Meter_Digits", "Please Update Your Maximum Meter Digits For Your Connection");
+					}
 			//  String propertyId = waterConnection.getPropertyId();
 			//  Property property = util.getProperty(requestInfo,tenantId,propertyId);
 			 //String propertyApplicationNumber = property.getAcknowldgementNumber();
