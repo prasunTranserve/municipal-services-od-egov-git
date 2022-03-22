@@ -87,14 +87,14 @@ public class MeterServicesImpl implements MeterService {
 		return meterReadingsList;
 	}
 
-	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo, int maxMeterNumber) {
+	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo, int maxMeterReading) {
 		List<CalculationCriteria> criteriaList = new ArrayList<>();
 		meterReadingsList.forEach(reading -> {
 			CalculationCriteria criteria = new CalculationCriteria();
 			criteria.setTenantId(reading.getTenantId());
 			criteria.setAssessmentYear(estimationService.getAssessmentYear());
 			if(reading.getMeterStatus() == MeterStatusEnum.RESET) {
-				criteria.setCurrentReading(maxMeterNumber + reading.getCurrentReading());
+				criteria.setCurrentReading(maxMeterReading + reading.getCurrentReading());
 			}
 			else {
 			criteria.setCurrentReading(reading.getCurrentReading());
