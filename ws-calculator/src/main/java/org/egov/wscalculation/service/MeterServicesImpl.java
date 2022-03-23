@@ -136,11 +136,17 @@ public class MeterServicesImpl implements MeterService {
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateUpdateMeterReading(meterConnectionRequest, true);
+			if(meterConnectionRequest.getMeterReading().getMeterStatus().equals(MeterStatusEnum.RESET)) {
+				maxMeterReading = maxMeterReading(meterConnectionRequest);
+		}
 		}
 		wsCalculationValidator.validateUpdate(meterConnectionRequest);
 		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, true);
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.updateMeterReading(meterConnectionRequest);
+		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo(),maxMeterReading);
+		}
 		return meterReadingsList;
 	}
 
