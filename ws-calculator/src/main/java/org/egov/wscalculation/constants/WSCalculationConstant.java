@@ -111,6 +111,8 @@ public class WSCalculationConstant {
 
 	public static final String METER_READING_DATE = "meterReadingDate";
 	
+	public static final String MAX_METER_DIGITS_CONST = "maxMeterDigits";
+	
 	/*
 	 * bigdecimal values
 	 */

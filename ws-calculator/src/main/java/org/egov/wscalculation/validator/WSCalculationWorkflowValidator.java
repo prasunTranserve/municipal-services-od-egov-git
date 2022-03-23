@@ -18,6 +18,9 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,12 +30,15 @@ public class WSCalculationWorkflowValidator {
 
 	@Autowired
 	private CalculatorUtil util;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	@Autowired
 	private MDMSValidator mdmsValidator;
 
 	 public Boolean applicationValidation(RequestInfo requestInfo,String tenantId,String connectionNo, Boolean genratedemand){
-	    Map<String,String> errorMap = new HashMap<>();
+		 Map<String,String> errorMap = new HashMap<>();
 		 List<WaterConnection> waterConnectionList = util.getWaterConnection(requestInfo,connectionNo,tenantId);
 		 WaterConnection waterConnection = null;
 		 if(waterConnectionList != null){
@@ -42,7 +48,14 @@ public class WSCalculationWorkflowValidator {
 			 String waterApplicationNumber = waterConnection.getApplicationNo();
 			 String waterApplicationStatus = waterConnection.getApplicationStatus();
 			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus, errorMap);
-
+			 HashMap<String, Object> addDetail = mapper
+						.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
+					if(StringUtils.isEmpty(addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST))) {
+						throw new CustomException("Invalid_Max_Meter_Digits", "Please update the maximum meter digits for this connection.");
+					}
+					if(Integer.parseInt((String) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)) == 0) {
+						throw new CustomException("Invalid_Max_Meter_Digits", "Max meter digits cannot be zero. Please update the maximum meter digits for this connection.");
+					}
 			//  String propertyId = waterConnection.getPropertyId();
 			//  Property property = util.getProperty(requestInfo,tenantId,propertyId);
 			 //String propertyApplicationNumber = property.getAcknowldgementNumber();
