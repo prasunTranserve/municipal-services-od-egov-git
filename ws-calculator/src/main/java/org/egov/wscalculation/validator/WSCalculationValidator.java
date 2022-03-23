@@ -21,6 +21,7 @@ import org.egov.wscalculation.service.MasterDataService;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
+import org.egov.wscalculation.web.models.MeterReading.MeterStatusEnum;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,13 +82,13 @@ public class WSCalculationValidator {
 		List<MeterReading> previousMeterReading = wSCalculationDao.searchCurrentMeterReadings(criteria);
 		if (!CollectionUtils.isEmpty(previousMeterReading)) {
 			Double currentMeterReading = previousMeterReading.get(0).getCurrentReading();
-			if (meterReading.getCurrentReading() < currentMeterReading) {
+			if (meterReading.getCurrentReading() < currentMeterReading && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 				errorMap.put("INVALID_METER_READING_CONNECTION_NUMBER",
 						"Current meter reading has to be greater than the past last readings in the meter reading!");
 			}
 		}
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading()) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}
@@ -192,7 +193,7 @@ public class WSCalculationValidator {
 		Set<String> connectionNos = new HashSet<>();
 		connectionNos.add(meterReading.getConnectionNo());
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading()) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}

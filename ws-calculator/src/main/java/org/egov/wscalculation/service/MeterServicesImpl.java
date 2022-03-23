@@ -1,12 +1,16 @@
 package org.egov.wscalculation.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
+import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.repository.WSCalculationDao;
+import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.validator.WSCalculationValidator;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
 import org.egov.wscalculation.web.models.BulkMeterConnectionRequest;
@@ -14,10 +18,15 @@ import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
+import org.egov.wscalculation.web.models.MeterReading.MeterStatusEnum;
 import org.egov.wscalculation.web.models.MeterReading.SuccessFail;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
+import org.egov.wscalculation.web.models.SearchCriteria;
+import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class MeterServicesImpl implements MeterService {
@@ -43,6 +52,12 @@ public class MeterServicesImpl implements MeterService {
 	private MasterDataService masterDataService; 
 
 	@Autowired
+	private CalculatorUtil util;
+
+	@Autowired
+	private ObjectMapper mapper;
+
+	@Autowired
 	public MeterServicesImpl(EnrichmentService enrichmentService) {
 		this.enrichmentService = enrichmentService;
 	}
@@ -56,27 +71,36 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> createMeterReading(MeterConnectionRequest meterConnectionRequest) {
 		Boolean genratedemand = true;
+		int maxMeterReading = 0;
 		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateMeterReading(meterConnectionRequest, true);
+			if(meterConnectionRequest.getMeterReading().getMeterStatus().equals(MeterStatusEnum.RESET)) {
+					maxMeterReading = maxMeterReading(meterConnectionRequest);
+			}
 		}
 		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, false);
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.saveMeterReading(meterConnectionRequest);
 		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
-			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo(),maxMeterReading);
 		}
 		return meterReadingsList;
 	}
 
-	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo) {
+	private void generateDemandForMeterReading(List<MeterReading> meterReadingsList, RequestInfo requestInfo, int maxMeterReading) {
 		List<CalculationCriteria> criteriaList = new ArrayList<>();
 		meterReadingsList.forEach(reading -> {
 			CalculationCriteria criteria = new CalculationCriteria();
 			criteria.setTenantId(reading.getTenantId());
 			criteria.setAssessmentYear(estimationService.getAssessmentYear());
+			if(reading.getMeterStatus() == MeterStatusEnum.RESET) {
+				criteria.setCurrentReading(maxMeterReading + reading.getCurrentReading());
+			}
+			else {
 			criteria.setCurrentReading(reading.getCurrentReading());
+			}
 			criteria.setLastReading(reading.getLastReading());
 			criteria.setConnectionNo(reading.getConnectionNo());
 			criteria.setFrom(reading.getLastReadingDate());
@@ -119,6 +143,7 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
 		Boolean genratedemand = true;
+		int maxMeterReading = 0;
 		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
@@ -129,7 +154,7 @@ public class MeterServicesImpl implements MeterService {
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.updateMeterReading(meterConnectionRequest);
 		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
-			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo());
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo(),maxMeterReading);
 		}
 		return meterReadingsList;
 	}
@@ -153,4 +178,22 @@ public class MeterServicesImpl implements MeterService {
 		}
 		return meterReadingsList;
 	}
+
+	/*Returns Max Meter Reading for a connection using Max Meter Digits*/
+	private int maxMeterReading(MeterConnectionRequest meterConnectionRequest) {
+		List<WaterConnection> waterConnectionList = util.getWaterConnection(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getConnectionNo(),meterConnectionRequest.getMeterReading().getTenantId());
+		WaterConnection waterConnection = waterConnectionList.get(0);
+		HashMap<String, Object> addDetail = mapper
+				.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
+		Integer maxMeterDigits = Integer.parseInt((String) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)); 
+		int maxMeterReading = findLargestNumber(maxMeterDigits);
+		return maxMeterReading;
+	}
+
+	/*Returns the largest number possible for meter digits ex:- meter digit 4 will give 9999 i.e largest 4 digit number*/
+	private int findLargestNumber(int maxMeterDigit) {
+		int largestNumber = (int) ((Math.pow(10, maxMeterDigit))-1);
+		return largestNumber;
+	}
+
 }
