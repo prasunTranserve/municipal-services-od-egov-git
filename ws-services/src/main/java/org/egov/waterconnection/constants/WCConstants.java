@@ -50,6 +50,9 @@ public class WCConstants {
 	
 	public static final String MDMS_WC_CONNECTION_FACILITY = "connectionFacility";
 
+	// Update Max Meter Digits
+	public static final String APPL_TYPE_UPDATE_MAX_METER_DIGITS = "UPDATE_MAX_METER_DIGITS";
+
 	// WS actions
 
 	public static final String ACTION_INITIATE = "INITIATE";
