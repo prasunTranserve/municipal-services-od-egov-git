@@ -49,13 +49,13 @@ public class MeterReadingService {
 					MeterConnectionRequest req = MeterConnectionRequest.builder().meterReading(MeterReading.builder()
 							.connectionNo(request.getWaterConnection().getConnectionNo())
 							.currentReading(initialMeterReading.doubleValue())
-							.currentReadingDate(request.getWaterConnection().getConnectionExecutionDate().longValue())
+							.currentReadingDate(request.getWaterConnection().getMeterInstallationDate().longValue())
 							.tenantId(request.getWaterConnection().getTenantId())
 							.meterStatus(MeterStatusEnum.WORKING)
 							.billingPeriod(getBillingPeriod(
-									request.getWaterConnection().getConnectionExecutionDate().longValue()))
+									request.getWaterConnection().getMeterInstallationDate().longValue()))
 							.generateDemand(Boolean.FALSE).lastReading(initialMeterReading.doubleValue())
-							.lastReadingDate(request.getWaterConnection().getConnectionExecutionDate().longValue())
+							.lastReadingDate(request.getWaterConnection().getMeterInstallationDate().longValue())
 							.build()).requestInfo(request.getRequestInfo()).build();
 					Object response = serviceRequestRepository.fetchResult(waterServiceUtil.getMeterReadingCreateURL(),
 							req);
