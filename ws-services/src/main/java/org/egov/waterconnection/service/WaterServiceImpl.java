@@ -337,8 +337,6 @@ public class WaterServiceImpl implements WaterService {
 		// check for edit and send edit notification
 		waterDaoImpl.pushForEditNotification(waterConnectionRequest);
 		int reqInt = (waterConnectionRequest.getWaterConnection().getApplicationType().equalsIgnoreCase(WCConstants.METER_REPLACEMENT)) ? WCConstants.METER_REPLACE : WCConstants.MODIFY_CONNECTION;
-		//Temporary solution for exectuionDate and meterInstallationDate
-		changeExecutionDate(waterConnectionRequest);
 		enrichmentService.postForMeterReading(waterConnectionRequest, reqInt);
 		return Arrays.asList(waterConnectionRequest.getWaterConnection());
 	}
@@ -348,10 +346,12 @@ public class WaterServiceImpl implements WaterService {
 	 * Added by kaustubh
 	 * To change the connectionExecutionDate to meterInstallationDate
 	 * This change was necessary as the process under createMeter function takes connectionExecutionDate rather than meterInstallationDate
-	 */
+	
 	private void changeExecutionDate(WaterConnectionRequest waterConnectionRequest) {
 		waterConnectionRequest.getWaterConnection().setConnectionExecutionDate(waterConnectionRequest.getWaterConnection().getMeterInstallationDate());
 	}
+	
+	*/
 
 	/**
 	 * 
