@@ -136,11 +136,17 @@ public class MeterServicesImpl implements MeterService {
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateUpdateMeterReading(meterConnectionRequest, true);
+			if(meterConnectionRequest.getMeterReading().getMeterStatus().equals(MeterStatusEnum.RESET)) {
+				maxMeterReading = maxMeterReading(meterConnectionRequest);
+		}
 		}
 		wsCalculationValidator.validateUpdate(meterConnectionRequest);
 		enrichmentService.enrichMeterReadingRequest(meterConnectionRequest, true);
 		meterReadingsList.add(meterConnectionRequest.getMeterReading());
 		wSCalculationDao.updateMeterReading(meterConnectionRequest);
+		if (meterConnectionRequest.getMeterReading().getGenerateDemand()) {
+			generateDemandForMeterReading(meterReadingsList, meterConnectionRequest.getRequestInfo(),maxMeterReading);
+		}
 		return meterReadingsList;
 	}
 
@@ -171,7 +177,7 @@ public class MeterServicesImpl implements MeterService {
 		WaterConnection waterConnection = waterConnectionList.get(0);
 		HashMap<String, Object> addDetail = mapper
 				.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
-		Integer maxMeterDigits = Integer.parseInt((String) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)); 
+		Integer maxMeterDigits = ((Integer) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)); 
 		int maxMeterReading = findLargestNumber(maxMeterDigits);
 		return maxMeterReading;
 	}
