@@ -39,6 +39,8 @@ public class WSCalculationWorkflowValidator {
 
 	 public Boolean applicationValidation(RequestInfo requestInfo,String tenantId,String connectionNo, Boolean genratedemand){
 	    Map<String,String> errorMap = new HashMap<>();
+	     //	 allowed max meter digits   
+	     Integer allowedMaxMeterDigits[] = {4, 5, 6, 7, 8};
 		 List<WaterConnection> waterConnectionList = util.getWaterConnection(requestInfo,connectionNo,tenantId);
 		 WaterConnection waterConnection = null;
 		 if(waterConnectionList != null){
@@ -54,8 +56,8 @@ public class WSCalculationWorkflowValidator {
 						throw new CustomException("Invalid_Max_Meter_Digits", "Please update the maximum meter digits for this connection.");
 					}
 
-					if(Integer.parseInt((String) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)) == 0) {
-						throw new CustomException("Invalid_Max_Meter_Digits", "Max meter digits cannot be zero. Please update the maximum meter digits for this connection.");
+					if(!Arrays.asList(allowedMaxMeterDigits).contains((Integer)(addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST)))) {
+						throw new CustomException("Invalid_Max_Meter_Digits", "Max meter digits has to be in between " + allowedMaxMeterDigits[0] + " to " + allowedMaxMeterDigits[allowedMaxMeterDigits.length - 1] + " range.");
 					}
 
 			//  String propertyId = waterConnection.getPropertyId();
