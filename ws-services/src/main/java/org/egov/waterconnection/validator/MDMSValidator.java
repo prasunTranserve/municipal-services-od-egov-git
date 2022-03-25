@@ -133,10 +133,11 @@ public class MDMSValidator {
 
 		//Validate amount for Labour Fee
 		if(isLabourFeeApplicable && isInstallmentApplicable) {
-			// Temporary stopping metered connection for installment
+			/*Temporary stopping metered connection for installment
 			if(WCConstants.METERED_CONNECTION.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				errorMap.put("INVALID_LABOUR_FEE_INSTALLMENT", "Labour fee installment is not applicable for Metered connection");
 			}
+			*/
 
 			if(additionalDetailJsonNode.containsKey(WCConstants.NO_OF_LABOUR_FEE_INSTALLMENTS)
 					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.NO_OF_LABOUR_FEE_INSTALLMENTS))) {
@@ -180,10 +181,11 @@ public class MDMSValidator {
 
 		//Validate amount for Scrutiny Fee
 		if(isInstallmentApplicableForScrutinyFee) {
-			// Temporary stopping metered connection for installment
+			/* Temporary stopping metered connection for installment
 			if(WCConstants.METERED_CONNECTION.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				errorMap.put("INVALID_SCRUTINY_FEE_INSTALLMENT", "Scrutiny fee installment is not applicable for Metered connection");
 			}
+			*/
 			
 			if(additionalDetailJsonNode.containsKey(WCConstants.NO_OF_SCRUTINY_FEE_INSTALLMENTS)
 					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.NO_OF_SCRUTINY_FEE_INSTALLMENTS))) {
