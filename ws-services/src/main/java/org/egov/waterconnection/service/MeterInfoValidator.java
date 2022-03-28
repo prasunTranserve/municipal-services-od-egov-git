@@ -1,9 +1,11 @@
 package org.egov.waterconnection.service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.web.models.ValidatorResult;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
@@ -77,6 +79,8 @@ public class MeterInfoValidator implements WaterActionValidator {
 	@SuppressWarnings("unchecked")
 	private void validateMeteredConnectionRequst(WaterConnectionRequest waterConnectionRequest,
 			Map<String, String> errorMap) {
+		
+		Integer allowedMaxMeterDigits[] = {4, 5, 6, 7, 8};
 
 		if (waterConnectionRequest.getWaterConnection().getMeterId() == null) {
 			errorMap.put("INVALID_METER_ID", "Meter Id cannot be empty");
@@ -100,6 +104,12 @@ public class MeterInfoValidator implements WaterActionValidator {
 				errorMap.put("INVALID_INITIAL_METER_READING", "Initial meter reading can not be zero or negative");
 			}
 		}
+		if(StringUtils.isEmpty(addDetail.get(WCConstants.MAX_METER_DIGITS_CONST))) {
+				errorMap.put("Invalid_Max_Meter_Digits", "Maximum meter reading can not be zero or negative");
+		} else {
+				if(!Arrays.asList(allowedMaxMeterDigits).contains((Integer)(addDetail.get(WCConstants.MAX_METER_DIGITS_CONST)))) {
+				errorMap.put("Invalid_Max_Meter_Digits", "Max meter digits has to be in between " + allowedMaxMeterDigits[0] + " to " + allowedMaxMeterDigits[allowedMaxMeterDigits.length - 1] + " range.");
+		}
 	}
-
+	}
 }
