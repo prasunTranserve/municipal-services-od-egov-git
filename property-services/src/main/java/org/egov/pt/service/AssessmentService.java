@@ -7,15 +7,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.config.PropertyConfiguration;
@@ -39,6 +41,8 @@ import org.egov.pt.util.PTConstants;
 import org.egov.pt.util.CommonUtils;
 import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.Demand;
+import org.egov.pt.web.contracts.DemandDetail;
 import org.egov.pt.web.contracts.MigrateAssessmentRequest;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
@@ -283,14 +287,22 @@ public class AssessmentService {
 	public Assessment migrateAssessment(MigrateAssessmentRequest request) {
 		AssessmentRequest assessmentRequest = createAssessmentRequest(request);
 		Property property = utils.getPropertyForAssessment(assessmentRequest);
+		
+		//Added newly for populating additional details
+		property.setAdditionalDetails(utils.prepareAdditionalDetailsFromDemand(request.getDemands()));
+		assessmentRequest.getAssessment().setAdditionalDetails(utils.prepareAdditionalDetailsFromDemand(request.getDemands()));
+		
 		assessmentEnrichmentService.enrichAssessmentMigrate(assessmentRequest);
 
 		calculationService.calculateMigrationFee(assessmentRequest, property, request.getDemands());
 		producer.push(props.getCreateAssessmentTopic(), request);
+		
+		//Added newly for updating additional details in property table
+		updatePropertyAfterAssessmentApproved(request.getRequestInfo(), request.getAssessment(), property);
 
 		return request.getAssessment();
 	}
-
+	
 	private AssessmentRequest createAssessmentRequest(@Valid MigrateAssessmentRequest request) {
 		AssessmentRequest assessmentRequest = AssessmentRequest.builder().requestInfo(request.getRequestInfo())
 				.assessment(request.getAssessment()).build();
