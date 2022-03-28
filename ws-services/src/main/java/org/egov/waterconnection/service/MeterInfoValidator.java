@@ -1,9 +1,11 @@
 package org.egov.waterconnection.service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.egov.tracer.model.CustomException;
 import org.egov.waterconnection.constants.WCConstants;
 import org.egov.waterconnection.web.models.ValidatorResult;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
