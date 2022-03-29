@@ -132,6 +132,7 @@ public class MeterServicesImpl implements MeterService {
 	@Override
 	public List<MeterReading> updateMeterReading(MeterConnectionRequest meterConnectionRequest) {
 		Boolean genratedemand = true;
+		int maxMeterReading = 0;
 		List<MeterReading> meterReadingsList = new ArrayList<MeterReading>();
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
