@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -163,7 +164,7 @@ public class PropertyService {
 
 	}
 
-	private PropertyDTO searchProperty(PropertyDetailDTO propertyDetail) throws Exception {
+	public PropertyDTO searchProperty(PropertyDetailDTO propertyDetail) throws Exception {
 		// http://localhost:8083/property-services/property/_search?oldpropertyids=008000436&tenantId=od.jatni
 		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getPtSearchEndpoint())
 				.append("?").append("oldpropertyids=").append(propertyDetail.getProperty().getOldPropertyId())
@@ -674,6 +675,158 @@ public class PropertyService {
 			propertyDetail.getProperty().getOwners().get(0).setUuid(uuid);
 		}
 		
+	}
+	
+	public PropertyDTO searchPropertyByPropertyId(PropertyDetailDTO propertyDetail) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getPtSearchEndpoint())
+				.append("?").append("propertyIds=").append(propertyDetail.getProperty().getPropertyId())
+				.append("&tenantId=").append(propertyDetail.getProperty().getTenantId());
+
+		Map<String, Object> propertySearchRequest = prepareSearchPropertyRequest(propertyDetail);
+		Object response = remoteService.fetchResult(uri, propertySearchRequest);
+		if (response == null) {
+			return null;
+		} else {
+			PropertyResponse propertyResponse = mapper.convertValue(response, PropertyResponse.class);
+			if (propertyResponse.getProperties().isEmpty())
+				return null;
+
+			return propertyResponse.getProperties().get(0);
+		}
+	}
+	
+	public void enrichDemandDetailsV1(Property property) {
+		
+		if(property.getDemands() != null) {
+			property.getDemands().forEach(demand -> {
+				demand.setPaymentComplete(MigrationUtility.getPaymentComplete(demand.getPaymentComplete()));
+				if(demand.getTaxPeriodFrom() == null || !demand.getTaxPeriodFrom().matches(MigrationConst.TAX_PERIOD_PATTERN)) {
+					if(demand.getTaxPeriodTo() != null && demand.getTaxPeriodTo().matches(MigrationConst.TAX_PERIOD_PATTERN)) {
+						demand.setTaxPeriodFrom(demand.getTaxPeriodTo().split("/")[0].concat("/Q1"));
+					} else {
+						demand.setTaxPeriodFrom("1980-81/Q1");
+						demand.setTaxPeriodTo("1980-81/Q4");
+					}
+				}
+				
+				String startYear = demand.getTaxPeriodFrom().substring(0, 4);
+				if(Integer.parseInt(startYear) < 1980) {
+					demand.setTaxPeriodFrom("1980-81/Q1");
+					demand.setTaxPeriodTo("1980-81/Q4");
+				}
+			});
+		}
+		
+		if(property.getDemandDetails() != null) {
+			property.getDemandDetails().forEach(demandDtl -> {
+				if(demandDtl.getTaxHead() == null) {
+					demandDtl.setTaxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT);
+				}
+				
+				if(mdProperties.getTaxhead().get(demandDtl.getTaxHead().toLowerCase().replaceAll(" ", "_")) == null) {
+					demandDtl.setTaxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT);
+				}
+				
+//				demandDtl.setTaxAmt(MigrationUtility.getNearest(demandDtl.getTaxAmt(), "4"));
+			});
+		}
+		
+		if(property.getDemandDetails() == null && property.getDemands() == null) {
+			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
+					.propertyId(property.getPropertyId())
+					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
+					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.minPayableAmt("0")
+					.paymentComplete("N").build()));
+			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
+					.propertyId(property.getPropertyId())
+					.ulb(property.getUlb())
+					.taxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT)
+					.taxAmt("0").build()));
+		}
+		
+		if(property.getDemandDetails() == null && property.getDemands() != null) {
+			Double totalDemandAmt = property.getDemands().stream().mapToDouble(demand -> MigrationUtility.getDoubleAmount(demand.getMinPayableAmt())).sum();
+			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
+					.propertyId(property.getPropertyId())
+					.ulb(property.getUlb())
+					.taxHead(MigrationConst.TAXHEAD_HOLDING_TAX_INPUT)
+					.taxAmt(totalDemandAmt.toString()).build()));
+		}
+		
+		if(property.getDemandDetails() != null && property.getDemands() == null) {
+			Double totalDemandAmt = property.getDemandDetails().stream().mapToDouble(dtl -> MigrationUtility.getDoubleAmount(dtl.getTaxAmt())).sum();
+			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
+					.propertyId(property.getPropertyId())
+					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
+					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.minPayableAmt(totalDemandAmt.toString())
+					.paymentComplete("N").build()));
+		}
+		
+	}
+
+	public void enrichAssessmentV1(Property property) {
+		if(property.getAssessments() == null) {
+			property.setAssessments(Arrays.asList(Assessment.builder()
+					.propertyId(property.getPropertyId())
+					.finYear(MigrationUtility.getFinYear())
+					.assessmentDate(MigrationUtility.getCurrentDate()).build()));
+		} else {
+			property.getAssessments().forEach(asmt -> {
+				asmt.setFinYear(MigrationUtility.getAssessmentFinYear(asmt.getFinYear()));
+			});
+		}
+	}
+	
+	public boolean migrateAssessmentV1(PropertyDetailDTO propertyDetail) throws Exception {
+		if(propertyDetail.getProperty().getPropertyId() == null)
+			return false;
+		boolean isAssessmentMigrated = false;
+		PropertyDTO propertyDTO = searchProperty(propertyDetail);
+		if (propertyDTO != null) {
+			List<AssessmentDTO> assessmentDTOs = getAllAssessmentForProperty(propertyDetail);
+			
+			if(!Objects.isNull(assessmentDTOs)) {
+				AssessmentDTO assessmentDTO = assessmentDTOs.stream().filter(
+						assessment -> (MigrationConst.PROPERTY_PREVIOUS_FINYEAR.equals(assessment.getFinancialYear())
+								|| MigrationConst.PROPERTY_NEW_FINYEAR.equals(assessment.getFinancialYear()))).findAny().orElse(null);
+				
+				//Do migration iff no assessment found for 2021-22
+				if(Objects.isNull(assessmentDTO)) {
+					isAssessmentMigrated = doMigrateAssessment(propertyDetail);
+				}else {
+					log.info(String.format("Assessment for property %s already migrated", assessmentDTO.getPropertyId()));
+					propertyDetail.setAssessment(assessmentDTO);
+					isAssessmentMigrated = true;
+				}
+			}
+			return isAssessmentMigrated;
+		} else {
+			MigrationUtility.addError(propertyDetail.getProperty().getOldPropertyId(),
+					PROPERTY_MIGRATION_ERROR_MSG);
+			return false;
+		}
+	}
+	
+	private List<AssessmentDTO> getAllAssessmentForProperty(PropertyDetailDTO propertyDetail) throws Exception {
+		// http://local.egov.org/property-services/assessment/_search?tenantId=od.jatni&propertyIds=PT-2021-08-10-000672
+		StringBuilder uri = new StringBuilder(properties.getPtServiceHost()).append(properties.getAsmtSearchEndPoint())
+				.append("?").append("tenantId=").append(propertyDetail.getProperty().getTenantId())
+				.append("&propertyIds=").append(propertyDetail.getProperty().getPropertyId());
+
+		Map<String, Object> assessmentSearchRequest = prepareSearchAssessmentRequest(propertyDetail);
+		Object response = remoteService.fetchResult(uri, assessmentSearchRequest);
+		if (response == null) {
+			return null;
+		} else {
+			AssessmentResponse assessmentResponse = mapper.convertValue(response, AssessmentResponse.class);
+			if (assessmentResponse.getAssessments().isEmpty())
+				return null;
+
+			return assessmentResponse.getAssessments();
+		}
+
 	}
 	
 }

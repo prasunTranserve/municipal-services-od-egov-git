@@ -6,6 +6,8 @@ import org.apache.poi.EncryptedDocumentException;
 import org.egov.migration.business.model.ConnectionDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.common.model.RecordStatistic;
+import org.egov.migration.processor.PropertyAssessmentItemWriter;
+import org.egov.migration.processor.PropertyAssessmentTransformProcessor;
 import org.egov.migration.processor.PropertyFetchbillReader;
 import org.egov.migration.processor.PropertyFetchbillWriter;
 import org.egov.migration.processor.PropertyItemWriter;
@@ -15,6 +17,9 @@ import org.egov.migration.processor.PropertyReaderForUser;
 import org.egov.migration.processor.PropertySearchTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessor;
 import org.egov.migration.processor.PropertyTransformProcessorForUser;
+import org.egov.migration.processor.PtFetchbillItemReader;
+import org.egov.migration.processor.PtFetchbillWriter;
+import org.egov.migration.processor.PtSearchTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
 import org.egov.migration.processor.WnsTransformProcessor;
@@ -157,4 +162,47 @@ public class BatchConfiguration {
 		return new PropertyItemWriterForUser();
 	}
 
+    @Bean(name = "stepPtFetchbill")
+    protected Step stepPtFetchbill() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepPtFetchbill").<Property, PropertyDetailDTO> chunk(100)
+          .reader(getPTFetchBillReader())
+          .processor(getPTFetchbillProcessor())
+          .writer(getPTFetchbillWriter()).build();
+    }
+    
+    @Bean
+    public ItemProcessor<Property, PropertyDetailDTO> getPTFetchbillProcessor() {
+		return new PtSearchTransformProcessor();
+	}
+    
+    @Bean
+    @StepScope
+	public ItemReader<? extends Property> getPTFetchBillReader() throws EncryptedDocumentException, IOException, Exception {
+    	PtFetchbillItemReader ptItemReader = new PtFetchbillItemReader();
+		ptItemReader.setSkipRecord(1);
+    	return ptItemReader;
+	}
+    
+    @Bean
+    public ItemWriter<PropertyDetailDTO> getPTFetchbillWriter() {
+		return new PtFetchbillWriter();
+	}
+    
+    @Bean
+    public ItemProcessor<Property, PropertyDetailDTO> getPropertyAssessmentProcessor() {
+		return new PropertyAssessmentTransformProcessor();
+	}
+    
+    @Bean
+    public ItemWriter<PropertyDetailDTO> getPropertyAssessmentWriter() {
+		return new PropertyAssessmentItemWriter();
+	}
+    
+    @Bean(name = "stepPropertyAssessmentMigrate")
+    protected Step stepPropertyAssessmentMigrate() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepPropertyMigrate").<Property, PropertyDetailDTO> chunk(100)
+          .reader(getPropertyReader())
+          .processor(getPropertyAssessmentProcessor())
+          .writer(getPropertyAssessmentWriter()).build();
+    }
 }

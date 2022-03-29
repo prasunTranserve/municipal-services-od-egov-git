@@ -29,9 +29,6 @@ public class AssessmentUtils extends CommonUtils {
     private PropertyService propertyService;
     
     @Autowired
-	private ObjectMapper mapper;
-
-    @Autowired
     public AssessmentUtils(PropertyService propertyService) {
         this.propertyService = propertyService;
     }
@@ -51,16 +48,5 @@ public class AssessmentUtils extends CommonUtils {
 
         return properties.get(0);
     }
-    
-    public JsonNode prepareAdditionalDetailsFromDemand(List<Demand> demands) {
-		Map<String,String> additionalDetail = new HashMap<>();
-		Collections.sort(demands, Comparator.comparing(Demand::getTaxPeriodFrom).thenComparing(Demand::getTaxPeriodTo).reversed());
-		Demand demand = demands.get(0);
-		for(DemandDetail demandDetail : demand.getDemandDetails()) {
-			additionalDetail.put(demandDetail.getTaxHeadMasterCode(), String.valueOf(demandDetail.getTaxAmount()));
-		}
-		return mapper.convertValue(additionalDetail,JsonNode.class);
-	}
-
 
 }
