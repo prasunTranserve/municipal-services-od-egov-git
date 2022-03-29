@@ -7,10 +7,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -33,8 +36,12 @@ import org.egov.pt.repository.AssessmentRepository;
 import org.egov.pt.repository.PropertyRepository;
 import org.egov.pt.util.AssessmentUtils;
 import org.egov.pt.util.PTConstants;
+import org.egov.pt.util.CommonUtils;
+import org.egov.pt.util.DemandUtils;
 import org.egov.pt.validator.AssessmentValidator;
 import org.egov.pt.web.contracts.AssessmentRequest;
+import org.egov.pt.web.contracts.Demand;
+import org.egov.pt.web.contracts.DemandDetail;
 import org.egov.pt.web.contracts.PropertyRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +73,8 @@ public class AssessmentService {
 	private DiffService diffService;
 
 	private AssessmentUtils utils;
+	
+	private DemandUtils demandUtils;
 
 	private WorkflowService workflowService;
 
@@ -74,13 +83,16 @@ public class AssessmentService {
 	private PropertyService propertyService;
 	
 	private PropertyRepository propertyRepository;
+	
+	private DemandService demandService;
 
 
 	@Autowired
 	public AssessmentService(AssessmentValidator validator, Producer producer, PropertyConfiguration props, AssessmentRepository repository,
 							 AssessmentEnrichmentService assessmentEnrichmentService, PropertyConfiguration config, DiffService diffService,
 							 AssessmentUtils utils, WorkflowService workflowService, CalculationService calculationService, 
-							 PropertyService propertyService, PropertyRepository propertyRepository) {
+							 PropertyService propertyService, PropertyRepository propertyRepository, DemandService demandService,
+							 DemandUtils demandUtils) {
 		this.validator = validator;
 		this.producer = producer;
 		this.props = props;
@@ -93,6 +105,8 @@ public class AssessmentService {
 		this.calculationService = calculationService;
 		this.propertyService = propertyService;
 		this.propertyRepository = propertyRepository;
+		this.demandService = demandService;
+		this.demandUtils = demandUtils;
 	}
 
 	/**
@@ -349,10 +363,12 @@ public class AssessmentService {
 					log.info("count [ "+count+" ], batchsize [ "+batchsize+" ], batchOffset [ "+batchOffset+" ]");
 					List<Property> properties = getActivePropertiesWithActiveAssesment(tenantId,batchsize, batchOffset);
 					
+					if(Objects.isNull(properties) || properties.isEmpty() ) {
+						count = 0;
+					}
 					log.info(properties.stream().map(Property::getPropertyId).collect(Collectors.toList()).toString());
 					if (properties.size() > 0) {
 						properties.stream()
-						.filter(property -> "PT-CTC-000014".equalsIgnoreCase(property.getPropertyId()))
 						.forEach(property -> {
 							try {
 								Thread.sleep(5000);
@@ -422,6 +438,16 @@ public class AssessmentService {
 		Property property = utils.getPropertyForAssessment(request);
 		validator.validateAssessmentCreate(request, property);
 		assessmentEnrichmentService.enrichAssessmentCreate(request, autoTriggered);
+		
+		if(Objects.isNull(property.getAdditionalDetails())) {
+			List<Demand> demands = demandService.searchDemand(property.getTenantId(),
+					Collections.singleton(property.getPropertyId()), null, null, PTConstants.ASMT_MODULENAME,
+					request.getRequestInfo());
+			//Added newly for populating additional details
+			JsonNode additionalDetails = demandUtils.prepareAdditionalDetailsFromDemand(demands);
+			property.setAdditionalDetails(additionalDetails);
+			request.getAssessment().setAdditionalDetails(additionalDetails);
+		}
 
 		//Remove OTHER_DUES for new demand creation for new financial year
 		JsonNode additionalDetails = property.getAdditionalDetails();
