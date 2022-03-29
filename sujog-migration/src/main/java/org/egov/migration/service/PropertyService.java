@@ -788,9 +788,11 @@ public class PropertyService {
 			List<AssessmentDTO> assessmentDTOs = getAllAssessmentForProperty(propertyDetail);
 			
 			if(!Objects.isNull(assessmentDTOs)) {
-				AssessmentDTO assessmentDTO = assessmentDTOs.stream().filter(
-						assessment -> (MigrationConst.PROPERTY_PREVIOUS_FINYEAR.equals(assessment.getFinancialYear())
-								|| MigrationConst.PROPERTY_NEW_FINYEAR.equals(assessment.getFinancialYear()))).findAny().orElse(null);
+				AssessmentDTO assessmentDTO = assessmentDTOs.stream()
+						.filter(assessment -> ((MigrationConst.PROPERTY_PREVIOUS_FINYEAR.equals(
+								assessment.getFinancialYear()) && Objects.isNull(assessment.getAdditionalDetails()))
+								|| MigrationConst.PROPERTY_NEW_FINYEAR.equals(assessment.getFinancialYear())))
+						.findAny().orElse(null);
 				
 				//Do migration iff no assessment found for 2021-22
 				if(Objects.isNull(assessmentDTO)) {
