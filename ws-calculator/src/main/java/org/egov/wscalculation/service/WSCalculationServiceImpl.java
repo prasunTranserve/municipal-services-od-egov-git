@@ -21,6 +21,8 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
@@ -480,6 +482,11 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		AnnualPaymentDetails annualPaymentDetails = estimationService.getAnnualAdvanceEstimation(request.getCalculationCriteria().get(0), request.getRequestInfo(),
 				masterMap);
 		return annualPaymentDetails;
+	}
+
+	public AnnualAdvance applyAnnualAdvance(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
+
+		return null;
 	}
 	
 }

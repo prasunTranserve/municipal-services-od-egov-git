@@ -4,8 +4,10 @@ import javax.validation.Valid;
 
 import org.egov.wscalculation.service.WSCalculationServiceImpl;
 import org.egov.wscalculation.util.ResponseInfoFactory;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.AnnualPaymentDetails;
-import org.egov.wscalculation.web.models.AnnuapPaymentResponse;
+import org.egov.wscalculation.web.models.AnnualPaymentResponse;
 import org.egov.wscalculation.web.models.CalculationReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,11 +35,21 @@ public class AnnualAdvanceController {
 	private final ResponseInfoFactory responseInfoFactory;
 
 	@PostMapping("/_estimate")
-	public ResponseEntity<AnnuapPaymentResponse> getAnnualTaxEstimation(@RequestBody @Valid CalculationReq calculationReq) {
+	public ResponseEntity<AnnualPaymentResponse> getAnnualTaxEstimation(@RequestBody @Valid CalculationReq calculationReq) {
 		AnnualPaymentDetails annualPaymentDetails = wSCalculationService.getAnnualPaymentEstimation(calculationReq);
-		AnnuapPaymentResponse response = AnnuapPaymentResponse.builder().payment(annualPaymentDetails)
+		AnnualPaymentResponse response = AnnualPaymentResponse.builder().payment(annualPaymentDetails)
 				.responseInfo(
 						responseInfoFactory.createResponseInfoFromRequestInfo(calculationReq.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/_apply")
+	public ResponseEntity<AnnualPaymentResponse> applyAnnualTaxEstimation(@RequestBody @Valid AnnualAdvanceRequest annualAdvanceRequests) {
+		AnnualAdvance annualAdvance = wSCalculationService.applyAnnualAdvance(annualAdvanceRequests);
+		AnnualPaymentResponse response = AnnualPaymentResponse.builder().annualAdvance(annualAdvance)
+				.responseInfo(
+						responseInfoFactory.createResponseInfoFromRequestInfo(annualAdvanceRequests.getRequestInfo(), true))
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

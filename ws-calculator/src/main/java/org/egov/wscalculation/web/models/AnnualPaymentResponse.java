@@ -13,11 +13,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AnnuapPaymentResponse {
+public class AnnualPaymentResponse {
 	@JsonProperty("ResponseInfo")
 	private ResponseInfo responseInfo;
 	
 	@JsonProperty("annualPaymentDetails")
 	private AnnualPaymentDetails payment;
+	
+	@JsonProperty("annualAdvance")
+	private AnnualAdvance annualAdvance;
 
 }
