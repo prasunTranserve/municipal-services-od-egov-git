@@ -807,8 +807,7 @@ public class EstimationService {
 		
 		BigDecimal labourFee = calculateLabourFee(requestInfo, criteria.getWaterConnection(), masterData, isEstimate);
 		//Scrutiny Fee Installments only applicable for non-metered and domestic connections
-		if(WSCalculationConstant.nonMeterdConnection.equalsIgnoreCase(criteria.getWaterConnection().getConnectionType())
-				&& WSCalculationConstant.CONNECTION_PERMANENT.equalsIgnoreCase(criteria.getWaterConnection().getConnectionCategory())
+		if(WSCalculationConstant.CONNECTION_PERMANENT.equalsIgnoreCase(criteria.getWaterConnection().getConnectionCategory())
 				&& WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(criteria.getWaterConnection().getUsageCategory())
 				&& criteria.getWaterConnection().getNoOfFlats().compareTo(0) <= 0) {
 			
@@ -858,15 +857,7 @@ public class EstimationService {
 		JSONObject labourFeeObj = mapper.convertValue(labourFeeMaster.get(0), JSONObject.class);
 		
 		if(isLabourFeeApplicable && isInstallmentApplicable) {
-			if(WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
-					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
-							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
-				|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory()))) {
-				if(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT) != null) {
-					labourFee = new BigDecimal(labourFeeObj.getAsNumber(WSCalculationConstant.LABOURFEE_TOTALAMOUNT).toString());
-				}
-				
-			} else if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
+			if((WSCalculationConstant.meteredConnectionType.equalsIgnoreCase(waterConnection.getConnectionType())
 					&& ((WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
 							&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
 				|| WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
