@@ -374,12 +374,18 @@ public class AssessmentService {
 						.forEach(property -> {
 							try {
 								Thread.sleep(5000);
-							} catch (InterruptedException e) { }
+								AssessmentRequest assessmentRequest = prepareAssessmentRequest(PropertyRequest
+										.builder().requestInfo(requestInfo).property(property).build(),
+										bulkBillCriteria.getFinancialYear());
+								createAssessmentForNewFinYear(assessmentRequest, true);
+							} catch (InterruptedException e) { 
+								log.error("Failed to sleep thread");
+							} catch (Exception e) {
+								log.error("Failed to migrate assessment for property id ["+property.getPropertyId()+"]");
+							}
 							
-							AssessmentRequest assessmentRequest = prepareAssessmentRequest(PropertyRequest
-									.builder().requestInfo(requestInfo).property(property).build(),
-									bulkBillCriteria.getFinancialYear());
-							createAssessmentForNewFinYear(assessmentRequest, true);
+							
+							
 						});
 						count = count - properties.size();
 					}
