@@ -245,16 +245,14 @@ public class CommonUtils {
 	    return String.format("%s-%s", finFirstYear, finLastYear%100);
 	}
 	
-	public static String getPreviousFinancialYear() {
-		int year = Calendar.getInstance().get(Calendar.YEAR);
-		int finFirstYear =  year;
-		int finLastYear =  year;
-	    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
-	    if (month <= 3) {
-	    	finFirstYear = (year - 1);
-	    } else {
-	    	finLastYear = (year + 1);
-	    }
+	public static String getPreviousFinancialYear(String financialYear) {
+		if(!financialYear.contains("-")) {
+			return null;
+		}
+		String [] finYears = financialYear.split("\\-");
+		int finFirstYear =  Integer.parseInt(finYears[0]);
+		int finLastYear =  Integer.parseInt(finYears[1]);
+	    
 	    return String.format("%s-%s", (finFirstYear - 1), ((finLastYear%100) - 1));
 	}
 }
