@@ -169,4 +169,11 @@ public class MigrationConst {
 	public static final String USAGE_CATEGORY_OTHERS = "Others";
 
 	
+	public static final String PROPERTY_PREVIOUS_FINYEAR = "2021-22";
+	public static final String PROPERTY_NEW_FINYEAR = "2022-23";
+	
+	public static class MODULE {
+		public static final String PT  = "PT";
+	}
+	
 }

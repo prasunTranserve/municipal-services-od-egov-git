@@ -282,4 +282,15 @@ masterdata:
     seventh_floor: 7
     eighth_floor: 8
     
-    
+  financialyear: 
+    - 
+      code: 2022-23
+      startingDate: 1648774800000
+      endingDate: 1680303600000
+      module: PT
+      
+    - 
+      code: 2021-22
+      startingDate: 1617238800000
+      endingDate: 1648767600000
+      module: PT

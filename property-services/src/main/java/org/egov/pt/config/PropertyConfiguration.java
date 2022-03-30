@@ -252,6 +252,9 @@ public class PropertyConfiguration {
 
     @Value("${egbs.fetchbill.endpoint}")
     private String egbsFetchBill;
+    
+    @Value("${egbs.demand.search.endpoint}")
+    private String egbsDemandSearchEndpoint;
     	
     // Registry 
     

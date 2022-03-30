@@ -486,6 +486,16 @@ public class MigrationUtility {
 		itemMap.put(MigrationConst.PROPERTY_ID, property.getPropertyId());
 		itemMap.put(MigrationConst.FETCH_BILL_STATUS, "Y");
 	}
+	
+	public static void addSuccessForPTFetchBill(PropertyDTO property) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(property.getPropertyId()) == null) {
+			successMap.put(property.getPropertyId(), new HashMap<>());
+		}
+		Map<String, String> itemMap = successMap.get(property.getPropertyId());
+		itemMap.put(MigrationConst.PROPERTY_ID, property.getPropertyId());
+		itemMap.put(MigrationConst.FETCH_BILL_STATUS, "Y");
+	}
 
 	public static String getSalutation(String salutation) {
 		if(StringUtils.isEmpty(salutation))
