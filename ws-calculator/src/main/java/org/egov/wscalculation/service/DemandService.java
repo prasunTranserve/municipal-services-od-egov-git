@@ -491,8 +491,8 @@ public class DemandService {
 					resetTimeBasedApplicablesForArear(demand);
 				}
 				addRoundOffTaxHead(tenantId, demand.getDemandDetails());
-				demandsToBeUpdated.add(demand);
 			}
+			demandsToBeUpdated.add(demand);
 		});
 
 		//Call demand update in bulk to update the interest or penalty
