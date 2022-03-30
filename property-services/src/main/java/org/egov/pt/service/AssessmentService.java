@@ -406,15 +406,10 @@ public class AssessmentService {
 	 */
 	public List<Property> getActivePropertiesWithActiveAssesment(String tenantId,long limit,long offset, String financialYear) {
 		log.info("getActivePropertiesWithActiveAssesment >>");
-		String previuosFinancialYear = CommonUtils.getFinancialYear();
-		if(!financialYear.equals(previuosFinancialYear)) {
-			financialYear = CommonUtils.getPreviousFinancialYear();
-		}else {
-			financialYear = previuosFinancialYear;
-		}
-		log.info("Get all properties for tenant Ids : " + tenantId + " , financialYear : "+financialYear);
+		String previuosFinancialYear = CommonUtils.getPreviousFinancialYear(financialYear);
+		log.info("Get all properties for tenant Ids : " + tenantId + " , financialYear : "+previuosFinancialYear);
 		PropertyCriteria criteria = PropertyCriteria.builder().tenantId(tenantId).limit(limit).offset(offset).build();
-		return propertyRepository.getActivePropertiesWithActiveAssesmentForCurentFinYear(criteria, financialYear);
+		return propertyRepository.getActivePropertiesWithActiveAssesmentForCurentFinYear(criteria, previuosFinancialYear);
 	}
 	
 	public int getCountOfActivePropertyByTenantId(String tenantId) {
