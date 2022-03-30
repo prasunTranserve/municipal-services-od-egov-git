@@ -100,4 +100,5 @@ public class AssessmentController {
 	public void jobscheduler(@Valid @RequestBody BulkAssesmentCreationCriteriaWrapper bulkAssesmentCreationCriteriaWrapper ) {
 		assessmentService.createNewAssesmentFromPropertyForNewFinYear(bulkAssesmentCreationCriteriaWrapper);
 	}
+
 }

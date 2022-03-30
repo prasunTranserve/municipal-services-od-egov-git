@@ -1,6 +1,7 @@
 package org.egov.migration.business.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +34,9 @@ public class AssessmentDTO {
 
 	@JsonProperty("channel")
 	private String channel ;
+	
+	@JsonProperty("additionalDetails")
+	private JsonNode additionalDetails ;
 
 }
 

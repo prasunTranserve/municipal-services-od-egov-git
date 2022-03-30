@@ -389,7 +389,7 @@ public class AssessmentService {
 				while (count>0) {
 					//Get all active property for tenants
 					log.info("count [ "+count+" ], batchsize [ "+batchsize+" ], batchOffset [ "+batchOffset+" ]");
-					List<Property> properties = getActivePropertiesWithActiveAssesment(tenantId,batchsize, batchOffset);
+					List<Property> properties = getActivePropertiesWithActiveAssesment(tenantId,batchsize, batchOffset, bulkBillCriteria.getFinancialYear());
 					
 					if(Objects.isNull(properties) || properties.isEmpty() ) {
 						count = 0;
@@ -400,10 +400,18 @@ public class AssessmentService {
 						.forEach(property -> {
 							try {
 								Thread.sleep(5000);
-							} catch (InterruptedException e) { }
+								AssessmentRequest assessmentRequest = prepareAssessmentRequest(PropertyRequest
+										.builder().requestInfo(requestInfo).property(property).build(),
+										bulkBillCriteria.getFinancialYear());
+								createAssessmentForNewFinYear(assessmentRequest, true);
+							} catch (InterruptedException e) { 
+								log.error("Failed to sleep thread");
+							} catch (Exception e) {
+								log.error("Failed to migrate assessment for property id ["+property.getPropertyId()+"]");
+							}
 							
-							AssessmentRequest assessmentRequest = prepareAssessmentRequest(PropertyRequest.builder().requestInfo(requestInfo).property(property).build(), bulkBillCriteria.getFinancialYear());
-							createAssessmentForNewFinYear(assessmentRequest, true);
+							
+							
 						});
 						count = count - properties.size();
 					}
@@ -422,11 +430,17 @@ public class AssessmentService {
 	 * @param offset
 	 * @return
 	 */
-	public List<Property> getActivePropertiesWithActiveAssesment(String tenantId,long limit,long offset) {
+	public List<Property> getActivePropertiesWithActiveAssesment(String tenantId,long limit,long offset, String financialYear) {
 		log.info("getActivePropertiesWithActiveAssesment >>");
-		log.info("Get all properties for tenant Ids : " + tenantId);
+		String previuosFinancialYear = CommonUtils.getFinancialYear();
+		if(!financialYear.equals(previuosFinancialYear)) {
+			financialYear = CommonUtils.getPreviousFinancialYear();
+		}else {
+			financialYear = previuosFinancialYear;
+		}
+		log.info("Get all properties for tenant Ids : " + tenantId + " , financialYear : "+financialYear);
 		PropertyCriteria criteria = PropertyCriteria.builder().tenantId(tenantId).limit(limit).offset(offset).build();
-		return propertyRepository.getActivePropertiesWithActiveAssesmentForCurentFinYear(criteria);
+		return propertyRepository.getActivePropertiesWithActiveAssesmentForCurentFinYear(criteria, financialYear);
 	}
 	
 	public int getCountOfActivePropertyByTenantId(String tenantId) {
