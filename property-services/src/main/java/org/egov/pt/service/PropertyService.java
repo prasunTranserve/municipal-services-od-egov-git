@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,6 +151,10 @@ public class PropertyService {
 		Map <String, String> uuidToMobileNumber = new HashMap <String, String>();
 		List <OwnerInfo> owners = propertyFromSearch.getOwners();
 		
+		if(Objects.isNull(owners) || owners.isEmpty()) {
+			return false;
+		}
+		
 		for(OwnerInfo owner : owners) {
 			uuidToMobileNumber.put(owner.getUuid(), owner.getMobileNumber());
 		}
@@ -159,7 +164,7 @@ public class PropertyService {
 		Boolean isNumberDifferent = false;
 		
 		for(OwnerInfo owner : ownersFromRequest) {
-			if(uuidToMobileNumber.containsKey(owner.getUuid()) && !uuidToMobileNumber.get(owner.getUuid()).equals(owner.getMobileNumber())) {
+			if(uuidToMobileNumber.containsKey(owner.getUuid()) && !Objects.isNull(owner.getMobileNumber()) && !uuidToMobileNumber.get(owner.getUuid()).equals(owner.getMobileNumber())) {
 				isNumberDifferent = true;
 				break;
 			}

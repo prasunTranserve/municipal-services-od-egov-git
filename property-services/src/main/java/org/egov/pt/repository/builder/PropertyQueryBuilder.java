@@ -1,16 +1,16 @@
 package org.egov.pt.repository.builder;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.time.Instant;
+
 import org.egov.pt.config.PropertyConfiguration;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 @Component
 public class PropertyQueryBuilder {
@@ -53,6 +53,8 @@ public class PropertyQueryBuilder {
 	private static String ownerDocSelectValues = " owndoc.id as owndocid, owndoc.tenantid as owndoctenantid, owndoc.entityid as owndocentityId, owndoc.documenttype as owndoctype, owndoc.filestoreid as owndocfilestore, owndoc.documentuid as owndocuid, owndoc.status as owndocstatus, ";
 	
 	private static String UnitSelectValues = "unit.id as unitid, unit.tenantid as unittenantid, unit.propertyid as unitpid, floorno, unittype, unit.usagecategory as unitusagecategory, occupancytype, occupancydate, carpetarea, builtuparea, plintharea, unit.superbuiltuparea as unitspba, arv, constructiontype, constructiondate, dimensions, unit.active as isunitactive, unit.createdby as unitcreatedby, unit.createdtime as unitcreatedtime, unit.lastmodifiedby as unitlastmodifiedby, unit.lastmodifiedtime as unitlastmodifiedtime ";
+	
+	
 
 	private static final String QUERY = SELECT 
 			

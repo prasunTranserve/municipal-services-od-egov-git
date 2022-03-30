@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.pt.models.OwnerInfo;
 import org.egov.pt.models.Property;
@@ -21,15 +22,15 @@ import org.egov.pt.repository.rowmapper.PropertyAuditRowMapper;
 import org.egov.pt.repository.rowmapper.PropertyDetailsRowMapper;
 import org.egov.pt.repository.rowmapper.PropertyRowMapper;
 import org.egov.pt.service.UserService;
-import org.egov.pt.util.CommonUtils;
 import org.egov.pt.util.PropertyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
-import com.google.common.collect.Sets;
 import org.springframework.util.ObjectUtils;
+
+import com.google.common.collect.Sets;
 
 @Repository
 public class PropertyRepository {
@@ -258,10 +259,9 @@ public class PropertyRepository {
 	 * @param criteria
 	 * @return {@link List}
 	 */
-	public List<Property> getActivePropertiesWithActiveAssesmentForCurentFinYear(PropertyCriteria criteria) {
-		String currentFinancialYear = CommonUtils.getFinancialYear();
+	public List<Property> getActivePropertiesWithActiveAssesmentForCurentFinYear(PropertyCriteria criteria, String financialYear) {
 		List<Object> preparedStmtList = new ArrayList<>();
-		String query = queryBuilder.getActivePropertyWithActiveCurrentFinYearAssesmentSearchQuery(criteria, currentFinancialYear, preparedStmtList);
+		String query = queryBuilder.getActivePropertyWithActiveCurrentFinYearAssesmentSearchQuery(criteria, financialYear, preparedStmtList);
 		return jdbcTemplate.query(query, preparedStmtList.toArray(), propertyDetailsRowMapper);
 	}
 	
