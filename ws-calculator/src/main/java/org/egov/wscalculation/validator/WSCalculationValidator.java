@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -39,6 +41,9 @@ public class WSCalculationValidator {
 	
 	@Autowired
 	private CalculatorUtil calculationUtil;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	/**
 	 * 
@@ -253,6 +258,45 @@ public class WSCalculationValidator {
 			throw new CustomException(errorMap);
 		}
 		
+	}
+	
+	public Boolean validateMaxMeterDigits(MeterConnectionRequest meterConnectionRequest) {
+		Map<String, String> errorMap = new HashMap<>();
+
+		List<WaterConnection> waterConnectionList = calculationUtil.getWaterConnection(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getConnectionNo(),meterConnectionRequest.getMeterReading().getTenantId());
+		WaterConnection waterConnection = waterConnectionList.get(0);
+		HashMap<String, Object> addDetail = mapper.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
+
+		Integer maxMeterDigits = null;
+		if(addDetail.containsKey(WSCalculationConstant.MAX_METER_DIGITS_CONST)
+				&& addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST) != null) {
+			maxMeterDigits = (Integer) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST);
+		} else {
+			errorMap.put("INVALID_METER_INFO", "Please update the maximum meter digits for this connection. If already updated please retry after a few days.");
+		}
+
+		if(maxMeterDigits != null && !WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.contains((maxMeterDigits))) {
+			errorMap.put("INVALID_METER_INFO", "Max meter digits has to be in between " + WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.get(0) + " to " + WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.get(WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.size() - 1) + " range.");
+		}
+
+		if(maxMeterDigits != null) {
+			int maxMeterReading = calculateMaxMeterReading(maxMeterDigits);
+			if(maxMeterReading < meterConnectionRequest.getMeterReading().getCurrentReading()) {
+				errorMap.put("INVALID_METER_READING", "Max reading allowed "+maxMeterReading+" for this connection. Please check carefully");
+			}
+		}
+
+		if (!errorMap.isEmpty()) {
+			throw new CustomException(errorMap);
+		}
+
+		return true;
+	}
+
+	/*Returns the largest number possible for meter digits ex:- meter digit 4 will give 9999 i.e largest 4 digit number*/
+	private Integer calculateMaxMeterReading(Integer maxMeterDigit) {
+		Integer maxMeterReading = (int) ((Math.pow(10, maxMeterDigit))-1);
+		return maxMeterReading;
 	}
 
 }

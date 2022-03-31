@@ -74,6 +74,7 @@ public class MeterServicesImpl implements MeterService {
 		if(meterConnectionRequest.getMeterReading().getGenerateDemand()){
 			wsCalulationWorkflowValidator.applicationValidation(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getTenantId(),meterConnectionRequest.getMeterReading().getConnectionNo(),genratedemand);
 			wsCalculationValidator.validateMeterReading(meterConnectionRequest, true);
+			wsCalculationValidator.validateMaxMeterDigits(meterConnectionRequest);
 			if(meterConnectionRequest.getMeterReading().getMeterStatus().equals(MeterStatusEnum.RESET)) {
 					maxMeterReading = maxMeterReading(meterConnectionRequest);
 			}
