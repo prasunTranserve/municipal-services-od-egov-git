@@ -353,4 +353,6 @@ public class WSCalculationConstant {
 	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
 	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
 	
+	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
+	
 }
