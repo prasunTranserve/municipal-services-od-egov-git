@@ -32,6 +32,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
+import org.egov.wscalculation.web.models.BillResponse;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
@@ -1128,6 +1129,18 @@ public class DemandService {
 			.build());
 		}
 		return taxHeadEstimates;
+	}
+	
+	public BillResponse fetchBill(RequestInfo requestInfo, String tenantId, String consumerCode) {
+		try {
+			Object result = serviceRequestRepository.fetchResult(
+					calculatorUtils.getFetchBillURL(tenantId, consumerCode),
+					RequestInfoWrapper.builder().requestInfo(requestInfo).build());
+			return mapper.convertValue(result, BillResponse.class);
+		} catch (Exception ex) {
+			log.error("Fetch Bill Error", ex);
+			return null;
+		}
 	}
 
 }

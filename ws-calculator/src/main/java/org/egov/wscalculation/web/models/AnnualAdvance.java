@@ -31,6 +31,9 @@ public class AnnualAdvance {
 	@JsonProperty("financialYear")
 	private String financialYear;
 	
+	@JsonProperty("channel")
+	private String channel;
+	
 	@JsonProperty("status")
 	private AnnualAdvanceStatus status;
 	

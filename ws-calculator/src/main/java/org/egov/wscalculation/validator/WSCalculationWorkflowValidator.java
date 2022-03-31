@@ -81,7 +81,7 @@ public class WSCalculationWorkflowValidator {
 		Boolean isApplicationApproved = workflowValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus);
 		if (!isApplicationApproved)
 			errorMap.put("WATER_APPLICATION_ERROR",
-					"Demand cannot be generated as water connection application with application number "
+					"Can not proceed as water connection application with application number "
 							+ waterApplicationNumber + " is either not approved yet or disconnected or closed");
 	}
 
@@ -134,5 +134,35 @@ public class WSCalculationWorkflowValidator {
 				response=configArray.getJSONObject(i);
 		}
 		return response;
+	}
+
+	public Boolean waterApplicationValidationForAnnualAdvance(RequestInfo requestInfo, String tenantId, String connectionNo) {
+	    Map<String,String> errorMap = new HashMap<>();
+		 List<WaterConnection> waterConnectionList = util.getWaterConnection(requestInfo,connectionNo,tenantId);
+		 WaterConnection waterConnection = null;
+		 if(waterConnectionList != null){
+			 int size = waterConnectionList.size();
+			 waterConnection = waterConnectionList.get(size-1);
+
+			 String waterApplicationNumber = waterConnection.getApplicationNo();
+			 String waterApplicationStatus = waterConnection.getApplicationStatus();
+			 String connectionType = waterConnection.getConnectionType();
+			 
+			 if(!connectionType.equalsIgnoreCase(WSCalculationConstant.nonMeterdConnection)) {
+				 errorMap.put("WATER_CONNECTION_ERROR",
+						 "Annual Advance is only applicable for Non Metered connection");
+			 }
+			 
+			 waterConnectionValidation(requestInfo, tenantId, waterApplicationNumber, waterApplicationStatus, errorMap);
+		 }
+		 else{
+			 errorMap.put("WATER_CONNECTION_ERROR",
+					 "Water connection object is null");
+		 }
+
+       if(!CollectionUtils.isEmpty(errorMap))
+			throw new CustomException(errorMap);
+
+       return true;
 	}
 }

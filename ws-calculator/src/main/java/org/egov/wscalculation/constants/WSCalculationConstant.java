@@ -357,4 +357,10 @@ public class WSCalculationConstant {
 	
 	// Annual advance
 	public static final String ANNUAL_ADVANCE_REBATE = "annualRebate";
+	public static final String ADVANCE_WATER_CHARGE = "annualWaterCharge";
+	public static final String ADVANCE_SEWERAGE_CHARGE = "annualSewerageCharge";
+	public static final String ADVANCE_REBATE = "annualRebate";
+
+	public static final String COMMON_CHANNEL = "INTERNAL";
+	
 }
