@@ -256,6 +256,7 @@ public class BPACalculatorConstants {
 	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
 	public static final String TOTAL_FLOOR_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalFloorArea";
 	public static final String TOTAL_BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea";
+	public static final String TOTAL_EXISTING_BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalExistingBuiltUpArea";
 	public static final String EWS_AREA_PATH = "edcrDetail.*.planDetail.totalEWSFeeEffectiveArea";
 	public static final String SHELTER_FEE_PATH = "edcrDetail.*.planDetail.planInformation.shelterFeeRequired";
 	public static final String BENCHMARK_VALUE_PATH = "edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre";
@@ -278,6 +279,7 @@ public class BPACalculatorConstants {
 	public static final String TOTAL_FLOOR_AREA = "TOTAL_FLOOR_AREA";
 	public static final String TOTAL_FLOOR_AREA_EDCR = "TOTAL_FLOOR_AREA_EDCR";
 	public static final String TOTAL_BUILTUP_AREA_EDCR = "TOTAL_BUILTUP_AREA_EDCR";
+	public static final String TOTAL_BUILTUP_AREA = "TOTAL_BUILTUP_AREA";
 	public static final String EWS_AREA = "EWS_AREA";
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
@@ -291,6 +293,7 @@ public class BPACalculatorConstants {
 	public static final String AREA_TYPE_PLOT = "PLOT";
 	public static final String SECURITY_DEPOSIT = "SECURITY_DEPOSIT";
 	public static final String DEVIATION_FLOOR_AREA = "DEVIATION_FLOOR_AREA";
+	public static final String DEVIATION_BUILTUP_AREA = "DEVIATION_BUILTUP_AREA";
 	public static final String PROJECT_VALUE_FOR_EIDP = "PROJECT_VALUE_FOR_EIDP";
 	public static final String PROJECT_VALUE_FOR_EIDP_OC = "PROJECT_VALUE_FOR_EIDP_OC";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT = "IS_PROJECT_UNDERTAKING_BY_GOVT";
