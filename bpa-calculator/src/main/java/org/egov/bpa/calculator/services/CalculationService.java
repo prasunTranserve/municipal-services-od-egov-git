@@ -1380,9 +1380,7 @@ public class CalculationService {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		Double deviationBUA = null;
 		String occupancyType = null;
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA);
-		}
+		deviationBUA=getDeviationBUAForOCFeesCalculation(paramMap);
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -1439,7 +1437,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1471,7 +1469,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1504,7 +1502,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1537,7 +1535,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1569,7 +1567,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1607,7 +1605,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if (((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1706,7 +1704,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1740,7 +1738,7 @@ public class CalculationService {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
 		// using deviation in builtup area for calculation of application fees for OC- 
-		deviationBUA = getAreaParameterForOCFeesCalculation(paramMap);
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -3222,13 +3220,11 @@ public class CalculationService {
 	private Double getAreaParameterForBPFeesCalculation(Map<String, Object> paramMap) {
 		//String applicableAreaParameterName = BPACalculatorConstants.TOTAL_FLOOR_AREA;
 		String applicableAreaParameterName = BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR;
-		//TODO should return null or 0?
 		return null != paramMap.get(applicableAreaParameterName)?(Double) paramMap.get(applicableAreaParameterName):null;
 	}
 	
-	private Double getAreaParameterForOCFeesCalculation(Map<String, Object> paramMap) {
+	private Double getDeviationBUAForOCFeesCalculation(Map<String, Object> paramMap) {
 		String applicableAreaParameterName = BPACalculatorConstants.DEVIATION_BUILTUP_AREA;
-		//TODO should return null or 0?
 		return null != paramMap.get(applicableAreaParameterName)?(Double) paramMap.get(applicableAreaParameterName):null;
 	}
 
