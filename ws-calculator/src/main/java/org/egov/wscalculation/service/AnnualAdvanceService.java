@@ -8,10 +8,12 @@ import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wscalculation.constants.WSCalculationConstant;
+import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.validator.WSCalculationValidator;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
 import org.egov.wscalculation.web.models.AnnualAdvance.AnnualAdvanceStatus;
+import org.egov.wscalculation.web.models.AnnualAdvance;
 import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.AuditDetails;
@@ -37,13 +39,16 @@ public class AnnualAdvanceService {
 	@Autowired
 	private WSCalculationValidator wsCalculationValidator;
 	
+	@Autowired
+	private WSCalculationDao wSCalculationDao;
+	
 	public void enrichRequest(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
 		annualAdvanceRequests.getAnnualAdvance().setId(UUID.randomUUID().toString());
 		annualAdvanceRequests.getAnnualAdvance().setFinancialYear(calculatorUtil.getFinancialYear());
 		annualAdvanceRequests.getAnnualAdvance().setStatus(AnnualAdvanceStatus.ACTIVE);
 		
 		if(StringUtils.isEmpty(annualAdvanceRequests.getAnnualAdvance().getChannel())) {
-			annualAdvanceRequests.getAnnualAdvance().setChannel(WSCalculationConstant.COMMON_CHANNEL);
+			annualAdvanceRequests.getAnnualAdvance().setChannel(WSCalculationConstant.CHANNEL_SUJOG);
 		}
 		
 		long currentTime = System.currentTimeMillis();
@@ -61,12 +66,6 @@ public class AnnualAdvanceService {
 		wsCalculationValidator.validateAnnualAdvance(requestInfo, criteria.getTenantId(), criteria.getConnectionNo());
 	}
 
-	public Boolean validatePayment(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
-		// TODO Auto-generated method stub
-		
-		return true;
-	}
-
 	public void enrichAnnualAdvanceDetails(@Valid AnnualAdvanceRequest annualAdvanceRequests,
 			AnnualPaymentDetails annualPaymentDetails) {
 		HashMap<String, Object> additionalDetail = new HashMap<>();
@@ -75,6 +74,15 @@ public class AnnualAdvanceService {
 		additionalDetail.put(WSCalculationConstant.ADVANCE_REBATE, annualPaymentDetails.getTotalRebate());
 		
 		annualAdvanceRequests.getAnnualAdvance().setAdditionalDetails(additionalDetail);
+	}
+
+	public List<AnnualAdvance> findAnnualPayment(String tenantId, String connectionNo, String assessYear) {
+		if(StringUtils.isEmpty(assessYear)) {
+			assessYear = calculatorUtil.getFinancialYear();
+		}
+		
+		List<AnnualAdvance> annualAdvances = wSCalculationDao.getAnnualAdvance(tenantId, connectionNo, assessYear);
+		return annualAdvances;
 	}
 
 }

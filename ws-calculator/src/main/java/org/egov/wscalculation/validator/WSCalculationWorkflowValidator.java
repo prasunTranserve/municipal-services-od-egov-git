@@ -157,7 +157,7 @@ public class WSCalculationWorkflowValidator {
 		 }
 		 else{
 			 errorMap.put("WATER_CONNECTION_ERROR",
-					 "Water connection object is null");
+					 "No Water connection found");
 		 }
 
        if(!CollectionUtils.isEmpty(errorMap))

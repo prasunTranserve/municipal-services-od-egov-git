@@ -419,7 +419,7 @@ public class WSCalculatorQueryBuilder {
 		
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" status = ? ");
-		preparedStatement.add("ACTIVE");
+		preparedStatement.add("Active");
 		
 		if(StringUtils.hasText(finYear)) {
 			addClauseIfRequired(preparedStatement, query);

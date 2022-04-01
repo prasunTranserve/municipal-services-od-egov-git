@@ -492,6 +492,10 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	}
 
 	public AnnualAdvance applyAnnualAdvance(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
+		List<AnnualAdvance> annualAdvances = annualAdvanceService.findAnnualPayment(annualAdvanceRequests.getAnnualAdvance().getTenantId(), annualAdvanceRequests.getAnnualAdvance().getConnectionNo(), null);
+		if(!annualAdvances.isEmpty()) {
+			return annualAdvances.get(0);
+		}
 		validatePaymentForAnnualAdvanceAndEnrich(annualAdvanceRequests);
 		annualAdvanceService.enrichRequest(annualAdvanceRequests);
 		wSCalculationDao.saveAnnualAdvance(annualAdvanceRequests);

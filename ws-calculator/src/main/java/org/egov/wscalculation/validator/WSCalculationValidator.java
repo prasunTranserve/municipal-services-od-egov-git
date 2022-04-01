@@ -269,7 +269,7 @@ public class WSCalculationValidator {
 			}
 			
 		} else {
-			errorMap.put("INVALID_WATER_CONNECTION", "No connection found with this connectionNos");
+			errorMap.put("INVALID_WATER_CONNECTION", "No connection found with this connectionNo");
 		}
 		
 		if (!errorMap.isEmpty()) {

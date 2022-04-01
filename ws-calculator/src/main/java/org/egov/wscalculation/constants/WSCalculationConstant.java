@@ -361,6 +361,6 @@ public class WSCalculationConstant {
 	public static final String ADVANCE_SEWERAGE_CHARGE = "annualSewerageCharge";
 	public static final String ADVANCE_REBATE = "annualRebate";
 
-	public static final String COMMON_CHANNEL = "INTERNAL";
+	public static final String CHANNEL_SUJOG = "SUJOG";
 	
 }
