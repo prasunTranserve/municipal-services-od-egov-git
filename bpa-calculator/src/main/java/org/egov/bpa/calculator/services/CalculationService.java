@@ -586,6 +586,16 @@ public class CalculationService {
 				paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR, totalBuiltUpArea);
 			}
 		}
+		
+		//totalBuiltUpArea of OC-
+		JSONArray totalBuiltUpAreasOC = ocContext.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(totalBuiltUpAreasOC)) {
+			if (null != totalBuiltUpAreasOC.get(0)) {
+				String ocTotalBuiltUpAreaString = edcrTotalBuiltUpAreas.get(0).toString();
+				Double totalBuiltUpArea = Double.parseDouble(ocTotalBuiltUpAreaString);
+				paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA, totalBuiltUpArea);
+			}
+		}
 
 		JSONArray totalBuitUpAreas = ocContext.read(BPACalculatorConstants.TOTAL_FLOOR_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalBuitUpAreas)) {
@@ -604,6 +614,19 @@ public class CalculationService {
 				Double totalBuitUpArea = Double.parseDouble(totalBuitUpAreaString);
 				Double exisitingBuitUpArea = Double.parseDouble(existingBuitUpAreaString);
 				paramMap.put(BPACalculatorConstants.DEVIATION_FLOOR_AREA, totalBuitUpArea-exisitingBuitUpArea);
+			}
+		}
+		
+		//use builtup area rather than floor area for some OC calculations-(this is stable wrt application fees do not change anything)
+		JSONArray totalExistingBuiltUpArea=edcrContext.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
+		JSONArray totalBuiltUpAreas = ocContext.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(totalBuiltUpAreas) && !CollectionUtils.isEmpty(totalExistingBuiltUpArea)) {
+			if (null != totalBuiltUpAreas.get(0) && null != totalExistingBuiltUpArea.get(0)) {
+				String totalBuiltUpAreaString = totalBuiltUpAreas.get(0).toString();
+				String totalExistingBuiltUpAreaString = totalExistingBuiltUpArea.get(0).toString();
+				Double totalBuiltUpArea = Double.parseDouble(totalBuiltUpAreaString);
+				Double totalExisitingBuiltUpArea = Double.parseDouble(totalExistingBuiltUpAreaString);
+				paramMap.put(BPACalculatorConstants.DEVIATION_BUILTUP_AREA, totalBuiltUpArea-totalExisitingBuiltUpArea);
 			}
 		}
 		
@@ -800,6 +823,15 @@ public class CalculationService {
 				paramMap.put(BPACalculatorConstants.TOTAL_FLOOR_AREA, totalBuitUpArea);
 			}
 		}
+		
+		JSONArray edcrTotalBuiltUpAreas = context.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(edcrTotalBuiltUpAreas)) {
+			if (null != edcrTotalBuiltUpAreas.get(0)) {
+				String edcrTotalBuiltUpAreaString = edcrTotalBuiltUpAreas.get(0).toString();
+				Double totalBuiltUpArea = Double.parseDouble(edcrTotalBuiltUpAreaString);
+				paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR, totalBuiltUpArea);
+			}
+		}
 
 		JSONArray totalEWSAreas = context.read(BPACalculatorConstants.EWS_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalEWSAreas)) {
@@ -927,11 +959,11 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
+		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA)) {
+			deviationBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
-			totalBuaEdcr = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR);
+		if (null != paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR)) {
+			totalBuaEdcr = (Double) paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR);
 		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1033,8 +1065,8 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
 			plotArea = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.PLOT_AREA));
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviation = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA));
+		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA)) {
+			deviation = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA));
 		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1044,8 +1076,8 @@ public class CalculationService {
 			
 			BigDecimal baseFarBUA = plotArea.multiply(baseFAR);
 			BigDecimal permissableFarBUA = plotArea.multiply(permissableFAR);
-			BigDecimal builtUpAreaBP = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR));
-			BigDecimal builtUpAreaOC = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA));
+			BigDecimal builtUpAreaBP = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR));
+			BigDecimal builtUpAreaOC = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA));
 			
 			if(baseFarBUA.compareTo(builtUpAreaOC) >= 0) {
 				compoundFARFee = calculateOcCompoundingFar(paramMap, mdmsData, deviation);
@@ -1348,9 +1380,7 @@ public class CalculationService {
 		BigDecimal ocScrutinyFee = BigDecimal.ZERO;
 		Double deviationBUA = null;
 		String occupancyType = null;
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA=getDeviationBUAForOCFeesCalculation(paramMap);
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -1407,9 +1437,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1441,9 +1469,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1476,9 +1502,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1511,9 +1535,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1545,9 +1567,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1585,9 +1605,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if (((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1686,9 +1704,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -1721,9 +1737,8 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
-		}
+		// using deviation in builtup area for calculation of application fees for OC- 
+		deviationBUA = getDeviationBUAForOCFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
@@ -2227,7 +2242,8 @@ public class CalculationService {
 		BigDecimal welfareCess = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
-		Double totalBuitUpArea = null;
+		Double totalFloorArea = null;
+		Double totalBuiltupArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -2235,17 +2251,20 @@ public class CalculationService {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
+			totalFloorArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
 		}
+		totalBuiltupArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 			// Double costOfConstruction = (1750 * totalBuitUpArea * 10.764);
-			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuitUpArea))
+			//Use builtup area instead of floor area to calculate totalCostOfConstruction and check if totalCostOfConstruction>10Lakh.If true,
+			//then use builtup area instead of floor area to calculate ConstructionWorkerWelfareCess-
+			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuiltupArea))
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(totalBuitUpArea))
+				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(totalBuiltupArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
 
@@ -2267,9 +2286,7 @@ public class CalculationService {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -2331,9 +2348,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C)) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2423,9 +2438,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2457,9 +2470,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2491,9 +2502,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2525,9 +2534,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2559,9 +2566,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2593,9 +2598,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2631,9 +2634,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A) && StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2728,9 +2729,7 @@ public class CalculationService {
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -2788,9 +2787,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2821,9 +2818,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2855,9 +2850,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2889,9 +2882,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.E))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2922,9 +2913,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -2962,9 +2951,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
 			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if (((occupancyType.equalsIgnoreCase(BPACalculatorConstants.C))) && (StringUtils.hasText(subOccupancyType))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -3062,9 +3049,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -3096,9 +3081,7 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
-			totalBuitUpArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
-		}
+		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -3232,6 +3215,17 @@ public class CalculationService {
 		estimate.setCategory(category);
 		estimate.setTaxHeadCode(taxHeadCode);
 		estimates.add(estimate);
+	}
+	
+	private Double getAreaParameterForBPFeesCalculation(Map<String, Object> paramMap) {
+		//String applicableAreaParameterName = BPACalculatorConstants.TOTAL_FLOOR_AREA;
+		String applicableAreaParameterName = BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR;
+		return null != paramMap.get(applicableAreaParameterName)?(Double) paramMap.get(applicableAreaParameterName):null;
+	}
+	
+	private Double getDeviationBUAForOCFeesCalculation(Map<String, Object> paramMap) {
+		String applicableAreaParameterName = BPACalculatorConstants.DEVIATION_BUILTUP_AREA;
+		return null != paramMap.get(applicableAreaParameterName)?(Double) paramMap.get(applicableAreaParameterName):null;
 	}
 
 	/*
