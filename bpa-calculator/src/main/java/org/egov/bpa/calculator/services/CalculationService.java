@@ -591,7 +591,7 @@ public class CalculationService {
 		JSONArray totalBuiltUpAreasOC = ocContext.read(BPACalculatorConstants.TOTAL_BUILTUP_AREA_PATH);
 		if (!CollectionUtils.isEmpty(totalBuiltUpAreasOC)) {
 			if (null != totalBuiltUpAreasOC.get(0)) {
-				String ocTotalBuiltUpAreaString = edcrTotalBuiltUpAreas.get(0).toString();
+				String ocTotalBuiltUpAreaString = totalBuiltUpAreasOC.get(0).toString();
 				Double totalBuiltUpArea = Double.parseDouble(ocTotalBuiltUpAreaString);
 				paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA, totalBuiltUpArea);
 			}
@@ -1012,8 +1012,8 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA_EDCR)) {
 			edcrTotalBUA = (Double) paramMap.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR);
 		}
-		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA)) {
-			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_FLOOR_AREA);
+		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA)) {
+			deviationBUA = (Double) paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA);
 		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
