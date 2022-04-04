@@ -60,7 +60,7 @@ public class MeterInfoValidator implements WaterActionValidator {
 				.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getProcessInstance().getAction())) {
 			if (WCConstants.METERED_CONNECTION
 					.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionType())) {
-//				validateMeteredConnectionRequst(waterConnectionRequest, errorMap);
+				validateMeteredConnectionRequst(waterConnectionRequest, errorMap);
 			}
 		}
 	}
