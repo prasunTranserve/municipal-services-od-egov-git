@@ -56,6 +56,20 @@ public class BPACalculatorController {
 		 CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		 return new ResponseEntity<CalculationRes>(calculationRes,HttpStatus.OK);
 	}
+	
+	/**
+	 * Calculates the BPA fee without creating Demand
+	 * 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = "/_estimate", method = RequestMethod.POST)
+	public ResponseEntity<CalculationRes> estimate(@Valid @RequestBody CalculationReq calculationReq) {
+		log.debug("CalculationReaquest:: " + calculationReq);
+		List<Calculation> calculations = calculationService.getEstimate(calculationReq);
+		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
+		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
 
 
 }
