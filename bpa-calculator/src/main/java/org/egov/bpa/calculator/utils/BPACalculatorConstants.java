@@ -318,6 +318,7 @@ public class BPACalculatorConstants {
 	public static final String TAXHEAD_BPA_SHELTER_FEE = "BPA_SANC_SHELTER_FEE";
 	public static final String TAXHEAD_BPA_SANCTION_FEE = "BPA_SANC_SANC_FEE";
 	public static final String TAXHEAD_BPA_EIDP_FEE = "BPA_SANC_EIDP_FEE";
+	public static final String TAXHEAD_BPA_ADJUSTMENT_AMOUNT = "BPA_SANC_ADJUSTMENT_AMOUNT";
 	
 	/* Tax heads for BPA OC*/
 	public static final String TAXHEAD_BPA_OC_SANC_CWWC_FEE = "BPA_OC_SANC_WORKER_WELFARE_CESS";
@@ -343,4 +344,6 @@ public class BPACalculatorConstants {
 
 	public static final String BPA_GENDER_MISSING = "BPA GENDER MISSING";
 	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
+	
+	public static final String BPA_ADD_DETAILS_SANCTION_FEE_ADJUSTMENT_AMOUNT_KEY = "sanctionFeeAdjustmentAmount";
 }

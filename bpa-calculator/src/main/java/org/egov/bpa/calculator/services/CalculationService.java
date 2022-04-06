@@ -144,6 +144,18 @@ public class CalculationService {
 
 				EstimatesAndSlabs estimatesAndSlabs = getTaxHeadEstimatesV2(criteria, requestInfo, mdmsData, tenantId);
 				List<TaxHeadEstimate> taxHeadEstimates = estimatesAndSlabs.getEstimates();
+				//add adjustment to above taxHeadEstimates if applicable from BPA-
+				if (Objects.nonNull(criteria.getBpa()) && Objects.nonNull(criteria.getBpa().getAdditionalDetails())
+						&& !StringUtils.isEmpty(((Map) criteria.getBpa().getAdditionalDetails())
+								.get(BPACalculatorConstants.BPA_ADD_DETAILS_SANCTION_FEE_ADJUSTMENT_AMOUNT_KEY))) {
+					BigDecimal feeAmount = new BigDecimal(((Map) criteria.getBpa().getAdditionalDetails())
+							.get(BPACalculatorConstants.BPA_ADD_DETAILS_SANCTION_FEE_ADJUSTMENT_AMOUNT_KEY).toString());
+					TaxHeadEstimate estimate = new TaxHeadEstimate();
+					estimate.setEstimateAmount(feeAmount.setScale(0, BigDecimal.ROUND_UP));
+					estimate.setCategory(Category.FEE);
+					estimate.setTaxHeadCode(BPACalculatorConstants.TAXHEAD_BPA_ADJUSTMENT_AMOUNT);
+					taxHeadEstimates.add(estimate);
+				}
 
 				Calculation calculation = new Calculation();
 				calculation.setBpa(criteria.getBpa());
