@@ -270,9 +270,11 @@ public class BPACalculatorConstants {
 	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
 	public static final String PROJECT_VALUE_FOR_EIDP_PATH = "edcrDetail.*.planDetail.planInformation.projectValueForEIDP";
 	public static final String RETENTION_FEE_APPLICABLE_PATH = "edcrDetail.*.planDetail.planInformation.isRetentionFeeApplicable";
+	public static final String NUMBER_OF_TEMP_STRUCTURES_PATH = "edcrDetail.*.planDetail.planInformation.numberOfTemporaryStructures";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT_PATH = "edcrDetail.*.planDetail.planInformation.isProjectUndertakingByGovt";
 	public static final String BLOCKS_PATH = "edcrDetail.*.planDetail.blocks";
 	public static final String IS_RETENTION_FEE_APPLICABLE = "isRetentionFeeApplicable";
+	public static final String NUMBER_OF_TEMP_STRUCTURES = "numberOfTemporaryStructures";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
 	public static final String RISK_TYPE = "RISK_TYPE";
