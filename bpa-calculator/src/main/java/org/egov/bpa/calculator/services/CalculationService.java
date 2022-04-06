@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.tomcat.jni.BIOCallback;
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
@@ -101,7 +102,7 @@ public class CalculationService {
 		// getCalculation(calculationReq.getRequestInfo(),calculationReq.getCalulationCriteria(),
 		// mdmsData);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
-				calculationReq.getCalulationCriteria(), mdmsData);
+				calculationReq.getCalulationCriteria(), mdmsData, tenantId);
 		demandService.generateDemand(calculationReq.getRequestInfo(), calculations, mdmsData);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		producer.push(config.getSaveTopic(), calculationRes);
@@ -119,7 +120,7 @@ public class CalculationService {
 		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
 		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
-				calculationReq.getCalulationCriteria(), mdmsData);
+				calculationReq.getCalulationCriteria(), mdmsData, tenantId);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		return calculations;
 	}
@@ -127,9 +128,10 @@ public class CalculationService {
 	/**
 	 * @param requestInfo
 	 * @param calulationCriteria
+	 * @param tenantId
 	 * @return
 	 */
-	private List<Calculation> getCalculationV2(RequestInfo requestInfo, List<CalulationCriteria> calulationCriteria, Object mdmsData) {
+	private List<Calculation> getCalculationV2(RequestInfo requestInfo, List<CalulationCriteria> calulationCriteria, Object mdmsData, String tenantId) {
 		List<Calculation> calculations = new LinkedList<>();
 		if (!CollectionUtils.isEmpty(calulationCriteria)) {
 			for (CalulationCriteria criteria : calulationCriteria) {
@@ -140,7 +142,7 @@ public class CalculationService {
 					criteria.setBpa(bpa);
 				}
 
-				EstimatesAndSlabs estimatesAndSlabs = getTaxHeadEstimatesV2(criteria, requestInfo, mdmsData);
+				EstimatesAndSlabs estimatesAndSlabs = getTaxHeadEstimatesV2(criteria, requestInfo, mdmsData, tenantId);
 				List<TaxHeadEstimate> taxHeadEstimates = estimatesAndSlabs.getEstimates();
 
 				Calculation calculation = new Calculation();
@@ -159,12 +161,13 @@ public class CalculationService {
 	/**
 	 * @param criteria
 	 * @param requestInfo
+	 * @param tenantId
 	 * @return
 	 */
-	private EstimatesAndSlabs getTaxHeadEstimatesV2(CalulationCriteria criteria, RequestInfo requestInfo, Object mdmsData) {
+	private EstimatesAndSlabs getTaxHeadEstimatesV2(CalulationCriteria criteria, RequestInfo requestInfo, Object mdmsData, String tenantId) {
 		List<TaxHeadEstimate> estimates = new LinkedList<>();
 		EstimatesAndSlabs estimatesAndSlabs;
-		estimatesAndSlabs = getBaseTaxV2(criteria, requestInfo, mdmsData);
+		estimatesAndSlabs = getBaseTaxV2(criteria, requestInfo, mdmsData, tenantId);
 		estimates.addAll(estimatesAndSlabs.getEstimates());
 		estimatesAndSlabs.setEstimates(estimates);
 
@@ -342,9 +345,10 @@ public class CalculationService {
 	/**
 	 * @param criteria
 	 * @param requestInfo
+	 * @param tenantId
 	 * @return
 	 */
-	private EstimatesAndSlabs getBaseTaxV2(CalulationCriteria criteria, RequestInfo requestInfo, Object mdmsData) {
+	private EstimatesAndSlabs getBaseTaxV2(CalulationCriteria criteria, RequestInfo requestInfo, Object mdmsData, String tenantId) {
 		BPA bpa = criteria.getBpa();
 		String feeType = criteria.getFeeType();
 
@@ -371,14 +375,14 @@ public class CalculationService {
 			if (StringUtils.hasText(feeType)
 					&& feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE)) {
 				calculateTotalFee(requestInfo, criteria, estimates,
-						BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE);
+						BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE, mdmsData, tenantId);
 	
 			}
 			if (StringUtils.hasText(feeType)
 					&& feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)) {
 	
 				calculateTotalFee(requestInfo, criteria, estimates,
-						BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE);
+						BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE, mdmsData, tenantId);
 			}
 		}
 
@@ -768,11 +772,13 @@ public class CalculationService {
 	 * @param criteria
 	 * @param estimates
 	 * @param feeType
+	 * @param mdmsData
+	 * @param tenantId
 	 */
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
-			ArrayList<TaxHeadEstimate> estimates, String feeType) {
+			ArrayList<TaxHeadEstimate> estimates, String feeType, Object mdmsData, String tenantId) {
 		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType);
-		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap, estimates);
+		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap, estimates, mdmsData, tenantId);
 		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
 		}
@@ -912,6 +918,12 @@ public class CalculationService {
 			Double projectValueForEIDP = Double.parseDouble(totalProjectValueForEIDP);
 			paramMap.put(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP, projectValueForEIDP);
 		}
+		
+		JSONArray isRetentionFeeApplicableJson = context.read(BPACalculatorConstants.RETENTION_FEE_APPLICABLE_PATH);
+		if (!CollectionUtils.isEmpty(isRetentionFeeApplicableJson)) {
+			Boolean isRetentionFeeApplicable = Boolean.valueOf(isRetentionFeeApplicableJson.get(0).toString());
+			paramMap.put(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE, isRetentionFeeApplicable);
+		}
 
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
 		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
@@ -923,9 +935,11 @@ public class CalculationService {
 	/**
 	 * @param paramMap
 	 * @param estimates
+	 * @param mdmsData
+	 * @param tenantId
 	 * @return
 	 */
-	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
+	private BigDecimal calculateTotalFeeAmount(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates, Object mdmsData, String tenantId) {
 		BigDecimal calculatedTotalAmout = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -949,7 +963,7 @@ public class CalculationService {
 				calculatedTotalAmout = calculateTotalScrutinyFee(paramMap, estimates);
 
 			} else if (feeType.equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)) {
-				calculatedTotalAmout = calculateTotalPermitFee(paramMap, estimates);
+				calculatedTotalAmout = calculateTotalPermitFee(paramMap, estimates, mdmsData, tenantId);
 			}
 
 		}
@@ -1799,14 +1813,16 @@ public class CalculationService {
 	/**
 	 * @param paramMap
 	 * @param estimates
+	 * @param mdmsData
+	 * @param tenntId
 	 * @return
 	 */
-	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
+	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates, Object mdmsData, String tenantId) {
 		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
 		BigDecimal sanctionFee = calculateSanctionFee(paramMap, estimates);
 		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap, estimates);
 		BigDecimal shelterFee = calculateShelterFee(paramMap, estimates);
-		BigDecimal temporaryRetentionFee = calculateTemporaryRetentionFee(paramMap, estimates);
+		BigDecimal temporaryRetentionFee = calculateTemporaryRetentionFee(paramMap, estimates, mdmsData, tenantId);
 		BigDecimal securityDeposit = calculateSecurityDeposit(paramMap, estimates);
 		BigDecimal purchasableFAR = calculatePurchasableFAR(paramMap, estimates);
 		BigDecimal eidpFee = calculateEIDPFee(paramMap, estimates);
@@ -2128,10 +2144,12 @@ public class CalculationService {
 	/**
 	 * @param paramMap
 	 * @param estimates
+	 * @param mdmsData
+	 * @param tenantId
 	 * @return
 	 */
 	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap,
-			ArrayList<TaxHeadEstimate> estimates) {
+			ArrayList<TaxHeadEstimate> estimates, Object mdmsData, String tenantId) {
 		BigDecimal retentionFee = BigDecimal.ZERO;
 		String applicationType = null;
 		String serviceType = null;
@@ -2141,11 +2159,31 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.SERVICE_TYPE)) {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
+		
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
-			retentionFee = TWO_THOUSAND;
+		/*
+		if ((StringUtils.hasText(applicationType)
+				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
+				&& (StringUtils.hasText(serviceType)
+						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
+				&& Objects.nonNull(paramMap.get(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE))
+				&& ((Boolean) paramMap.get(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE)).booleanValue()) {
+				*/
+			try {
+				List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_RETENTION_FEE_PATH);
+				String filterExp = "$.[?(@.tenantId == '" + tenantId + "')]";
+				List<Map<String, String>> retentionFeeForTenantJson = JsonPath.read(jsonOutput, filterExp);
+				if (!CollectionUtils.isEmpty(retentionFeeForTenantJson)) {
+					String retentionFeeForTenant = retentionFeeForTenantJson.get(0)
+							.get(BPACalculatorConstants.MDMS_RETENTION_FEE);
+					retentionFee = new BigDecimal(retentionFeeForTenant);
+				}
+			} catch (Exception e) {
+				throw new CustomException(BPACalculatorConstants.CALCULATION_ERROR, "Failed to calculate retention fees from master data");
+			}
 		}
 
 		generateTaxHeadEstimate(estimates, retentionFee, BPACalculatorConstants.TAXHEAD_BPA_TEMP_RETENTION_FEE, Category.FEE);

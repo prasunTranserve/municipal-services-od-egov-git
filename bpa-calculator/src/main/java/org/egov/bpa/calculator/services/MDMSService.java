@@ -73,6 +73,7 @@ public class MDMSService {
         bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_CALCULATIONTYPE)
         		.build());
         bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_OC_COMPOUNDING_FEE).build());
+        bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_RETENTION_FEES_MASTER_NAME).build());
         
         ModuleDetail bpaModuleDtls = ModuleDetail.builder().masterDetails(bpaMasterDetails)
                 .moduleName(BPACalculatorConstants.MDMS_BPA).build();
