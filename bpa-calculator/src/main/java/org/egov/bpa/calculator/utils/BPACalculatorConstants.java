@@ -17,9 +17,12 @@ public class BPACalculatorConstants {
 	public static final String MDMS_CALCULATIONTYPE = "CalculationType";
 	
 	public static final String MDMS_OC_COMPOUNDING_FEE = "ocCompoundingFee";
+	public static final String MDMS_RETENTION_FEES_MASTER_NAME = "RetentionFees";
+	public static final String MDMS_RETENTION_FEE = "retentionFee";
 
 	public static final String MDMS_CALCULATIONTYPE_PATH = "$.MdmsRes.BPA.CalculationType";
 	public static final String MDMS_OC_COMPOUNDING_FEE_PATH = "$.MdmsRes.BPA.ocCompoundingFee";
+	public static final String MDMS_RETENTION_FEE_PATH = "$.MdmsRes.BPA.RetentionFees";
 
 	public static final String MDMS_BPA_PATH = "$.MdmsRes.BPA";
 
@@ -266,8 +269,12 @@ public class BPACalculatorConstants {
 	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
 	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
 	public static final String PROJECT_VALUE_FOR_EIDP_PATH = "edcrDetail.*.planDetail.planInformation.projectValueForEIDP";
+	public static final String RETENTION_FEE_APPLICABLE_PATH = "edcrDetail.*.planDetail.planInformation.isRetentionFeeApplicable";
+	public static final String NUMBER_OF_TEMP_STRUCTURES_PATH = "edcrDetail.*.planDetail.planInformation.numberOfTemporaryStructures";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT_PATH = "edcrDetail.*.planDetail.planInformation.isProjectUndertakingByGovt";
 	public static final String BLOCKS_PATH = "edcrDetail.*.planDetail.blocks";
+	public static final String IS_RETENTION_FEE_APPLICABLE = "isRetentionFeeApplicable";
+	public static final String NUMBER_OF_TEMP_STRUCTURES = "numberOfTemporaryStructures";
 	public static final String APPLICATION_TYPE = "APPLICATION_TYPE";
 	public static final String SERVICE_TYPE = "SERVICE_TYPE";
 	public static final String RISK_TYPE = "RISK_TYPE";
@@ -313,6 +320,7 @@ public class BPACalculatorConstants {
 	public static final String TAXHEAD_BPA_SHELTER_FEE = "BPA_SANC_SHELTER_FEE";
 	public static final String TAXHEAD_BPA_SANCTION_FEE = "BPA_SANC_SANC_FEE";
 	public static final String TAXHEAD_BPA_EIDP_FEE = "BPA_SANC_EIDP_FEE";
+	public static final String TAXHEAD_BPA_ADJUSTMENT_AMOUNT = "BPA_SANC_ADJUSTMENT_AMOUNT";
 	
 	/* Tax heads for BPA OC*/
 	public static final String TAXHEAD_BPA_OC_SANC_CWWC_FEE = "BPA_OC_SANC_WORKER_WELFARE_CESS";
@@ -338,4 +346,6 @@ public class BPACalculatorConstants {
 
 	public static final String BPA_GENDER_MISSING = "BPA GENDER MISSING";
 	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
+	
+	public static final String BPA_ADD_DETAILS_SANCTION_FEE_ADJUSTMENT_AMOUNT_KEY = "sanctionFeeAdjustmentAmount";
 }
