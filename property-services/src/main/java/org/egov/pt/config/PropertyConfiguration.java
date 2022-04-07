@@ -326,4 +326,7 @@ public class PropertyConfiguration {
 
 	@Value("${egov.demand.tenants.skip}")
 	private String skipSchedulerTenants;
+	
+	@Value("${egov.bulk.assessment.generation.audit.topic}")
+	private String bulkAssessmentGenAutidTopic;
 }
