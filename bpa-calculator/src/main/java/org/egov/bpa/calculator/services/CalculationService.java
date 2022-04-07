@@ -932,17 +932,17 @@ public class CalculationService {
 			paramMap.put(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP, projectValueForEIDP);
 		}
 		
-		boolean isRetentionFeeApplicable = true;
 		JSONArray isRetentionFeeApplicableJson = context.read(BPACalculatorConstants.RETENTION_FEE_APPLICABLE_PATH);
 		if (!CollectionUtils.isEmpty(isRetentionFeeApplicableJson)) {
-			 isRetentionFeeApplicable = (boolean) isRetentionFeeApplicableJson.get(0);
+			boolean isRetentionFeeApplicable = (boolean) isRetentionFeeApplicableJson.get(0);
+			paramMap.put(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE, isRetentionFeeApplicable);
 		}
-		paramMap.put(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE, isRetentionFeeApplicable);
 		
 		JSONArray numberOfTemporaryStructuresJson = context.read(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES_PATH);
 		if (!CollectionUtils.isEmpty(numberOfTemporaryStructuresJson)) {
-			Object numberOfTemporaryStructuresObject = numberOfTemporaryStructuresJson.get(0);
-			paramMap.put(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES, numberOfTemporaryStructuresObject);
+			String numberOfTemporaryStructuresString = numberOfTemporaryStructuresJson.get(0).toString();
+			Double numberOfTemporaryStructures = Double.parseDouble(numberOfTemporaryStructuresString);
+			paramMap.put(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES, numberOfTemporaryStructures);
 		}
 
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
@@ -2185,7 +2185,7 @@ public class CalculationService {
 	private BigDecimal calculateTemporaryRetentionFee(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal retentionFee = BigDecimal.ZERO;
-		Double numberOfTemporaryStructures = new Double(0);
+		Double numberOfTemporaryStructures = null;
 		String applicationType = null;
 		String serviceType = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
@@ -2195,11 +2195,7 @@ public class CalculationService {
 			serviceType = (String) paramMap.get(BPACalculatorConstants.SERVICE_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES)) {
-			Object numberOfTemporaryStructuresObject = paramMap.get(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES);
-			numberOfTemporaryStructures = (numberOfTemporaryStructuresObject.toString().equalsIgnoreCase("NA")
-					|| ((numberOfTemporaryStructuresObject instanceof Double)
-							&& (Double.compare((double) numberOfTemporaryStructuresObject, new Double(0)) == 0))) ? 0
-									: ((double) numberOfTemporaryStructuresObject);
+			numberOfTemporaryStructures = (Double) paramMap.get(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES);
 		}
 		boolean isRetentionFeeApplicable = false;
 		if (null != paramMap.get(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE)) {
@@ -2209,7 +2205,7 @@ public class CalculationService {
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 				&& (StringUtils.hasText(serviceType)
 						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))
-				&& isRetentionFeeApplicable) {
+				&& isRetentionFeeApplicable && Objects.nonNull(numberOfTemporaryStructures)) {
 			Object mdmsData = paramMap.get("mdmsData");
 			String tenantId = String.valueOf(paramMap.get("tenantId"));
 			List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_RETENTION_FEE_PATH);
