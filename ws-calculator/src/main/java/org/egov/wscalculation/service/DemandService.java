@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -33,7 +31,6 @@ import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
 import org.egov.wscalculation.web.models.BillResponse;
-import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
@@ -54,6 +51,8 @@ import org.egov.wscalculation.web.models.WaterConnectionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -91,9 +90,6 @@ public class DemandService {
     
     @Autowired
     private CalculatorUtil calculatorUtils;
-    
-    @Autowired
-    private EstimationService estimationService;
     
     @Autowired
     private WSCalculationProducer wsCalculationProducer;
@@ -598,6 +594,8 @@ public class DemandService {
 		TaxPeriod taxPeriod = taxPeriods.stream().filter(t -> demand.getTaxPeriodFrom().compareTo(t.getFromDate()) >= 0
 				&& demand.getTaxPeriodTo().compareTo(t.getToDate()) <= 0).findAny().orElse(null);
 		
+		boolean isAnnualAdvanceRebatePresent = demand.getDemandDetails().stream().anyMatch(dd -> WSCalculationConstant.WS_ANNUAL_PAYMENT_REBATE.equalsIgnoreCase(dd.getTaxHeadMasterCode()));
+		
 		if (taxPeriod == null) {
 			log.info("Demand Expired!! ->> Consumer Code "+ demand.getConsumerCode() +" Demand Id -->> "+ demand.getId());
 			return false;
@@ -650,7 +648,7 @@ public class DemandService {
 
 		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE,
 				demand.getDemandDetails());
-		if (latestRebateDemandDetail != null) {
+		if (latestRebateDemandDetail != null && !isAnnualAdvanceRebatePresent) {
 			updateTaxAmount(rebate.negate(), latestRebateDemandDetail);
 			isRebateUpdated = true;
 		}
@@ -755,7 +753,7 @@ public class DemandService {
 				while (count>0) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
 							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate);
-					String assessmentYear = estimationService.getAssessmentYear();
+					String assessmentYear = calculatorUtils.getAssessmentYear();
 					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
 
 					if (connections.size() > 0) {
@@ -955,7 +953,7 @@ public class DemandService {
 			if(count>0) {
 				List<WaterConnection> connectionList = waterCalculatorDao.getConnectionsNoList(tenantId,
 						WSCalculationConstant.nonMeterdConnection, fromDate, toDate, bulkBillCriteria.getConnectionNos());
-				String assessmentYear = estimationService.getAssessmentYear();
+				String assessmentYear = calculatorUtils.getAssessmentYear();
 				
 				while (count>0) {
 					// Taking connctions in batch

@@ -363,4 +363,7 @@ public class WSCalculationConstant {
 
 	public static final String CHANNEL_SUJOG = "SUJOG";
 	
+	public static final String WS_ANNUAL_PAYMENT_REBATE = "WS_ANNUAL_PAYMENT_REBATE";
+	
+	public static final List<String> ANNUAL_ADVANCE_ALLOWED_TAXHEAD = Arrays.asList(WS_CHARGE, SW_CHARGE);
 }

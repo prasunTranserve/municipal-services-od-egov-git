@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
+import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class PayService {
 	
 	@Autowired
 	private EstimationService estimationService;
+	
+	@Autowired
+	private CalculatorUtil calculatorUtil;
 
 	/**
 	 * Decimal is ceiled for all the tax heads
@@ -181,7 +185,7 @@ public class PayService {
 	 */
 	public BigDecimal getApplicablePenalty(BigDecimal waterCharge, BigDecimal noOfDays, JSONArray config) {
 		BigDecimal applicablePenalty = BigDecimal.ZERO;
-		Map<String, Object> penaltyMaster = mDService.getApplicableMaster(estimationService.getAssessmentYear(), config);
+		Map<String, Object> penaltyMaster = mDService.getApplicableMaster(calculatorUtil.getAssessmentYear(), config);
 		if (null == penaltyMaster) return applicablePenalty;
 		BigDecimal daysApplicable = null != penaltyMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)
 				? BigDecimal.valueOf(((Number) penaltyMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)).intValue())
@@ -220,7 +224,7 @@ public class PayService {
 	 */
 	public BigDecimal getApplicableInterest(BigDecimal waterCharge, BigDecimal noOfDays, JSONArray config) {
 		BigDecimal applicableInterest = BigDecimal.ZERO;
-		Map<String, Object> interestMaster = mDService.getApplicableMaster(estimationService.getAssessmentYear(), config);
+		Map<String, Object> interestMaster = mDService.getApplicableMaster(calculatorUtil.getAssessmentYear(), config);
 		if (null == interestMaster) return applicableInterest;
 		BigDecimal daysApplicable = null != interestMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)
 				? BigDecimal.valueOf(((Number) interestMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)).intValue())

@@ -513,8 +513,11 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 		AnnualPaymentDetails annualPaymentDetails = getAnnualPaymentEstimation(calculationRequest);
 		
 		// get current due
+		BigDecimal currentDue = BigDecimal.ZERO;
 		BillResponse fetchBillResponse = demandService.fetchBill(annualAdvanceRequests.getRequestInfo(), annualAdvanceRequests.getAnnualAdvance().getTenantId(), annualAdvanceRequests.getAnnualAdvance().getConnectionNo());
-		BigDecimal currentDue = fetchBillResponse.getBill().get(0).getTotalAmount();
+		if(fetchBillResponse != null) {
+			currentDue = fetchBillResponse.getBill().get(0).getTotalAmount();
+		}
 		
 		BigDecimal annualAdvanceAdjustedAmt = annualPaymentDetails.getNetAnnualAdvancePayable().add(currentDue);
 		if(annualAdvanceAdjustedAmt.compareTo(BigDecimal.ZERO) > 0 ) {

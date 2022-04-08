@@ -1,6 +1,9 @@
 package org.egov.wscalculation.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -394,6 +397,31 @@ public class CalculatorUtil {
 			return String.format("%s-%s", today.getYear(), String.valueOf(today.plusYears(1).getYear()).substring(2));
 		} else {
 			return String.format("%s-%s", today.minusYears(1).getYear(), String.valueOf(today.getYear()).substring(2));
+		}
+	}
+	
+	public String getAssessmentYear() {
+		LocalDateTime localDateTime = LocalDateTime.now();
+		int currentMonth = localDateTime.getMonthValue();
+		String assessmentYear;
+		if (currentMonth >= Month.APRIL.getValue()) {
+			assessmentYear = YearMonth.now().getYear() + "-";
+			assessmentYear = assessmentYear
+					+ (Integer.toString(YearMonth.now().getYear() + 1).substring(2, assessmentYear.length() - 1));
+		} else {
+			assessmentYear = YearMonth.now().getYear() - 1 + "-";
+			assessmentYear = assessmentYear
+					+ (Integer.toString(YearMonth.now().getYear()).substring(2, assessmentYear.length() - 1));
+
+		}
+		return assessmentYear;
+	}
+	
+	public String detectAssessmentyear(int month, int year) {
+		if(month > 3) {
+			return String.format("%s-%s", year, String.valueOf(year+1).substring(2));
+		} else {
+			return String.format("%s-%s", year-1, String.valueOf(year).substring(2));
 		}
 	}
 }

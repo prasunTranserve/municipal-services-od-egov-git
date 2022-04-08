@@ -175,7 +175,7 @@ public class MasterDataService {
 	 */
 	public Map<String, Map<String, Object>> getFinancialYear(RequestInfo requestInfo, String tenantId) {
 		Set<String> assessmentYears = new HashSet<>(1);
-		assessmentYears.add(estimationService.getAssessmentYear());
+		assessmentYears.add(calculatorUtils.getAssessmentYear());
 		MdmsCriteriaReq mdmsCriteriaReq = calculatorUtils.getFinancialYearRequest(requestInfo, assessmentYears,
 				tenantId);
 		StringBuilder url = calculatorUtils.getMdmsSearchUrl();
