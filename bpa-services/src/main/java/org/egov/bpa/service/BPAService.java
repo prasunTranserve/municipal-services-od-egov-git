@@ -719,5 +719,16 @@ public class BPAService {
 
 		return pendingDigitalsignDocuments;
 	}
+	
+	/**
+	 * call BPA-calculator and fetch the fee estimate
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 */
+	public Object getFeeEstimateFromBpaCalculator(Object bpaRequest) {
+		return calculationService.callBpaCalculatorEstimate(bpaRequest);
+	}
+		
 
 }
