@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -26,6 +27,7 @@ import org.egov.pt.models.Assessment.Source;
 import org.egov.pt.models.AssessmentSearchCriteria;
 import org.egov.pt.models.BulkAssesmentCreationCriteria;
 import org.egov.pt.models.BulkAssesmentCreationCriteriaWrapper;
+import org.egov.pt.models.BulkAssessmentAudit;
 import org.egov.pt.models.Property;
 import org.egov.pt.models.PropertyCriteria;
 import org.egov.pt.models.enums.CreationReason;
@@ -390,7 +392,21 @@ public class AssessmentService {
 						count = count - properties.size();
 					}
 					batchOffset = batchOffset + batchsize;
+					
 					log.info("Pending connection count "+ count +" for tenant: "+ tenantId);
+					
+					BulkAssessmentAudit audit = BulkAssessmentAudit.builder().tenantid(tenantId)
+							.businessService("PT")
+							.limit(batchsize)
+							.id(UUID.randomUUID().toString())
+							.offset(batchOffset)
+							.createdTime(System.currentTimeMillis())
+							.auditTime(System.currentTimeMillis())
+							.recordCount(count)
+							.message("prcoess succeded in assesment creation for fin year "+bulkBillCriteria.getFinancialYear())
+							.build();
+					
+					producer.push(props.getBulkAssessmentGenAutidTopic(), audit);
 				}
 			}
 			

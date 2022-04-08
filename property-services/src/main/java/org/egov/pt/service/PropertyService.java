@@ -149,6 +149,7 @@ public class PropertyService {
 	
 	private boolean checkIsRequestForMobileNumberUpdate(PropertyRequest request, Property propertyFromSearch) {
 		Map <String, String> uuidToMobileNumber = new HashMap <String, String>();
+		Map <String, String> uuidToOwnerName = new HashMap <String, String>();
 		List <OwnerInfo> owners = propertyFromSearch.getOwners();
 		
 		if(Objects.isNull(owners) || owners.isEmpty()) {
@@ -157,20 +158,27 @@ public class PropertyService {
 		
 		for(OwnerInfo owner : owners) {
 			uuidToMobileNumber.put(owner.getUuid(), owner.getMobileNumber());
+			uuidToOwnerName.put(owner.getUuid(), owner.getName());
 		}
 		
 		List <OwnerInfo> ownersFromRequest = request.getProperty().getOwners();
 		
-		Boolean isNumberDifferent = false;
+		Boolean isNameNumberDifferent = false;
 		
 		for(OwnerInfo owner : ownersFromRequest) {
-			if(uuidToMobileNumber.containsKey(owner.getUuid()) && !Objects.isNull(owner.getMobileNumber()) && !uuidToMobileNumber.get(owner.getUuid()).equals(owner.getMobileNumber())) {
-				isNumberDifferent = true;
+			if(uuidToMobileNumber.containsKey(owner.getUuid()) 
+					&& ( (!Objects.isNull(owner.getMobileNumber()) && Objects.isNull(uuidToMobileNumber.get(owner.getUuid())))
+							|| (!Objects.isNull(owner.getMobileNumber()) && !uuidToMobileNumber.get(owner.getUuid()).equals(owner.getMobileNumber()))
+						|| (!Objects.isNull(owner.getName()) && Objects.isNull(uuidToOwnerName.get(owner.getUuid())) )
+							|| (!Objects.isNull(owner.getName()) && !uuidToOwnerName.get(owner.getUuid()).equals(owner.getName()) )
+						)
+			) {
+				isNameNumberDifferent = true;
 				break;
 			}
 		}
 		
-		return isNumberDifferent;
+		return isNameNumberDifferent;
 	}
 	
 	/*
