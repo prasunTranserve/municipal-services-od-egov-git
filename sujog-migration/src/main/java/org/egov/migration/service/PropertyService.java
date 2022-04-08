@@ -480,8 +480,8 @@ public class PropertyService {
 		if(property.getDemandDetails() == null && property.getDemands() == null) {
 			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
 					.propertyId(property.getPropertyId())
-					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
-					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.taxPeriodFrom(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q1"))
+					.taxPeriodTo(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q4"))
 					.minPayableAmt("0")
 					.paymentComplete("N").build()));
 			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
@@ -504,8 +504,8 @@ public class PropertyService {
 			Double totalDemandAmt = property.getDemandDetails().stream().mapToDouble(dtl -> MigrationUtility.getDoubleAmount(dtl.getTaxAmt())).sum();
 			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
 					.propertyId(property.getPropertyId())
-					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
-					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.taxPeriodFrom(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q1"))
+					.taxPeriodTo(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q4"))
 					.minPayableAmt(totalDemandAmt.toString())
 					.paymentComplete("N").build()));
 		}
@@ -734,8 +734,8 @@ public class PropertyService {
 		if(property.getDemandDetails() == null && property.getDemands() == null) {
 			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
 					.propertyId(property.getPropertyId())
-					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
-					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.taxPeriodFrom(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q1"))
+					.taxPeriodTo(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q4"))
 					.minPayableAmt("0")
 					.paymentComplete("N").build()));
 			property.setDemandDetails(Arrays.asList(DemandDetail.builder()
@@ -758,8 +758,8 @@ public class PropertyService {
 			Double totalDemandAmt = property.getDemandDetails().stream().mapToDouble(dtl -> MigrationUtility.getDoubleAmount(dtl.getTaxAmt())).sum();
 			property.setDemands(Arrays.asList(Demand.builder().ulb(property.getUlb())
 					.propertyId(property.getPropertyId())
-					.taxPeriodFrom(MigrationUtility.getFinYear().concat("/Q1"))
-					.taxPeriodTo(MigrationUtility.getFinYear().concat("/Q4"))
+					.taxPeriodFrom(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q1"))
+					.taxPeriodTo(MigrationConst.PROPERTY_PREVIOUS_FINYEAR.concat("/Q4"))
 					.minPayableAmt(totalDemandAmt.toString())
 					.paymentComplete("N").build()));
 		}
@@ -797,6 +797,10 @@ public class PropertyService {
 				//Do migration iff no assessment found for 2021-22
 				if(Objects.isNull(assessmentDTO)) {
 					isAssessmentMigrated = doMigrateAssessment(propertyDetail);
+					if(propertyDetail.getProperty().getPropertyId() != null) {
+						log.info("Calling fetch bill for "+propertyDetail.getProperty().getPropertyId());
+						callFetchBill(propertyDetail);
+					}
 				}else {
 					log.info(String.format("Assessment for property %s already migrated", assessmentDTO.getPropertyId()));
 					propertyDetail.setAssessment(assessmentDTO);
