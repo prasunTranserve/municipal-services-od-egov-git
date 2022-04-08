@@ -331,5 +331,7 @@ public class WCConstants {
 	public static final String MDMS_WC_INSTALLMENT = "Installment";
 	public static final String WS_SCRUTINY_FEE = "WS_SCRUTINY_FEE";
 	public static final String WS_LABOUR_FEE = "WS_LABOUR_FEE";
+	
+	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
 
 }
