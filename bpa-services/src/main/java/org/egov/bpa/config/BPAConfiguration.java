@@ -328,5 +328,8 @@ public class BPAConfiguration {
 	//digital certificate integration
 	@Value("${persister.update.bpa.dscdetails.topic}")
 	private String updateDscDetailsTopic;
+	
+	@Value("${egov.bpa.calculator.estimate.endpoint}")
+	private String bpaCalculationEstimateEndpoint;
 
 }
