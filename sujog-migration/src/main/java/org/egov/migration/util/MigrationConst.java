@@ -176,4 +176,10 @@ public class MigrationConst {
 		public static final String PT  = "PT";
 	}
 	
+
+	
+	public static final String COL_DEMAND_ID = "DEMAND_ID";
+	public static final String COL_AMOUNT_PAID = "AMOUNT_PAID";
+	public static final String COL_COLLECTED_AMOUNT = "COLLECTION_AMOUNT";
+	public static final String AMOUNT_ADJUSTED = "AMOUNT_ADJUSTED";
 }

@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -34,6 +33,7 @@ import org.egov.migration.business.model.WaterConnectionDTO;
 import org.egov.migration.common.model.RecordStatistic;
 import org.egov.migration.config.SystemProperties;
 import org.egov.migration.reader.model.Address;
+import org.egov.migration.reader.model.DemandDetailPaymentMapper;
 import org.egov.migration.reader.model.Owner;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
@@ -940,5 +940,22 @@ public class MigrationUtility {
 			return null;
 		}
 		return Integer.parseInt(value);
+	}
+
+	public static boolean isDemandEmpty(DemandDetailPaymentMapper demand) {
+		if (demand.getDemandid() == null ) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static void addSuccessForExternalDemandUpdate(String amountAdnusted, String demandId) {
+		Map<String, Map<String, String>> successMap = MigrationUtility.instance.recordStatistic.getSuccessRecords();
+		if (successMap.get(demandId) == null) {
+			successMap.put(demandId, new HashMap<>()); 
+		}
+		Map<String, String> itemMap = successMap.get(demandId);
+		itemMap.put(MigrationConst.COL_DEMAND_ID, demandId);
+		itemMap.put(MigrationConst.AMOUNT_ADJUSTED, amountAdnusted);
 	}
 }

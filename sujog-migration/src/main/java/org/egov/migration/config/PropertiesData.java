@@ -105,5 +105,7 @@ public class PropertiesData {
 	
 	@Value("${remomte.api.demand.fetchbill}")
 	private String fetchBillEndpoint;
-	
+
+	@Value("${remomte.api.demand.update}")
+	private String demandUpdateHost;
 }
