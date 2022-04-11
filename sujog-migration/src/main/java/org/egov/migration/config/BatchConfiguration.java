@@ -4,10 +4,14 @@ import java.io.IOException;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.egov.migration.business.model.ConnectionDTO;
+import org.egov.migration.business.model.DemandDetailsDTO;
 import org.egov.migration.business.model.PropertyDetailDTO;
 import org.egov.migration.common.model.RecordStatistic;
+import org.egov.migration.processor.DemandSearchTransformProcessor;
 import org.egov.migration.processor.PropertyAssessmentItemWriter;
 import org.egov.migration.processor.PropertyAssessmentTransformProcessor;
+import org.egov.migration.processor.PropertyDemandDetailsUpdateReader;
+import org.egov.migration.processor.PropertyDemandDetailsUpdateWriter;
 import org.egov.migration.processor.PropertyFetchbillReader;
 import org.egov.migration.processor.PropertyFetchbillWriter;
 import org.egov.migration.processor.PropertyItemWriter;
@@ -23,6 +27,7 @@ import org.egov.migration.processor.PtSearchTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
 import org.egov.migration.processor.WnsTransformProcessor;
+import org.egov.migration.reader.model.DemandDetailPaymentMapper;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WnsConnection;
 import org.springframework.batch.core.Step;
@@ -205,4 +210,31 @@ public class BatchConfiguration {
           .processor(getPropertyAssessmentProcessor())
           .writer(getPropertyAssessmentWriter()).build();
     }
+
+// For Demand Details Update
+    @Bean(name = "stepDemandCollectionAmount")
+    protected Step stepDemandCollectionAmount() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepDemandCollectionAmount").<DemandDetailPaymentMapper, DemandDetailsDTO> chunk(100)
+          .reader(getDemandCollectionReader())
+          .processor(getDemandCollectionProcessor())
+          .writer(getDemandCollectionWriter()).build();
+    }
+
+    @Bean
+    @StepScope
+    public ItemReader<DemandDetailPaymentMapper> getDemandCollectionReader() throws EncryptedDocumentException, IOException, Exception {
+    	PropertyDemandDetailsUpdateReader propertyDemandDetailsUpdateReader = new PropertyDemandDetailsUpdateReader();
+    	propertyDemandDetailsUpdateReader.setSkipRecord(1);
+    	return propertyDemandDetailsUpdateReader;
+    }
+    
+    @Bean
+    public ItemProcessor<DemandDetailPaymentMapper, DemandDetailsDTO> getDemandCollectionProcessor() {
+		return new DemandSearchTransformProcessor(); 
+	}
+    
+    @Bean
+    public ItemWriter<DemandDetailsDTO> getDemandCollectionWriter() {//DemandDetailSearchRequest request
+		return new PropertyDemandDetailsUpdateWriter();
+	}
 }
