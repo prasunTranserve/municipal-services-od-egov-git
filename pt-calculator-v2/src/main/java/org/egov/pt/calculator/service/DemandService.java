@@ -524,7 +524,7 @@ public class DemandService {
 			}
 			
 			resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
-		}else {
+		}else if(isCurrentDemand) {
 			details.add(DemandDetail.builder().taxAmount(rebate.negate())
 					.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
 					.build());
