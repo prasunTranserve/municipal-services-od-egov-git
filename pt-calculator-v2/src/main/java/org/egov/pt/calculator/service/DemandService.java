@@ -733,11 +733,17 @@ public class DemandService {
 	 */
 	private List<DemandDetail> resetExistingRebateWithNewAmountTaxHeads(Demand demand, BigDecimal newRebateAmount) {
 		List<DemandDetail> demandDetails = demand.getDemandDetails();
+		boolean isRebateAlreadySet = false;
 		for(DemandDetail demandDetail : demandDetails) {
 			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
-				demandDetail.setTaxAmount(newRebateAmount);
-				demandDetail.setCollectionAmount(BigDecimal.ZERO);
-				break;
+				if(!isRebateAlreadySet) {
+					demandDetail.setTaxAmount(newRebateAmount);
+					demandDetail.setCollectionAmount(BigDecimal.ZERO);
+					isRebateAlreadySet = true;
+				}else {
+					demandDetail.setTaxAmount(BigDecimal.ZERO);
+					demandDetail.setCollectionAmount(BigDecimal.ZERO);
+				}
 			}
 		}
 		return demandDetails;
