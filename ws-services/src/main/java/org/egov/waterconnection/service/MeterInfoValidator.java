@@ -50,6 +50,7 @@ public class MeterInfoValidator implements WaterActionValidator {
 			if (WCConstants.METERED_CONNECTION
 					.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				validateMeteredConnectionRequst(waterConnectionRequest, errorMap);
+				validateMaxMeterDigit(waterConnectionRequest, errorMap);
 			}
 		}
 	}
@@ -72,6 +73,7 @@ public class MeterInfoValidator implements WaterActionValidator {
 			if (WCConstants.METERED_CONNECTION
 					.equalsIgnoreCase(waterConnectionRequest.getWaterConnection().getConnectionType())) {
 				validateMeteredConnectionRequst(waterConnectionRequest, errorMap);
+				validateMaxMeterDigit(waterConnectionRequest, errorMap);
 			}
 		}
 	}
@@ -79,8 +81,6 @@ public class MeterInfoValidator implements WaterActionValidator {
 	@SuppressWarnings("unchecked")
 	private void validateMeteredConnectionRequst(WaterConnectionRequest waterConnectionRequest,
 			Map<String, String> errorMap) {
-
-		Integer allowedMaxMeterDigits[] = {4, 5, 6, 7, 8};
 
 		if (waterConnectionRequest.getWaterConnection().getMeterId() == null) {
 			errorMap.put("INVALID_METER_ID", "Meter Id cannot be empty");
@@ -104,12 +104,24 @@ public class MeterInfoValidator implements WaterActionValidator {
 				errorMap.put("INVALID_INITIAL_METER_READING", "Initial meter reading can not be zero or negative");
 			}
 		}
-		if(StringUtils.isEmpty(addDetail.get(WCConstants.MAX_METER_DIGITS_CONST))) {
-				errorMap.put("Invalid_Max_Meter_Digits", "Maximum meter reading can not be zero or negative");
+		
+	}	
+	
+	@SuppressWarnings("unchecked")
+	private void validateMaxMeterDigit(WaterConnectionRequest waterConnectionRequest, Map<String, String> errorMap) {
+		HashMap<String, Object> addDetail = mapper.convertValue(
+				waterConnectionRequest.getWaterConnection().getAdditionalDetails(), HashMap.class);
+		
+		Integer maxMeterDigits = null;
+		if(addDetail.containsKey(WCConstants.MAX_METER_DIGITS_CONST)
+				&& addDetail.get(WCConstants.MAX_METER_DIGITS_CONST) != null) {
+			maxMeterDigits = (Integer) addDetail.get(WCConstants.MAX_METER_DIGITS_CONST);
 		} else {
-			if(!Arrays.asList(allowedMaxMeterDigits).contains((Integer)(addDetail.get(WCConstants.MAX_METER_DIGITS_CONST)))) {
-				errorMap.put("Invalid_Max_Meter_Digits", "Max meter digits has to be in between " + allowedMaxMeterDigits[0] + " to " + allowedMaxMeterDigits[allowedMaxMeterDigits.length - 1] + " range.");
+			errorMap.put("INVALID_METER_INFO", "Maximum meter Digit can not be blank");
+		}
+
+		if(maxMeterDigits != null && !WCConstants.ALLOWED_MAX_METER_DIGIT_LIST.contains((maxMeterDigits))) {
+			errorMap.put("INVALID_METER_INFO", "Max meter digits has to be in between " + WCConstants.ALLOWED_MAX_METER_DIGIT_LIST.get(0) + " to " + WCConstants.ALLOWED_MAX_METER_DIGIT_LIST.get(WCConstants.ALLOWED_MAX_METER_DIGIT_LIST.size() - 1) + " range.");
 		}
 	}
-	}	
 }
