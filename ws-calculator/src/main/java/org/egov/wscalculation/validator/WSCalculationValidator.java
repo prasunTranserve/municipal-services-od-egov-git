@@ -265,7 +265,7 @@ public class WSCalculationValidator {
 			String assessYear = calculationUtil.getFinancialYear();
 			List<AnnualAdvance> annualAdvances = wSCalculationDao.getAnnualAdvance(tenantId, connectionNo, assessYear);
 			if(!annualAdvances.isEmpty()) {
-				errorMap.put("INVALID_ANNUAL_ADVANCE", "Annual advance already applied on this connection for this year");
+				errorMap.put("INVALID_ANNUAL_ADVANCE", "Annual advance already applied on this connection for this financial year");
 			}
 			
 		} else {

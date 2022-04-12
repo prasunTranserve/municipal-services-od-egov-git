@@ -31,6 +31,7 @@ import org.egov.wscalculation.util.WaterCessUtil;
 import org.egov.wscalculation.web.models.AnnualAdvance;
 import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.AuditDetails;
+import org.egov.wscalculation.web.models.BillAccountDetail;
 import org.egov.wscalculation.web.models.BillResponse;
 import org.egov.wscalculation.web.models.BillingSlab;
 import org.egov.wscalculation.web.models.CalculationCriteria;
@@ -426,19 +427,25 @@ public class EstimationService {
 		
 		// Check if any advance available
 		BillResponse billResponse = demandService.fetchBill(requestInfoWrapper.getRequestInfo(), criteria.getTenantId(), criteria.getConnectionNo());
-		BigDecimal currentDue = billResponse.getBill().get(0).getTotalAmount();
-		if(billResponse != null && currentDue.compareTo(BigDecimal.ZERO) < 0) {
+		BigDecimal availableAdvance = BigDecimal.ZERO;
+		if(billResponse != null) {
+			availableAdvance = billResponse.getBill().get(0).getBillDetails().stream().flatMap(billDetails -> billDetails.getBillAccountDetails().stream())
+				.filter(billAccDetail -> billAccDetail.getTaxHeadCode().contains("ADVANCE"))
+				.map(BillAccountDetail::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+		}
+		
+		if(availableAdvance.compareTo(BigDecimal.ZERO) < 0) {
 			// Search for annual Advance
 			BigDecimal annualPaymentRebate = BigDecimal.ZERO;
 			List<AnnualAdvance> annualAdvances = annualAdvanceService.findAnnualPayment(criteria.getTenantId(), criteria.getConnectionNo(), calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()));
 			if(!annualAdvances.isEmpty()) {
-				// if annual advance opted and have suffient advance to knock off specified tax amounts then add annual advance rebate
+				// if annual advance opted and have sufficient advance to knock off specified tax amounts then add annual advance rebate
 				annualPaymentRebate = payService.getAnnualAdvanceRebate(waterCharge, SewerageCharge, calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_ANNUAL_ADVANCE_MASTER));
 				BigDecimal tillNowTotalDemand = estimates.stream().filter(the -> WSCalculationConstant.ANNUAL_ADVANCE_ALLOWED_TAXHEAD.contains(the.getTaxHeadCode()))
 						.map(TaxHeadEstimate::getEstimateAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-				// if have sufficient balance to knockoff the estimates 5% rebate for annual including rebate.
+				// if have sufficient balance to knock-off the estimates 5% rebate for annual including rebate.
 				BigDecimal payableIncludingAnnualRebate = tillNowTotalDemand.add(annualPaymentRebate.negate());
-				if((currentDue.add(payableIncludingAnnualRebate)).compareTo(BigDecimal.ZERO) <= 0
+				if((availableAdvance.add(payableIncludingAnnualRebate)).compareTo(BigDecimal.ZERO) <= 0
 						&& annualPaymentRebate.compareTo(BigDecimal.ZERO) > 0) {
 					isAnnualAdvanceRebateApplied = true;
 					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_ANNUAL_PAYMENT_REBATE)
@@ -449,7 +456,7 @@ public class EstimationService {
 				BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
 				BigDecimal tillNowTotalDemand = estimates.stream().map(TaxHeadEstimate::getEstimateAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 				BigDecimal payableIncludingRebate = tillNowTotalDemand.add(timeBaseRebate.negate());
-				if((currentDue.add(payableIncludingRebate)).compareTo(BigDecimal.ZERO) <= 0
+				if((availableAdvance.add(payableIncludingRebate)).compareTo(BigDecimal.ZERO) <= 0
 						&& timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
 					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
 							.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());

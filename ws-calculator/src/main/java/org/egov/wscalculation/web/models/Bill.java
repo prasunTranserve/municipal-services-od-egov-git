@@ -1,6 +1,7 @@
 package org.egov.wscalculation.web.models;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,6 +66,9 @@ public class Bill {
 
 	@JsonProperty("auditDetails")
 	private AuditDetails auditDetails;
+	
+	@JsonProperty("billDetails")
+	private List<BillDetail> billDetails;
 
 	/**
 	 * status of the bill .
