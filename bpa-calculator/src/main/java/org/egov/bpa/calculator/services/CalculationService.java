@@ -69,7 +69,8 @@ public class CalculationService {
 	private static final BigDecimal TEN = new BigDecimal("10");// BigDecimal.valueOf(10);
 	private static final BigDecimal FIFTEEN = new BigDecimal("15");// BigDecimal.valueOf(15);
 //	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.50");// BigDecimal.valueOf(17.50);
-	private static final BigDecimal SEVENTEEN_POINT_EIGHT_FIVE = new BigDecimal("17.85");// BigDecimal.valueOf(17.50);
+	//private static final BigDecimal SEVENTEEN_POINT_EIGHT_FIVE = new BigDecimal("17.85");// BigDecimal.valueOf(17.50);
+	private static final BigDecimal EIGHTEEN_POINT_TWO_ONE = new BigDecimal("18.21");
 	private static final BigDecimal TWENTY = new BigDecimal("20");// BigDecimal.valueOf(20);
 	private static final BigDecimal TWENTY_FIVE = new BigDecimal("25");// BigDecimal.valueOf(25);
 	private static final BigDecimal THIRTY = new BigDecimal("30");// BigDecimal.valueOf(30);
@@ -903,6 +904,15 @@ public class CalculationService {
 				paramMap.put(BPACalculatorConstants.PROVIDED_FAR, permissibleFar);
 			}
 		}
+		
+		JSONArray maxPermissibleFarJson = context.read(BPACalculatorConstants.PERMISSABLE_FAR_PATH);
+		if (!CollectionUtils.isEmpty(maxPermissibleFarJson)) {
+			if (null != maxPermissibleFarJson.get(0)) {
+				String maxPermissibleFarString = maxPermissibleFarJson.get(0).toString();
+				Double maxPermissibleFar = Double.parseDouble(maxPermissibleFarString);
+				paramMap.put(BPACalculatorConstants.PERMISSABLE_FAR, maxPermissibleFar);
+			}
+		}
 
 		JSONArray totalNoOfDwellingUnitsArray = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
 		if (!CollectionUtils.isEmpty(totalNoOfDwellingUnitsArray)) {
@@ -1023,7 +1033,7 @@ public class CalculationService {
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, RoundingMode.UP);
 			
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(deviationBuitUpArea))
+				welfareCess = (EIGHTEEN_POINT_TWO_ONE.multiply(BigDecimal.valueOf(deviationBuitUpArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, RoundingMode.UP);
 			}
 
@@ -1095,6 +1105,7 @@ public class CalculationService {
 		BigDecimal permissableFAR = null;
 		BigDecimal plotArea = null;
 		BigDecimal deviation = null;
+		String subOccupancyType = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1116,6 +1127,9 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA)) {
 			deviation = BigDecimal.valueOf((Double) paramMap.get(BPACalculatorConstants.DEVIATION_BUILTUP_AREA));
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_OC))
 				&& (StringUtils.hasText(serviceType)
@@ -1131,7 +1145,20 @@ public class CalculationService {
 				compoundFARFee = calculateOcCompoundingFar(paramMap, mdmsData, deviation);
 			} else if(baseFarBUA.compareTo(builtUpAreaOC) < 0 && permissableFarBUA.compareTo(builtUpAreaOC) >= 0) {
 				BigDecimal fee1 = calculateOcCompoundingFar(paramMap, mdmsData, baseFarBUA.subtract(builtUpAreaBP));
-				BigDecimal fee2 = calculateOcPurchableFAR(paramMap, builtUpAreaOC.subtract(baseFarBUA));
+				BigDecimal fee2 = BigDecimal.ZERO;
+				// calculation of fee2(Purchasable far) for MIG sub-occupancy-
+				if (StringUtils.hasText(subOccupancyType)
+						&& BPACalculatorConstants.A_MIH.equalsIgnoreCase(subOccupancyType)) {
+					BigDecimal applicableDiscountFarArea = (permissableFarBUA.subtract(baseFarBUA)
+							.multiply(new BigDecimal("0.25"))).setScale(2, BigDecimal.ROUND_UP);
+					BigDecimal deltaFarBUA = builtUpAreaOC.subtract(baseFarBUA);
+					if (deltaFarBUA.compareTo(applicableDiscountFarArea) > 0) {
+						fee2 = calculateOcPurchableFAR(paramMap,
+								builtUpAreaOC.subtract(baseFarBUA).subtract(applicableDiscountFarArea));
+					}
+				} else {
+					fee2 = calculateOcPurchableFAR(paramMap, builtUpAreaOC.subtract(baseFarBUA));
+				}
 				compoundFARFee = fee1.add(fee2);
 			} else if(builtUpAreaOC.compareTo(permissableFarBUA) > 0) {
 				compoundFARFee = calculateOcPurchableFAR(paramMap, deviation);
@@ -1910,7 +1937,9 @@ public class CalculationService {
 		Double benchmarkValuePerAcre = null;
 		Double baseFar = null;
 		Double providedFar = null;
+		Double maxPermissibleFar = null;
 		Double plotArea = null;
+		String subOccupancyType = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1929,8 +1958,44 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
 			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE)) {
+			subOccupancyType = (String) paramMap.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.PERMISSABLE_FAR)) {
+			maxPermissibleFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSABLE_FAR);
+		}
 
-		if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar) && (null != plotArea)) {
+		//calculation for MIG sub-occupancy-
+		if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar) && (null != plotArea)
+				&& StringUtils.hasText(subOccupancyType)
+				&& BPACalculatorConstants.A_MIH.equalsIgnoreCase(subOccupancyType)
+				&& (StringUtils.hasText(applicationType)
+						&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
+				&& (StringUtils.hasText(serviceType)
+						&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
+				BigDecimal benchmarkValuePerSQM = BigDecimal.valueOf(benchmarkValuePerAcre).divide(ACRE_SQMT_MULTIPLIER, 2,
+					BigDecimal.ROUND_UP);
+
+				BigDecimal purchasableFARRate = (benchmarkValuePerSQM.multiply(ZERO_TWO_FIVE)).setScale(2,
+					BigDecimal.ROUND_UP);
+
+				BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(baseFar))).setScale(2,
+					BigDecimal.ROUND_UP);
+				
+				BigDecimal applicableDiscountFar = (BigDecimal.valueOf(maxPermissibleFar)
+						.subtract(BigDecimal.valueOf(baseFar)).multiply(new BigDecimal("0.25"))).setScale(2,
+								BigDecimal.ROUND_UP);
+				if (deltaFAR.compareTo(applicableDiscountFar) > 0) {
+					deltaFAR = deltaFAR.subtract(applicableDiscountFar);
+				} else {
+					deltaFAR = BigDecimal.ZERO;
+				}
+
+				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR).multiply(BigDecimal.valueOf(plotArea)))
+					.setScale(2, BigDecimal.ROUND_UP);
+		}
+		//calculation for all cases other than MIG sub-occupancy-
+		else if ((null != providedFar) && (null != baseFar) && (providedFar > baseFar) && (null != plotArea)) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
@@ -2350,7 +2415,7 @@ public class CalculationService {
 			BigDecimal totalCostOfConstruction = (SEVENTEEN_FIFTY.multiply(BigDecimal.valueOf(totalBuiltupArea))
 					.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE.multiply(BigDecimal.valueOf(totalBuiltupArea))
+				welfareCess = (EIGHTEEN_POINT_TWO_ONE.multiply(BigDecimal.valueOf(totalBuiltupArea))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
 
