@@ -275,13 +275,12 @@ public class WSCalculationValidator {
 			
 		} else {
 			errorMap.put("INVALID_WATER_CONNECTION", "No connection found with this connectionNo");
-    }
+		}
 		
 		if (!errorMap.isEmpty()) {
 			throw new CustomException(errorMap);
 		}
   
-  return true;
 	}
 
 	public Boolean validateMaxMeterDigits(MeterConnectionRequest meterConnectionRequest) {
