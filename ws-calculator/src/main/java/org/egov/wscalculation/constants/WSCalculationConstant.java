@@ -366,4 +366,7 @@ public class WSCalculationConstant {
 	public static final String WS_ANNUAL_PAYMENT_REBATE = "WS_ANNUAL_PAYMENT_REBATE";
 	
 	public static final List<String> ANNUAL_ADVANCE_ALLOWED_TAXHEAD = Arrays.asList(WS_CHARGE, SW_CHARGE);
+
+	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
+	
 }

@@ -230,7 +230,7 @@ public class EstimationService {
 				if(WSCalculationConstant.WS_UC_DOMESTIC.equalsIgnoreCase(usageType)) {
 					waterCharges = BigDecimal.valueOf(106);
 					if(criteria.getWaterConnection().getNoOfTaps() > 2) {
-						waterCharges.add(BigDecimal.valueOf(35.18).multiply(BigDecimal.valueOf(criteria.getWaterConnection().getNoOfTaps() - 2)));
+						waterCharges = waterCharges.add(BigDecimal.valueOf(35.18).multiply(BigDecimal.valueOf(criteria.getWaterConnection().getNoOfTaps() - 2)));
 					}
 				} else if(WSCalculationConstant.WS_UC_BPL.equalsIgnoreCase(usageType)) {
 					waterCharges = BigDecimal.valueOf(56);
