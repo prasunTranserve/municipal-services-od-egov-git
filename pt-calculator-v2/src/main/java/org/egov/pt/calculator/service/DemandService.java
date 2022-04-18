@@ -1055,10 +1055,10 @@ public class DemandService {
 			BigDecimal totalOldCollectedAmount = oldDemand.getDemandDetails().stream().map(DemandDetail::getCollectionAmount)
 					.reduce(BigDecimal.ZERO, BigDecimal::add);
 			
-			/*if(totalOldTaxAmount.compareTo(totalOldCollectedAmount) == 0) {
+			if(totalOldTaxAmount.compareTo(totalOldCollectedAmount) == 0) {
 				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
 						+ consumerCodes.toString());
-			}*/
+			}
 			
 			BigDecimal totalNewTaxAmount = BigDecimal.ZERO;
 			
