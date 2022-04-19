@@ -993,7 +993,7 @@ public class DemandService {
 		}
 		
 		//Inserts new PT_TIME_PENALTY tax head in demand details if it does not exists
-		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) > 0 && !isCurrentDemand)
+		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) != 0 && !isCurrentDemand)
 			details.add(DemandDetail.builder().taxAmount(penalty).taxHeadMasterCode(CalculatorConstants.PT_TIME_PENALTY)
 					.demandId(demandId).tenantId(tenantId).build());
 		
