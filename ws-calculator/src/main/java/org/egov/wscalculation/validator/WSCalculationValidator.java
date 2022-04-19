@@ -264,7 +264,7 @@ public class WSCalculationValidator {
 		Map<String, String> errorMap = new HashMap<>();
 
 		List<WaterConnection> waterConnectionList = calculationUtil.getWaterConnection(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getConnectionNo(),meterConnectionRequest.getMeterReading().getTenantId());
-		WaterConnection waterConnection = waterConnectionList.get(0);
+		WaterConnection waterConnection = calculationUtil.getWaterConnectionObject(waterConnectionList);
 		HashMap<String, Object> addDetail = mapper.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
 
 		Integer maxMeterDigits = null;
