@@ -29,11 +29,13 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -942,6 +944,87 @@ public class CalculatorUtils {
         }
         
         return dueAmt;
+    }
+    
+    public static String getFinancialYear() {
+		int year = Calendar.getInstance().get(Calendar.YEAR);
+		int finFirstYear =  year;
+		int finLastYear =  year;
+	    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+	    if (month <= 3) {
+	    	finFirstYear = (year - 1);
+	    } else {
+	    	finLastYear = (year + 1);
+	    }
+	    return String.format("%s-%s", finFirstYear, finLastYear%100);
+	}
+    
+    /**
+     * Returns the applicable total tax amount to be paid on a demand
+     *
+     * @param demand
+     * @return
+     */
+    public BigDecimal getTaxAmtForModifiedDemandForPenaltyGeneration(Demand demand, Demand oldDemand) {
+        BigDecimal taxAmt = BigDecimal.ZERO;
+        BigDecimal collectedAmt = BigDecimal.ZERO;
+        
+        BigDecimal oldTaxAmt = BigDecimal.ZERO;
+        BigDecimal oldCollectedAmt = BigDecimal.ZERO;
+        
+        boolean isPenaltyAmountDue = false;
+        boolean isPenaltyApplied = false;
+        
+        for (DemandDetail detail : demand.getDemandDetails()) {
+        	
+
+    		//Check if the penalty has been applied or not
+        	if(CalculatorConstants.PT_TIME_PENALTY.equals(detail.getTaxHeadMasterCode())){
+        		isPenaltyApplied  = true;
+        		if(detail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
+        			&& detail.getTaxAmount().subtract(detail.getCollectionAmount()).compareTo(BigDecimal.ZERO) >= 0) {
+        			isPenaltyAmountDue = true;
+        		}
+        	}
+        	
+        	//Consider all taxheads other than PT_TIME_PENALTY
+        	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(detail.getTaxHeadMasterCode())) {
+        		collectedAmt = collectedAmt.add(detail.getCollectionAmount());
+            	taxAmt = taxAmt.add(detail.getTaxAmount());
+        	}
+        }
+        
+        if(!Objects.isNull(oldDemand)) {
+        	for (DemandDetail detail : oldDemand.getDemandDetails()) {
+            	
+            	//Consider all taxheads other than PT_TIME_PENALTY
+            	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(detail.getTaxHeadMasterCode())) {
+            		oldCollectedAmt = oldCollectedAmt.add(detail.getCollectionAmount());
+            		oldTaxAmt = oldTaxAmt.add(detail.getTaxAmount());
+            	}
+            }
+        	
+        	/**
+        	 * Penalty will not be calculated on the modified amount if penalty is 
+        	 * already applied else apply penalty on the total tax amount
+        	 */
+        	
+        	if(isPenaltyApplied) {
+        		return taxAmt.subtract(oldTaxAmt);
+        	}else {
+        		if(taxAmt.compareTo(collectedAmt) == 0) {
+                	taxAmt = BigDecimal.ZERO;
+                }
+        		return taxAmt;
+        	}
+        	
+        }
+        
+        if(isPenaltyApplied && isPenaltyAmountDue) {
+        	taxAmt = BigDecimal.ZERO;
+        }
+        
+        return taxAmt;
     }
     
 
