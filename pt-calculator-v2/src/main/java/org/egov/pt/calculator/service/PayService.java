@@ -555,6 +555,32 @@ public class PayService {
 		return !Objects.isNull(interest) ? interest : BigDecimal.ZERO;
 	}
 
+	/**
+	 * Updates the incoming demand with latest penalty values if applicable
+	 * 
+	 * @param taxAmt
+	 * @param collectedPtTax
+	 * @param assessmentYear
+	 * @param timeBasedExmeptionMasterMap
+	 * @param payments
+	 * @param taxPeriod
+	 * @return
+	 */
+	public BigDecimal applyPenaltyForModifiedDemand(BigDecimal taxAmt,BigDecimal collectedPtTax,
+			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
 
+		log.info("applyPenaltyForModifiedDemand >>");
+		
+		log.info("taxAmt ["+taxAmt+"]");
+		log.info("assessmentYear ["+assessmentYear+"]");
+		log.info("timeBasedExmeptionMasterMap ["+timeBasedExmeptionMasterMap+"]");
+		
+		BigDecimal penalty = BigDecimal.ZERO;
+
+		penalty = getPenalty(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.PENANLTY_MASTER));
+
+		log.info("<< applyPenaltyForModifiedDemand");
+		return !Objects.isNull(penalty) ? penalty : BigDecimal.ZERO;
+	}
 
 }
