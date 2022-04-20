@@ -806,20 +806,20 @@ public class BPAService {
 		if (StringUtils.isEmpty(bpa.getApprovalNo())) {
 			throw new CustomException(BPAErrorConstants.INVALID_REQUEST, "Approval Number is required.");
 		}
-		File file1=null;
-		File file2=null;
+		File permitCertificateFile=null;
+		File shortenedScsrutinyReportFile=null;
 		String tempFileName="tempFile";
 		String mergedFileName="mergedPdf.pdf";
 		try {
 			this.createTempShortenedReport(bpaRequest, fileName, document);
 			Map<String, String> additionalDetails =  (Map<String, String>) bpaRequest.getBPA().getAdditionalDetails();
-			file1 = fileStoreService.fetch(additionalDetails.get("permitFileStoreId"), "BPA", tempFileName,
+			permitCertificateFile = fileStoreService.fetch(additionalDetails.get("permitFileStoreId"), "BPA", tempFileName,
 					bpaRequest.getBPA().getTenantId());
-			file2=new File(fileName);
+			shortenedScsrutinyReportFile=new File(fileName);
 			PDFMergerUtility obj = new PDFMergerUtility();
 			obj.setDestinationFileName(mergedFileName);
-			obj.addSource(file1);
-			obj.addSource(file2);
+			obj.addSource(permitCertificateFile);
+			obj.addSource(shortenedScsrutinyReportFile);
 			obj.mergeDocuments(null);
 
 			// push to filestore-
@@ -833,10 +833,10 @@ public class BPAService {
 				if (document != null) {
 					document.close();
 				}
-				if (Objects.nonNull(file1))
-					FileUtils.forceDelete(file1);
-				if (Objects.nonNull(file2))
-					FileUtils.forceDelete(file2);
+				if (Objects.nonNull(permitCertificateFile))
+					FileUtils.forceDelete(permitCertificateFile);
+				if (Objects.nonNull(shortenedScsrutinyReportFile))
+					FileUtils.forceDelete(shortenedScsrutinyReportFile);
 				if (new File(tempFileName).exists())
 					FileUtils.forceDelete(new File(tempFileName));
 				if (new File(mergedFileName).exists())
