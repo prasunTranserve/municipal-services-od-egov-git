@@ -319,6 +319,39 @@ public class EDCRService {
 
 		return CollectionUtils.isEmpty(planReports) ? null : planReports.get(0);
 	}
+	
+	/**
+	 * fetch the edcrShortenedPdfUrl from the bpa data
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public String getEDCRShortenedPdfUrl(BPARequest bpaRequest) {
+
+		BPA bpa = bpaRequest.getBPA();
+		StringBuilder uri = new StringBuilder(config.getEdcrHost());
+		uri.append(config.getGetPlanEndPoint());
+		uri.append("?").append("tenantId=").append(bpa.getTenantId());
+		uri.append("&").append("edcrNumber=").append(bpaRequest.getBPA().getEdcrNumber());
+		RequestInfo edcrRequestInfo = new RequestInfo();
+		BeanUtils.copyProperties(bpaRequest.getRequestInfo(), edcrRequestInfo);
+		LinkedHashMap responseMap = null;
+		try {
+			responseMap = (LinkedHashMap) serviceRequestRepository.fetchResult(uri,
+					new RequestInfoWrapper(edcrRequestInfo));
+		} catch (ServiceCallException se) {
+			throw new CustomException(BPAErrorConstants.EDCR_ERROR, " EDCR Number is Invalid");
+		}
+
+		String jsonString = new JSONObject(responseMap).toString();
+		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
+		//TODO: once edcr supports sending the shortenedPlanReport, uncomment the below line-
+		//List<String> planReports = context.read("edcrDetail.*.shortenedPlanReport");
+		List<String> planReports = context.read("edcrDetail.*.planReport");
+
+		return CollectionUtils.isEmpty(planReports) ? null : planReports.get(0);
+	}
 
 	/**
 	 * fetch the edcr details from the bpa
