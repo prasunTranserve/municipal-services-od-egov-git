@@ -138,5 +138,12 @@ public class BPAController {
 		Object response = bpaService.getFeeEstimateFromBpaCalculator(bpaRequest);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping(value = { "/_mergeScrutinyReportToPermit" })
+	public ResponseEntity<Object> mergeScrutinyReportToPermit(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @RequestBody BPARequest bpaRequest) {
+		return new ResponseEntity<>(
+				bpaService.mergeScrutinyReportToPermit(bpaRequest, requestInfoWrapper.getRequestInfo()), HttpStatus.OK);
+	}
 
 }
