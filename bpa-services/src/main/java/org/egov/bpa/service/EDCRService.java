@@ -346,9 +346,7 @@ public class EDCRService {
 
 		String jsonString = new JSONObject(responseMap).toString();
 		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
-		//TODO: once edcr supports sending the shortenedPlanReport, uncomment the below line-
-		//List<String> planReports = context.read("edcrDetail.*.shortenedPlanReport");
-		List<String> planReports = context.read("edcrDetail.*.planReport");
+		List<String> planReports = context.read("edcrDetail.*.shortenedPlanReport");
 
 		return CollectionUtils.isEmpty(planReports) ? null : planReports.get(0);
 	}
