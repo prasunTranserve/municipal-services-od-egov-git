@@ -216,6 +216,8 @@ public class WSCalculationConstant {
 	
 	public static final String WC_LABOURFEE_MASTER = "LabourFee";
 	
+	public static final String WC_ANNUAL_ADVANCE_MASTER = "AnnualAdvance";
+	
 	
 	
 	/**
@@ -354,5 +356,17 @@ public class WSCalculationConstant {
 	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
 	
 	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
+	
+	// Annual advance
+	public static final String ANNUAL_ADVANCE_REBATE = "annualRebate";
+	public static final String ADVANCE_WATER_CHARGE = "annualWaterCharge";
+	public static final String ADVANCE_SEWERAGE_CHARGE = "annualSewerageCharge";
+	public static final String ADVANCE_REBATE = "annualRebate";
+
+	public static final String CHANNEL_SUJOG = "SUJOG";
+
+	public static final String WS_ANNUAL_PAYMENT_REBATE = "WS_ANNUAL_PAYMENT_REBATE";
+
+	public static final List<String> ANNUAL_ADVANCE_ALLOWED_TAXHEAD = Arrays.asList(WS_CHARGE, SW_CHARGE);
 	
 }

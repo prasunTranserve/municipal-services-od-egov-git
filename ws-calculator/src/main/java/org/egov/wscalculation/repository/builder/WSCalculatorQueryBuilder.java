@@ -71,6 +71,8 @@ public class WSCalculatorQueryBuilder {
 
 	private static final String GET_INSTALLMENT_DETAILS_BY_APPLICATION_NO = "select * from eg_ws_installment ewi ";
 	
+	private static final String ANNUAL_ADVANCE_SEARCH = "select * from eg_ws_annualadvancedetails ewa ";
+	
 	public String getDistinctTenantIds() {
 		return distinctTenantIdsCriteria;
 	}
@@ -409,5 +411,30 @@ public class WSCalculatorQueryBuilder {
 
 		return query.toString();
   }
+	
+	public String getAnnualAdvance(String tenantId, String connectionNo, String finYear, List<Object> preparedStatement) {
+		// TODO Auto-generated method stub
+		StringBuilder query = new StringBuilder(ANNUAL_ADVANCE_SEARCH);
+
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" tenantid = ? ");
+		preparedStatement.add(tenantId);
+
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" connectionno = ? ");
+		preparedStatement.add(connectionNo);
+
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" status = ? ");
+		preparedStatement.add("Active");
+
+		if(StringUtils.hasText(finYear)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" finyear = ? ");
+			preparedStatement.add(finYear);
+		}
+
+		return query.toString();
+	}
 
 }
