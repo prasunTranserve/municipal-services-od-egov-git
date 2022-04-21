@@ -14,11 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.service.MasterDataService;
 import org.egov.wscalculation.util.CalculatorUtil;
+import org.egov.wscalculation.web.models.AnnualAdvance;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReading.MeterStatusEnum;
@@ -254,6 +256,33 @@ public class WSCalculationValidator {
 
 	}
 
+	public void validateAnnualAdvance(RequestInfo requestInfo, String tenantId, String connectionNo) {
+		Map<String, String> errorMap = new HashMap<>();
+		
+		List<WaterConnection> waterConnectionList = calculationUtil.getWaterConnection(requestInfo,connectionNo, tenantId);
+		WaterConnection connection = null;
+		if(waterConnectionList != null){
+			int size = waterConnectionList.size();
+			connection = waterConnectionList.get(size-1);
+		}
+		
+		if(connection != null) {
+			String assessYear = calculationUtil.getFinancialYear();
+			List<AnnualAdvance> annualAdvances = wSCalculationDao.getAnnualAdvance(tenantId, connectionNo, assessYear);
+			if(!annualAdvances.isEmpty()) {
+				errorMap.put("INVALID_ANNUAL_ADVANCE", "Annual advance already applied on this connection for this financial year");
+			}
+			
+		} else {
+			errorMap.put("INVALID_WATER_CONNECTION", "No connection found with this connectionNo");
+		}
+		
+		if (!errorMap.isEmpty()) {
+			throw new CustomException(errorMap);
+		}
+  
+	}
+
 	public Boolean validateMaxMeterDigits(MeterConnectionRequest meterConnectionRequest) {
 		Map<String, String> errorMap = new HashMap<>();
 		
@@ -283,7 +312,7 @@ public class WSCalculationValidator {
 		if (!errorMap.isEmpty()) {
 			throw new CustomException(errorMap);
 		}
-		
+
 		return true;
 	}
 	
