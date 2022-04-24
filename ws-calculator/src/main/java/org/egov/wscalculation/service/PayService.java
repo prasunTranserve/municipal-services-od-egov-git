@@ -1,6 +1,7 @@
 package org.egov.wscalculation.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -293,5 +295,39 @@ public class PayService {
 			}
 		}
 		return specialRebate;
+	}
+	
+	public BigDecimal getAnnualAdvanceRebate(BigDecimal waterCharge, BigDecimal sewerageFee, String assessmentYear, JSONArray annualAdvanceMasterData) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+		
+		Map<String, Object> annualAdvanceMaster = mDService.getApplicableAnnualAdvanceMaster(assessmentYear, annualAdvanceMasterData);
+
+		if (null == annualAdvanceMaster) {
+			throw new CustomException("MDMS_ERROR_FOR_ANNUAL_ADVANCE", "Failed to fetch Annual advance master data for tis financial year");
+		}
+
+		rebateAmt = calculateAnnualAdvanceRebate(waterCharge, sewerageFee, annualAdvanceMaster);
+
+		return rebateAmt;
+	}
+
+	private BigDecimal calculateAnnualAdvanceRebate(BigDecimal waterCharge, BigDecimal sewerageFee,
+			Map<String, Object> annualAdvanceMaster) {
+		BigDecimal annualRebate = BigDecimal.ZERO;
+
+		if (null == annualAdvanceMaster)
+			return annualRebate;
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> configMap = (Map<String, Object>) annualAdvanceMaster;
+		
+		BigDecimal rate = null != configMap.get(WSCalculationConstant.ANNUAL_ADVANCE_REBATE)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.ANNUAL_ADVANCE_REBATE)).doubleValue())
+				: null;
+		
+		if (null != rate) {
+			annualRebate = waterCharge.add(sewerageFee).multiply(rate.divide(WSCalculationConstant.HUNDRED)).setScale(2, RoundingMode.HALF_UP);
+		}
+		return annualRebate;
 	}
 }

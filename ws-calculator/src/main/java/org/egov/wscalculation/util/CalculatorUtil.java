@@ -1,5 +1,6 @@
 package org.egov.wscalculation.util;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -54,6 +55,7 @@ public class CalculatorUtil {
 	 */
 	public MdmsCriteriaReq getWaterConnectionModuleRequest(RequestInfo requestInfo, String tenantId) {
 		List<MasterDetail> details = new ArrayList<>();
+		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_ANNUAL_ADVANCE_MASTER).build());
 		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_REBATE_MASTER).build());
 		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_WATER_CESS_MASTER).build());
 		details.add(MasterDetail.builder().name(WSCalculationConstant.WC_PENANLTY_MASTER).build());
@@ -379,5 +381,19 @@ public class CalculatorUtil {
 		cal.setTimeInMillis(dateInMilisecound);
 		
 		return cal;
+	}
+
+	public int getTodayMonth() {
+		LocalDate today = LocalDate.now();
+		return today.getMonthValue();
+	}
+	
+	public String getFinancialYear() {
+		LocalDate today = LocalDate.now();
+		if(today.getMonthValue() > 3) {
+			return String.format("%s-%s", today.getYear(), String.valueOf(today.plusYears(1).getYear()).substring(2));
+		} else {
+			return String.format("%s-%s", today.minusYears(1).getYear(), String.valueOf(today.getYear()).substring(2));
+		}
 	}
 }

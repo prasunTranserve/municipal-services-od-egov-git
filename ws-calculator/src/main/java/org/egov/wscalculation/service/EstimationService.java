@@ -30,6 +30,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.util.WaterCessUtil;
+import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.AuditDetails;
 import org.egov.wscalculation.web.models.BillingSlab;
 import org.egov.wscalculation.web.models.CalculationCriteria;
@@ -86,11 +87,12 @@ public class EstimationService {
 	@Autowired 
 	private WSCalculationProducer wsCalculationProducer;
 
-	 @Autowired
-	 private WSCalculationDao waterCalculatorDao;
+	@Autowired
+	private WSCalculationDao waterCalculatorDao;
 	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
 	private static BigDecimal TenPercent = BigDecimal.valueOf(0.1);
+	private static BigDecimal FivePercent = BigDecimal.valueOf(0.05);
 
 	/**
 	 * Generates a List of Tax head estimates with tax head code, tax head
@@ -1483,5 +1485,79 @@ public class EstimationService {
 
 		wsCalculationProducer.push(configs.getWsCreateInstallmentTopic(), InstallmentsRequest.builder().requestInfo(requestInfo).installments(installments).build());
 		return installments;
+	}
+
+	public AnnualPaymentDetails getAnnualAdvanceEstimation(CalculationCriteria criteria, RequestInfo requestInfo,
+			Map<String, Object> masterData) {
+		String tenantId = criteria.getTenantId();
+		if (criteria.getWaterConnection() == null && !StringUtils.isEmpty(criteria.getConnectionNo())) {
+			List<WaterConnection> waterConnectionList = calculatorUtil.getWaterConnection(requestInfo, criteria.getConnectionNo(), tenantId);
+			WaterConnection waterConnection = calculatorUtil.getWaterConnectionObject(waterConnectionList);
+			criteria.setWaterConnection(waterConnection);
+		}
+		if (criteria.getWaterConnection() == null || StringUtils.isEmpty(criteria.getConnectionNo())) {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Water Connection are not present for ")
+					.append(StringUtils.isEmpty(criteria.getConnectionNo()) ? "" : criteria.getConnectionNo())
+					.append(" connection no");
+			throw new CustomException("WATER_CONNECTION_NOT_FOUND", builder.toString());
+		}
+		
+		Map<String, JSONArray> billingSlabMaster = new HashMap<>();
+		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
+		ArrayList<String> billingSlabIds = new ArrayList<>();
+		billingSlabMaster.put(WSCalculationConstant.WC_BILLING_SLAB_MASTER,
+				(JSONArray) masterData.get(WSCalculationConstant.WC_BILLING_SLAB_MASTER));
+		billingSlabMaster.put(WSCalculationConstant.CALCULATION_ATTRIBUTE_CONST,
+				(JSONArray) masterData.get(WSCalculationConstant.CALCULATION_ATTRIBUTE_CONST));
+		timeBasedExemptionMasterMap.put(WSCalculationConstant.WC_WATER_CESS_MASTER,
+				(JSONArray) (masterData.getOrDefault(WSCalculationConstant.WC_WATER_CESS_MASTER, null)));
+		
+		mDataService.setWaterConnectionMasterValues(requestInfo, criteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
+		
+		BigDecimal waterTaxAmt = getWaterEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo, masterData);
+		BigDecimal sewerageTaxAmt = getSewerageEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo);
+		
+		AnnualPaymentDetails annualPaymentDetails = AnnualPaymentDetails.builder().tenantid(criteria.getTenantId()).consumerCode(criteria.getConnectionNo()).build();
+		
+		CalculateAnnualAdvance(annualPaymentDetails, waterTaxAmt, sewerageTaxAmt, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_ANNUAL_ADVANCE_MASTER));
+		
+		return annualPaymentDetails;
+	}
+
+	private void CalculateAnnualAdvance(AnnualPaymentDetails annualPaymentDetails, BigDecimal waterTaxAmt, BigDecimal sewerageTaxAmt,
+			JSONArray annualAdvanceMaster) {
+		
+		
+		BigDecimal increasedWaterTax = waterTaxAmt.add(waterTaxAmt.multiply(FivePercent).setScale(2, RoundingMode.HALF_UP));
+		
+		// TODO Auto-generated method stub
+		int month = calculatorUtil.getTodayMonth();
+		int noOfMonthsForCurrentCharges=0;
+		int noOfMonthsForIncrementedCharges=0;
+		if(month>=4 && month <=6 ) {
+			noOfMonthsForCurrentCharges = 6 - month + 1;
+			noOfMonthsForIncrementedCharges = 9;
+		} else {
+			if(month>=7 && month <=12 ) {
+				noOfMonthsForIncrementedCharges = 12 - month + 4;
+			} else {
+				noOfMonthsForIncrementedCharges = 3 - month + 1;
+			}
+		}
+		
+		
+		BigDecimal totalWaterTaxAmount = waterTaxAmt.multiply(BigDecimal.valueOf(noOfMonthsForCurrentCharges)).setScale(2, RoundingMode.HALF_UP)
+									.add(increasedWaterTax.multiply(BigDecimal.valueOf(noOfMonthsForIncrementedCharges)).setScale(2, RoundingMode.HALF_UP));
+		BigDecimal totalSewerageTaxAmount = sewerageTaxAmt.multiply(BigDecimal.valueOf(noOfMonthsForCurrentCharges+noOfMonthsForIncrementedCharges)).setScale(2, RoundingMode.HALF_UP);
+
+		BigDecimal annualRebate = payService.getAnnualAdvanceRebate(totalWaterTaxAmount, totalSewerageTaxAmount, calculatorUtil.getFinancialYear(), annualAdvanceMaster).negate();
+		BigDecimal netAnnualAdvancePayable = totalWaterTaxAmount.add(totalSewerageTaxAmount).add(annualRebate).setScale(0, RoundingMode.CEILING);
+		
+		annualPaymentDetails.setTotalWaterCharge(totalWaterTaxAmount);
+		annualPaymentDetails.setTotalSewerageCharge(totalSewerageTaxAmount);
+		annualPaymentDetails.setTotalRebate(annualRebate);
+		annualPaymentDetails.setNetAnnualAdvancePayable(netAnnualAdvancePayable);
 	}
 }

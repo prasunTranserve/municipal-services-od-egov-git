@@ -216,6 +216,8 @@ public class WSCalculationConstant {
 	
 	public static final String WC_LABOURFEE_MASTER = "LabourFee";
 	
+	public static final String WC_ANNUAL_ADVANCE_MASTER = "AnnualAdvance";
+	
 	
 	
 	/**
@@ -353,4 +355,6 @@ public class WSCalculationConstant {
 	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
 	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
 	
+	// Annual advance
+	public static final String ANNUAL_ADVANCE_REBATE = "annualRebate";
 }

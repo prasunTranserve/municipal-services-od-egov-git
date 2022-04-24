@@ -440,5 +440,24 @@ public class MasterDataService {
 		}
 		return master;
 	}
+
+	public Map<String, Object> getApplicableAnnualAdvanceMaster(String assessmentYear, JSONArray annualAdvanceMaster) {
+		Map<String, Object> objToBeReturned = null;
+
+		for (Object object : annualAdvanceMaster) {
+
+			Map<String, Object> objMap = (Map<String, Object>) object;
+			String objFinYear = ((String) objMap.get(WSCalculationConstant.FROMFY_FIELD_NAME));
+			long objStartDay = ((long) objMap.get(WSCalculationConstant.STARTING_DATE_APPLICABLES));
+			long objEndingDay = ((long) objMap.get(WSCalculationConstant.ENDING_DATE_APPLICABLES));
+			if (assessmentYear.equalsIgnoreCase(objFinYear.trim())) {
+				long currentTime = System.currentTimeMillis();
+				if (objStartDay <= currentTime && currentTime < objEndingDay) {
+					objToBeReturned = objMap;
+				}
+			}
+		}
+		return objToBeReturned;
+	}
 	
 }

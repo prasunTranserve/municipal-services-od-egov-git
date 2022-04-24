@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.mdms.model.MdmsCriteriaReq;
@@ -19,6 +21,7 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
+import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
@@ -472,6 +475,14 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			throw new CustomException("INVALID_REQUEST", "No connection specified for bill generation");
 		}
 		
+	}
+
+	public AnnualPaymentDetails getAnnualPaymentEstimation(@Valid CalculationReq request) {
+		Map<String, Object> masterMap = masterDataService.loadMasterData(request.getRequestInfo(),
+				request.getCalculationCriteria().get(0).getTenantId());
+		AnnualPaymentDetails annualPaymentDetails = estimationService.getAnnualAdvanceEstimation(request.getCalculationCriteria().get(0), request.getRequestInfo(),
+				masterMap);
+		return annualPaymentDetails;
 	}
 	
 }
