@@ -503,32 +503,36 @@ public class DemandService {
 		if(Objects.isNull(penalty) && Objects.isNull(rebate) && Objects.isNull(interest)) return isCurrentDemand;
 		
 		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
-
-
-		BigDecimal oldRebate = BigDecimal.ZERO;
-		BigDecimal oldCollectedRebate = BigDecimal.ZERO;
-		boolean rebateTaxHeadExists = false;
-		for(DemandDetail demandDetail : details) {
-			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
-				oldRebate = oldRebate.add(demandDetail.getTaxAmount());
-				oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
-				rebateTaxHeadExists = true;
-			}
-		}
 		
-		if(rebateTaxHeadExists) {
-			if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
-				if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
-					adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+		//Rebate will only be calculated/adjusted iff the demand is not paid fully
+		if(!demand.getIsPaymentCompleted()) {
+			
+			BigDecimal oldRebate = BigDecimal.ZERO;
+			BigDecimal oldCollectedRebate = BigDecimal.ZERO;
+			boolean rebateTaxHeadExists = false;
+			for(DemandDetail demandDetail : details) {
+				if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
+					oldRebate = oldRebate.add(demandDetail.getTaxAmount());
+					oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
+					rebateTaxHeadExists = true;
 				}
 			}
 			
-			resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
-		}else if(isCurrentDemand) {
-			details.add(DemandDetail.builder().taxAmount(rebate.negate())
-					.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
-					.build());
+			if(rebateTaxHeadExists) {
+				if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
+					if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
+						adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+					}
+				}
+				
+				resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
+			}else if(isCurrentDemand) {
+				details.add(DemandDetail.builder().taxAmount(rebate.negate())
+						.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
+						.build());
+			}
 		}
+		
 		
 		
 		if(interest.compareTo(BigDecimal.ZERO)!=0){
@@ -704,6 +708,7 @@ public class DemandService {
 		for(DemandDetail demandDetail : demandDetails) {
 			if(!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE) 
 					&& !TAXES_WITH_EXCEMPTION.contains(demandDetail.getTaxHeadMasterCode()) 
+					&& !PT_ADVANCE_CARRYFORWARD.contains(demandDetail.getTaxHeadMasterCode()) 
 					&& demandDetail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
 					&& demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0
 					&& additionalRebateAmount.compareTo(BigDecimal.ZERO) > 0) {
