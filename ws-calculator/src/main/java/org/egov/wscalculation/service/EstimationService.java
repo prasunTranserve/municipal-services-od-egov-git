@@ -6,9 +6,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.Period;
-import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +28,11 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.util.WaterCessUtil;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualPaymentDetails;
 import org.egov.wscalculation.web.models.AuditDetails;
+import org.egov.wscalculation.web.models.BillAccountDetail;
+import org.egov.wscalculation.web.models.BillResponse;
 import org.egov.wscalculation.web.models.BillingSlab;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.Installments;
@@ -86,11 +88,18 @@ public class EstimationService {
 	@Autowired 
 	private WSCalculationProducer wsCalculationProducer;
 
-	 @Autowired
-	 private WSCalculationDao waterCalculatorDao;
+	@Autowired
+	private WSCalculationDao waterCalculatorDao;
+	
+	@Autowired
+	private DemandService demandService;
+	
+	@Autowired
+	private AnnualAdvanceService annualAdvanceService;
 	
 	private static BigDecimal OWNERSHIP_CHANGE_FEE = BigDecimal.valueOf(60);
 	private static BigDecimal TenPercent = BigDecimal.valueOf(0.1);
+	private static BigDecimal FivePercent = BigDecimal.valueOf(0.05);
 
 	/**
 	 * Generates a List of Tax head estimates with tax head code, tax head
@@ -325,13 +334,13 @@ public class EstimationService {
 //		}
 		
 		// water Special Rebate
-		if(isSpecialRebateApplicableForMonth(criteria, masterData)) {
-			BigDecimal specialRebate = payService.getApplicableSpecialRebate(totalCharge.setScale(2, 2), getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
-			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
-				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
-						.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
-			}
-		}
+//		if(isSpecialRebateApplicableForMonth(criteria, masterData)) {
+//			BigDecimal specialRebate = payService.getApplicableSpecialRebate(totalCharge.setScale(2, 2), calculatorUtil.getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+//			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
+//				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
+//						.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+//			}
+//		}
 		
 		// Sewerage arrear fee
 		if(configs.isSwArrearDemandEnabled()) {
@@ -403,8 +412,66 @@ public class EstimationService {
 		
 		//add water installment related taxheads
 		addTaxHeadsForInstallments(connection, estimates);
+		
+		// Rebate Section
+		applyRebate(waterCharge, SewerageCharge, criteria, timeBasedExemptionsMasterMap, requestInfoWrapper, estimates, masterData);
 				
 		return estimates;
+	}
+
+	private void applyRebate(BigDecimal waterCharge, BigDecimal SewerageCharge, CalculationCriteria criteria,
+			Map<String, JSONArray> timeBasedExemptionsMasterMap, RequestInfoWrapper requestInfoWrapper,
+			List<TaxHeadEstimate> estimates, Map<String, Object> masterData) {
+		boolean isAnnualAdvanceRebateApplied = false;
+		BigDecimal totalCharge = waterCharge.add(SewerageCharge);
+		
+		// Check if any advance available
+		BillResponse billResponse = demandService.fetchBill(requestInfoWrapper.getRequestInfo(), criteria.getTenantId(), criteria.getConnectionNo());
+		BigDecimal availableAdvance = BigDecimal.ZERO;
+		if(billResponse != null) {
+			availableAdvance = billResponse.getBill().get(0).getBillDetails().stream().flatMap(billDetails -> billDetails.getBillAccountDetails().stream())
+				.filter(billAccDetail -> billAccDetail.getTaxHeadCode().contains("ADVANCE"))
+				.map(BillAccountDetail::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+		}
+		
+		if(availableAdvance.compareTo(BigDecimal.ZERO) < 0) {
+			// Search for annual Advance
+			BigDecimal annualPaymentRebate = BigDecimal.ZERO;
+			List<AnnualAdvance> annualAdvances = annualAdvanceService.findAnnualPayment(criteria.getTenantId(), criteria.getConnectionNo(), calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()));
+			if(!annualAdvances.isEmpty()) {
+				// if annual advance opted and have sufficient advance to knock off specified tax amounts then add annual advance rebate
+				annualPaymentRebate = payService.getAnnualAdvanceRebate(waterCharge, SewerageCharge, calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_ANNUAL_ADVANCE_MASTER));
+				BigDecimal tillNowTotalDemand = estimates.stream().filter(the -> WSCalculationConstant.ANNUAL_ADVANCE_ALLOWED_TAXHEAD.contains(the.getTaxHeadCode()))
+						.map(TaxHeadEstimate::getEstimateAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+				// if have sufficient balance to knock-off the estimates 5% rebate for annual including rebate.
+				BigDecimal payableIncludingAnnualRebate = tillNowTotalDemand.add(annualPaymentRebate.negate());
+				if((availableAdvance.add(payableIncludingAnnualRebate)).compareTo(BigDecimal.ZERO) <= 0
+						&& annualPaymentRebate.compareTo(BigDecimal.ZERO) > 0) {
+					isAnnualAdvanceRebateApplied = true;
+					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_ANNUAL_PAYMENT_REBATE)
+							.estimateAmount(annualPaymentRebate.setScale(2, 2).negate()).build());
+				}
+			} else {
+				// For normal advance if have sufficient advance to knock off the entire demand then add time base rebate.
+				BigDecimal timeBaseRebate = payService.getApplicableRebateForInitialDemand(totalCharge.setScale(2, 2), calculatorUtil.detectAssessmentyear(configs.getDemandManualMonthNo(), configs.getDemandManualYear()), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+				BigDecimal tillNowTotalDemand = estimates.stream().map(TaxHeadEstimate::getEstimateAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+				BigDecimal payableIncludingRebate = tillNowTotalDemand.add(timeBaseRebate.negate());
+				if((availableAdvance.add(payableIncludingRebate)).compareTo(BigDecimal.ZERO) <= 0
+						&& timeBaseRebate.compareTo(BigDecimal.ZERO) > 0) {
+					estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_TIME_REBATE)
+							.estimateAmount(timeBaseRebate.setScale(2, 2).negate()).build());
+				}
+			}
+		}
+		
+		// water Special Rebate if annual advance rebate not applied
+		if(isSpecialRebateApplicableForMonth(criteria, masterData) && !isAnnualAdvanceRebateApplied) {
+			BigDecimal specialRebate = payService.getApplicableSpecialRebate(totalCharge.setScale(2, 2), calculatorUtil.getAssessmentYear(), timeBasedExemptionsMasterMap.get(WSCalculationConstant.WC_REBATE_MASTER));
+			if(specialRebate.compareTo(BigDecimal.ZERO) > 0) {
+				estimates.add(TaxHeadEstimate.builder().taxHeadCode(WSCalculationConstant.WS_SPECIAL_REBATE)
+						.estimateAmount(specialRebate.setScale(2, 2).negate()).build());
+			}
+		}
 	}
 
 	/**
@@ -516,23 +583,6 @@ public class EstimationService {
 	 */
 	private boolean isRangeCalculation(String type) {
 		return !type.equalsIgnoreCase(WSCalculationConstant.flatRateCalculationAttribute);
-	}
-	
-	public String getAssessmentYear() {
-		LocalDateTime localDateTime = LocalDateTime.now();
-		int currentMonth = localDateTime.getMonthValue();
-		String assessmentYear;
-		if (currentMonth >= Month.APRIL.getValue()) {
-			assessmentYear = YearMonth.now().getYear() + "-";
-			assessmentYear = assessmentYear
-					+ (Integer.toString(YearMonth.now().getYear() + 1).substring(2, assessmentYear.length() - 1));
-		} else {
-			assessmentYear = YearMonth.now().getYear() - 1 + "-";
-			assessmentYear = assessmentYear
-					+ (Integer.toString(YearMonth.now().getYear()).substring(2, assessmentYear.length() - 1));
-
-		}
-		return assessmentYear;
 	}
 	
 	private Double getUnitOfMeasurement(WaterConnection waterConnection, String calculationAttribute,
@@ -1474,5 +1524,79 @@ public class EstimationService {
 
 		wsCalculationProducer.push(configs.getWsCreateInstallmentTopic(), InstallmentsRequest.builder().requestInfo(requestInfo).installments(installments).build());
 		return installments;
+	}
+
+	public AnnualPaymentDetails getAnnualAdvanceEstimation(CalculationCriteria criteria, RequestInfo requestInfo,
+			Map<String, Object> masterData) {
+		String tenantId = criteria.getTenantId();
+		if (criteria.getWaterConnection() == null && !StringUtils.isEmpty(criteria.getConnectionNo())) {
+			List<WaterConnection> waterConnectionList = calculatorUtil.getWaterConnection(requestInfo, criteria.getConnectionNo(), tenantId);
+			WaterConnection waterConnection = calculatorUtil.getWaterConnectionObject(waterConnectionList);
+			criteria.setWaterConnection(waterConnection);
+		}
+		if (criteria.getWaterConnection() == null || StringUtils.isEmpty(criteria.getConnectionNo())) {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Water Connection are not present for ")
+					.append(StringUtils.isEmpty(criteria.getConnectionNo()) ? "" : criteria.getConnectionNo())
+					.append(" connection no");
+			throw new CustomException("WATER_CONNECTION_NOT_FOUND", builder.toString());
+		}
+		
+		Map<String, JSONArray> billingSlabMaster = new HashMap<>();
+		Map<String, JSONArray> timeBasedExemptionMasterMap = new HashMap<>();
+		ArrayList<String> billingSlabIds = new ArrayList<>();
+		billingSlabMaster.put(WSCalculationConstant.WC_BILLING_SLAB_MASTER,
+				(JSONArray) masterData.get(WSCalculationConstant.WC_BILLING_SLAB_MASTER));
+		billingSlabMaster.put(WSCalculationConstant.CALCULATION_ATTRIBUTE_CONST,
+				(JSONArray) masterData.get(WSCalculationConstant.CALCULATION_ATTRIBUTE_CONST));
+		timeBasedExemptionMasterMap.put(WSCalculationConstant.WC_WATER_CESS_MASTER,
+				(JSONArray) (masterData.getOrDefault(WSCalculationConstant.WC_WATER_CESS_MASTER, null)));
+		
+		mDataService.setWaterConnectionMasterValues(requestInfo, criteria.getTenantId(), billingSlabMaster,
+				timeBasedExemptionMasterMap);
+		
+		BigDecimal waterTaxAmt = getWaterEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo, masterData);
+		BigDecimal sewerageTaxAmt = getSewerageEstimationChargeV2(criteria.getWaterConnection(), criteria, requestInfo);
+		
+		AnnualPaymentDetails annualPaymentDetails = AnnualPaymentDetails.builder().tenantid(criteria.getTenantId()).consumerCode(criteria.getConnectionNo()).build();
+		
+		CalculateAnnualAdvance(annualPaymentDetails, waterTaxAmt, sewerageTaxAmt, timeBasedExemptionMasterMap.get(WSCalculationConstant.WC_ANNUAL_ADVANCE_MASTER));
+		
+		return annualPaymentDetails;
+	}
+
+	private void CalculateAnnualAdvance(AnnualPaymentDetails annualPaymentDetails, BigDecimal waterTaxAmt, BigDecimal sewerageTaxAmt,
+			JSONArray annualAdvanceMaster) {
+		
+		
+		BigDecimal increasedWaterTax = waterTaxAmt.add(waterTaxAmt.multiply(FivePercent).setScale(2, RoundingMode.HALF_UP));
+		
+		// TODO Auto-generated method stub
+		int month = calculatorUtil.getTodayMonth();
+		int noOfMonthsForCurrentCharges=0;
+		int noOfMonthsForIncrementedCharges=0;
+		if(month>=4 && month <=6 ) {
+			noOfMonthsForCurrentCharges = 6 - month + 1;
+			noOfMonthsForIncrementedCharges = 9;
+		} else {
+			if(month>=7 && month <=12 ) {
+				noOfMonthsForIncrementedCharges = 12 - month + 4;
+			} else {
+				noOfMonthsForIncrementedCharges = 3 - month + 1;
+			}
+		}
+		
+		
+		BigDecimal totalWaterTaxAmount = waterTaxAmt.multiply(BigDecimal.valueOf(noOfMonthsForCurrentCharges)).setScale(2, RoundingMode.HALF_UP)
+									.add(increasedWaterTax.multiply(BigDecimal.valueOf(noOfMonthsForIncrementedCharges)).setScale(2, RoundingMode.HALF_UP));
+		BigDecimal totalSewerageTaxAmount = sewerageTaxAmt.multiply(BigDecimal.valueOf(noOfMonthsForCurrentCharges+noOfMonthsForIncrementedCharges)).setScale(2, RoundingMode.HALF_UP);
+
+		BigDecimal annualRebate = payService.getAnnualAdvanceRebate(totalWaterTaxAmount, totalSewerageTaxAmount, calculatorUtil.getFinancialYear(), annualAdvanceMaster).negate();
+		BigDecimal netAnnualAdvancePayable = totalWaterTaxAmount.add(totalSewerageTaxAmount).add(annualRebate).setScale(0, RoundingMode.CEILING);
+		
+		annualPaymentDetails.setTotalWaterCharge(totalWaterTaxAmount);
+		annualPaymentDetails.setTotalSewerageCharge(totalSewerageTaxAmount);
+		annualPaymentDetails.setTotalRebate(annualRebate);
+		annualPaymentDetails.setNetAnnualAdvancePayable(netAnnualAdvancePayable);
 	}
 }
