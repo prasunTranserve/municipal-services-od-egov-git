@@ -10,11 +10,14 @@ import java.util.stream.Collectors;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.producer.WSCalculationProducer;
 import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
+import org.egov.wscalculation.repository.rowmapper.AnnualAdvanceRowMapper;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
 import org.egov.wscalculation.repository.rowmapper.InstallmentRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.WaterRowMapper;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
 import org.egov.wscalculation.web.models.Installments;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
@@ -56,12 +59,18 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	@Autowired
 	private InstallmentRowMapper installmentRowMapper;
 	
+	@Autowired
+	private AnnualAdvanceRowMapper annualAdvanceRowMapper;
+	
 
 	@Value("${egov.meterservice.createmeterconnection}")
 	private String createMeterConnection;
 	
 	@Value("${egov.meterservice.updatemeterconnection}")
 	private String updateMeterConnection;
+	
+	@Value("${kafka.topic.ws.annual.advance.create}")
+    private String createAnnualAdvance;
 
 	/**
 	 * 
@@ -250,5 +259,18 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		String query = queryBuilder.getInstallmentCountByApplicationNoAndFeeType(tenantId, applicationNo, feeType, preparedStatement);
 		log.info(" getAllInstallmentsByApplicationNoAndFeeType query : " + query);
 		return jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+	}
+	
+	@Override
+	public void saveAnnualAdvance(AnnualAdvanceRequest annualAdvanceRequests) {
+		wSCalculationProducer.push(createAnnualAdvance, annualAdvanceRequests);
+	}
+
+	@Override
+	public List<AnnualAdvance> getAnnualAdvance(String tenantId, String connectionNo, String finYear) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getAnnualAdvance(tenantId, connectionNo, finYear, preparedStatement);
+		log.info(" Annual advance search query: " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), annualAdvanceRowMapper);
 	}
 }

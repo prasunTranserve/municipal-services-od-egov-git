@@ -3,7 +3,6 @@ package org.egov.wscalculation.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +32,7 @@ import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.util.WSCalculationUtil;
 import org.egov.wscalculation.validator.WSCalculationWorkflowValidator;
-import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.BillResponse;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
@@ -91,9 +90,6 @@ public class DemandService {
     
     @Autowired
     private CalculatorUtil calculatorUtils;
-    
-    @Autowired
-    private EstimationService estimationService;
     
     @Autowired
     private WSCalculationProducer wsCalculationProducer;
@@ -659,6 +655,8 @@ public class DemandService {
 		TaxPeriod taxPeriod = taxPeriods.stream().filter(t -> demand.getTaxPeriodFrom().compareTo(t.getFromDate()) >= 0
 				&& demand.getTaxPeriodTo().compareTo(t.getToDate()) <= 0).findAny().orElse(null);
 		
+		boolean isAnnualAdvanceRebatePresent = demand.getDemandDetails().stream().anyMatch(dd -> WSCalculationConstant.WS_ANNUAL_PAYMENT_REBATE.equalsIgnoreCase(dd.getTaxHeadMasterCode()));
+		
 		if (taxPeriod == null) {
 			log.info("Demand Expired!! ->> Consumer Code "+ demand.getConsumerCode() +" Demand Id -->> "+ demand.getId());
 			return false;
@@ -710,7 +708,7 @@ public class DemandService {
 		DemandDetailAndCollection latestRebateDemandDetail, latestPenaltyDemandDetail, latestInterestDemandDetail;
 
 		latestRebateDemandDetail = utils.getLatestDemandDetailByTaxHead(WSCalculationConstant.WS_TIME_REBATE, demand.getDemandDetails());
-		if (latestRebateDemandDetail != null) {
+		if (latestRebateDemandDetail != null && !isAnnualAdvanceRebatePresent) {
 			updateTaxAmount(rebate.negate(), latestRebateDemandDetail);
 			isRebateUpdated = true;
 		}
@@ -813,7 +811,7 @@ public class DemandService {
 				while (count>0) {
 					List<WaterConnection> connections = waterCalculatorDao.getConnectionsNoList(tenantId,
 							WSCalculationConstant.nonMeterdConnection, batchOffset, batchsize, fromDate, toDate);
-					String assessmentYear = estimationService.getAssessmentYear();
+					String assessmentYear = calculatorUtils.getAssessmentYear();
 					log.info("Size of the connection list for batch : "+ batchOffset + " is " + connections.size());
 
 					if (connections.size() > 0) {
@@ -997,7 +995,7 @@ public class DemandService {
 			if(count>0) {
 				List<WaterConnection> connectionList = waterCalculatorDao.getConnectionsNoList(tenantId,
 						WSCalculationConstant.nonMeterdConnection, fromDate, toDate, bulkBillCriteria.getConnectionNos());
-				String assessmentYear = estimationService.getAssessmentYear();
+				String assessmentYear = calculatorUtils.getAssessmentYear();
 				
 				while (count>0) {
 					// Taking connctions in batch
@@ -1132,6 +1130,18 @@ public class DemandService {
 			.build());
 		}
 		return taxHeadEstimates;
+	}
+	
+	public BillResponse fetchBill(RequestInfo requestInfo, String tenantId, String consumerCode) {
+		try {
+			Object result = serviceRequestRepository.fetchResult(
+					calculatorUtils.getFetchBillURL(tenantId, consumerCode),
+					RequestInfoWrapper.builder().requestInfo(requestInfo).build());
+			return mapper.convertValue(result, BillResponse.class);
+		} catch (Exception ex) {
+			log.error("Fetch Bill Error", ex);
+			return null;
+		}
 	}
 
 }

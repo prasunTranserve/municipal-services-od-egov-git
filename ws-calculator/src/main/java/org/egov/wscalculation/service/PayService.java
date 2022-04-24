@@ -1,6 +1,7 @@
 package org.egov.wscalculation.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Collections;
@@ -8,7 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
+import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,9 @@ public class PayService {
 	
 	@Autowired
 	private EstimationService estimationService;
+	
+	@Autowired
+	private CalculatorUtil calculatorUtil;
 
 	/**
 	 * Decimal is ceiled for all the tax heads
@@ -178,7 +184,7 @@ public class PayService {
 	 */
 	public BigDecimal getApplicablePenalty(BigDecimal waterCharge, BigDecimal noOfDays, JSONArray config) {
 		BigDecimal applicablePenalty = BigDecimal.ZERO;
-		Map<String, Object> penaltyMaster = mDService.getApplicableMaster(estimationService.getAssessmentYear(), config);
+		Map<String, Object> penaltyMaster = mDService.getApplicableMaster(calculatorUtil.getAssessmentYear(), config);
 		if (null == penaltyMaster) return applicablePenalty;
 		BigDecimal daysApplicable = null != penaltyMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)
 				? BigDecimal.valueOf(((Number) penaltyMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)).intValue())
@@ -217,7 +223,7 @@ public class PayService {
 	 */
 	public BigDecimal getApplicableInterest(BigDecimal waterCharge, BigDecimal noOfDays, JSONArray config) {
 		BigDecimal applicableInterest = BigDecimal.ZERO;
-		Map<String, Object> interestMaster = mDService.getApplicableMaster(estimationService.getAssessmentYear(), config);
+		Map<String, Object> interestMaster = mDService.getApplicableMaster(calculatorUtil.getAssessmentYear(), config);
 		if (null == interestMaster) return applicableInterest;
 		BigDecimal daysApplicable = null != interestMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)
 				? BigDecimal.valueOf(((Number) interestMaster.get(WSCalculationConstant.DAYA_APPLICABLE_NAME)).intValue())
@@ -292,5 +298,39 @@ public class PayService {
 			}
 		}
 		return specialRebate;
+	}
+	
+	public BigDecimal getAnnualAdvanceRebate(BigDecimal waterCharge, BigDecimal sewerageFee, String assessmentYear, JSONArray annualAdvanceMasterData) {
+		BigDecimal rebateAmt = BigDecimal.ZERO;
+
+		Map<String, Object> annualAdvanceMaster = mDService.getApplicableAnnualAdvanceMaster(assessmentYear, annualAdvanceMasterData);
+
+		if (null == annualAdvanceMaster) {
+			throw new CustomException("MDMS_ERROR_FOR_ANNUAL_ADVANCE", "Failed to fetch Annual advance master data for tis financial year");
+		}
+
+		rebateAmt = calculateAnnualAdvanceRebate(waterCharge, sewerageFee, annualAdvanceMaster);
+
+		return rebateAmt;
+	}
+
+	private BigDecimal calculateAnnualAdvanceRebate(BigDecimal waterCharge, BigDecimal sewerageFee,
+			Map<String, Object> annualAdvanceMaster) {
+		BigDecimal annualRebate = BigDecimal.ZERO;
+
+		if (null == annualAdvanceMaster)
+			return annualRebate;
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> configMap = (Map<String, Object>) annualAdvanceMaster;
+
+		BigDecimal rate = null != configMap.get(WSCalculationConstant.ANNUAL_ADVANCE_REBATE)
+				? BigDecimal.valueOf(((Number) configMap.get(WSCalculationConstant.ANNUAL_ADVANCE_REBATE)).doubleValue())
+				: null;
+
+		if (null != rate) {
+			annualRebate = waterCharge.add(sewerageFee).multiply(rate.divide(WSCalculationConstant.HUNDRED)).setScale(2, RoundingMode.HALF_UP);
+		}
+		return annualRebate;
 	}
 }

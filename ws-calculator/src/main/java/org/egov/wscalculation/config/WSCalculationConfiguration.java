@@ -312,4 +312,8 @@ public class WSCalculationConfiguration {
 
 	@Value("${kafka.topic.ws.installment.update}")
     private String wsInstallmentUpdateTopic;
+	
+	@Value("${kafka.topic.ws.annual.advance.create}")
+    private String createAnnualAdvance;
+	
 }
