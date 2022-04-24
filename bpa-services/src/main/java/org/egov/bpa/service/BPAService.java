@@ -17,7 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -49,6 +52,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -103,6 +107,9 @@ public class BPAService {
 
 	@Autowired
 	private BPAConfiguration config;
+	
+	@Autowired
+	private FileStoreService fileStoreService;
 
 	/**
 	 * does all the validations required to create BPA Record in the system
@@ -617,6 +624,41 @@ public class BPAService {
 		}
 		return downloadUrl;
 	}
+	
+	/**
+	 * make edcr call and get the edcr shortened report url to download the shortened edcr report
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 * @throws Exception
+	 */
+	private URL getEdcrShortenedReportDownloadUrl(BPARequest bpaRequest) throws Exception {
+		String pdfUrl = edcrService.getEDCRShortenedPdfUrl(bpaRequest);
+		URL downloadUrl = new URL(pdfUrl);
+
+		log.debug("Connecting to redirect url" + downloadUrl.toString() + " ... ");
+		URLConnection urlConnection = downloadUrl.openConnection();
+
+		// Checking whether the URL contains a PDF
+		if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
+			String downloadUrlString = urlConnection.getHeaderField("Location");
+			if (!StringUtils.isEmpty(downloadUrlString)) {
+				downloadUrl = new URL(downloadUrlString);
+				log.debug("Connecting to download url" + downloadUrl.toString() + " ... ");
+				urlConnection = downloadUrl.openConnection();
+				if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
+					log.error("Download url content type is not application/pdf.");
+					throw new CustomException(BPAErrorConstants.INVALID_EDCR_REPORT,
+							"Download url content type is not application/pdf.");
+				}
+			} else {
+				log.error("Unable to fetch the location header URL");
+				throw new CustomException(BPAErrorConstants.INVALID_EDCR_REPORT,
+						"Unable to fetch the location header URL");
+			}
+		}
+		return downloadUrl;
+	}
 
 	/**
 	 * download the edcr report and create in tempfile
@@ -641,6 +683,32 @@ public class BPAService {
 		readStream.close();
 
 		document = PDDocument.load(new File(fileName));
+	}
+	
+	/**
+	 * download the edcr shortened report and create in tempfile
+	 * 
+	 * @param bpaRequest
+	 * @param fileName
+	 * @param document
+	 * @throws Exception
+	 */
+	private void createTempShortenedReport(BPARequest bpaRequest, String fileName, PDDocument document) throws Exception {
+		URL downloadUrl = this.getEdcrShortenedReportDownloadUrl(bpaRequest);
+		// Read the PDF from the URL and save to a local file
+		FileOutputStream writeStream = new FileOutputStream(fileName);
+		byte[] byteChunck = new byte[1024];
+		int baLength;
+		InputStream readStream = downloadUrl.openStream();
+		while ((baLength = readStream.read(byteChunck)) != -1) {
+			writeStream.write(byteChunck, 0, baLength);
+		}
+		writeStream.flush();
+		writeStream.close();
+		readStream.close();
+
+		document = PDDocument.load(new File(fileName));
+		document.close();
 	}
 
 	private void addDataToPdf(PDDocument document, BPARequest bpaRequest, String permitNo, String generatedOn,
@@ -728,6 +796,56 @@ public class BPAService {
 	 */
 	public Object getFeeEstimateFromBpaCalculator(Object bpaRequest) {
 		return calculationService.callBpaCalculatorEstimate(bpaRequest);
+	}
+	
+	public Object mergeScrutinyReportToPermit(BPARequest bpaRequest, RequestInfo requestInfo) {
+		String fileName = "shortenedScrutinyReport.pdf";
+		PDDocument document = null;
+		BPA bpa = bpaRequest.getBPA();
+
+		if (StringUtils.isEmpty(bpa.getApprovalNo())) {
+			throw new CustomException(BPAErrorConstants.INVALID_REQUEST, "Approval Number is required.");
+		}
+		File permitCertificateFile=null;
+		File shortenedScsrutinyReportFile=null;
+		String tempFileName="tempFile";
+		String mergedFileName="mergedPdf.pdf";
+		try {
+			this.createTempShortenedReport(bpaRequest, fileName, document);
+			Map<String, String> additionalDetails =  (Map<String, String>) bpaRequest.getBPA().getAdditionalDetails();
+			permitCertificateFile = fileStoreService.fetch(additionalDetails.get("permitFileStoreId"), "BPA", tempFileName,
+					bpaRequest.getBPA().getTenantId());
+			shortenedScsrutinyReportFile=new File(fileName);
+			PDFMergerUtility obj = new PDFMergerUtility();
+			obj.setDestinationFileName(mergedFileName);
+			obj.addSource(permitCertificateFile);
+			obj.addSource(shortenedScsrutinyReportFile);
+			obj.mergeDocuments(null);
+
+			// push to filestore-
+			return fileStoreService.upload(new File(mergedFileName), mergedFileName, MediaType.APPLICATION_PDF_VALUE,
+					"BPA", bpa.getTenantId());
+		} catch (Exception ex) {
+			log.debug("Exception occured while downloading pdf", ex.getMessage());
+			throw new CustomException(BPAErrorConstants.UNABLE_TO_DOWNLOAD, "Unable to download the file");
+		} finally {
+			try {
+				if (document != null) {
+					document.close();
+				}
+				if (Objects.nonNull(permitCertificateFile))
+					FileUtils.forceDelete(permitCertificateFile);
+				if (Objects.nonNull(shortenedScsrutinyReportFile))
+					FileUtils.forceDelete(shortenedScsrutinyReportFile);
+				if (new File(tempFileName).exists())
+					FileUtils.forceDelete(new File(tempFileName));
+				if (new File(mergedFileName).exists())
+					FileUtils.forceDelete(new File(mergedFileName));
+			} catch (Exception ex) {
+				throw new CustomException(BPAErrorConstants.INVALID_FILE, "unable to close this file");
+			}
+		}
+	
 	}
 		
 
