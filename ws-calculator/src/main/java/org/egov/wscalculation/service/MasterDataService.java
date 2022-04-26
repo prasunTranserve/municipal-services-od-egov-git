@@ -175,7 +175,7 @@ public class MasterDataService {
 	 */
 	public Map<String, Map<String, Object>> getFinancialYear(RequestInfo requestInfo, String tenantId) {
 		Set<String> assessmentYears = new HashSet<>(1);
-		assessmentYears.add(estimationService.getAssessmentYear());
+		assessmentYears.add(calculatorUtils.getAssessmentYear());
 		MdmsCriteriaReq mdmsCriteriaReq = calculatorUtils.getFinancialYearRequest(requestInfo, assessmentYears,
 				tenantId);
 		StringBuilder url = calculatorUtils.getMdmsSearchUrl();
@@ -439,6 +439,25 @@ public class MasterDataService {
 			master.put(resp.getKey(), resp.getValue());
 		}
 		return master;
+	}
+
+	public Map<String, Object> getApplicableAnnualAdvanceMaster(String assessmentYear, JSONArray annualAdvanceMaster) {
+		Map<String, Object> objToBeReturned = null;
+
+		for (Object object : annualAdvanceMaster) {
+
+			Map<String, Object> objMap = (Map<String, Object>) object;
+			String objFinYear = ((String) objMap.get(WSCalculationConstant.FROMFY_FIELD_NAME));
+			long objStartDay = ((long) objMap.get(WSCalculationConstant.STARTING_DATE_APPLICABLES));
+			long objEndingDay = ((long) objMap.get(WSCalculationConstant.ENDING_DATE_APPLICABLES));
+			if (assessmentYear.equalsIgnoreCase(objFinYear.trim())) {
+				long currentTime = System.currentTimeMillis();
+				if (objStartDay <= currentTime && currentTime < objEndingDay) {
+					objToBeReturned = objMap;
+				}
+			}
+		}
+		return objToBeReturned;
 	}
 	
 }

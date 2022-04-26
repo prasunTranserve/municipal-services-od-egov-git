@@ -95,7 +95,7 @@ public class MeterServicesImpl implements MeterService {
 		meterReadingsList.forEach(reading -> {
 			CalculationCriteria criteria = new CalculationCriteria();
 			criteria.setTenantId(reading.getTenantId());
-			criteria.setAssessmentYear(estimationService.getAssessmentYear());
+			criteria.setAssessmentYear(util.getAssessmentYear());
 			if(reading.getMeterStatus() == MeterStatusEnum.RESET) {
 				criteria.setCurrentReading(maxMeterReading + reading.getCurrentReading());
 			}
