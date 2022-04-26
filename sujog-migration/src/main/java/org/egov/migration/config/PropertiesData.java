@@ -1,5 +1,6 @@
 package org.egov.migration.config;
 
+import org.egov.migration.reader.model.BulkBillCriteria;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -109,4 +110,8 @@ public class PropertiesData {
 	@Value("${remomte.api.demand.fetchbill}")
 	private String fetchBillEndpoint;
 	
+	@Value("${remomte.api.ws.calculator.generatebill}")
+	private String generateBillEndpoint;
+	
+	private BulkBillCriteria bulkBillCriteria;
 }

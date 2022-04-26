@@ -568,4 +568,19 @@ public class WnsService {
 
 	}
 	
+	public void callBillGenerator(WSConnection conn) throws Exception {
+		StringBuilder uri = new StringBuilder(properties.getWsCalculatorHost()).append(properties.getGenerateBillEndpoint());
+		
+		Map<String, Object> generateBillRequest = prepareWSGenerateBillRequest(conn);
+		Object response = remoteService.fetchResult(uri, generateBillRequest);
+		
+	}
+	
+	private Map<String, Object> prepareWSGenerateBillRequest(WSConnection conn) {
+		Map<String, Object> generateBillRequest = new HashMap<>();
+		generateBillRequest.put("RequestInfo", prepareRequestInfo());
+		generateBillRequest.put("BulkBillCriteria", conn.getBulkBillCriteria());
+		return generateBillRequest;
+	}
+	
 }

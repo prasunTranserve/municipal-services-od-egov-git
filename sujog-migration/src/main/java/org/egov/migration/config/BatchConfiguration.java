@@ -23,6 +23,9 @@ import org.egov.migration.processor.WnsFetchbillItemWriter;
 import org.egov.migration.processor.WnsFetchbillTransformProcessor;
 import org.egov.migration.processor.WnsItemReader;
 import org.egov.migration.processor.WnsItemWriter;
+import org.egov.migration.processor.WnsSchedulerItemReader;
+import org.egov.migration.processor.WnsSchedulerItemWriter;
+import org.egov.migration.processor.WnsSchedulerTransformProcessor;
 import org.egov.migration.processor.WnsTransformProcessor;
 import org.egov.migration.reader.model.Property;
 import org.egov.migration.reader.model.WSConnection;
@@ -143,6 +146,32 @@ public class BatchConfiguration {
           .processor(getWSProcessor())
           .writer(getWSWriter()).build();
     }
+    
+    @Bean(name = "stepWsGenerateBill")
+    protected Step stepWsGenerateBill() throws EncryptedDocumentException, IOException, Exception {
+        return stepBuilderFactory.get("stepWSFetchbill").<WSConnection, WSConnection> chunk(100)
+          .reader(getWsSchedulerReader())
+          .processor(getWsSchedulerProcessor())
+          .writer(getWsSchedulerWriter()).build();
+    }
+    
+    @Bean
+    public ItemProcessor<? super WSConnection, ? extends WSConnection> getWsSchedulerProcessor() {
+		return new WnsSchedulerTransformProcessor();
+	}
+
+    @Bean
+	public WnsSchedulerItemWriter getWsSchedulerWriter() {
+		return new WnsSchedulerItemWriter();
+	}
+
+	@Bean
+    @StepScope
+	public ItemReader<? extends WSConnection> getWsSchedulerReader() throws EncryptedDocumentException, IOException, Exception {
+		WnsSchedulerItemReader wnsItemReader = new WnsSchedulerItemReader();
+    	wnsItemReader.setSkipRecord(1);
+    	return wnsItemReader;
+	}
 	
     @Bean
     public ItemProcessor<? super WSConnection, ? extends WSConnection> getWSProcessor() {

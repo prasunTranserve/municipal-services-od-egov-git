@@ -49,6 +49,7 @@ remomte:
         meterreadingmigeate: /meterConnection/_migrateMeterReading
         meterreadingsearch: /meterConnection/_search
         demandmigrate: /waterCalculator/_migrateDemand
+        generatebill: /waterCalculator/generate/_bill
     sw:
       host: http://sujog.odisha.gov.in/sw-services/swc
       search: /_search
