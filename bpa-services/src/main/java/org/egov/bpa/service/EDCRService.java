@@ -31,6 +31,9 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.TypeRef;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class EDCRService {
 
@@ -341,12 +344,17 @@ public class EDCRService {
 			responseMap = (LinkedHashMap) serviceRequestRepository.fetchResult(uri,
 					new RequestInfoWrapper(edcrRequestInfo));
 		} catch (ServiceCallException se) {
+			log.error("service exception while fetching edcr details from uri:" + uri, se);
+			throw new CustomException(BPAErrorConstants.EDCR_ERROR, " EDCR Number is Invalid");
+		} catch (Exception ex) {
+			log.error("exception while fetching edcr details from uri:" + uri, ex);
 			throw new CustomException(BPAErrorConstants.EDCR_ERROR, " EDCR Number is Invalid");
 		}
 
 		String jsonString = new JSONObject(responseMap).toString();
 		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
 		List<String> planReports = context.read("edcrDetail.*.shortenedPlanReport");
+		log.info("shortenedplanReports url:"+planReports);
 
 		return CollectionUtils.isEmpty(planReports) ? null : planReports.get(0);
 	}
