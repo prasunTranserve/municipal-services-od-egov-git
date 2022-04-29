@@ -18,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -644,7 +645,7 @@ public class BPAService {
 			String downloadUrlString = urlConnection.getHeaderField("Location");
 			if (!StringUtils.isEmpty(downloadUrlString)) {
 				downloadUrl = new URL(downloadUrlString);
-				log.debug("Connecting to download url" + downloadUrl.toString() + " ... ");
+				log.info("Connecting to download url" + downloadUrl.toString() + " ... ");
 				urlConnection = downloadUrl.openConnection();
 				if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
 					log.error("Download url content type is not application/pdf.");
@@ -799,7 +800,8 @@ public class BPAService {
 	}
 	
 	public Object mergeScrutinyReportToPermit(BPARequest bpaRequest, RequestInfo requestInfo) {
-		String fileName = "shortenedScrutinyReport.pdf";
+		String randomUuidPerThread=UUID.randomUUID().toString();
+		String fileName = "shortenedScrutinyReport_"+randomUuidPerThread+".pdf";
 		PDDocument document = null;
 		BPA bpa = bpaRequest.getBPA();
 
@@ -808,11 +810,13 @@ public class BPAService {
 		}
 		File permitCertificateFile=null;
 		File shortenedScsrutinyReportFile=null;
-		String tempFileName="tempFile";
-		String mergedFileName="mergedPdf.pdf";
+		String tempFileName="tempFile_"+randomUuidPerThread+".pdf";
+		String mergedFileName="mergedPdf_"+randomUuidPerThread+".pdf";
 		try {
 			this.createTempShortenedReport(bpaRequest, fileName, document);
 			Map<String, String> additionalDetails =  (Map<String, String>) bpaRequest.getBPA().getAdditionalDetails();
+			log.info("fetching permit certificate from filestore for filestoreid:"
+					+ additionalDetails.get("permitFileStoreId"));
 			permitCertificateFile = fileStoreService.fetch(additionalDetails.get("permitFileStoreId"), "BPA", tempFileName,
 					bpaRequest.getBPA().getTenantId());
 			shortenedScsrutinyReportFile=new File(fileName);
@@ -823,10 +827,11 @@ public class BPAService {
 			obj.mergeDocuments(null);
 
 			// push to filestore-
+			log.info("uploading merged pdf to filestore");
 			return fileStoreService.upload(new File(mergedFileName), mergedFileName, MediaType.APPLICATION_PDF_VALUE,
 					"BPA", bpa.getTenantId());
 		} catch (Exception ex) {
-			log.debug("Exception occured while downloading pdf", ex.getMessage());
+			log.error("Exception occured while downloading pdf", ex.getMessage());
 			throw new CustomException(BPAErrorConstants.UNABLE_TO_DOWNLOAD, "Unable to download the file");
 		} finally {
 			try {
@@ -842,6 +847,7 @@ public class BPAService {
 				if (new File(mergedFileName).exists())
 					FileUtils.forceDelete(new File(mergedFileName));
 			} catch (Exception ex) {
+				log.error("exception while closing and deleting the files",ex);
 				throw new CustomException(BPAErrorConstants.INVALID_FILE, "unable to close this file");
 			}
 		}
