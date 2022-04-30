@@ -99,6 +99,10 @@ public class PayService {
 		String[] endtime = ((String) rebate.get(CalculatorConstants.ENDING_DATE_APPLICABLES)).split("/");
 		Calendar endcal = Calendar.getInstance();
 		setDateToCalendar(assessmentYear, endtime, endcal);
+		endcal.set(Calendar.HOUR_OF_DAY, 23);
+		endcal.set(Calendar.MINUTE, 59);
+		endcal.set(Calendar.SECOND, 59);
+		endcal.set(Calendar.MILLISECOND, 999);
 
 		if (startcal.getTimeInMillis() <= System.currentTimeMillis() && endcal.getTimeInMillis() > System.currentTimeMillis())
 			rebateAmt = mDService.calculateApplicables(taxAmt, rebate);
