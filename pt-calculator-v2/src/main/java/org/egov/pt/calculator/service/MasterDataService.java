@@ -346,13 +346,23 @@ public class MasterDataService {
 		try{
 			SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 			Date date = df.parse(startDay);
-			startTime = date.getTime();
+			startTime = atEndOfDay(date).getTime();
 		}
 		catch (ParseException e) {
 			throw new CustomException("INVALID ENDDAY","The endDay of the configuration cannot be parsed");
 		}
 
 		return startTime;
+	}
+	
+	private Date atEndOfDay(Date date) {
+	    Calendar calendar = Calendar.getInstance();
+	    calendar.setTime(date);
+	    calendar.set(Calendar.HOUR_OF_DAY, 23);
+	    calendar.set(Calendar.MINUTE, 59);
+	    calendar.set(Calendar.SECOND, 59);
+	    calendar.set(Calendar.MILLISECOND, 999);
+	    return calendar.getTime();
 	}
 	
 	@SuppressWarnings("unchecked")
