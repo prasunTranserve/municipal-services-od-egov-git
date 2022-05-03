@@ -635,18 +635,22 @@ public class BPAService {
 	 */
 	private URL getEdcrShortenedReportDownloadUrl(BPARequest bpaRequest) throws Exception {
 		String pdfUrl = edcrService.getEDCRShortenedPdfUrl(bpaRequest);
+		log.info("pdfUrl: "+pdfUrl);
 		URL downloadUrl = new URL(pdfUrl);
 
-		log.debug("Connecting to redirect url" + downloadUrl.toString() + " ... ");
+		log.info("Connecting to redirect url" + downloadUrl.toString() + " ... ");
 		URLConnection urlConnection = downloadUrl.openConnection();
-
+		log.info("connected...");
 		// Checking whether the URL contains a PDF
 		if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
+			log.info("inside if condition as contenttype is not pdf");
 			String downloadUrlString = urlConnection.getHeaderField("Location");
+			log.info("downloadUrlString: "+downloadUrlString);
 			if (!StringUtils.isEmpty(downloadUrlString)) {
 				downloadUrl = new URL(downloadUrlString);
 				log.info("Connecting to download url" + downloadUrl.toString() + " ... ");
 				urlConnection = downloadUrl.openConnection();
+				log.info("connected to donwload url...");
 				if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
 					log.error("Download url content type is not application/pdf.");
 					throw new CustomException(BPAErrorConstants.INVALID_EDCR_REPORT,
@@ -658,6 +662,7 @@ public class BPAService {
 						"Unable to fetch the location header URL");
 			}
 		}
+		log.info("returning downloadUrl: "+downloadUrl);
 		return downloadUrl;
 	}
 
@@ -696,6 +701,7 @@ public class BPAService {
 	 */
 	private void createTempShortenedReport(BPARequest bpaRequest, String fileName, PDDocument document) throws Exception {
 		URL downloadUrl = this.getEdcrShortenedReportDownloadUrl(bpaRequest);
+		log.info("inside method createTempShortenedReport ,downloadUrl: "+downloadUrl);
 		// Read the PDF from the URL and save to a local file
 		FileOutputStream writeStream = new FileOutputStream(fileName);
 		byte[] byteChunck = new byte[1024];
@@ -704,12 +710,14 @@ public class BPAService {
 		while ((baLength = readStream.read(byteChunck)) != -1) {
 			writeStream.write(byteChunck, 0, baLength);
 		}
+		log.info("before flush writestream");
 		writeStream.flush();
 		writeStream.close();
 		readStream.close();
 
 		document = PDDocument.load(new File(fileName));
 		document.close();
+		log.info("finished execution of method createTempShortenedReport");
 	}
 
 	private void addDataToPdf(PDDocument document, BPARequest bpaRequest, String permitNo, String generatedOn,
@@ -831,7 +839,7 @@ public class BPAService {
 			return fileStoreService.upload(new File(mergedFileName), mergedFileName, MediaType.APPLICATION_PDF_VALUE,
 					"BPA", bpa.getTenantId());
 		} catch (Exception ex) {
-			log.error("Exception occured while downloading pdf", ex.getMessage());
+			log.error("Exception occured while downloading pdf", ex);
 			throw new CustomException(BPAErrorConstants.UNABLE_TO_DOWNLOAD, "Unable to download the file");
 		} finally {
 			try {
