@@ -401,6 +401,9 @@ public class BPAService {
 		if (bpa.getId() == null) {
 			throw new CustomException(BPAErrorConstants.UPDATE_ERROR, "Application Not found in the System" + bpa);
 		}
+		if (isRequestForBuildingPlanLayoutSignature(bpaRequest)) {
+			return processBuildingPlanLayoutSignature(bpaRequest);
+		}
 
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
@@ -457,6 +460,33 @@ public class BPAService {
 		repository.update(bpaRequest, workflowService.isStateUpdatable(bpa.getStatus(), businessService));
 		return bpaRequest.getBPA();
 
+	}
+	
+	private BPA processBuildingPlanLayoutSignature(BPARequest bpaRequest) {
+		//update the eg_bpa_document table to unlink the old filestoreid and link the new filestoreid
+		//for the document BPD.BPL.BPL
+		log.info("inside method processBuildingPlanLayoutSignature");
+		List<BPA> searchResult = getBPAWithBPAId(bpaRequest);
+		if (CollectionUtils.isEmpty(searchResult) || searchResult.size() > 1) {
+			throw new CustomException(BPAErrorConstants.UPDATE_ERROR,
+					"Failed to Update the Application, Found None or multiple applications!");
+		}
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).remove("applicationType");
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).put("buildingPlanLayoutIsSigned",true);
+		bpaRequest.getBPA().setAuditDetails(searchResult.get(0).getAuditDetails());
+		repository.update(bpaRequest, true);
+		return bpaRequest.getBPA();
+	}
+	
+	private boolean isRequestForBuildingPlanLayoutSignature(BPARequest bpaRequest) {
+		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVAL_INPROGRESS")
+				|| bpaRequest.getBPA().getStatus().equalsIgnoreCase("PENDING_SANC_FEE_PAYMENT"))
+				&& Objects.nonNull(bpaRequest.getBPA().getAdditionalDetails())
+				&& bpaRequest.getBPA().getAdditionalDetails() instanceof Map
+				&& "buildingPlanLayoutSignature"
+						.equals(((Map) bpaRequest.getBPA().getAdditionalDetails()).get("applicationType"))
+				&& !(Objects.nonNull(((Map) bpaRequest.getBPA().getAdditionalDetails()).get("buildingPlanLayoutIsSigned"))
+				&& ((boolean) ((Map) bpaRequest.getBPA().getAdditionalDetails()).get("buildingPlanLayoutIsSigned"))));
 	}
 
 	/**
