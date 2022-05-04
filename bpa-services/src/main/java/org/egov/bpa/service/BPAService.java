@@ -655,46 +655,6 @@ public class BPAService {
 		}
 		return downloadUrl;
 	}
-	
-	/**
-	 * make edcr call and get the edcr shortened report url to download the shortened edcr report
-	 * 
-	 * @param bpaRequest
-	 * @return
-	 * @throws Exception
-	 */
-	private URL getEdcrShortenedReportDownloadUrl(BPARequest bpaRequest) throws Exception {
-		String pdfUrl = edcrService.getEDCRShortenedPdfUrl(bpaRequest);
-		log.info("pdfUrl: "+pdfUrl);
-		URL downloadUrl = new URL(pdfUrl);
-
-		log.info("Connecting to redirect url" + downloadUrl.toString() + " ... ");
-		URLConnection urlConnection = downloadUrl.openConnection();
-		log.info("connected...");
-		// Checking whether the URL contains a PDF
-		if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
-			log.info("inside if condition as contenttype is not pdf");
-			String downloadUrlString = urlConnection.getHeaderField("Location");
-			log.info("downloadUrlString: "+downloadUrlString);
-			if (!StringUtils.isEmpty(downloadUrlString)) {
-				downloadUrl = new URL(downloadUrlString);
-				log.info("Connecting to download url" + downloadUrl.toString() + " ... ");
-				urlConnection = downloadUrl.openConnection();
-				log.info("connected to donwload url...");
-				if (!urlConnection.getContentType().equalsIgnoreCase("application/pdf")) {
-					log.error("Download url content type is not application/pdf.");
-					throw new CustomException(BPAErrorConstants.INVALID_EDCR_REPORT,
-							"Download url content type is not application/pdf.");
-				}
-			} else {
-				log.error("Unable to fetch the location header URL");
-				throw new CustomException(BPAErrorConstants.INVALID_EDCR_REPORT,
-						"Unable to fetch the location header URL");
-			}
-		}
-		log.info("returning downloadUrl: "+downloadUrl);
-		return downloadUrl;
-	}
 
 	/**
 	 * download the edcr report and create in tempfile
@@ -730,22 +690,27 @@ public class BPAService {
 	 * @throws Exception
 	 */
 	private void createTempShortenedReport(BPARequest bpaRequest, String fileName, PDDocument document) throws Exception {
-		URL downloadUrl = this.getEdcrShortenedReportDownloadUrl(bpaRequest);
-		log.info("inside method createTempShortenedReport ,downloadUrl: "+downloadUrl);
+		log.info("inside method createTempShortenedReport");
+		URL downloadUrl=new URL(edcrService.getEDCRShortenedPdfUrl(bpaRequest));
+		log.info("downloadUrl: "+downloadUrl);
 		// Read the PDF from the URL and save to a local file
 		FileOutputStream writeStream = new FileOutputStream(fileName);
 		byte[] byteChunck = new byte[1024];
 		int baLength;
 		InputStream readStream = downloadUrl.openStream();
+		log.info("input stream opened with downloadUrl");
 		while ((baLength = readStream.read(byteChunck)) != -1) {
 			writeStream.write(byteChunck, 0, baLength);
 		}
 		log.info("before flush writestream");
 		writeStream.flush();
 		writeStream.close();
+		log.info("write stream closed");
 		readStream.close();
+		log.info("read stream closed");
 
 		document = PDDocument.load(new File(fileName));
+		log.info("loaded PDDocument from fileName: "+fileName);
 		document.close();
 		log.info("finished execution of method createTempShortenedReport");
 	}
