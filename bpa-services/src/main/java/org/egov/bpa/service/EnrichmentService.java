@@ -566,6 +566,11 @@ public class EnrichmentService {
 	public void enrichAssignes(BPA bpa) {
 		Workflow wf = bpa.getWorkflow();
 		Set<String> assignes = new HashSet<>();
+		// Add assignes from request
+		if(bpa.getWorkflow() != null) {
+			assignes.addAll(bpa.getWorkflow().getAssignes());
+		}
+		
 		if (wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SENDBACKTOCITIZEN)) {
 
 			// Adding owners to assignes list
