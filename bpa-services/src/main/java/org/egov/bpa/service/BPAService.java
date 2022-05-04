@@ -479,7 +479,7 @@ public class BPAService {
 	}
 	
 	private boolean isRequestForBuildingPlanLayoutSignature(BPARequest bpaRequest) {
-		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVAL_INPROGRESS")
+		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVED")
 				|| bpaRequest.getBPA().getStatus().equalsIgnoreCase("PENDING_SANC_FEE_PAYMENT"))
 				&& Objects.nonNull(bpaRequest.getBPA().getAdditionalDetails())
 				&& bpaRequest.getBPA().getAdditionalDetails() instanceof Map
