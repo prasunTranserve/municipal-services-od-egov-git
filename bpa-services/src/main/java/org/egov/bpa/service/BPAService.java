@@ -479,7 +479,7 @@ public class BPAService {
 	}
 	
 	private boolean isRequestForBuildingPlanLayoutSignature(BPARequest bpaRequest) {
-		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVAL_INPROGRESS")
+		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVED")
 				|| bpaRequest.getBPA().getStatus().equalsIgnoreCase("PENDING_SANC_FEE_PAYMENT"))
 				&& Objects.nonNull(bpaRequest.getBPA().getAdditionalDetails())
 				&& bpaRequest.getBPA().getAdditionalDetails() instanceof Map
@@ -691,7 +691,13 @@ public class BPAService {
 	 */
 	private void createTempShortenedReport(BPARequest bpaRequest, String fileName, PDDocument document) throws Exception {
 		log.info("inside method createTempShortenedReport");
-		URL downloadUrl=new URL(edcrService.getEDCRShortenedPdfUrl(bpaRequest));
+		String downloadUrlString=edcrService.getEDCRShortenedPdfUrl(bpaRequest);
+		log.info("downloadUrlString:"+downloadUrlString);
+		if (downloadUrlString.contains("https")) {
+			//replace https with http as getting unable to download file-
+			downloadUrlString = downloadUrlString.replace("https", "http");
+		}
+		URL downloadUrl=new URL(downloadUrlString);
 		log.info("downloadUrl: "+downloadUrl);
 		// Read the PDF from the URL and save to a local file
 		FileOutputStream writeStream = new FileOutputStream(fileName);
