@@ -266,6 +266,7 @@ public class BPACalculatorConstants {
 	public static final String BASE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.baseFar";
 	public static final String PROVIDED_FAR_PATH = "edcrDetail.*.planDetail.farDetails.providedFar";
 	public static final String PERMISSABLE_FAR_PATH = "edcrDetail.*.planDetail.farDetails.permissableFar";
+	public static final String TDR_FAR_RELAXATION_PATH = "edcrDetail.*.planDetail.farDetails.tdrFarRelaxation";
 	public static final String DWELLING_UNITS_PATH = "edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits";
 	public static final String SECURITY_DEPOSIT_PATH = "edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired";
 	public static final String PROJECT_VALUE_FOR_EIDP_PATH = "edcrDetail.*.planDetail.planInformation.projectValueForEIDP";
@@ -293,6 +294,7 @@ public class BPACalculatorConstants {
 	public static final String BASE_FAR = "BASE_FAR";
 	public static final String PROVIDED_FAR = "PROVIDED_FAR";
 	public static final String PERMISSABLE_FAR = "PERMISSABLE_FAR";
+	public static final String TDR_FAR_RELAXATION = "TDR_FAR_RELAXATION";
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
 	public static final String TOTAL_NO_OF_DWELLING_UNITS = "TOTAL_NO_OF_DWELLING_UNITS";
