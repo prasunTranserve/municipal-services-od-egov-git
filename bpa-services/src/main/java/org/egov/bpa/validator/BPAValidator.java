@@ -556,7 +556,9 @@ public class BPAValidator {
 	public void validatePreEnrichData(BPARequest bpaRequest, Object mdmsRes) {		
 		validateSkipPaymentAction(bpaRequest);
 		validateNocApprove(bpaRequest, mdmsRes);
+		validateBpaForward(bpaRequest);
 	}
+	
 	/**
 	 * Validate workflowActions against the skipPayment 
 	 * @param bpaRequest
@@ -730,4 +732,29 @@ public class BPAValidator {
 					"Father or Husband's Name is mandatory for Individual Single Owner");
 		}
 	}
+	
+	/**
+	 * Validates assignees while forwarding got low risk application
+	 * @param bpaRequest
+	 */
+	private void validateBpaForward(BPARequest bpaRequest) {
+		if(BPAConstants.BPA_AR_AP_LR_MODULE_CODE.equalsIgnoreCase(bpaRequest.getBPA().getBusinessService())) {
+			if(bpaRequest.getBPA().getWorkflow() != null
+					&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpaRequest.getBPA().getWorkflow().getAction())
+					&& bpaRequest.getBPA().getWorkflow().getAssignes().isEmpty()) {
+				throw new CustomException(BPAErrorConstants.BPA_ASSIGNE_MISSING,
+						"Plase assign some body while forwarding.");
+			}
+			
+			if(bpaRequest.getBPA().getWorkflow() != null
+					&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpaRequest.getBPA().getWorkflow().getAction())
+					&& !bpaRequest.getBPA().getWorkflow().getAssignes().isEmpty()
+					&& bpaRequest.getBPA().getWorkflow().getAssignes().contains(bpaRequest.getRequestInfo().getUserInfo().getUuid())) {
+				throw new CustomException(BPAErrorConstants.BPA_FORWARD_ISSUE,
+						"Cannot forward to yourself");
+			}
+		}
+	}
+
+
 }

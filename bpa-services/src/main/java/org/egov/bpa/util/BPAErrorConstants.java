@@ -83,5 +83,8 @@ public class BPAErrorConstants {
 	public static final String BPA_GENDER_MISSING = "BPA GENDER MISSING";
 	
 	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
-
+	
+	public static final String BPA_ASSIGNE_MISSING = "BPA ASSIGNE MISSING";
+	
+	public static final String BPA_FORWARD_ISSUE = "BPA FORWARD ISSUE";
 }
