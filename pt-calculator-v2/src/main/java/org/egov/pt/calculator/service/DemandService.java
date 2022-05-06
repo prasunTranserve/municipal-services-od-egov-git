@@ -816,10 +816,18 @@ public class DemandService {
 			BigDecimal taxAmount= demandDetails.stream().map(DemandDetail::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 			BigDecimal collectionAmount= demandDetails.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 			BigDecimal netAmount = collectionAmount.subtract(taxAmount);
-			details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
-					.taxAmount(netAmount)
-					.collectionAmount(BigDecimal.ZERO)
-					.tenantId(tenantId).build());
+			if(CalculatorConstants.PT_TIME_REBATE.equals(entry.getKey()) && netAmount.compareTo(BigDecimal.ZERO) >= 0) {
+				details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
+						.taxAmount(netAmount.negate())
+						.collectionAmount(BigDecimal.ZERO)
+						.tenantId(tenantId).build());
+			}else {
+				details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
+						.taxAmount(netAmount)
+						.collectionAmount(BigDecimal.ZERO)
+						.tenantId(tenantId).build());
+			}
+			
 		}
 
 		return details;
