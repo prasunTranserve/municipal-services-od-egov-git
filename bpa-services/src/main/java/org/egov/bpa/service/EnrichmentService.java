@@ -567,7 +567,7 @@ public class EnrichmentService {
 		Workflow wf = bpa.getWorkflow();
 		Set<String> assignes = new HashSet<>();
 		// Add assignes from request
-		if(bpa.getWorkflow() != null) {
+		if(bpa.getWorkflow() != null && bpa.getWorkflow().getAssignes() != null) {
 			assignes.addAll(bpa.getWorkflow().getAssignes());
 		}
 		
