@@ -913,6 +913,15 @@ public class CalculationService {
 				paramMap.put(BPACalculatorConstants.PERMISSABLE_FAR, maxPermissibleFar);
 			}
 		}
+		
+		JSONArray tdrFarRelaxationJson = context.read(BPACalculatorConstants.TDR_FAR_RELAXATION_PATH);
+		if (!CollectionUtils.isEmpty(tdrFarRelaxationJson)) {
+			if (null != tdrFarRelaxationJson.get(0)) {
+				String tdrFarRelaxationString = tdrFarRelaxationJson.get(0).toString();
+				Double tdrFarRelaxation = Double.parseDouble(tdrFarRelaxationString);
+				paramMap.put(BPACalculatorConstants.TDR_FAR_RELAXATION, tdrFarRelaxation);
+			}
+		}
 
 		JSONArray totalNoOfDwellingUnitsArray = context.read(BPACalculatorConstants.DWELLING_UNITS_PATH);
 		if (!CollectionUtils.isEmpty(totalNoOfDwellingUnitsArray)) {
@@ -1938,6 +1947,7 @@ public class CalculationService {
 		Double baseFar = null;
 		Double providedFar = null;
 		Double maxPermissibleFar = null;
+		Double tdrFarRelaxation = null;
 		Double plotArea = null;
 		String subOccupancyType = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
@@ -1963,6 +1973,9 @@ public class CalculationService {
 		}
 		if (null != paramMap.get(BPACalculatorConstants.PERMISSABLE_FAR)) {
 			maxPermissibleFar = (Double) paramMap.get(BPACalculatorConstants.PERMISSABLE_FAR);
+		}
+		if (null != paramMap.get(BPACalculatorConstants.TDR_FAR_RELAXATION)) {
+			tdrFarRelaxation = (Double) paramMap.get(BPACalculatorConstants.TDR_FAR_RELAXATION);
 		}
 
 		//calculation for MIG sub-occupancy-
@@ -2009,6 +2022,11 @@ public class CalculationService {
 
 				BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(baseFar)))
 						.setScale(2, BigDecimal.ROUND_UP);
+				
+				//tdr relaxation- decrease deltaFar based on tdrFarRelaxation-
+				if(null!=tdrFarRelaxation && deltaFAR.compareTo(new BigDecimal(tdrFarRelaxation))>0) {
+					deltaFAR=deltaFAR.subtract(new BigDecimal(tdrFarRelaxation)).setScale(2, BigDecimal.ROUND_UP);
+				}
 
 				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR).multiply(BigDecimal.valueOf(plotArea)))
 						.setScale(2, BigDecimal.ROUND_UP);
