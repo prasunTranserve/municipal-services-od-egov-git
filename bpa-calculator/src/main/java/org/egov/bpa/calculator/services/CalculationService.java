@@ -2024,8 +2024,11 @@ public class CalculationService {
 						.setScale(2, BigDecimal.ROUND_UP);
 				
 				//tdr relaxation- decrease deltaFar based on tdrFarRelaxation-
-				if(null!=tdrFarRelaxation && deltaFAR.compareTo(new BigDecimal(tdrFarRelaxation))>0) {
+				if(null!=tdrFarRelaxation) {
 					deltaFAR=deltaFAR.subtract(new BigDecimal(tdrFarRelaxation)).setScale(2, BigDecimal.ROUND_UP);
+				}
+				if (deltaFAR.compareTo(BigDecimal.ZERO) < 0) {
+					deltaFAR = BigDecimal.ZERO;
 				}
 
 				purchasableFARFee = (purchasableFARRate.multiply(deltaFAR).multiply(BigDecimal.valueOf(plotArea)))
