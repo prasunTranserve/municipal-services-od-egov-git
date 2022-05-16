@@ -145,5 +145,16 @@ public class BPAController {
 		return new ResponseEntity<>(
 				bpaService.mergeScrutinyReportToPermit(bpaRequest, requestInfoWrapper.getRequestInfo()), HttpStatus.OK);
 	}
+	
+	@PostMapping(value = "/_get")
+	public ResponseEntity<BPAResponse> reportingSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
+
+		List<BPA> bpas = bpaService.searchApplications(requestInfoWrapper.getRequestInfo());
+
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }

@@ -862,6 +862,11 @@ public class BPAService {
 		}
 	
 	}
+
+
+	public List<BPA> searchApplications(RequestInfo requestInfo) {
+		return repository.getBpaApplication(requestInfo);
+	}
 		
 
 }
