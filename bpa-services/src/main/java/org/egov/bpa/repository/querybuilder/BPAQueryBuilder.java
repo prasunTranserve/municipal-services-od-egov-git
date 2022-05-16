@@ -37,6 +37,10 @@ public class BPAQueryBuilder {
             "({})" +
             " result) result_offset " +
             "WHERE offset_ > ? AND offset_ <= ?";
+	
+	private static final String BPA_QUERY = "SELECT bpa.*,bpa.id as bpa_id,bpa.tenantid as bpa_tenantId,bpa.lastModifiedTime as "
+			+ "bpa_lastModifiedTime,bpa.createdBy as bpa_createdBy,bpa.lastModifiedBy as bpa_lastModifiedBy,bpa.createdTime as "
+			+ "bpa_createdTime,bpa.additionalDetails,bpa.landId as bpa_landId from eg_bpa_buildingplan bpa";
 
 	/**
 	 * To give the Search query based on the requirements.
@@ -281,5 +285,10 @@ public class BPAQueryBuilder {
 		preparedStmtList.add(limit + offset);
 
 		return finalQuery;
+	}
+
+	public String getBPAsSearchQuery(List<Object> preparedStmtList) {
+		StringBuilder builder = new StringBuilder(BPA_QUERY);
+		return builder.toString();
 	}
 }
