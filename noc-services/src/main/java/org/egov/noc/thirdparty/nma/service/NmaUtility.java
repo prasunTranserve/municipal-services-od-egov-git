@@ -123,7 +123,7 @@ public class NmaUtility {
 				.modernConstructionsImage(getModernConstructionsImage(bpa))
 				.ownershipDocuments(getOwnershipDocuments(bpa))
 				.termAndCondition(getValue((Map) noc.getAdditionalDetails(),
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.TermAndCondition"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.TermAndCondition"))
 				.build();
 	}
 
@@ -218,11 +218,11 @@ public class NmaUtility {
 
 		return ProposedWorkDetails.builder()
 				.approximateDateOfCommencementOfWorks(
-						getValue(details, "thirdPartNOC.ApproximateDateOfCommencementOfWorks"))
+						getValue(details, "thirdPartyNOC.ApproximateDateOfCommencementOfWorks"))
 				.approximateDurationOfCommencementOfWorks(
-						getValue(details, "thirdPartNOC.ApproximateDurationOfCommencementOfWorks"))
-				.basementIfAnyProposedWithDetails(getValue(details, "thirdPartNOC.BasementIfAnyProposedWithDetails"))
-				.detailsOfRepairAndRenovation(getValue(details, "thirdPartNOC.DetailsOfRepairAndRenovation"))
+						getValue(details, "thirdPartyNOC.ApproximateDurationOfCommencementOfWorks"))
+				.basementIfAnyProposedWithDetails(getValue(details, "thirdPartyNOC.BasementIfAnyProposedWithDetails"))
+				.detailsOfRepairAndRenovation(getValue(details, "thirdPartyNOC.DetailsOfRepairAndRenovation"))
 				.elevationDocument(getElevationDocument(noc))
 				.floorAreaInSquareMetresStoreyWise(getFloorAreaInSquareMetresStoreyWise(edcr))
 				.heightInMetresExcludingMumtyParapetWaterStorageTankEtc(
@@ -306,24 +306,24 @@ public class NmaUtility {
 		// write code
 		Map map = (Map) noc.getAdditionalDetails();
 		String nearTheMonument = getValue(map,
-				"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.NearTheMonument");
+				"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.NearTheMonument");
 		return MaximumHeightOfExistingModernBuildingInCloseVicinityOf.builder()
 				.doesMasterPlanApprovedByConcernedAuthoritiesExistsForTheCityTownVillage(getValue(map,
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.DoesMasterPlanApprovedByConcernedAuthoritiesExistsForTheCityTownVillage"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.DoesMasterPlanApprovedByConcernedAuthoritiesExistsForTheCityTownVillage"))
 				.inCaseOfRepairsOrRenovationReportFromDulyAuthorisedOrLicencedArchitectSubmittedByApplicant(
 						getInCaseOfRepairsOrRenovationReportFromDulyAuthorisedOrLicencedArchitectSubmittedByApplicant(
 								noc))
 				.nearTheMonument(nearTheMonument != null ? Double.parseDouble(nearTheMonument) : 0)
 				.openSpaceOrParkOrGreenAreaCloseToProtectedMonumentOrProtectedArea(getValue(map,
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.OpenSpaceOrParkOrGreenAreaCloseToProtectedMonumentOrProtectedArea"))
-				.remarks(getValue(map, "thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.Remarks"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.OpenSpaceOrParkOrGreenAreaCloseToProtectedMonumentOrProtectedArea"))
+				.remarks(getValue(map, "thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.Remarks"))
 				.signature(getSignature(noc))
 				.statusOfModernConstructions(getValue(map,
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.StatusOfModernConstructions"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.StatusOfModernConstructions"))
 				.whetherAnyRoadExistsBetweenTheMonumentAndTheSiteOfConstruction(getValue(map,
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.WhetherAnyRoadExistsBetweenTheMonumentAndTheSiteOfConstruction"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.WhetherAnyRoadExistsBetweenTheMonumentAndTheSiteOfConstruction"))
 				.whetherMonumentIsLocatedWithinLimitOf(getValue(map,
-						"thirdPartNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.WhetherMonumentIsLocatedWithinLimitOf"))
+						"thirdPartyNOC.MaximumHeightOfExistingModernBuildingInCloseVicinityOf.WhetherMonumentIsLocatedWithinLimitOf"))
 				.build();
 	}
 
@@ -392,11 +392,11 @@ public class NmaUtility {
 	private NameOfTheNearestMonumentOrSite getNameOfTheNearestMonumentOrSite(Noc noc) {
 		Map<String, String> map = (Map<String, String>) noc.getAdditionalDetails();
 		return NameOfTheNearestMonumentOrSite.builder()
-				.district(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.District"))
-				.locality(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.Locality"))
-				.monumentName(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.MonumentName"))
-				.state(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.State"))
-				.taluk(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.Taluk")).build();
+				.district(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.District"))
+				.locality(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.Locality"))
+				.monumentName(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.MonumentName"))
+				.state(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.State"))
+				.taluk(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.Taluk")).build();
 	}
 
 	private String getValue(Map responseMap, String key) {
@@ -411,9 +411,9 @@ public class NmaUtility {
 	private LocalityOfTheProposedConstruction getLocalityOfTheProposedConstruction(BPA bpa, Noc noc) {
 		Address address = bpa.getLandInfo().getAddress();
 		Map<String, String> map = (Map<String, String>) noc.getAdditionalDetails();
-		return LocalityOfTheProposedConstruction.builder().district(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.District"))
-				.locality(address.getLocality().getName()).plotSurveyNo(getValue(map, "thirdPartNOC.PlotSurveyNo"))
-				.state(getValue(map, "thirdPartNOC.NameOfTheNearestMonumentOrSite.State")).taluk(address.getCity()).build();
+		return LocalityOfTheProposedConstruction.builder().district(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.District"))
+				.locality(address.getLocality().getName()).plotSurveyNo(getValue(map, "thirdPartyNOC.PlotSurveyNo"))
+				.state(getValue(map, "thirdPartyNOC.NameOfTheNearestMonumentOrSite.State")).taluk(address.getCity()).build();
 	}
 
 	private DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument getDistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument(
@@ -421,9 +421,9 @@ public class NmaUtility {
 		Map<String, String> map = (Map<String, String>) noc.getAdditionalDetails();
 		return DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument.builder()
 				.distanceFromTheMainMonument(getValue(map,
-						"thirdPartNOC.DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument.DistanceFromTheMainMonument"))
+						"thirdPartyNOC.DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument.DistanceFromTheMainMonument"))
 				.distanceFromTheProtectedBoundaryWall(getValue(map,
-						"thirdPartNOC.DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument.DistanceFromTheProtectedBoundaryWall"))
+						"thirdPartyNOC.DistanceOfTheSiteOfTheConstructionFromProtectedBoundaryOfMonument.DistanceFromTheProtectedBoundaryWall"))
 				.build();
 	}
 

@@ -56,7 +56,8 @@
                             "nextState": "SUBMITED",
                             "roles": [
                                 "CITIZEN",
-                                "BPA_ARCHITECT"
+                                "BPA_ARCHITECT",
+                                "SYSTEM"
                             ]
                         }
                     ]
