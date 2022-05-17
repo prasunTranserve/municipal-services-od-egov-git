@@ -18,6 +18,6 @@ import lombok.ToString;
 public class FetchRecommendationStatusContract {
 
 	private String token;
-	@JsonProperty("applicationID")
+	@JsonProperty("applicationId")
 	private String applicationId;
 }
