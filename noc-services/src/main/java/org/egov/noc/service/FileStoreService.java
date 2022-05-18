@@ -174,37 +174,37 @@ public class FileStoreService {
 	
 	public List<Document> upload(File file, String fileName, String mimeType, String moduleName, String tenantId,
 			String documentType) {
-		String url = config.getFilestoreHost() +config.getFilestoreContext()+ config.getFilestorefilestorepath();
+		String url = config.getFilestoreHost() + config.getFilestoreContext() + config.getFilestorefilestorepath();
 		fileName = normalizeString(fileName);
-        mimeType = normalizeString(mimeType);
-        moduleName = normalizeString(moduleName);
-        HttpHeaders headers = new HttpHeaders();
-        log.info("Uploading file to filestore:"+fileName);
+		mimeType = normalizeString(mimeType);
+		moduleName = normalizeString(moduleName);
+		HttpHeaders headers = new HttpHeaders();
+		log.info("Uploading file to filestore:" + fileName);
 
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        MultiValueMap<String, Object> map = new LinkedMultiValueMap<String, Object>();
-        map.add("file", new FileSystemResource(file.getName()));
-        map.add("tenantId", tenantId);
-        map.add("module", moduleName);
-        ResponseEntity<String> result = null;
-        List<Document> documents= new ArrayList<>();
-        try {
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map,
-                headers);
-        result = restTemplate.postForEntity(url, request, String.class);
-        DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(result.getBody());
-        List<String> list=context.read("files.*.fileStoreId");
-        String fileStoreId=null;
-        if(!CollectionUtils.isEmpty(list))
-        	fileStoreId=list.get(0);
-        Document document=new Document();
-        document.setFileStoreId(fileStoreId);
-        document.setDocumentType(documentType);
-        documents.add(document);
-		if (file.exists())
-			FileUtils.forceDelete(file);
-        } catch (RestClientException e) {
-            log.error("Rest Exception occurred while uploading file", e);
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		MultiValueMap<String, Object> map = new LinkedMultiValueMap<String, Object>();
+		map.add("file", new FileSystemResource(file.getName()));
+		map.add("tenantId", tenantId);
+		map.add("module", moduleName);
+		ResponseEntity<String> result = null;
+		List<Document> documents = new ArrayList<>();
+		try {
+			HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map,
+					headers);
+			result = restTemplate.postForEntity(url, request, String.class);
+			DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(result.getBody());
+			List<String> list = context.read("files.*.fileStoreId");
+			String fileStoreId = null;
+			if (!CollectionUtils.isEmpty(list))
+				fileStoreId = list.get(0);
+			Document document = new Document();
+			document.setFileStoreId(fileStoreId);
+			document.setDocumentType(documentType);
+			documents.add(document);
+			if (file.exists())
+				FileUtils.forceDelete(file);
+		} catch (RestClientException e) {
+			log.error("Rest Exception occurred while uploading file", e);
 			throw new CustomException("Error while uploading file to filestore",
 					"Error while uploading file to filestore");
 		} catch (Exception ex) {
@@ -212,8 +212,8 @@ public class FileStoreService {
 			throw new CustomException("Error while uploading file to filestore",
 					"Error while uploading file to filestore");
 		}
-        log.info("file upload completed...");
-        return documents;
+		log.info("file upload completed...");
+		return documents;
 	}
 	
 	public static String normalizeString(String fileName) {
