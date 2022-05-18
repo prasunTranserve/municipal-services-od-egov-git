@@ -6,11 +6,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -34,16 +40,20 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 @Service
 public class FileStoreService {
 
@@ -142,6 +152,80 @@ public class FileStoreService {
 			throw new CustomException(NOCConstants.FILE_STORE_ERROR, "error while binary encoding document");
 		}
 	}
+	
+	public String getBinaryDecodedDocument(String encodedData) {
+		try {
+			log.info("inside method getBinaryDecodedDocument");
+			byte[] decodedFileContentBytes = Base64.getDecoder().decode(encodedData);
+			String localFileName = "tempfile-decoded-doc-"+UUID.randomUUID()+".pdf";
+			Files.write(Paths.get(localFileName), decodedFileContentBytes);
+			log.info("successfully written file as pdf: "+localFileName);
+			//never delete this file here as might be used to upload to filestore later
+			return localFileName;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.error("error while binary decoding document",e);
+			throw new CustomException(NOCConstants.FILE_STORE_ERROR, "error while binary decoding document");
+		} catch (Exception ex) {
+			log.error("error while binary decoding document",ex);
+			throw new CustomException(NOCConstants.FILE_STORE_ERROR, "error while binary decoding document");
+		}
+	}
+	
+	public List<Document> upload(File file, String fileName, String mimeType, String moduleName, String tenantId,
+			String documentType) {
+		String url = config.getFilestoreHost() +config.getFilestoreContext()+ config.getFilestorefilestorepath();
+		fileName = normalizeString(fileName);
+        mimeType = normalizeString(mimeType);
+        moduleName = normalizeString(moduleName);
+        HttpHeaders headers = new HttpHeaders();
+        log.info("Uploading file to filestore:"+fileName);
+
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        MultiValueMap<String, Object> map = new LinkedMultiValueMap<String, Object>();
+        map.add("file", new FileSystemResource(file.getName()));
+        map.add("tenantId", tenantId);
+        map.add("module", moduleName);
+        ResponseEntity<String> result = null;
+        List<Document> documents= new ArrayList<>();
+        try {
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map,
+                headers);
+        result = restTemplate.postForEntity(url, request, String.class);
+        DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(result.getBody());
+        List<String> list=context.read("files.*.fileStoreId");
+        String fileStoreId=null;
+        if(!CollectionUtils.isEmpty(list))
+        	fileStoreId=list.get(0);
+        Document document=new Document();
+        document.setFileStoreId(fileStoreId);
+        document.setDocumentType(documentType);
+        documents.add(document);
+		if (file.exists())
+			FileUtils.forceDelete(file);
+        } catch (RestClientException e) {
+            log.error("Rest Exception occurred while uploading file", e);
+			throw new CustomException("Error while uploading file to filestore",
+					"Error while uploading file to filestore");
+		} catch (Exception ex) {
+			log.error("Error occurred while uploading file", ex);
+			throw new CustomException("Error while uploading file to filestore",
+					"Error while uploading file to filestore");
+		}
+        log.info("file upload completed...");
+        return documents;
+	}
+	
+	public static String normalizeString(String fileName) {
+        fileName = Normalizer.normalize(fileName, Form.NFKC);
+        Pattern pattern = Pattern.compile("[<>]");
+        Matcher matcher = pattern.matcher(fileName);
+        if (matcher.find()) {
+            // Found blacklisted tag
+            throw new IllegalStateException();
+        }
+        return fileName;
+    }
 	
 	public String getBinaryEncodedDocumentAfterPdfToJpg(String tenantId, String fileStoreIds) {
 		try {
