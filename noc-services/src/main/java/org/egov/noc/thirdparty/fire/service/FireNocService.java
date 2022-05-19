@@ -1,5 +1,6 @@
 package org.egov.noc.thirdparty.fire.service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -176,10 +178,12 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		Object fetchStatusResponse = serviceRequestRepository.fetchResult(fetchStatusUrl,
 				new FetchRecommendationStatusContract(config.getFireNocToken(), fireApplicationId));
 		String applicationStatus = "";
+		String certificate = "";
 		if (fetchStatusResponse instanceof Map) {
 			Map<String, Object> statusResponse = (Map<String, Object>) fetchStatusResponse;
 			Map<String, Object> result = (Map<String, Object>) statusResponse.get("result");
 			applicationStatus = String.valueOf(result.get("applicationStatus"));
+			certificate = String.valueOf(result.get("certificate"));
 		}
 		
 		switch (applicationStatus) {
@@ -191,6 +195,11 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		case "Approved Recommendation Issued":
 			workflow.setAction(NOCConstants.ACTION_APPROVE);
 			workflow.setComment("noc approved by fire department");
+			String decodedLocalFileName=fileStoreService.getBinaryDecodedDocument(certificate);
+			//hardcoded documentType=Fire-NOC
+			List<Document> fireNocDoc= fileStoreService.upload(new File(decodedLocalFileName), decodedLocalFileName,
+					MediaType.APPLICATION_PDF_VALUE, "NOC", pullRequestWrapper.getNoc().getTenantId(),"Fire-NOC");
+			workflow.setDocuments(fireNocDoc);
 		}
 		}
 		else {
