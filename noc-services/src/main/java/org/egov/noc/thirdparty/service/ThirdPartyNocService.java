@@ -105,7 +105,7 @@ public class ThirdPartyNocService {
 				try {
 					ThirdPartyNocPullService pullService = getPullBean(noc.getNocType());
 					UserResponse userResponse = getUser(noc, requestInfoWrapper);
-					requestInfoWrapper.getRequestInfo().setUserInfo(userResponse.getUser().get(0));
+					//requestInfoWrapper.getRequestInfo().setUserInfo(userResponse.getUser().get(0));
 
 					ThirdPartyNOCPullRequestWrapper pullRequestWrapper = ThirdPartyNOCPullRequestWrapper.builder()
 							.noc(noc).requestInfo(requestInfoWrapper.getRequestInfo())
