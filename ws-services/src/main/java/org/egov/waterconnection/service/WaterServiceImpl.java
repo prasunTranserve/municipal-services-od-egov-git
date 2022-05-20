@@ -29,6 +29,7 @@ import org.egov.waterconnection.web.models.Property;
 import org.egov.waterconnection.web.models.SearchCriteria;
 import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
+import org.egov.waterconnection.web.models.WaterConnectionResponse;
 import org.egov.waterconnection.web.models.workflow.BusinessService;
 import org.egov.waterconnection.workflow.WorkflowIntegrator;
 import org.egov.waterconnection.workflow.WorkflowService;
@@ -612,5 +613,17 @@ public class WaterServiceImpl implements WaterService {
 			waterConnectionProducer.push(config.getWsUpdateInstallmentTopic(), InstallmentsRequest.builder()
 					.requestInfo(waterConnectionRequest.getRequestInfo()).installments(installments).build());
 		}
+	}
+	
+	public WaterConnectionResponse planeSearch(SearchCriteria criteria, RequestInfo requestInfo) {
+		WaterConnectionResponse waterConnection = getWaterConnectionsListForPlaneSearch(criteria, requestInfo);
+		waterConnectionValidator.validatePropertyForConnection(waterConnection.getWaterConnection());
+		enrichmentService.enrichConnectionHolderDeatils(waterConnection.getWaterConnection(), criteria, requestInfo);
+		return waterConnection;
+	}
+
+	public WaterConnectionResponse getWaterConnectionsListForPlaneSearch(SearchCriteria criteria,
+			RequestInfo requestInfo) {
+		return waterDao.getWaterConnectionListForPlaneSearch(criteria, requestInfo);
 	}
 }

@@ -6,6 +6,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.waterconnection.web.models.SearchCriteria;
 import org.egov.waterconnection.web.models.WaterConnection;
 import org.egov.waterconnection.web.models.WaterConnectionRequest;
+import org.egov.waterconnection.web.models.WaterConnectionResponse;
 
 public interface WaterService {
 
@@ -18,5 +19,7 @@ public interface WaterService {
 	List<WaterConnection> migrateWaterConnection(WaterConnectionRequest waterConnectionRequest);
 
 	List<WaterConnection> migrateSewerageConnection(WaterConnectionRequest waterConnectionRequest);
+	
+	WaterConnectionResponse planeSearch(SearchCriteria criteria, RequestInfo requestInfo);
 
 }
