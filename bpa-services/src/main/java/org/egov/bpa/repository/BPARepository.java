@@ -120,5 +120,12 @@ public class BPARepository {
 		List<BPA> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), bpaReportingRowMapper);
 		return BPAData;
 	}
+	
+	public List<BPA> getBPADataForPlainSearch(BPASearchCriteria criteria, List<String> edcrNos) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getBPASearchQueryForPlainSearch(criteria, preparedStmtList, edcrNos, false);
+		List<BPA> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
+		return BPAData;
+	}
 
 }

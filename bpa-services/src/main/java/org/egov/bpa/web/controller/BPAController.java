@@ -156,5 +156,15 @@ public class BPAController {
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@PostMapping(value = "/_plainsearch")
+	public ResponseEntity<BPAResponse> plainSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria) {
+
+		List<BPA> bpas = bpaService.plainSearch(criteria, requestInfoWrapper.getRequestInfo());
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true)).build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }
