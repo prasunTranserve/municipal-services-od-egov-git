@@ -371,9 +371,9 @@ public class CalculatorConstants {
     public static final List<String> ULB_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
 			.asList("od.cuttack"));
     public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
-			.asList(PT_TIME_PENALTY));
+			.asList(PT_TIME_PENALTY,PT_TIME_REBATE));
     public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_REBATE = Collections.unmodifiableList(Arrays
-			.asList(PT_TIME_REBATE));
+			.asList(PT_TIME_REBATE, PT_OTHER_DUES));
     public static final List<String> TAXES_WITH_EXCEMPTION = Collections.unmodifiableList(Arrays
 			.asList(PT_OWNERSHIP_EXCEMPTION, PT_USAGE_EXCEMPTION));
     public static final List<String> TAXES_NOT_ALLOWED_TO_MODIFY = Collections.unmodifiableList(Arrays

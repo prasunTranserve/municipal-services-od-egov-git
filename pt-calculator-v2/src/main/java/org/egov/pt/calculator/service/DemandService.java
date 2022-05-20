@@ -503,32 +503,36 @@ public class DemandService {
 		if(Objects.isNull(penalty) && Objects.isNull(rebate) && Objects.isNull(interest)) return isCurrentDemand;
 		
 		DemandDetailAndCollection latestPenaltyDemandDetail, latestInterestDemandDetail;
-
-
-		BigDecimal oldRebate = BigDecimal.ZERO;
-		BigDecimal oldCollectedRebate = BigDecimal.ZERO;
-		boolean rebateTaxHeadExists = false;
-		for(DemandDetail demandDetail : details) {
-			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
-				oldRebate = oldRebate.add(demandDetail.getTaxAmount());
-				oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
-				rebateTaxHeadExists = true;
-			}
-		}
 		
-		if(rebateTaxHeadExists) {
-			if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
-				if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
-					adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+		//Rebate will only be calculated/adjusted iff the demand is not paid fully
+		if(!demand.getIsPaymentCompleted()) {
+			
+			BigDecimal oldRebate = BigDecimal.ZERO;
+			BigDecimal oldCollectedRebate = BigDecimal.ZERO;
+			boolean rebateTaxHeadExists = false;
+			for(DemandDetail demandDetail : details) {
+				if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
+					oldRebate = oldRebate.add(demandDetail.getTaxAmount());
+					oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
+					rebateTaxHeadExists = true;
 				}
 			}
 			
-			resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
-		}else {
-			details.add(DemandDetail.builder().taxAmount(rebate.negate())
-					.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
-					.build());
+			if(rebateTaxHeadExists) {
+				if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
+					if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
+						adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+					}
+				}
+				
+				resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
+			}else if(isCurrentDemand) {
+				details.add(DemandDetail.builder().taxAmount(rebate.negate())
+						.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
+						.build());
+			}
 		}
+		
 		
 		
 		if(interest.compareTo(BigDecimal.ZERO)!=0){
@@ -704,6 +708,7 @@ public class DemandService {
 		for(DemandDetail demandDetail : demandDetails) {
 			if(!demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE) 
 					&& !TAXES_WITH_EXCEMPTION.contains(demandDetail.getTaxHeadMasterCode()) 
+					&& !PT_ADVANCE_CARRYFORWARD.contains(demandDetail.getTaxHeadMasterCode()) 
 					&& demandDetail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
 					&& demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0
 					&& additionalRebateAmount.compareTo(BigDecimal.ZERO) > 0) {
@@ -733,11 +738,17 @@ public class DemandService {
 	 */
 	private List<DemandDetail> resetExistingRebateWithNewAmountTaxHeads(Demand demand, BigDecimal newRebateAmount) {
 		List<DemandDetail> demandDetails = demand.getDemandDetails();
+		boolean isRebateAlreadySet = false;
 		for(DemandDetail demandDetail : demandDetails) {
 			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
-				demandDetail.setTaxAmount(newRebateAmount);
-				demandDetail.setCollectionAmount(BigDecimal.ZERO);
-				break;
+				if(!isRebateAlreadySet) {
+					demandDetail.setTaxAmount(newRebateAmount);
+					demandDetail.setCollectionAmount(BigDecimal.ZERO);
+					isRebateAlreadySet = true;
+				}else {
+					demandDetail.setTaxAmount(BigDecimal.ZERO);
+					demandDetail.setCollectionAmount(BigDecimal.ZERO);
+				}
 			}
 		}
 		return demandDetails;
@@ -805,10 +816,18 @@ public class DemandService {
 			BigDecimal taxAmount= demandDetails.stream().map(DemandDetail::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 			BigDecimal collectionAmount= demandDetails.stream().map(DemandDetail::getCollectionAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 			BigDecimal netAmount = collectionAmount.subtract(taxAmount);
-			details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
-					.taxAmount(netAmount)
-					.collectionAmount(BigDecimal.ZERO)
-					.tenantId(tenantId).build());
+			if(CalculatorConstants.PT_TIME_REBATE.equals(entry.getKey()) && netAmount.compareTo(BigDecimal.ZERO) >= 0) {
+				details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
+						.taxAmount(netAmount.negate())
+						.collectionAmount(BigDecimal.ZERO)
+						.tenantId(tenantId).build());
+			}else {
+				details.add(DemandDetail.builder().taxHeadMasterCode(entry.getKey())
+						.taxAmount(netAmount)
+						.collectionAmount(BigDecimal.ZERO)
+						.tenantId(tenantId).build());
+			}
+			
 		}
 
 		return details;
@@ -870,7 +889,7 @@ public class DemandService {
 			
 			taxPeriods = mstrDataService.getTaxPeriodList(requestInfoWrapper.getRequestInfo(), demand.getTenantId());
 			
-			applytimeBasedApplicables(demand, requestInfoWrapper, timeBasedExmeptionMasterMap,taxPeriods);
+			applytimeBasedApplicablesForModifiedDemands(demand, requestInfoWrapper, timeBasedExmeptionMasterMap,taxPeriods,oldDemand);
 			
 			//round off demand details
 			roundOffDecimalForDemand(demand, requestInfoWrapper);
@@ -882,6 +901,145 @@ public class DemandService {
 		return updateDemand(demandRequest.getRequestInfo(), demands);
 	}
 	
+	/**
+	 * Applies Penalty/Rebate/Interest to the incoming demands
+	 * 
+	 * If applied already then the demand details will be updated
+	 * 
+	 * @param demand
+	 * @return
+	 */
+	private boolean applytimeBasedApplicablesForModifiedDemands(Demand demand,RequestInfoWrapper requestInfoWrapper,
+			Map<String, JSONArray> timeBasedExmeptionMasterMap,List<TaxPeriod> taxPeriods, Demand oldDemand) {
+
+		boolean isCurrentDemand = false;
+		String tenantId = demand.getTenantId();
+		String demandId = demand.getId();
+		
+		TaxPeriod taxPeriod = taxPeriods.stream()
+				.filter(t -> demand.getTaxPeriodFrom().compareTo(t.getFromDate()) >= 0
+				&& demand.getTaxPeriodTo().compareTo(t.getToDate()) <= 0)
+		.findAny().orElse(null);
+		
+		//Checks if the current date id within demand from and to date 
+		if((demand.getTaxPeriodFrom()<= System.currentTimeMillis() && demand.getTaxPeriodTo() >= System.currentTimeMillis()))
+			isCurrentDemand = true;
+		
+		log.debug("isCurrentDemand ["+isCurrentDemand+"]");
+		/*
+		 * method to get the latest collected time from the receipt service
+		 */
+		List<Payment> payments = paymentService.getPaymentsFromDemand(demand,requestInfoWrapper);
+
+
+		boolean isRebateUpdated = false;
+		boolean isPenaltyUpdated = false;
+//		boolean isInterestUpdated = false;
+		
+		List<DemandDetail> details = demand.getDemandDetails();
+
+//		BigDecimal taxAmt = utils.getTaxAmtFromDemandForApplicablesGeneration(demand);
+		BigDecimal taxAmtForPenalty = utils.getTaxAmtForModifiedDemandForPenaltyGeneration(demand, oldDemand);
+		BigDecimal taxAmtForRebate = utils.getTaxAmtForDemandForRebateGeneration(demand);
+		
+		BigDecimal collectedPtTax = BigDecimal.ZERO;
+		BigDecimal totalCollectedAmount = BigDecimal.ZERO;
+
+		for (DemandDetail detail : demand.getDemandDetails()) {
+
+			totalCollectedAmount = totalCollectedAmount.add(detail.getCollectionAmount());
+			if (CalculatorConstants.TAXES_TO_BE_CONSIDERD.contains(detail.getTaxHeadMasterCode()))
+				collectedPtTax = collectedPtTax.add(detail.getCollectionAmount());
+		}
+
+		BigDecimal penalty = BigDecimal.ZERO;
+		BigDecimal rebate = BigDecimal.ZERO;
+		//Penalty will be applied to selected ulb's and on arrear amount
+		if(CalculatorConstants.ULB_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(demand.getTenantId())){
+			penalty = payService.applyPenaltyForModifiedDemand(taxAmtForPenalty,collectedPtTax,
+	                taxPeriod.getFinancialYear(), timeBasedExmeptionMasterMap,payments,taxPeriod);
+		}
+		
+		log.debug("Penalty Amount ["+penalty+"]");
+		
+		//Rebate is only applicable for current years demand
+		if(isCurrentDemand) {
+			rebate = payService.applyRebate(taxAmtForRebate, collectedPtTax, taxPeriod.getFinancialYear(),
+					timeBasedExmeptionMasterMap, payments, taxPeriod);
+		}
+		
+		
+		if(Objects.isNull(penalty) && Objects.isNull(rebate)) return isCurrentDemand;
+		
+
+		
+		BigDecimal oldRebate = BigDecimal.ZERO;
+		BigDecimal oldCollectedRebate = BigDecimal.ZERO;
+		boolean rebateTaxHeadExists = false;
+		for(DemandDetail demandDetail : details) {
+			if(demandDetail.getTaxHeadMasterCode().equalsIgnoreCase(PT_TIME_REBATE)){
+				oldRebate = oldRebate.add(demandDetail.getTaxAmount());
+				oldCollectedRebate = oldCollectedRebate.add(demandDetail.getCollectionAmount());
+				rebateTaxHeadExists = true;
+			}
+		}
+		
+		if(rebateTaxHeadExists) {
+			if(oldRebate.compareTo(BigDecimal.ZERO) != 0) {
+				if(oldCollectedRebate.compareTo(BigDecimal.ZERO) != 0) {
+					adjustRebateAmountFromExistingTaxHeads(demand, oldCollectedRebate.negate());
+				}
+			}
+			
+			resetExistingRebateWithNewAmountTaxHeads(demand, rebate.negate());
+		}else if(isCurrentDemand) {
+			details.add(DemandDetail.builder().taxAmount(rebate.negate())
+					.taxHeadMasterCode(PT_TIME_REBATE).demandId(demandId).tenantId(tenantId)
+					.build());
+		}
+		
+
+		//Penalty will applied to arrear amount and not the current years demand
+		if(penalty.compareTo(BigDecimal.ZERO)!=0 && !isCurrentDemand){
+			isPenaltyUpdated = adjustPenaltyAmount(demand, penalty);
+			
+		}
+		
+		//Inserts new PT_TIME_PENALTY tax head in demand details if it does not exists
+		if (!isPenaltyUpdated && penalty.compareTo(BigDecimal.ZERO) != 0 && !isCurrentDemand)
+			details.add(DemandDetail.builder().taxAmount(penalty).taxHeadMasterCode(CalculatorConstants.PT_TIME_PENALTY)
+					.demandId(demandId).tenantId(tenantId).build());
+		
+		
+		return isCurrentDemand;
+	}
+	
+	private boolean adjustPenaltyAmount(Demand demand, BigDecimal penalty) {
+		BigDecimal totalTaxAmount = demand.getDemandDetails().stream().map(DemandDetail::getTaxAmount)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal totalCollectedAmount = demand.getDemandDetails().stream().map(DemandDetail::getCollectionAmount)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal totalDueAmount = totalTaxAmount.subtract(totalCollectedAmount);
+		
+		boolean isPenaltyUpdated = false;
+		
+		if(penalty.compareTo(BigDecimal.ZERO) < 0 && penalty.negate().compareTo(totalDueAmount) > 0 ) {
+			throw new CustomException("INVALID_DEMAND_UPDATE", "Amount cannot be adjusted as penalty amount will be greater than due amount");
+		}
+		
+		for(DemandDetail detail : demand.getDemandDetails()) {
+			
+			//If penalty amount is not collected then add the adjusted amount into existing penalty amount 
+			if(CalculatorConstants.PT_TIME_PENALTY.equals(detail.getTaxHeadMasterCode())
+        			&& detail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
+        			&& detail.getCollectionAmount().compareTo(BigDecimal.ZERO) == 0) {
+				detail.setTaxAmount(detail.getTaxAmount().add(penalty));
+				isPenaltyUpdated = true;
+        	}
+		}
+		return isPenaltyUpdated;
+	}
+
 	private void validateDemandUpdateRquest(List<Demand> demandsToBeUpdated,RequestInfo requestInfo) {
 		Demand oldDemand = null;
 		for( Demand demand : demandsToBeUpdated ) {
@@ -905,6 +1063,15 @@ public class DemandService {
 						+ consumerCodes.toString());
 			}
 			
+			BigDecimal totalOldTaxAmount = oldDemand.getDemandDetails().stream().map(DemandDetail::getTaxAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
+			BigDecimal totalOldCollectedAmount = oldDemand.getDemandDetails().stream().map(DemandDetail::getCollectionAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
+			
+			if(totalOldTaxAmount.compareTo(totalOldCollectedAmount) == 0) {
+				throw new CustomException("INVALID_DEMAND_UPDATE", "Demand has already been paid for Number: "
+						+ consumerCodes.toString());
+			}
 			
 			BigDecimal totalNewTaxAmount = BigDecimal.ZERO;
 			
@@ -943,9 +1110,6 @@ public class DemandService {
 				}*/
 				totalNewTaxAmount = totalNewTaxAmount.add(newDemandDetail.getTaxAmount());
 			}
-			
-			BigDecimal totalOldCollectedAmount = oldDemand.getDemandDetails().stream().map(DemandDetail::getCollectionAmount)
-					.reduce(BigDecimal.ZERO, BigDecimal::add);
 			
 			if(totalNewTaxAmount.compareTo(totalOldCollectedAmount) < 0) {
 				throw new CustomException("INVALID_DEMAND_UPDATE",
