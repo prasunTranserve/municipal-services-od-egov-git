@@ -15,4 +15,5 @@ public class SMSRequest {
 
 	private String mobileNumber;
 	private String message;
+        private final boolean skipEmail = true ;	
 }

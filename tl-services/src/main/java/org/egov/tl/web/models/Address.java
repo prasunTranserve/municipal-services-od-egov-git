@@ -94,6 +94,9 @@ public class Address   {
         @JsonProperty("locality")
         private Boundary locality = null;
 
+        @Size(max=64)
+        @JsonProperty("ward")
+        private String ward = null;
 
 }
 

@@ -117,6 +117,7 @@ public class TLRowMapper  implements ResultSetExtractor<List<TradeLicense>> {
                     .pincode(rs.getString("pincode"))
                     .doorNo(rs.getString("doorno"))
                     .street(rs.getString("street"))
+                    .ward(rs.getString("ward"))
                     .tenantId(tenantId)
                     .type(rs.getString("type"))
                     .build();

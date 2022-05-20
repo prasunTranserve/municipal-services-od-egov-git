@@ -97,9 +97,9 @@ public class TLConstants {
             NOTIFICATION_FORWARD_CITIZEN,NOTIFICATION_TL_REMINDER));
 
 
-    public static final String DEFAULT_OBJECT_MODIFIED_MSG = "Dear <1>,Your Trade License with application number <APPLICATION_NUMBER> was modified.";
+    public static final String DEFAULT_OBJECT_MODIFIED_MSG = "Dear <1>, Your Trade License with application number <APPLICATION_NUMBER> was modified.Thank You. Govt. of Odisha";
 
-    public static final String DEFAULT_OBJECT_RENEWAL_MODIFIED_MSG = "Dear <1>,Your Renewal Trade License with application number <APPLICATION_NUMBER> was modified.";
+    public static final String DEFAULT_OBJECT_RENEWAL_MODIFIED_MSG = "Dear <1>, Your Renewal Trade License with application number <APPLICATION_NUMBER> was modified.Thank You. Govt. of Odisha";
 
 
     // MDMS

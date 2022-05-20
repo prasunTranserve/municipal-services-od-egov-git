@@ -1,11 +1,16 @@
 package org.egov.tl.web.controllers;
 
 
+
+import org.egov.tl.service.MigrationService;
 import org.egov.tl.service.PaymentUpdateService;
 import org.egov.tl.service.TradeLicenseService;
 import org.egov.tl.service.notification.PaymentNotificationService;
 import org.egov.tl.util.ResponseInfoFactory;
 import org.egov.tl.web.models.*;
+import org.egov.tl.web.models.calculation.Calculation;
+import org.egov.tl.web.models.calculation.CalculationRes;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,14 +38,17 @@ import javax.servlet.http.HttpServletRequest;
         private final TradeLicenseService tradeLicenseService;
 
         private final ResponseInfoFactory responseInfoFactory;
+        
+        private final  MigrationService migrationService ;
 
     @Autowired
     public TradeLicenseController(ObjectMapper objectMapper, HttpServletRequest request,
-                                  TradeLicenseService tradeLicenseService, ResponseInfoFactory responseInfoFactory) {
+                                  TradeLicenseService tradeLicenseService, ResponseInfoFactory responseInfoFactory ,MigrationService migrationService) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.tradeLicenseService = tradeLicenseService;
         this.responseInfoFactory = responseInfoFactory;
+        this.migrationService = migrationService ;
     }
 
 
@@ -51,6 +59,19 @@ import javax.servlet.http.HttpServletRequest;
         TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
                 responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
                 .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @PostMapping({"/{servicename}/_estimate", "/_estimate"})
+    public ResponseEntity<CalculationRes> estimate(@Valid @RequestBody TradeLicenseRequest tradeLicenseRequest,
+                                                       @PathVariable(required = false) String servicename) {
+    	CalculationRes calculationResponse = tradeLicenseService.estimate(tradeLicenseRequest, servicename);
+    	
+    	CalculationRes response = CalculationRes.builder().calculations(calculationResponse.getCalculations())
+				.responseInfo(
+						responseInfoFactory.createResponseInfoFromRequestInfo(tradeLicenseRequest.getRequestInfo(), true))
+				.build();
+    	
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -100,6 +121,22 @@ import javax.servlet.http.HttpServletRequest;
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    
+	@PostMapping("/_migrate")
+	public ResponseEntity<?> tradeLicenseImport(@RequestParam(required = false) Long limit,
+			@RequestParam(required = false, defaultValue = "1") Long skip  ) throws Exception {
+		long startTime = System.nanoTime();
+		
+	
+
+		migrationService.importTradeLicenses( skip, limit);
+		
+		long endtime = System.nanoTime();
+		long elapsetime = endtime - startTime;
+		System.out.println("Elapsed time--->" + elapsetime);
+
+		return new ResponseEntity<>(true, HttpStatus.OK);
+	}
 
 
 

@@ -135,6 +135,9 @@ public class TLConfiguration {
 
     @Value("${egov.tl.calculator.calculate.endpoint}")
     private String calculateEndpointTL;
+    
+    @Value("${egov.tl.calculator.estimate.endpoint}")
+    private String estimateEndpointTL;
 
     @Value("${egov.bpa.calculator.calculate.endpoint}")
     private String calculateEndpointBPA;
@@ -308,4 +311,6 @@ public class TLConfiguration {
     @Value("${egov.tl.maximumTardeUnits.size}")
     private Integer maximumTardeUnits ;
 
+    @Value("${egov.migration.filename}")
+    private String migrationFileName ;
 }

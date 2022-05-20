@@ -244,6 +244,35 @@ public class PGRUtils {
 		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
 		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
 	}
+	
+	
+	public MdmsCriteriaReq prepareMdMsRequestForUlbGrade(StringBuilder uri, List<String> tenantIdList,String tenantId , RequestInfo requestInfo) {
+		uri.append(mdmsHost).append(mdmsEndpoint);
+		MasterDetail masterDetail = org.egov.mdms.model.MasterDetail.builder()
+				.name(PGRConstants.MDMS_MASTER_TENANTS).filter("[?(@.code IN " + tenantIdList + ")].city.ulbGrade").build();
+		List<MasterDetail> masterDetails = new ArrayList<>();
+		masterDetails.add(masterDetail);
+		ModuleDetail moduleDetail = ModuleDetail.builder().moduleName(PGRConstants.MDMS_TENANT_MODULE_NAME)
+				.masterDetails(masterDetails).build();
+		List<ModuleDetail> moduleDetails = new ArrayList<>();
+		moduleDetails.add(moduleDetail);
+		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
+		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+	}
+	
+	public MdmsCriteriaReq prepareMdMsRequestForApplicableServiceCodes(StringBuilder uri,List<String> uuidsList, String tenantId , RequestInfo requestInfo) {
+		uri.append(mdmsHost).append(mdmsEndpoint);
+		MasterDetail masterDetail = org.egov.mdms.model.MasterDetail.builder()
+				.name(PGRConstants.MDMS_ESCALATIONLEVEL4_COMPLAINTS_MASTER_NAME).filter("[?(@.id IN " + uuidsList + ")].serviceCodes").build();
+		List<MasterDetail> masterDetails = new ArrayList<>();
+		masterDetails.add(masterDetail);
+		ModuleDetail moduleDetail = ModuleDetail.builder().moduleName(PGRConstants.MDMS_PGR_MOD_NAME)
+				.masterDetails(masterDetails).build();
+		List<ModuleDetail> moduleDetails = new ArrayList<>();
+		moduleDetails.add(moduleDetail);
+		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().tenantId(tenantId).moduleDetails(moduleDetails).build();
+		return MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+	}
 
 	public MdmsCriteriaReq prepareMdMsRequestForDesignation(StringBuilder uri, String tenantId, String code,
 			RequestInfo requestInfo) {
@@ -688,7 +717,7 @@ public class PGRUtils {
 	 * @param actionInfo
 	 * @return String
 	 */
-	public String checkReopenForEscalation(ActionHistory history, String action) {
+	public String checkReopenForEscalation(RequestInfo requestInfo, ActionHistory history, String action ,String tenantId) {
 		List<ActionInfo> infos = history.getActions();
 		List<String>  statusList = new ArrayList() ;
 		
@@ -713,6 +742,15 @@ public class PGRUtils {
 			return WorkFlowConfigs.STATUS_ESCALATED_LEVEL3_PENDING;
 		}else if(statusList.contains(WorkFlowConfigs.STATUS_ESCALATED_LEVEL1_PENDING.toLowerCase()))
 		{
+			//Customized logic based on the ULB Grade
+			List<String>   ulbGrade = getUlbGrade(requestInfo, tenantId);
+			
+			if(ulbGrade.get(0).equalsIgnoreCase(PGRConstants.ULB_GRADE_MUNICIPAL_CORPORATION))
+			{
+				return WorkFlowConfigs.STATUS_ESCALATED_LEVEL4_PENDING;
+			}
+			
+			
 			return WorkFlowConfigs.STATUS_ESCALATED_LEVEL2_PENDING;
 		}else 
 			return null;
@@ -750,6 +788,105 @@ public class PGRUtils {
 		
 	}
 	
+	
+	/**
+	 * 
+	 * Fetches the ULB grade based on the tenant id .
+	 * 
+	 * @param requestInfo
+	 * @param tenantId
+	 * @return
+	 */
+	public List<String> getUlbGrade(RequestInfo requestInfo, String tenantId) {
+		StringBuilder mdmsUri = new StringBuilder();
+		List<String>  tenantIdList = new ArrayList<String>();
+		tenantIdList.add(tenantId);
+		List<String> ulbGrades = null;
+		Object response = null;
+		MdmsCriteriaReq mdmsCriteriaReq = prepareMdMsRequestForUlbGrade(mdmsUri, tenantIdList, tenantId , requestInfo);
+		try {
+			response = serviceRequestRepository.fetchResult(mdmsUri, mdmsCriteriaReq);
+			if (null == response) {
+				throw new CustomException(ErrorConstants.INVALID_ULB_GRADE_TENANT_KEY, ErrorConstants.INVALID_ULB_GRADE_TENANT_MSG);
+			}
+			ulbGrades = JsonPath.read(response, PGRConstants.JSONPATH_ULBGRADE);
+			if(CollectionUtils.isEmpty(ulbGrades)) {
+				throw new CustomException(ErrorConstants.INVALID_ULB_GRADE_TENANT_KEY, ErrorConstants.INVALID_ULB_GRADE_TENANT_MSG);
+			}
+		} catch (Exception e) {
+			log.error("Exception: " + e);
+			throw new CustomException(ErrorConstants.INVALID_ULB_GRADE_TENANT_KEY,
+					ErrorConstants.INVALID_ULB_GRADE_TENANT_MSG);
+		}
+		return ulbGrades;
+	}
+	
+	/**
+	 * 
+	 * Fetches the ApplicableServiceCodes based on the uuid .
+	 * 
+	 * @param requestInfo
+	 * @param tenantId
+	 * @return
+	 */
+	public List<String> getApplicableServiceCodes(RequestInfo requestInfo, String uuid  ) {
+		StringBuilder mdmsUri = new StringBuilder();
+		List<String>  uuidList = new ArrayList<String>();
+		uuidList.add(uuid);
+		List<String> applicableServiceCodes = null;
+		Object response = null;
+		MdmsCriteriaReq mdmsCriteriaReq = prepareMdMsRequestForApplicableServiceCodes(mdmsUri, uuidList, requestInfo.getUserInfo().getTenantId() , requestInfo);
+		try {
+			response = serviceRequestRepository.fetchResult(mdmsUri, mdmsCriteriaReq);
+			if (null == response) {
+				return applicableServiceCodes;
+			}
+			applicableServiceCodes = JsonPath.read(response, PGRConstants.JSONPATH_APPLICABLE_SERVICE_CODES);
+			if(CollectionUtils.isEmpty(applicableServiceCodes)) {
+				return applicableServiceCodes;
+			}
+		} catch (Exception e) {
+			log.error("Exception oocured while fetching the applicable service codes for escalationlevel4 officer with uuid "+uuid );
+			log.error("Exception: " + e);
+			
+		}
+		return applicableServiceCodes;
+	}
+	
+	
+	/**
+	 * 
+	 * 
+	 * 
+	 * @param requestInfo
+	 * @param tenantId
+	 * @return
+	 */
+	public List<String> getBuildingPermissionServiceCodes(String tenantId, String fieldName, String values,RequestInfo requestInfo) {
+		StringBuilder mdmsUri = new StringBuilder();
+		mdmsUri.append(mdmsHost).append(mdmsEndpoint);
+		List<String> applicableServiceCodes = null;
+		Object response = null;
+		MdmsCriteriaReq mdmsCriteriaReq = prepareMdMsRequest(tenantId, fieldName, values , requestInfo);
+		try {
+			response = serviceRequestRepository.fetchResult(mdmsUri, mdmsCriteriaReq);
+			if (null == response) {
+				return applicableServiceCodes;
+			}
+			applicableServiceCodes = JsonPath.read(response, PGRConstants.JSONPATH_SERVICEDEFS);
+			if(CollectionUtils.isEmpty(applicableServiceCodes)) {
+				return applicableServiceCodes;
+			}
+		} catch (Exception e) {
+			log.error("Exception oocured while fetching the applicable service codes for escalationlevel1 officer with fieldName {}  and values {}",fieldName,values );
+			log.error("Exception: " + e);
+			
+		}
+		return applicableServiceCodes;
+	}
+	
+	
+
 	
 
 }
