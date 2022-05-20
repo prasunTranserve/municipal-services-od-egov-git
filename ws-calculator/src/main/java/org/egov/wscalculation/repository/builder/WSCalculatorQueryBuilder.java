@@ -65,6 +65,13 @@ public class WSCalculatorQueryBuilder {
 			+  LEFT_OUTER_JOIN_STRING
 			+ "eg_ws_roadcuttinginfo roadcuttingInfo ON roadcuttingInfo.wsid = conn.id ";
 
+	private static final String GET_INSTALLMENT_DETAILS_BY_CONSUMER_NO = "select ewi.* from eg_ws_installment ewi inner join (select feetype, min(installmentno) as installmentNo from eg_ws_installment where consumerno = ? and demandid is null group by feetype) ewi2 on ewi2.feetype = ewi.feetype and ewi2.installmentNo = ewi.installmentno where ewi.tenantid = ? and ewi.consumerno = ? and demandid is null";
+
+	private static final String NO_OF_INSTALLMENT_PRESENT_BY_APPLICATIONNO_AND_FEETYPE = "SELECT count(*) FROM eg_ws_installment ewi ";
+	
+	private static final String GET_INSTALLMENT_DETAILS_BY_APPLICATION_NO = "select * from eg_ws_installment ewi ";
+
+	private static final String ANNUAL_ADVANCE_SEARCH = "select * from eg_ws_annualadvancedetails ewa ";
 
 	public String getDistinctTenantIds() {
 		return distinctTenantIdsCriteria;
@@ -254,7 +261,100 @@ public class WSCalculatorQueryBuilder {
 		return countQuery;
 	}
 	
-	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos) {
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
+		//StringBuilder query = new StringBuilder(connectionNoListQuery);
+
+		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
+
+		// add tenantid
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.tenantid = ? ");
+		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.applicationstatus = 'CONNECTION_ACTIVATED'");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.isoldapplication = false");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno is not null");
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectiontype = ? ");
+		preparedStatement.add(connectionType);
+		
+		// remove the connection which was created after billing period
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" wc.connectionexecutiondate <= ?");
+		preparedStatement.add(toDate);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
+		preparedStatement.add(fromDate);
+		preparedStatement.add(toDate);
+		preparedStatement.add(tenantId);
+
+//		addClauseIfRequired(preparedStatement, query);
+		String orderbyClause = " and conn.connectionno in (select ewc.connectionno from eg_ws_connection ewc inner join eg_ws_service ews on ews.connection_id = ewc.id where ewc.tenantid = ? and ewc.applicationstatus = 'CONNECTION_ACTIVATED' and ewc.isoldapplication = false and ewc.connectionno is not null and ews.connectiontype = ? and ews.connectionexecutiondate <= ? order by ewc.connectionno offset ? limit ?)";
+		preparedStatement.add(tenantId);
+		preparedStatement.add(connectionType);
+		preparedStatement.add(toDate);
+		preparedStatement.add(batchOffset);
+		preparedStatement.add(batchsize);
+		query.append(orderbyClause);
+		
+		return query.toString();
+		
+	}
+	
+	public String getInstallmentByConsumerNo(String tenantId, String consumerNo, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(GET_INSTALLMENT_DETAILS_BY_CONSUMER_NO);
+		preparedStatement.add(consumerNo);
+		preparedStatement.add(tenantId);
+		preparedStatement.add(consumerNo);
+		return query.toString();
+	}
+
+	public String getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(NO_OF_INSTALLMENT_PRESENT_BY_APPLICATIONNO_AND_FEETYPE);
+		if(!StringUtils.isEmpty(tenantId)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.tenantId= ? ");
+			preparedStatement.add(tenantId);
+		}
+		if(!StringUtils.isEmpty(applicationNo)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.applicationno= ? ");
+			preparedStatement.add(applicationNo);
+		}
+		if(!StringUtils.isEmpty(feeType)){
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" ewi.feetype= ? ");
+			preparedStatement.add(feeType);
+		}
+
+		return query.toString();
+	}
+	
+	public String getInstallmentByApplicationNo(String tenantId, String applicationNo, List<Object> preparedStatement) {
+		StringBuilder query = new StringBuilder(GET_INSTALLMENT_DETAILS_BY_APPLICATION_NO);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" tenantid = ? ");
+		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" applicationno = ? ");
+		preparedStatement.add(applicationNo);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" installmentno = 1 ");
+		
+		return query.toString();
+  }
+
+	public String getConnectionNumberList(String tenantId, String connectionType, List<Object> preparedStatement, Long fromDate, Long toDate, List<String> connectionNos) {
 		//StringBuilder query = new StringBuilder(connectionNoListQuery);
 
 		StringBuilder query = new StringBuilder(WATER_SEARCH_QUERY);
@@ -283,18 +383,18 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(toDate);
 		
 		// added for connection wise bill generation
-//		if(!connectionNos.isEmpty()) {
-//			addClauseIfRequired(preparedStatement, query);
-//			query.append(" conn.connectionno in (");
-//			int length = connectionNos.size();
-//			for (int i = 0; i < length; i++) {
-//				query.append(" ?");
-//				if (i != length - 1)
-//					query.append(",");
-//				preparedStatement.add(connectionNos.get(i));
-//			}
-//			query.append(")");
-//		}
+		if(!connectionNos.isEmpty()) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" conn.connectionno in (");
+			int length = connectionNos.size();
+			for (int i = 0; i < length; i++) {
+				query.append(" ?");
+				if (i != length - 1)
+					query.append(",");
+				preparedStatement.add(connectionNos.get(i));
+			}
+			query.append(")");
+		}
 
 		addClauseIfRequired(preparedStatement, query);
 		query.append(" conn.connectionno NOT IN (select distinct(consumercode) from egbs_demand_v1 dmd where (dmd.taxperiodfrom >= ? and dmd.taxperiodto <= ?) and businessservice = 'WS' and tenantid=?)");
@@ -302,17 +402,32 @@ public class WSCalculatorQueryBuilder {
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantId);
 
-//		addClauseIfRequired(preparedStatement, query);
-		String orderbyClause = " and conn.connectionno in (select ewc.connectionno from eg_ws_connection ewc inner join eg_ws_service ews on ews.connection_id = ewc.id where ewc.tenantid = ? and ewc.applicationstatus = 'CONNECTION_ACTIVATED' and ewc.isoldapplication = false and ewc.connectionno is not null and ews.connectiontype = ? and ews.connectionexecutiondate <= ? order by ewc.connectionno offset ? limit ?)";
-		preparedStatement.add(tenantId);
-		preparedStatement.add(connectionType);
-		preparedStatement.add(toDate);
-		preparedStatement.add(batchOffset);
-		preparedStatement.add(batchsize);
-		query.append(orderbyClause);
-		
 		return query.toString();
 		
+	}
+	public String getAnnualAdvance(String tenantId, String connectionNo, String finYear, List<Object> preparedStatement) {
+		// TODO Auto-generated method stub
+		StringBuilder query = new StringBuilder(ANNUAL_ADVANCE_SEARCH);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" tenantid = ? ");
+		preparedStatement.add(tenantId);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" connectionno = ? ");
+		preparedStatement.add(connectionNo);
+		
+		addClauseIfRequired(preparedStatement, query);
+		query.append(" status = ? ");
+		preparedStatement.add("Active");
+		
+		if(StringUtils.hasText(finYear)) {
+			addClauseIfRequired(preparedStatement, query);
+			query.append(" finyear = ? ");
+			preparedStatement.add(finYear);
+		}
+		
+		return query.toString();
 	}
 
 }

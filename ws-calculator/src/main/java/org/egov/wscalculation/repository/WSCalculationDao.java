@@ -3,7 +3,10 @@ package org.egov.wscalculation.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.Installments;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -31,9 +34,21 @@ public interface WSCalculationDao {
 	
 	void updateMeterReading(MeterConnectionRequest meterConnectionRequest);
 
-	long getConnectionCount(String tenantId, Long fromDate, Long toDate);
+	long getConnectionCount(String tenantId, Long fromDate, Long toDate, boolean connectionWise, List<String> connectionNos);
 
 	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Integer batchOffset,
-			Integer batchsize, Long fromDate, Long toDate, List<String> connectionNos);
+			Integer batchsize, Long fromDate, Long toDate);
+	
+	List<Installments> getApplicableInstallmentsByConsumerNo(String tenantId, String consumerNo);
+
+	int getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType);
+
+	List<Installments> getApplicableInstallmentsByApplicationNo(String tenantId, String consumerNo);
+
+	List<WaterConnection> getConnectionsNoList(String tenantId, String nonmeterdconnection, Long fromDate, Long toDate, List<String> connectionNos);
+
+	void saveAnnualAdvance(AnnualAdvanceRequest annualAdvanceRequests);
+
+	List<AnnualAdvance> getAnnualAdvance(String tenantId, String connectionNo, String assessYear);
 
 }

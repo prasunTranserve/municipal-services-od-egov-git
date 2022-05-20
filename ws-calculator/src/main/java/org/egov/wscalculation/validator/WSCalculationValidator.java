@@ -14,19 +14,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.service.MasterDataService;
 import org.egov.wscalculation.util.CalculatorUtil;
+import org.egov.wscalculation.web.models.AnnualAdvance;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
+import org.egov.wscalculation.web.models.MeterReading.MeterStatusEnum;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +47,9 @@ public class WSCalculationValidator {
 	
 	@Autowired
 	private MasterDataService masterDataService;
+	
+	@Autowired
+	private ObjectMapper mapper;
 
 	/**
 	 * 
@@ -81,13 +89,13 @@ public class WSCalculationValidator {
 		List<MeterReading> previousMeterReading = wSCalculationDao.searchCurrentMeterReadings(criteria);
 		if (!CollectionUtils.isEmpty(previousMeterReading)) {
 			Double currentMeterReading = previousMeterReading.get(0).getCurrentReading();
-			if (meterReading.getCurrentReading() < currentMeterReading) {
+			if (meterReading.getCurrentReading() < currentMeterReading && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 				errorMap.put("INVALID_METER_READING_CONNECTION_NUMBER",
 						"Current meter reading has to be greater than the past last readings in the meter reading!");
 			}
 		}
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading()) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}
@@ -192,7 +200,7 @@ public class WSCalculationValidator {
 		Set<String> connectionNos = new HashSet<>();
 		connectionNos.add(meterReading.getConnectionNo());
 
-		if (meterReading.getCurrentReading() < meterReading.getLastReading()) {
+		if (meterReading.getCurrentReading() < meterReading.getLastReading() && !(meterReading.getMeterStatus() == MeterStatusEnum.RESET)) {
 			errorMap.put("INVALID_METER_READING_LAST_READING",
 					"Current Meter Reading cannot be less than last meter reading");
 		}
@@ -246,6 +254,72 @@ public class WSCalculationValidator {
 			throw new CustomException(errorMap);
 		}
 
+	}
+
+	public void validateAnnualAdvance(RequestInfo requestInfo, String tenantId, String connectionNo) {
+		Map<String, String> errorMap = new HashMap<>();
+		
+		List<WaterConnection> waterConnectionList = calculationUtil.getWaterConnection(requestInfo,connectionNo, tenantId);
+		WaterConnection connection = null;
+		if(waterConnectionList != null){
+			int size = waterConnectionList.size();
+			connection = waterConnectionList.get(size-1);
+		}
+		
+		if(connection != null) {
+			String assessYear = calculationUtil.getFinancialYear();
+			List<AnnualAdvance> annualAdvances = wSCalculationDao.getAnnualAdvance(tenantId, connectionNo, assessYear);
+			if(!annualAdvances.isEmpty()) {
+				errorMap.put("INVALID_ANNUAL_ADVANCE", "Annual advance already applied on this connection for this financial year");
+			}
+			
+		} else {
+			errorMap.put("INVALID_WATER_CONNECTION", "No connection found with this connectionNo");
+		}
+		
+		if (!errorMap.isEmpty()) {
+			throw new CustomException(errorMap);
+		}
+  
+	}
+
+	public Boolean validateMaxMeterDigits(MeterConnectionRequest meterConnectionRequest) {
+		Map<String, String> errorMap = new HashMap<>();
+		
+		List<WaterConnection> waterConnectionList = calculationUtil.getWaterConnection(meterConnectionRequest.getRequestInfo(),meterConnectionRequest.getMeterReading().getConnectionNo(),meterConnectionRequest.getMeterReading().getTenantId());
+		WaterConnection waterConnection = calculationUtil.getWaterConnectionObject(waterConnectionList);
+		HashMap<String, Object> addDetail = mapper.convertValue(waterConnection.getAdditionalDetails(), HashMap.class);
+		
+		Integer maxMeterDigits = null;
+		if(addDetail.containsKey(WSCalculationConstant.MAX_METER_DIGITS_CONST)
+				&& addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST) != null) {
+			maxMeterDigits = (Integer) addDetail.get(WSCalculationConstant.MAX_METER_DIGITS_CONST);
+		} else {
+			errorMap.put("INVALID_METER_INFO", "Please update the maximum meter digits for this connection. If already updated please retry after a few days.");
+		}
+		
+		if(maxMeterDigits != null && !WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.contains((maxMeterDigits))) {
+			errorMap.put("INVALID_METER_INFO", "Max meter digits has to be in between " + WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.get(0) + " to " + WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.get(WSCalculationConstant.ALLOWED_MAX_METER_DIGIT_LIST.size() - 1) + " range.");
+		}
+		
+		if(maxMeterDigits != null) {
+			int maxMeterReading = calculateMaxMeterReading(maxMeterDigits);
+			if(maxMeterReading < meterConnectionRequest.getMeterReading().getCurrentReading()) {
+				errorMap.put("INVALID_METER_READING", "Max reading allowed "+maxMeterReading+" for this connection. Please check carefully");
+			}
+		}
+		
+		if (!errorMap.isEmpty()) {
+			throw new CustomException(errorMap);
+		}
+
+		return true;
+	}
+	
+	/*Returns the largest number possible for meter digits ex:- meter digit 4 will give 9999 i.e largest 4 digit number*/
+	private Integer calculateMaxMeterReading(Integer maxMeterDigit) {
+		Integer maxMeterReading = (int) ((Math.pow(10, maxMeterDigit))-1);
+		return maxMeterReading;
 	}
 
 }

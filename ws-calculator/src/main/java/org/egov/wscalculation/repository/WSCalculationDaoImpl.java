@@ -10,11 +10,16 @@ import java.util.stream.Collectors;
 import org.egov.wscalculation.constants.WSCalculationConstant;
 import org.egov.wscalculation.producer.WSCalculationProducer;
 import org.egov.wscalculation.repository.builder.WSCalculatorQueryBuilder;
+import org.egov.wscalculation.repository.rowmapper.AnnualAdvanceRowMapper;
 import org.egov.wscalculation.repository.rowmapper.DemandSchedulerRowMapper;
+import org.egov.wscalculation.repository.rowmapper.InstallmentRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingCurrentReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.MeterReadingRowMapper;
 import org.egov.wscalculation.repository.rowmapper.WaterRowMapper;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
 import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.Installments;
 import org.egov.wscalculation.web.models.MeterConnectionRequest;
 import org.egov.wscalculation.web.models.MeterReading;
 import org.egov.wscalculation.web.models.MeterReadingSearchCriteria;
@@ -51,12 +56,21 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	@Autowired
 	private WaterRowMapper waterRowMapper;
 	
+	@Autowired
+	private InstallmentRowMapper installmentRowMapper;
+	
+	@Autowired
+	private AnnualAdvanceRowMapper annualAdvanceRowMapper;
+	
 
 	@Value("${egov.meterservice.createmeterconnection}")
 	private String createMeterConnection;
 	
 	@Value("${egov.meterservice.updatemeterconnection}")
 	private String updateMeterConnection;
+	
+	@Value("${kafka.topic.ws.annual.advance.create}")
+    private String createAnnualAdvance;
 
 	/**
 	 * 
@@ -177,7 +191,7 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 	}
 	
 	@Override
-	public long getConnectionCount(String tenantid, Long fromDate, Long toDate){
+	public long getConnectionCount(String tenantid, Long fromDate, Long toDate, boolean connectionWise, List<String> connectionNos){
 		List<Object> preparedStatement = new ArrayList<>();
 		String query = queryBuilder.getCountQuery();
 		preparedStatement.add(tenantid);
@@ -185,17 +199,78 @@ public class WSCalculationDaoImpl implements WSCalculationDao {
 		preparedStatement.add(fromDate);
 		preparedStatement.add(toDate);
 		preparedStatement.add(tenantid);
+		
+		StringBuilder queryBuilder = new StringBuilder(query);
+		
+		if(connectionWise) {
+			// added for connection wise bill generation
+			if(!connectionNos.isEmpty()) {
+				queryBuilder.append(" and conn.connectionno in (");
+				int length = connectionNos.size();
+				for (int i = 0; i < length; i++) {
+					queryBuilder.append(" ?");
+					if (i != length - 1)
+						queryBuilder.append(",");
+					preparedStatement.add(connectionNos.get(i));
+				}
+				queryBuilder.append(")");
+			}
+		}
 
-		long count = jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+		long count = jdbcTemplate.queryForObject(queryBuilder.toString(), preparedStatement.toArray(), Integer.class);
 		return count;
 	}
 	
 	@Override
-	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate,
-			List<String> connectionNos) {
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Integer batchOffset, Integer batchsize, Long fromDate, Long toDate) {
 		List<Object> preparedStatement = new ArrayList<>();
-		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate, connectionNos);
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, batchOffset, batchsize, fromDate, toDate);
 		log.info("connection " + connectionType + " connection list : " + query);
 		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
+	}
+	
+	@Override
+	public List<WaterConnection> getConnectionsNoList(String tenantId, String connectionType, Long fromDate, Long toDate, List<String> connectionNos) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getConnectionNumberList(tenantId, connectionType, preparedStatement, fromDate, toDate, connectionNos);
+		log.info("connection " + connectionType + " connection list : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), waterRowMapper);
+	}
+	
+	@Override
+	public List<Installments> getApplicableInstallmentsByConsumerNo(String tenantId, String consumerNo) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentByConsumerNo(tenantId, consumerNo, preparedStatement);
+		log.info(" getAllInstallmentsByConsumerNo query : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), installmentRowMapper);
+	}
+	
+	@Override
+	public List<Installments> getApplicableInstallmentsByApplicationNo(String tenantId, String applicationNo) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentByApplicationNo(tenantId, applicationNo, preparedStatement);
+		log.info(" getAllInstallmentsByApplicationNo query : " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), installmentRowMapper);
+	}
+
+	@Override
+	public int getInstallmentCountByApplicationNoAndFeeType(String tenantId, String applicationNo, String feeType) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getInstallmentCountByApplicationNoAndFeeType(tenantId, applicationNo, feeType, preparedStatement);
+		log.info(" getAllInstallmentsByApplicationNoAndFeeType query : " + query);
+		return jdbcTemplate.queryForObject(query, preparedStatement.toArray(), Integer.class);
+	}
+	
+	@Override
+	public void saveAnnualAdvance(AnnualAdvanceRequest annualAdvanceRequests) {
+		wSCalculationProducer.push(createAnnualAdvance, annualAdvanceRequests);
+	}
+	
+	@Override
+	public List<AnnualAdvance> getAnnualAdvance(String tenantId, String connectionNo, String finYear) {
+		List<Object> preparedStatement = new ArrayList<>();
+		String query = queryBuilder.getAnnualAdvance(tenantId, connectionNo, finYear, preparedStatement);
+		log.info(" Annual advance search query: " + query);
+		return jdbcTemplate.query(query, preparedStatement.toArray(), annualAdvanceRowMapper);
 	}
 }

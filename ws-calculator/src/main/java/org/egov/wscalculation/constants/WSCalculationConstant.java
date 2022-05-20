@@ -111,6 +111,8 @@ public class WSCalculationConstant {
 	
 	public static final String METER_READING_DATE = "meterReadingDate";
 
+	public static final String MAX_METER_DIGITS_CONST = "maxMeterDigits";
+
 	/*
 	 * bigdecimal values
 	 */
@@ -213,6 +215,8 @@ public class WSCalculationConstant {
 	public static final String WC_ROADTYPE_MASTER = "RoadType";
 	
 	public static final String WC_LABOURFEE_MASTER = "LabourFee";
+	
+	public static final String WC_ANNUAL_ADVANCE_MASTER = "AnnualAdvance";
 	
 	
 	
@@ -340,5 +344,29 @@ public class WSCalculationConstant {
 	public static final String SW_ADHOC_CHARGE = "SW_ADHOC_CHARGE";
 	
 	public static final String SW_SPECIAL_REBATE = "SW_SPECIAL_REBATE";
+	
+	public static final String CONNECTION_TEMPORARY = "TEMPORARY";
+	public static final String CONNECTION_PERMANENT = "PERMANENT";
+	
+	// Installment
+	public static final String IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE = "isInstallmentApplicableForScrutinyFee";
+	public static final String NO_OF_SCRUTINY_FEE_INSTALLMENTS = "noOfScrutinyFeeInstallments";
+	public static final String NO_OF_LABOUR_FEE_INSTALLMENTS = "noOfLabourFeeInstallments";
+	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
+	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
+	
+	// Annual advance
+	public static final String ANNUAL_ADVANCE_REBATE = "annualRebate";
+	public static final String ADVANCE_WATER_CHARGE = "annualWaterCharge";
+	public static final String ADVANCE_SEWERAGE_CHARGE = "annualSewerageCharge";
+	public static final String ADVANCE_REBATE = "annualRebate";
+
+	public static final String CHANNEL_SUJOG = "SUJOG";
+	
+	public static final String WS_ANNUAL_PAYMENT_REBATE = "WS_ANNUAL_PAYMENT_REBATE";
+	
+	public static final List<String> ANNUAL_ADVANCE_ALLOWED_TAXHEAD = Arrays.asList(WS_CHARGE, SW_CHARGE);
+
+	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
 	
 }

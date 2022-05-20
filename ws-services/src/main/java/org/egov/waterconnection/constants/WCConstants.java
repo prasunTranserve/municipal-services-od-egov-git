@@ -50,6 +50,9 @@ public class WCConstants {
 	
 	public static final String MDMS_WC_CONNECTION_FACILITY = "connectionFacility";
 
+	// Update Max Meter Digits
+	public static final String APPL_TYPE_UPDATE_MAX_METER_DIGITS = "UPDATE_MAX_METER_DIGITS";
+
 	// WS actions
 
 	public static final String ACTION_INITIATE = "INITIATE";
@@ -128,7 +131,7 @@ public class WCConstants {
 	public static final String APPROVE_CLOSE_CONNECTION_STATUS_CODE = "APPROVE_TO_CLOSE_CONNECTION_PENDING_FOR_CLOSE_CONNECTION";
 	
 	public static final String CLOSE_CONNECTION_STATUS_CODE = "CLOSE_CONNECTION_CONNECTION_CLOSED";
-
+	
 	public static final List<String> NOTIFICATION_ENABLE_FOR_STATUS = Collections
 			.unmodifiableList(Arrays.asList(INITIATE_INITIATED, REJECT_REJECTED,
 					SEND_BACK_TO_CITIZEN_PENDING_FOR_CITIZEN_ACTION, SEND_BACK_FOR_DO_PENDING_FOR_DOCUMENT_VERIFICATION,
@@ -192,6 +195,8 @@ public class WCConstants {
 	public static final String ADHOC_REBATE_COMMENT = "adhocRebateComment";
 
 	public static final String INITIAL_METER_READING_CONST = "initialMeterReading";
+	
+	public static final String MAX_METER_DIGITS_CONST = "maxMeterDigits";
 
 	public static final String SUBMIT_APPLICATION_CONST = "SUBMIT_APPLICATION";
 
@@ -210,7 +215,7 @@ public class WCConstants {
 	public static final List<String> ADDITIONAL_OBJ_CONSTANT = Collections
 			.unmodifiableList(Arrays.asList(ADHOC_PENALTY, ADHOC_REBATE, ADHOC_PENALTY_REASON, ADHOC_PENALTY_COMMENT,
 					ADHOC_REBATE_REASON, ADHOC_REBATE_COMMENT, INITIAL_METER_READING_CONST, DETAILS_PROVIDED_BY,
-					APP_CREATED_DATE, ESTIMATION_FILESTORE_ID, SANCTION_LETTER_FILESTORE_ID, ESTIMATION_DATE_CONST));
+					APP_CREATED_DATE, ESTIMATION_FILESTORE_ID, SANCTION_LETTER_FILESTORE_ID, ESTIMATION_DATE_CONST, MAX_METER_DIGITS_CONST));
 
 	public static final List<String> EDIT_NOTIFICATION_STATE = Collections
 			.unmodifiableList(Arrays.asList(ACTION_INITIATE, SUBMIT_APPLICATION_CONST, ACTION_PAY));
@@ -257,6 +262,7 @@ public class WCConstants {
 	public static final int CLOSE_CONNECTION =  4;
 	public static final int RECONNECTION =  5;
 	public static final int OWNERSHIP_CHANGE_CONNECTION =  6;
+	public static final int METER_REPLACE = 7; 
 	
 	public static final String NEW_WATER_CONNECTION = "NEW_CONNECTION";
 
@@ -269,6 +275,8 @@ public class WCConstants {
 	public static final String WATER_RECONNECTION = "RECONNECT_CONNECTION";
 	
 	public static final String CONNECTION_OWNERSHIP_CHANGE = "CONNECTION_OWNERSHIP_CHANGE";
+	
+	public static final String METER_REPLACEMENT = "METER_REPLACEMENT";
 	
 	public static final String WATER_SERVICE_BUSINESS_ID = "WS";
 	
@@ -308,9 +316,24 @@ public class WCConstants {
 	public static final String CONNECTION_DOMESTIC = "Domestic";
 	
 	public static final String CONNECTION_BPL = "BPL";
+	public static final String CONNECTION_ROAD_SIDE_EATERS = "ROADSIDEEATERS";
 	
 	public static final String SERVICE_WATER = "WATER";
 	public static final String SERVICE_SEWERAGE = "SEWERAGE";
 	public static final String SERVICE_WATER_SEWERAGE = "WATER-SEWERAGE";
+	
+	//Additional Details for installment
+	public static final String IS_INSTALLMENT_APPLICABLE = "isInstallmentApplicable";
+	public static final String IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE = "isInstallmentApplicableForScrutinyFee";
+	public static final String NO_OF_SCRUTINY_FEE_INSTALLMENTS = "noOfScrutinyFeeInstallments";
+	public static final String NO_OF_LABOUR_FEE_INSTALLMENTS = "noOfLabourFeeInstallments";
+	public static final String SCRUTINY_FEE_INSTALLMENT_AMOUNT = "scrutinyFeeInstallmentAmount";
+	public static final String LABOUR_FEE_INSTALLMENT_AMOUNT = "labourFeeInstallmentAmount";
+
+	public static final String MDMS_WC_INSTALLMENT = "Installment";
+	public static final String WS_SCRUTINY_FEE = "WS_SCRUTINY_FEE";
+	public static final String WS_LABOUR_FEE = "WS_LABOUR_FEE";
+	
+	public static final List<Integer> ALLOWED_MAX_METER_DIGIT_LIST = Arrays.asList(4, 5, 6, 7, 8);
 
 }

@@ -1,13 +1,19 @@
 package org.egov.waterconnection.validator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.validation.Valid;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -83,6 +89,113 @@ public class MDMSValidator {
 					.flatMap(Collection::stream).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 			validateMDMSData(finalmasterNames, finalcodes);
 			validateCodes(request.getWaterConnection(), finalcodes);
+			validateInstallment(request, finalcodes);
+		}
+	}
+
+	private void validateInstallment(WaterConnectionRequest waterConnectionRequest, Map<String, List<String>> finalcodes) {
+		Map<String, String> errorMap = new HashMap<>();
+		WaterConnection waterConnection = waterConnectionRequest.getWaterConnection();
+		
+		Map<String, List<LinkedHashMap>> allInstallments = null;
+		List<LinkedHashMap> installments = null;
+		allInstallments = getMdmsAttributeValues(waterConnection.getTenantId(), WCConstants.WS_TAX_MODULE, Collections.singletonList(WCConstants.MDMS_WC_INSTALLMENT),
+				null, WCConstants.TAX_JSONPATH_ROOT, waterConnectionRequest.getRequestInfo());
+		installments = allInstallments.get("Installment");
+		
+		if(Objects.isNull(allInstallments) || Objects.isNull(installments)) {
+			errorMap.put("MDMS DATA ERROR ", "Unable to fetch " + WCConstants.MDMS_WC_INSTALLMENT + " codes from MDMS");
+			return;
+		}
+		
+		boolean isLabourFeeApplicable = Boolean.FALSE;
+		boolean isInstallmentApplicable = Boolean.FALSE;
+		BigDecimal labourFee = BigDecimal.ZERO;
+		int noOfLabourFeeInstallments = 0;
+
+		BigDecimal scrutinyFee = BigDecimal.ZERO;
+		boolean isInstallmentApplicableForScrutinyFee = Boolean.FALSE;
+		int noOfScrutinyFeeInstallments = 0;
+
+		LinkedHashMap additionalDetailJsonNode = (LinkedHashMap)waterConnection.getAdditionalDetails();
+
+		if(additionalDetailJsonNode.containsKey(WCConstants.IS_LABOUR_FEE_APPLICABLE)
+				&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.IS_LABOUR_FEE_APPLICABLE))) {
+			isLabourFeeApplicable = additionalDetailJsonNode.get(WCConstants.IS_LABOUR_FEE_APPLICABLE).toString().equalsIgnoreCase("Y") 
+					? Boolean.TRUE:Boolean.FALSE;
+		}
+
+		if(additionalDetailJsonNode.containsKey(WCConstants.IS_INSTALLMENT_APPLICABLE)
+				&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.IS_INSTALLMENT_APPLICABLE))) {
+			isInstallmentApplicable = additionalDetailJsonNode.get(WCConstants.IS_INSTALLMENT_APPLICABLE).toString().equalsIgnoreCase("Y") 
+					? Boolean.TRUE:Boolean.FALSE;
+		}
+
+		//Validate amount for Labour Fee
+		if(isLabourFeeApplicable && isInstallmentApplicable) {
+			if(additionalDetailJsonNode.containsKey(WCConstants.NO_OF_LABOUR_FEE_INSTALLMENTS)
+					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.NO_OF_LABOUR_FEE_INSTALLMENTS))) {
+				noOfLabourFeeInstallments = Integer.parseInt(additionalDetailJsonNode.get(WCConstants.NO_OF_LABOUR_FEE_INSTALLMENTS).toString());
+			}
+			if(additionalDetailJsonNode.containsKey(WCConstants.LABOUR_FEE_INSTALLMENT_AMOUNT)
+					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.LABOUR_FEE_INSTALLMENT_AMOUNT))) {
+				labourFee = new BigDecimal(additionalDetailJsonNode.get(WCConstants.LABOUR_FEE_INSTALLMENT_AMOUNT).toString());
+			}
+
+			if((WCConstants.METERED_CONNECTION.equalsIgnoreCase(waterConnection.getConnectionType())
+				&& ((WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+								&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+					|| WCConstants.CONNECTION_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))
+				|| (WCConstants.NON_METERED_CONNECTION.equalsIgnoreCase(waterConnection.getConnectionType())
+						&& ((WCConstants.CONNECTION_TEMPORARY.equalsIgnoreCase(waterConnection.getConnectionCategory())
+								&& WCConstants.CONNECTION_ROAD_SIDE_EATERS.equalsIgnoreCase(waterConnection.getUsageCategory()))
+							|| (WCConstants.CONNECTION_PERMANENT.equalsIgnoreCase(waterConnection.getConnectionCategory())
+									&& ((WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+											&& waterConnection.getNoOfFlats().compareTo(0) <= 0)
+										|| WCConstants.CONNECTION_BPL.equalsIgnoreCase(waterConnection.getUsageCategory())))))) {
+
+				for(LinkedHashMap installmentObj : installments) {
+					if(!Objects.isNull(installmentObj.get("feeType")) && WCConstants.WS_LABOUR_FEE.equalsIgnoreCase(installmentObj.get("feeType").toString())
+							&& !Objects.isNull(installmentObj.get("usageCategory")) && WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(installmentObj.get("usageCategory").toString())
+							&& !Objects.isNull(installmentObj.get("noOfInstallment")) && Integer.parseInt(installmentObj.get("noOfInstallment").toString()) == noOfLabourFeeInstallments) {
+						if(!Objects.isNull(installmentObj.get("installmentAmount")) && new BigDecimal(installmentObj.get("installmentAmount").toString()).compareTo(labourFee) != 0) {
+							errorMap.put("INVALID_LABOUR_FEE_INSTALLMENT_AMOUNT", "Invalid installment amount for Labour Fee");
+						}
+					}
+				}
+			}
+
+		}
+
+		if(additionalDetailJsonNode.containsKey(WCConstants.IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE)
+				&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE))) {
+			isInstallmentApplicableForScrutinyFee = additionalDetailJsonNode.get(WCConstants.IS_INSTALLMENT_APPLICABLE_FOR_SCRUTINY_FEE).toString().equalsIgnoreCase("Y") 
+					? Boolean.TRUE:Boolean.FALSE;
+		}
+
+		//Validate amount for Scrutiny Fee
+		if(isInstallmentApplicableForScrutinyFee) {
+			if(additionalDetailJsonNode.containsKey(WCConstants.NO_OF_SCRUTINY_FEE_INSTALLMENTS)
+					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.NO_OF_SCRUTINY_FEE_INSTALLMENTS))) {
+				noOfScrutinyFeeInstallments = Integer.parseInt(additionalDetailJsonNode.get(WCConstants.NO_OF_SCRUTINY_FEE_INSTALLMENTS).toString());
+			}
+			if(additionalDetailJsonNode.containsKey(WCConstants.SCRUTINY_FEE_INSTALLMENT_AMOUNT)
+					&& !StringUtils.isEmpty(additionalDetailJsonNode.get(WCConstants.SCRUTINY_FEE_INSTALLMENT_AMOUNT))) {
+				scrutinyFee = new BigDecimal(additionalDetailJsonNode.get(WCConstants.SCRUTINY_FEE_INSTALLMENT_AMOUNT).toString());
+			}
+			if(WCConstants.CONNECTION_PERMANENT.equalsIgnoreCase(waterConnection.getConnectionCategory())
+					&& WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(waterConnection.getUsageCategory())
+					&& waterConnection.getNoOfFlats().compareTo(0) <= 0) {
+				for(LinkedHashMap installmentObj : installments) {
+					if(!Objects.isNull(installmentObj.get("feeType")) && WCConstants.WS_SCRUTINY_FEE.equalsIgnoreCase(installmentObj.get("feeType").toString())
+							&& !Objects.isNull(installmentObj.get("usageCategory")) && WCConstants.CONNECTION_DOMESTIC.equalsIgnoreCase(installmentObj.get("usageCategory").toString())
+							&& !Objects.isNull(installmentObj.get("noOfInstallment")) && Integer.parseInt(installmentObj.get("noOfInstallment").toString()) == noOfScrutinyFeeInstallments) {
+						if(!Objects.isNull(installmentObj.get("installmentAmount")) && new BigDecimal(installmentObj.get("installmentAmount").toString()).compareTo(scrutinyFee) != 0) {
+							errorMap.put("INVALID_SCRUTINY_FEE_INSTALLMENT_AMOUNT", "Invalid installment amount for Scrutiny Fee");
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -100,7 +213,19 @@ public class MDMSValidator {
 		}
 	}
  
+	private Map<String, List<LinkedHashMap>> getMdmsAttributeValues(String tenantId, String moduleName, List<String> names,
+			String filter, String jsonPath, RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder(mdmsHost).append(mdmsEndpoint);
+		MdmsCriteriaReq criteriaReq = waterServicesUtil.prepareMdMsRequest(tenantId, moduleName, names, filter,
+				requestInfo);
+		try {
 
+			Object result = serviceRequestRepository.fetchResult(uri, criteriaReq);
+			return JsonPath.read(result, jsonPath);
+		} catch (Exception e) {
+			throw new CustomException(WCConstants.INVALID_CONNECTION_TYPE, WCConstants.INVALID_CONNECTION_TYPE);
+		}
+	}
 
 	private void validateMDMSData(String[] masterNames, Map<String, List<String>> codes) {
 		Map<String, String> errorMap = new HashMap<>();

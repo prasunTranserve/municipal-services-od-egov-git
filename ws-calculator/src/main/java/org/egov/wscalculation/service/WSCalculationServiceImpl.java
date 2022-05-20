@@ -4,10 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -19,20 +23,21 @@ import org.egov.wscalculation.repository.ServiceRequestRepository;
 import org.egov.wscalculation.repository.WSCalculationDao;
 import org.egov.wscalculation.util.CalculatorUtil;
 import org.egov.wscalculation.web.models.AdhocTaxReq;
-import org.egov.wscalculation.web.models.BillSchedulerCriteria;
+import org.egov.wscalculation.web.models.AnnualAdvance;
+import org.egov.wscalculation.web.models.AnnualAdvanceRequest;
+import org.egov.wscalculation.web.models.AnnualPaymentDetails;
+import org.egov.wscalculation.web.models.BillResponse;
 import org.egov.wscalculation.web.models.BulkBillCriteria;
 import org.egov.wscalculation.web.models.Calculation;
 import org.egov.wscalculation.web.models.CalculationCriteria;
 import org.egov.wscalculation.web.models.CalculationReq;
-import org.egov.wscalculation.web.models.DemandWard;
+import org.egov.wscalculation.web.models.Demand;
 import org.egov.wscalculation.web.models.TaxHeadCategory;
 import org.egov.wscalculation.web.models.TaxHeadEstimate;
 import org.egov.wscalculation.web.models.TaxHeadMaster;
 import org.egov.wscalculation.web.models.WaterConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -65,11 +70,20 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	
 	@Autowired
 	private WSCalculationConfiguration wsCalculationConfiguration;
+	
+	@Autowired
+	private InstallmentService installmentService;
+	
+	@Autowired
+	private AnnualAdvanceService annualAdvanceService;
 
 	/**
 	 * Get CalculationReq and Calculate the Tax Head on Water Charge And Estimation Charge
 	 */
 	public List<Calculation> getCalculation(CalculationReq request) {
+		
+		boolean isForApplication = false;
+		
 		List<Calculation> calculations;
 
 		Map<String, Object> masterMap;
@@ -90,9 +104,16 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			//Calculate and create demand for application
 			masterMap = masterDataService.loadExemptionMaster(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
-			calculations = getFeeCalculation(request, masterMap);
+			calculations = getFeeCalculation(request, masterMap, false);
+			isForApplication = true;
 		}
-		demandService.generateDemand(request.getRequestInfo(), calculations, masterMap, request.getIsconnectionCalculation());
+		List<Demand> demands = demandService.generateDemand(request.getRequestInfo(), calculations, masterMap, request.getIsconnectionCalculation());
+
+		if(isForApplication) {
+			//Update demand id in case of installment for new approved connection
+			installmentService.updateInstallmentsWithDemands(request.getRequestInfo(), demands, isForApplication);
+		}
+		
 		unsetWaterConnection(calculations);
 		return calculations;
 	}
@@ -117,7 +138,7 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	public List<Calculation> getEstimation(CalculationReq request) {
 		Map<String, Object> masterData = masterDataService.loadExemptionMaster(request.getRequestInfo(),
 				request.getCalculationCriteria().get(0).getTenantId());
-		List<Calculation> calculations = getFeeCalculation(request, masterData);
+		List<Calculation> calculations = getFeeCalculation(request, masterData, true);
 		unsetWaterConnection(calculations);
 		return calculations;
 	}
@@ -324,11 +345,11 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	 * @param masterMap - Master MDMS Data
 	 * @return list of calculation based on estimation criteria
 	 */
-	List<Calculation> getFeeCalculation(CalculationReq request, Map<String, Object> masterMap) {
+	List<Calculation> getFeeCalculation(CalculationReq request, Map<String, Object> masterMap, boolean isEstimate) {
 		List<Calculation> calculations = new ArrayList<>(request.getCalculationCriteria().size());
 		for (CalculationCriteria criteria : request.getCalculationCriteria()) {
 			Map<String, List> estimationMap = estimationService.getFeeEstimation(criteria, request.getRequestInfo(),
-					masterMap);
+					masterMap, isEstimate);
 			masterDataService.enrichBillingPeriodForFee(masterMap);
 			Calculation calculation = getCalculation(request.getRequestInfo(), criteria, estimationMap, masterMap, false);
 			calculations.add(calculation);
@@ -441,6 +462,10 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			throw new CustomException("INVALID_REQUEST", "Tenants are missing or empty. If want to process for all tenants use ALL");
 		}
 		
+		if(bulkBillCriteria.getTenantIds().size() > 1) {
+			throw new CustomException("INVALID_REQUEST", "Multiple Tenants not allowed");
+		}
+		
 		if(bulkBillCriteria.isSpecificMonth()) {
 			if(bulkBillCriteria.getDemandMonth() < 1 && bulkBillCriteria.getDemandMonth() > 12) {
 				throw new CustomException("INVALID_REQUEST", "Invalid demand month");
@@ -455,6 +480,55 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			throw new CustomException("INVALID_REQUEST", "No connection specified for bill generation");
 		}
 		
+	}
+
+	public AnnualPaymentDetails getAnnualPaymentEstimation(@Valid CalculationReq request) {
+		Map<String, Object> masterMap = masterDataService.loadMasterData(request.getRequestInfo(),
+				request.getCalculationCriteria().get(0).getTenantId());
+		annualAdvanceService.applicationValidation(request.getRequestInfo(), request.getCalculationCriteria());
+		AnnualPaymentDetails annualPaymentDetails = estimationService.getAnnualAdvanceEstimation(request.getCalculationCriteria().get(0), request.getRequestInfo(),
+				masterMap);
+		return annualPaymentDetails;
+	}
+
+	public AnnualAdvance applyAnnualAdvance(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
+		List<AnnualAdvance> annualAdvances = annualAdvanceService.findAnnualPayment(annualAdvanceRequests.getAnnualAdvance().getTenantId(), annualAdvanceRequests.getAnnualAdvance().getConnectionNo(), null);
+		if(!annualAdvances.isEmpty()) {
+			return annualAdvances.get(0);
+		}
+		validatePaymentForAnnualAdvanceAndEnrich(annualAdvanceRequests);
+		annualAdvanceService.enrichRequest(annualAdvanceRequests);
+		wSCalculationDao.saveAnnualAdvance(annualAdvanceRequests);
+		return annualAdvanceRequests.getAnnualAdvance();
+	}
+
+	private void validatePaymentForAnnualAdvanceAndEnrich(@Valid AnnualAdvanceRequest annualAdvanceRequests) {
+		Map<String, String> errorMap = new HashMap<>();
+		
+		// get annual advance details
+		CalculationCriteria criteria = CalculationCriteria.builder().tenantId(annualAdvanceRequests.getAnnualAdvance().getTenantId())
+				.connectionNo(annualAdvanceRequests.getAnnualAdvance().getConnectionNo()).build();
+		CalculationReq calculationRequest = CalculationReq.builder().requestInfo(annualAdvanceRequests.getRequestInfo()).isconnectionCalculation(true)
+			.calculationCriteria(Arrays.asList(criteria)).build();
+		AnnualPaymentDetails annualPaymentDetails = getAnnualPaymentEstimation(calculationRequest);
+		
+		// get current due
+		BigDecimal currentDue = BigDecimal.ZERO;
+		BillResponse fetchBillResponse = demandService.fetchBill(annualAdvanceRequests.getRequestInfo(), annualAdvanceRequests.getAnnualAdvance().getTenantId(), annualAdvanceRequests.getAnnualAdvance().getConnectionNo());
+		if(fetchBillResponse != null) {
+			currentDue = fetchBillResponse.getBill().get(0).getTotalAmount();
+		}
+		
+		BigDecimal annualAdvanceAdjustedAmt = annualPaymentDetails.getNetAnnualAdvancePayable().add(currentDue);
+		if(annualAdvanceAdjustedAmt.compareTo(BigDecimal.ZERO) > 0 ) {
+			errorMap.put("INVALID_ANNUAL_ADVANCE_REQUEST", "Pay full amount to avail annual advance. Please pay rest amount from annual advance window");
+		}
+		
+		if (!errorMap.isEmpty()) {
+			throw new CustomException(errorMap);
+		} else {
+			annualAdvanceService.enrichAnnualAdvanceDetails(annualAdvanceRequests, annualPaymentDetails);
+		}
 	}
 	
 }
