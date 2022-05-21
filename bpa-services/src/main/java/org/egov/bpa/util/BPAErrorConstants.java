@@ -87,4 +87,6 @@ public class BPAErrorConstants {
 	public static final String BPA_ASSIGNE_MISSING = "BPA ASSIGNE MISSING";
 	
 	public static final String BPA_FORWARD_ISSUE = "BPA FORWARD ISSUE";
+	
+	public static final String BPA_BUSINESS_SERVICE_ISSUE = "BPA BUSINESS SERVICE ISSUE";
 }

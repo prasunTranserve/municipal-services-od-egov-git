@@ -738,7 +738,7 @@ public class BPAValidator {
 	 * @param bpaRequest
 	 */
 	private void validateBpaForward(BPARequest bpaRequest) {
-		if(BPAConstants.BPA_AR_AP_LR_MODULE_CODE.equalsIgnoreCase(bpaRequest.getBPA().getBusinessService())) {
+		if(BPAConstants.BPA_AC_MODULE_CODE.equalsIgnoreCase(bpaRequest.getBPA().getBusinessService())) {
 			if(bpaRequest.getBPA().getWorkflow() != null
 					&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpaRequest.getBPA().getWorkflow().getAction())
 					&& bpaRequest.getBPA().getWorkflow().getAssignes().isEmpty()) {
@@ -746,13 +746,13 @@ public class BPAValidator {
 						"Plase assign some body while forwarding.");
 			}
 			
-			if(bpaRequest.getBPA().getWorkflow() != null
-					&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpaRequest.getBPA().getWorkflow().getAction())
-					&& !bpaRequest.getBPA().getWorkflow().getAssignes().isEmpty()
-					&& bpaRequest.getBPA().getWorkflow().getAssignes().contains(bpaRequest.getRequestInfo().getUserInfo().getUuid())) {
-				throw new CustomException(BPAErrorConstants.BPA_FORWARD_ISSUE,
-						"Cannot forward to yourself");
-			}
+//			if(bpaRequest.getBPA().getWorkflow() != null
+//					&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpaRequest.getBPA().getWorkflow().getAction())
+//					&& !bpaRequest.getBPA().getWorkflow().getAssignes().isEmpty()
+//					&& bpaRequest.getBPA().getWorkflow().getAssignes().contains(bpaRequest.getRequestInfo().getUserInfo().getUuid())) {
+//				throw new CustomException(BPAErrorConstants.BPA_FORWARD_ISSUE,
+//						"Cannot forward to yourself");
+//			}
 		}
 	}
 
