@@ -147,7 +147,7 @@ public class BPAController {
 	}
 	
 	@PostMapping(value = "/_get")
-	public ResponseEntity<BPAResponse> reportingSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
+	public ResponseEntity<BPAResponse> get(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
 
 		List<BPA> bpas = bpaService.searchApplications(requestInfoWrapper.getRequestInfo());
 
@@ -166,5 +166,19 @@ public class BPAController {
 				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true)).build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	
+	@PostMapping(value = "/_reportsearch")
+	public ResponseEntity<BPAResponse> reportSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria) {
+
+		List<BPA> bpas = bpaService.reportSearch(criteria, requestInfoWrapper.getRequestInfo());
+
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 
 }

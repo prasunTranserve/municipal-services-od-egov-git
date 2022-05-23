@@ -755,6 +755,37 @@ public class BPAValidator {
 //			}
 		}
 	}
+	
+	
+	/**
+	 * Validates if the search parameters are valid
+	 * 
+	 * @param requestInfo
+	 *            The requestInfo of the incoming request
+	 * @param criteria
+	 *            The BPASearch Criteria
+	 */
+//TODO need to make the changes in the data
+	public void validateReportSearch(RequestInfo requestInfo, BPASearchCriteria criteria) {
+
+		String allowedParamStr = null;
+
+		if (requestInfo.getUserInfo().getType().equalsIgnoreCase(BPAConstants.CITIZEN))
+			allowedParamStr = config.getAllowedCitizenSearchParameters();
+		else if (requestInfo.getUserInfo().getType().equalsIgnoreCase(BPAConstants.EMPLOYEE))
+			allowedParamStr = config.getAllowedEmployeeSearchParameters();
+		else
+			throw new CustomException(BPAErrorConstants.INVALID_SEARCH,
+					"The userType: " + requestInfo.getUserInfo().getType() + " does not have any search config");
+
+		if (StringUtils.isEmpty(allowedParamStr) && !criteria.isEmpty())
+			throw new CustomException(BPAErrorConstants.INVALID_SEARCH, "No search parameters are expected");
+		else {
+			List<String> allowedParams = Arrays.asList(allowedParamStr.split(","));
+			validateSearchParams(criteria, allowedParams);
+		}
+	}
+
 
 
 }
