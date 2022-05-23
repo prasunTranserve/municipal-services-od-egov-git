@@ -2,6 +2,7 @@ package org.egov.bpa.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
@@ -41,7 +43,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.TypeRef;
 
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
 
 @Service
 @Slf4j
@@ -368,11 +369,23 @@ public class EnrichmentService {
 		// Double buildingHeight = extractBuildingHeight(context);
 
 		// boolean isSpecialBuilding = isSpecialBuilding(context);
-
-		String businessService = extractBusinessService(context);
-		log.info("businessService "+businessService);
-		bpaRequest.getBPA().setBusinessService(businessService);
-
+		
+		String businessServiceFromReq = bpaRequest.getBPA().getBusinessService();
+		
+		String businessServiceFromEdcr = extractBusinessService(context);
+		List<String> edcrSuggestedList = Arrays.asList(businessServiceFromEdcr.split("\\|"));
+				
+		if(StringUtils.hasText(businessServiceFromReq)
+				&& !edcrSuggestedList.contains(businessServiceFromReq)) {
+			throw new CustomException(BPAErrorConstants.BPA_BUSINESS_SERVICE_ISSUE,
+					"Business service is not found in EDCR suggested list.");
+		}
+		
+		if(!StringUtils.hasText(businessServiceFromReq)) {
+			bpaRequest.getBPA().setBusinessService(edcrSuggestedList.get(0));
+		}
+		log.info("businessService "+bpaRequest.getBPA().getBusinessService());
+		
 		// setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
 
 	}

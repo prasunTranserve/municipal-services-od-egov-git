@@ -152,7 +152,7 @@ public class BPAConstants {
 
 	public static final String STATUS_REJECTED = "REJECTED";
 
-	public static final String STATUS_REVOCATED = "PERMIT REVOCATION";
+	public static final String STATUS_REVOCATED = "PERMIT_REVOKED";
 
 	public static final String STATUS_DOCUMENTVERIFICATION = "INPROGRESS";
 
@@ -564,6 +564,7 @@ public class BPAConstants {
 	public static final String BPA_PO_MODULE_CODE = "BPA2";
 	public static final String BPA_PM_MODULE_CODE = "BPA3";
 	public static final String BPA_DP_BP_MODULE_CODE = "BPA4";
+	public static final String BPA_AC_MODULE_CODE = "BPA5";
 	
 	public static final String YES = "YES";
 	
