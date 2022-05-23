@@ -220,5 +220,8 @@ public class WSConfiguration {
 
 	@Value("${kafka.waterservice.update.installment.topic}")
   private String wsUpdateInstallmentTopic;
+	
+	@Value("${state.level.tenant.id}")
+	private String stateLevelTenantId;
 
 }

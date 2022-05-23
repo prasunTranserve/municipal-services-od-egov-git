@@ -36,6 +36,16 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
 
 	@Autowired
 	private ObjectMapper mapper;
+	
+	private int full_count=0;
+
+	public int getFull_count() {
+		return full_count;
+	}
+
+	public void setFull_count(int full_count) {
+		this.full_count = full_count;
+	}
 
 	@Override
 	public List<WaterConnection> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -73,6 +83,7 @@ public class WaterRowMapper implements ResultSetExtractor<List<WaterConnection>>
                 currentWaterConnection.setNoOfWaterClosets(rs.getInt("noOfWaterClosets"));
                 currentWaterConnection.setNoOfToilets(rs.getInt("noOfToilets"));
 				PGobject pgObj = (PGobject) rs.getObject("additionaldetails");
+				this.setFull_count(rs.getInt("full_count"));
 				ObjectNode additionalDetails = null;
 				if (pgObj != null) {
 

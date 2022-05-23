@@ -87,6 +87,14 @@ public class SearchCriteria {
 	
 	@JsonProperty("connectionFacility")
 	private String connectionFacility;
+	
+	@JsonProperty("sortOrder")
+	private SortOrder sortOrder;
+
+	public enum SortOrder {
+	    ASC,
+	    DESC
+	}
 
 	public boolean isEmpty() {
 		return (StringUtils.isEmpty(this.tenantId) && StringUtils.isEmpty(this.mobileNumber)
