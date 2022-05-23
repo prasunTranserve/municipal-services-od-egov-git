@@ -926,5 +926,51 @@ public class BPAService {
 			}
 		}
 	}
+	
+	
+	/**
+	 * Searches the Bpa for the given criteria if search is on owner paramter then
+	 * first user service is called followed by query to db
+	 * 
+	 * @param criteria    The object containing the parameters on which to search
+	 * @param requestInfo The search request's requestInfo
+	 * @return List of bpa for the given criteria
+	 */
+	public List<BPA> reportSearch(BPASearchCriteria criteria, RequestInfo requestInfo) {
+		List<BPA> bpas = new LinkedList<>();
+		bpaValidator.validateReportSearch(requestInfo, criteria);
+		LandSearchCriteria landcriteria = new LandSearchCriteria();
+		landcriteria.setTenantId(criteria.getTenantId());
+		List<String> edcrNos = null;
+		if (criteria.getMobileNumber() != null) {
+			bpas = this.getBPAFromMobileNumber(criteria, landcriteria, requestInfo);
+		} else {
+			List<String> roles = new ArrayList<>();
+			for (Role role : requestInfo.getUserInfo().getRoles()) {
+				roles.add(role.getCode());
+			}
+			if ((criteria.tenantIdOnly() || criteria.isEmpty()) && roles.contains(BPAConstants.CITIZEN)) {
+				log.debug("loading data of created and by me");
+				bpas = this.getBPACreatedForByMe(criteria, requestInfo, landcriteria, edcrNos);
+				log.debug("no of bpas retuning by the search query" + bpas.size());
+			} else {
+				bpas = getBPAFromCriteria(criteria, requestInfo, edcrNos);
+				ArrayList<String> landIds = new ArrayList<String>();
+				if (bpas.size() > 0) {
+					for (int i = 0; i < bpas.size(); i++) {
+						landIds.add(bpas.get(i).getLandId());
+					}
+					landcriteria.setIds(landIds);
+					landcriteria.setTenantId(bpas.get(0).getTenantId());
+					log.debug("Call with tenantId to Land::" + landcriteria.getTenantId());
+					ArrayList<LandInfo> landInfos = landService.searchLandInfoToBPA(requestInfo, landcriteria);
+
+					this.populateLandToBPA(bpas, landInfos, requestInfo);
+				}
+			}
+		}
+		return bpas;
+	}
+
 
 }
