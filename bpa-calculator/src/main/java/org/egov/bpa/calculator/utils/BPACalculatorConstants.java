@@ -31,6 +31,7 @@ public class BPACalculatorConstants {
 	public static final String MDMS_BPA2 = "BPA2";
 	public static final String MDMS_BPA3 = "BPA3";
 	public static final String MDMS_BPA4 = "BPA4";
+	public static final String MDMS_BPA5 = "BPA5";
 	
 	public static final String MDMS_BPA_LOW = "BPA_LOW";
 	
