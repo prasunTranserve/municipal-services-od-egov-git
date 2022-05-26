@@ -144,11 +144,11 @@ import javax.servlet.http.HttpServletRequest;
     }
     
     @PostMapping(value = "/_reportsearch")
-    public ResponseEntity<TradeLicenseResponse> dateSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+    public ResponseEntity<TradeLicenseResponse> reportSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
                                                        @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
                                                        @PathVariable(required = false) String servicename
             , @RequestHeader HttpHeaders headers) {
-        List<TradeLicense> licenses = tradeLicenseService.datesearch(criteria, requestInfoWrapper.getRequestInfo(), servicename, headers);
+        List<TradeLicense> licenses = tradeLicenseService.reportSearch(criteria, requestInfoWrapper.getRequestInfo(), servicename, headers);
 
         TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
                 responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))

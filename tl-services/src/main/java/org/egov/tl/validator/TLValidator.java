@@ -1089,7 +1089,7 @@ public class TLValidator {
     }
 
 
-	public void validateSearchdate(RequestInfo requestInfo, @Valid TradeLicenseSearchCriteria criteria,
+	public void validateSearchReport(RequestInfo requestInfo, @Valid TradeLicenseSearchCriteria criteria,
 			String servicename, boolean isInterServiceCall) {
 		// TODO Auto-generated method stub
 		

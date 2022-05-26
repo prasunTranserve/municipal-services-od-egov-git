@@ -525,12 +525,12 @@ public class TradeLicenseService {
 
 
 
-	public List<TradeLicense> datesearch(@Valid TradeLicenseSearchCriteria criteria, RequestInfo requestInfo,
+	public List<TradeLicense> reportSearch(@Valid TradeLicenseSearchCriteria criteria, RequestInfo requestInfo,
 			String servicename, HttpHeaders headers) {
 		 List<TradeLicense> licenses;
 	        // allow mobileNumber based search by citizen if interserviceCall
 	        boolean isInterServiceCall = isInterServiceCall(headers);
-	        tlValidator.validateSearchdate(requestInfo,criteria,servicename, isInterServiceCall);
+	        tlValidator.validateSearchReport(requestInfo,criteria,servicename, isInterServiceCall);
 	        criteria.setBusinessService(servicename);
 	        enrichmentService.enrichSearchCriteriaWithAccountId(requestInfo,criteria);
 	         if(criteria.getMobileNumber()!=null){
