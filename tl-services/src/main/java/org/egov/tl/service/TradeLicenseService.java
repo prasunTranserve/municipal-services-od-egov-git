@@ -3,6 +3,8 @@ package org.egov.tl.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tl.config.TLConfiguration;
@@ -518,5 +520,26 @@ public class TradeLicenseService {
        
        return pendingDigitalsignDocuments;
     }
+
+
+
+
+
+	public List<TradeLicense> datesearch(@Valid TradeLicenseSearchCriteria criteria, RequestInfo requestInfo,
+			String servicename, HttpHeaders headers) {
+		 List<TradeLicense> licenses;
+	        // allow mobileNumber based search by citizen if interserviceCall
+	        boolean isInterServiceCall = isInterServiceCall(headers);
+	        tlValidator.validateSearchdate(requestInfo,criteria,servicename, isInterServiceCall);
+	        criteria.setBusinessService(servicename);
+	        enrichmentService.enrichSearchCriteriaWithAccountId(requestInfo,criteria);
+	         if(criteria.getMobileNumber()!=null){
+	             licenses = getLicensesFromMobileNumber(criteria,requestInfo);
+	         }
+	         else {
+	             licenses = getLicensesWithOwnerInfo(criteria,requestInfo);
+	         }
+	       return licenses;
+			}
 
 }
