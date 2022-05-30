@@ -1,6 +1,7 @@
 package org.egov.bpa.calculator.services;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class AlterationCalculationService {
 	private static final BigDecimal FIFTEEN = new BigDecimal("15");// BigDecimal.valueOf(15);
 //	private static final BigDecimal SEVENTEEN_FIVE = new BigDecimal("17.50");// BigDecimal.valueOf(17.50);
 	private static final BigDecimal SEVENTEEN_POINT_EIGHT_FIVE = new BigDecimal("17.85");// BigDecimal.valueOf(17.50);
+	private static final BigDecimal EIGHTEEN_POINT_TWO_ONE = new BigDecimal("18.21");
 	private static final BigDecimal TWENTY = new BigDecimal("20");// BigDecimal.valueOf(20);
 	private static final BigDecimal TWENTY_FIVE = new BigDecimal("25");// BigDecimal.valueOf(25);
 	private static final BigDecimal THIRTY = new BigDecimal("30");// BigDecimal.valueOf(30);
@@ -929,7 +931,7 @@ public class AlterationCalculationService {
 					.multiply(BigDecimal.valueOf(alterationTotalBuiltupArea)).multiply(SQMT_SQFT_MULTIPLIER))
 							.setScale(2, BigDecimal.ROUND_UP);
 			if (totalCostOfConstruction.compareTo(TEN_LAC) > 0) {
-				welfareCess = (SEVENTEEN_POINT_EIGHT_FIVE
+				welfareCess = (EIGHTEEN_POINT_TWO_ONE
 						.multiply(BigDecimal.valueOf(alterationTotalBuiltupAreaProposed))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
@@ -1377,7 +1379,6 @@ public class AlterationCalculationService {
 
 				BigDecimal deltaFAR = (BigDecimal.valueOf(providedFar).subtract(BigDecimal.valueOf(baseFar)))
 						.setScale(2, BigDecimal.ROUND_UP);
-				
 				//tdr relaxation- decrease deltaFar based on tdrFarRelaxation-
 				if(null!=tdrFarRelaxation) {
 					deltaFAR=deltaFAR.subtract(new BigDecimal(tdrFarRelaxation)).setScale(2, BigDecimal.ROUND_UP);
@@ -1406,6 +1407,8 @@ public class AlterationCalculationService {
 		String applicationType = null;
 		String serviceType = null;
 		Double projectValue = null;
+		Double alterationTotalBuiltupAreaProposed = null;
+		Double alterationTotalBuiltupArea = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1415,6 +1418,8 @@ public class AlterationCalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP)) {
 			projectValue = (Double) paramMap.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP);
 		}
+		alterationTotalBuiltupAreaProposed = getProposedAreaParameterForAlteration(paramMap);
+		alterationTotalBuiltupArea = getTotalAreaParameterForAlteration(paramMap);
 		
 		if ((StringUtils.hasText(applicationType)
 				&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -1422,7 +1427,9 @@ public class AlterationCalculationService {
 				&& serviceType.equalsIgnoreCase(BPACalculatorConstants.ALTERATION))
 				&& projectValue != null) {
 			
-			eidpFee = BigDecimal.valueOf(projectValue).divide(HUNDRED);
+			eidpFee = BigDecimal.valueOf(projectValue).multiply(BigDecimal.valueOf(alterationTotalBuiltupAreaProposed))
+					.divide(BigDecimal.valueOf(alterationTotalBuiltupArea), 2, RoundingMode.HALF_UP).divide(HUNDRED)
+					.setScale(2, BigDecimal.ROUND_HALF_UP);
 		}
 		generateTaxHeadEstimate(estimates, eidpFee, BPACalculatorConstants.TAXHEAD_BPA_EIDP_FEE, Category.FEE);
 
