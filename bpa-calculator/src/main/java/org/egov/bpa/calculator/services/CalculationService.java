@@ -63,6 +63,9 @@ public class CalculationService {
 
 	@Autowired
 	private BPAService bpaService;
+	
+	@Autowired
+	private AlterationCalculationService alterationCalculationService;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -962,6 +965,30 @@ public class CalculationService {
 			String numberOfTemporaryStructuresString = numberOfTemporaryStructuresJson.get(0).toString();
 			Double numberOfTemporaryStructures = Double.parseDouble(numberOfTemporaryStructuresString);
 			paramMap.put(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES, numberOfTemporaryStructures);
+		}
+		
+		// alteration related parameters-
+		Double alterationTotalBuiltupArea = null;
+		Double alterationExistingBuiltupArea = null;
+		JSONArray alterationTotalBuiltupAreaJson = context
+				.read(BPACalculatorConstants.ALTERATION_TOTAL_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(alterationTotalBuiltupAreaJson)) {
+			String alterationTotalBuiltupAreaString = alterationTotalBuiltupAreaJson.get(0).toString();
+			alterationTotalBuiltupArea = Double.parseDouble(alterationTotalBuiltupAreaString);
+			paramMap.put(BPACalculatorConstants.ALTERATION_TOTAL_BUILTUP_AREA, alterationTotalBuiltupArea);
+		}
+
+		JSONArray alterationExistingBuiltupAreaJson = context
+				.read(BPACalculatorConstants.ALTERATION_EXISTING_BUILTUP_AREA_PATH);
+		if (!CollectionUtils.isEmpty(alterationExistingBuiltupAreaJson)) {
+			String alterationExistingBuiltupAreaString = alterationExistingBuiltupAreaJson.get(0).toString();
+			alterationExistingBuiltupArea = Double.parseDouble(alterationExistingBuiltupAreaString);
+			paramMap.put(BPACalculatorConstants.ALTERATION_EXISTING_BUILTUP_AREA, alterationExistingBuiltupArea);
+		}
+		// subtract above two and put as proposed builtup area-
+		if (Objects.nonNull(alterationTotalBuiltupArea) && Objects.nonNull(alterationExistingBuiltupArea)) {
+			Double alterationProposedBuiltupArea = alterationTotalBuiltupArea - alterationExistingBuiltupArea;
+			paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA, alterationProposedBuiltupArea);
 		}
 
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
@@ -1871,6 +1898,13 @@ public class CalculationService {
 	 * @return
 	 */
 	private BigDecimal calculateTotalPermitFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
+		
+		// check if alteration application-
+		if (!StringUtils.isEmpty(paramMap.get(BPACalculatorConstants.SERVICE_TYPE))
+				&& paramMap.get(BPACalculatorConstants.SERVICE_TYPE).equals(BPACalculatorConstants.ALTERATION)) {
+			return alterationCalculationService.calculateTotalSanctionFeeForPermit(paramMap, estimates);
+		}
+		
 		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
 		BigDecimal sanctionFee = calculateSanctionFee(paramMap, estimates);
 		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap, estimates);
@@ -2898,6 +2932,11 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates) {
+		
+		if(paramMap.get(BPACalculatorConstants.SERVICE_TYPE).equals(BPACalculatorConstants.ALTERATION)) {
+			return alterationCalculationService.calculateFeeForBuildingOperation(paramMap, estimates);
+		}
+		
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
