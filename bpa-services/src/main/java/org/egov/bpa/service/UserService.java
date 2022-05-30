@@ -9,17 +9,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.Valid;
-
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.repository.ServiceRequestRepository;
-import org.egov.bpa.repository.UserRepository;
 import org.egov.bpa.util.BPAConstants;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.landInfo.OwnerInfo;
 import org.egov.bpa.web.model.user.UserDetailResponse;
-import org.egov.bpa.web.model.user.UserSearchCriteria;
 import org.egov.bpa.web.model.user.UserSearchRequest;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -40,9 +36,6 @@ public class UserService {
 
 	@Autowired
 	private ObjectMapper mapper;
-	
-	@Autowired
-	private UserRepository userRepository;
 
 	public UserDetailResponse getUsersForBpas(List<BPA> bpas) {
 		UserSearchRequest userSearchRequest = new UserSearchRequest();
@@ -215,22 +208,5 @@ public class UserService {
 
         return uuids;
     }
-    
-	public UserDetailResponse search(@Valid UserSearchCriteria criteria, RequestInfo requestInfo) {
-		List<String> uuids = userRepository.getIdByRoles(criteria);
-		UserDetailResponse response = searchByUUid(uuids, getStateLevelTenant(criteria.getTenantId()));
-		return response;
-	}
-	
-	private UserDetailResponse searchByUUid(List<String> uuids, String tenantId){
-        UserSearchRequest userSearchRequest = new UserSearchRequest();
-        userSearchRequest.setUserType("CITIZEN");
-        userSearchRequest.setUuid(uuids);
-        userSearchRequest.setTenantId(tenantId);
-        StringBuilder uri = new StringBuilder(config.getUserHost()).append(config.getUserSearchEndpoint());
-        return userCall(userSearchRequest,uri);
-    }
-    
-
     
 }
