@@ -967,7 +967,7 @@ public class CalculationService {
 			paramMap.put(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES, numberOfTemporaryStructures);
 		}
 		
-		// alteration related parameters-
+		// alteration builtup area related parameters-
 		Double alterationTotalBuiltupArea = null;
 		Double alterationExistingBuiltupArea = null;
 		JSONArray alterationTotalBuiltupAreaJson = context
@@ -989,6 +989,28 @@ public class CalculationService {
 		if (Objects.nonNull(alterationTotalBuiltupArea) && Objects.nonNull(alterationExistingBuiltupArea)) {
 			Double alterationProposedBuiltupArea = alterationTotalBuiltupArea - alterationExistingBuiltupArea;
 			paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA, alterationProposedBuiltupArea);
+		}
+		// alteration floor area related parameters-
+		Double alterationTotalFloorArea = null;
+		Double alterationExistingFloorArea = null;
+		JSONArray alterationTotalFloorAreaJson = context.read(BPACalculatorConstants.ALTERATION_TOTAL_FLOOR_AREA_PATH);
+		if (!CollectionUtils.isEmpty(alterationTotalFloorAreaJson)) {
+			String alterationTotalFloorAreaString = alterationTotalFloorAreaJson.get(0).toString();
+			alterationTotalFloorArea = Double.parseDouble(alterationTotalFloorAreaString);
+			paramMap.put(BPACalculatorConstants.ALTERATION_TOTAL_FLOOR_AREA, alterationTotalFloorArea);
+		}
+
+		JSONArray alterationExistingFloorAreaJson = context
+				.read(BPACalculatorConstants.ALTERATION_EXISTING_FLOOR_AREA_PATH);
+		if (!CollectionUtils.isEmpty(alterationExistingFloorAreaJson)) {
+			String alterationExistingFloorAreaString = alterationExistingFloorAreaJson.get(0).toString();
+			alterationExistingFloorArea = Double.parseDouble(alterationExistingFloorAreaString);
+			paramMap.put(BPACalculatorConstants.ALTERATION_EXISTING_FLOOR_AREA, alterationExistingFloorArea);
+		}
+		// subtract above two and put as proposed builtup area-
+		if (Objects.nonNull(alterationTotalFloorArea) && Objects.nonNull(alterationExistingFloorArea)) {
+			Double alterationProposedFloorArea = alterationTotalFloorArea - alterationExistingFloorArea;
+			paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_FLOOR_AREA, alterationProposedFloorArea);
 		}
 
 		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
