@@ -259,6 +259,7 @@ public class BPACalculatorConstants {
 	public static final String SUB_OCCUPANCY_TYPE_PATH = "edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code";
 	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
 	public static final String TOTAL_FLOOR_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalFloorArea";
+	public static final String TOTAL_EXISTING_FLOOR_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalExistingFloorArea";
 	public static final String TOTAL_BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea";
 	public static final String TOTAL_EXISTING_BUILTUP_AREA_PATH = "edcrDetail.*.planDetail.virtualBuilding.totalExistingBuiltUpArea";
 	public static final String EWS_AREA_PATH = "edcrDetail.*.planDetail.totalEWSFeeEffectiveArea";
@@ -274,6 +275,10 @@ public class BPACalculatorConstants {
 	public static final String RETENTION_FEE_APPLICABLE_PATH = "edcrDetail.*.planDetail.planInformation.isRetentionFeeApplicable";
 	public static final String NUMBER_OF_TEMP_STRUCTURES_PATH = "edcrDetail.*.planDetail.planInformation.numberOfTemporaryStructures";
 	public static final String PROJECT_UNDERTAKING_BY_GOVT_PATH = "edcrDetail.*.planDetail.planInformation.isProjectUndertakingByGovt";
+	public static final String ALTERATION_TOTAL_BUILTUP_AREA_PATH = TOTAL_BUILTUP_AREA_PATH;
+	public static final String ALTERATION_EXISTING_BUILTUP_AREA_PATH = TOTAL_EXISTING_BUILTUP_AREA_PATH;
+	public static final String ALTERATION_TOTAL_FLOOR_AREA_PATH = TOTAL_FLOOR_AREA_PATH;
+	public static final String ALTERATION_EXISTING_FLOOR_AREA_PATH = TOTAL_EXISTING_FLOOR_AREA_PATH;
 	public static final String BLOCKS_PATH = "edcrDetail.*.planDetail.blocks";
 	public static final String IS_RETENTION_FEE_APPLICABLE = "isRetentionFeeApplicable";
 	public static final String NUMBER_OF_TEMP_STRUCTURES = "numberOfTemporaryStructures";
@@ -289,6 +294,13 @@ public class BPACalculatorConstants {
 	public static final String TOTAL_FLOOR_AREA_EDCR = "TOTAL_FLOOR_AREA_EDCR";
 	public static final String TOTAL_BUILTUP_AREA_EDCR = "TOTAL_BUILTUP_AREA_EDCR";
 	public static final String TOTAL_BUILTUP_AREA = "TOTAL_BUILTUP_AREA";
+	//ALTERATION_PROPOSED_BUILTUP_AREA=ALTERATION_TOTAL_BUILTUP_AREA-ALTERATION_EXISTING_BUILTUP_AREA
+	public static final String ALTERATION_TOTAL_BUILTUP_AREA = "ALTERATION_TOTAL_BUILTUP_AREA";
+	public static final String ALTERATION_EXISTING_BUILTUP_AREA = "ALTERATION_EXISTING_BUILTUP_AREA";
+	public static final String ALTERATION_PROPOSED_BUILTUP_AREA = "ALTERATION_PROPOSED_BUILTUP_AREA";
+	public static final String ALTERATION_TOTAL_FLOOR_AREA = "ALTERATION_TOTAL_FLOOR_AREA";
+	public static final String ALTERATION_EXISTING_FLOOR_AREA = "ALTERATION_EXISTING_FLOOR_AREA";
+	public static final String ALTERATION_PROPOSED_FLOOR_AREA = "ALTERATION_PROPOSED_FLOOR_AREA";
 	public static final String EWS_AREA = "EWS_AREA";
 	public static final String SHELTER_FEE = "SHELTER_FEE";
 	public static final String BMV_ACRE = "BMV_ACRE";
@@ -298,6 +310,7 @@ public class BPACalculatorConstants {
 	public static final String TDR_FAR_RELAXATION = "TDR_FAR_RELAXATION";
 	public static final String BUILDING_PLAN_SCRUTINY = "BUILDING_PLAN_SCRUTINY";
 	public static final String NEW_CONSTRUCTION = "NEW_CONSTRUCTION";
+	public static final String ALTERATION = "ALTERATION";
 	public static final String TOTAL_NO_OF_DWELLING_UNITS = "TOTAL_NO_OF_DWELLING_UNITS";
 	public static final String AREA_TYPE = "AREA_TYPE";
 	public static final String AREA_TYPE_PLOT = "PLOT";

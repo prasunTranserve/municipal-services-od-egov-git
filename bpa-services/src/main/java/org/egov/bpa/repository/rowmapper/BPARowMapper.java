@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
@@ -55,6 +56,11 @@ public class BPARowMapper implements ResultSetExtractor<List<BPA>> {
 						|| rs.getString("additionalDetails").equals("null") ? null : rs.getString("additionalDetails"),
 						Object.class);
 				
+				Object reWorkHistory = new Gson().fromJson(
+						Objects.isNull(rs.getObject("reWorkHistory")) || rs.getString("reWorkHistory").equals("{}")
+								|| rs.getString("reWorkHistory").equals("null") ? null : rs.getString("reWorkHistory"),
+						Object.class);
+				
 				AuditDetails auditdetails = AuditDetails.builder().createdBy(rs.getString("bpa_createdBy"))
 						.createdTime(rs.getLong("bpa_createdTime")).lastModifiedBy(rs.getString("bpa_lastModifiedBy"))
 						.lastModifiedTime(lastModifiedTime).build();
@@ -74,6 +80,7 @@ public class BPARowMapper implements ResultSetExtractor<List<BPA>> {
 						.id(id)
 						.additionalDetails(additionalDetails)
 						.businessService(rs.getString("businessService"))
+						.reWorkHistory(reWorkHistory)
 						.build();
 
 				buildingMap.put(id, currentbpa);
