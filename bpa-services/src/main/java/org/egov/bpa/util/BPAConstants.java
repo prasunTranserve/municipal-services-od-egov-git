@@ -570,4 +570,6 @@ public class BPAConstants {
 	
 	public static final String EDCR_SUGGESTED_REQUIRED_NOCs_PATH="$.edcrDetail[0].planDetail.planInformation.requiredNOCs";
 	public static final String EDCR_REQUIRED_NOCs="requiredNOCs";
+	
+	public static final String ACTION_SHOW_CAUSE = "SHOW_CAUSE";
 }

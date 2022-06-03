@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.egov.bpa.config.BPAConfiguration;
+import org.egov.bpa.repository.BPARepository;
 import org.egov.bpa.repository.IdGenRepository;
 import org.egov.bpa.util.BPAConstants;
 import org.egov.bpa.util.BPAErrorConstants;
@@ -74,6 +75,9 @@ public class EnrichmentService {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private BPARepository bpaRepository;
 
 	/**
 	 * encrich create BPA Reqeust by adding audidetails and uuids
@@ -188,7 +192,7 @@ public class EnrichmentService {
 		// dsc integration after approval-
 		List<String> roles = bpaRequest.getRequestInfo().getUserInfo().getRoles().stream().map(role -> role.getCode())
 				.collect(Collectors.toList());
-		if ((bpaRequest.getBPA().getStatus() != null) && roles.contains("EMPLOYEE")
+		if ((bpaRequest.getBPA().getStatus() != null) && (roles.contains("EMPLOYEE") || roles.contains("BPA_ARC_APPROVER"))
 				&& bpaRequest.getBPA().getWorkflow().getAction().equalsIgnoreCase("APPROVE")) {
 			List<DscDetails> dscDetailss = new ArrayList<>();
 			DscDetails dscDetails = new DscDetails();
@@ -614,6 +618,12 @@ public class EnrichmentService {
 			// Adding creator of BPA(Licensee)
 			if (bpa.getAccountId() != null)
 				assignes.add(bpa.getAccountId());
+		} else if(wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SHOW_CAUSE)) {
+			// get Approver
+			List<String> approvers = bpaRepository.getApprover(bpa.getTenantId(), bpa.getApplicationNo());
+			if(!CollectionUtils.isEmpty(approvers)) {
+				assignes.addAll(approvers);
+			}
 		}
 		if(bpa.getWorkflow() == null) {
 			Workflow wfNew = new Workflow();

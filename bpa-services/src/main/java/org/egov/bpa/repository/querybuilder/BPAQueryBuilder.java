@@ -43,6 +43,8 @@ public class BPAQueryBuilder {
 			+ "bpa_createdTime,bpa.additionalDetails,bpa.landId as bpa_landId from eg_bpa_buildingplan bpa";
 
 	private final String countWrapper = "SELECT COUNT(DISTINCT(bpa_id)) FROM ({INTERNAL_QUERY}) as bpa_count";
+	
+	private static final String BPA_APPROVER_QUERY = "select distinct approvedby from eg_bpa_dscdetails ";
 	 
 	/**
 	 * To give the Search query based on the requirements.
@@ -326,4 +328,18 @@ public class BPAQueryBuilder {
         return addPaginationWrapper(builder.toString(), preparedStmtList, criteria);
 
     }
+
+	public String getApplicationApprover(String tenantId, String applicationNo, List<Object> preparedStmtList) {
+		StringBuilder queryBuilder = new StringBuilder(BPA_APPROVER_QUERY);
+		
+		addClauseIfRequired(preparedStmtList, queryBuilder);
+		queryBuilder.append(" tenantid = ? ");
+		preparedStmtList.add(tenantId);
+		
+		addClauseIfRequired(preparedStmtList, queryBuilder);
+		queryBuilder.append(" applicationno = ? ");
+		preparedStmtList.add(applicationNo);
+		
+		return queryBuilder.toString();
+	}
 }
