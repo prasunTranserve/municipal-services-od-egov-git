@@ -122,6 +122,12 @@ public class BPACalculatorConfig {
     @Value("${egov.demand.oc.sanc.businessservice}")
     private String OCSancBusinessservice;
     
+	@Value("${egov.collection.service.host}")
+	private String collectionServiceHost;
+
+	@Value("${egov.collection.service.search.permitFee.endpoint}")
+	private String collectionServiceSearchPermitFeeEndpoint;
+    
     //CalculaterType Default Values
 //    @Value("${egov.tl.calculationtype.tradetype.default}")
 //    private String defaultTradeUnitCalculationType;
