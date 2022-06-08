@@ -1445,7 +1445,11 @@ public class EstimationService {
 				if(noOfRecords == 0) {
 					populateAndCreateInstallments(waterConnection, requestInfo, noOfLabourFeeInstallments, labourFee,
 							WSCalculationConstant.WS_LABOUR_FEE);
+					// EMI will be applicable from first billing onwards 
+					labourFee = BigDecimal.ZERO;
 				}
+			} else {
+				labourFee = BigDecimal.ZERO;
 			}
 		}
 		return labourFee;
@@ -1487,7 +1491,11 @@ public class EstimationService {
 				if (noOfRecords == 0) {
 					populateAndCreateInstallments(waterConnection, requestInfo, noOfScrutinyFeeInstallments,
 							scrutinyFee, WSCalculationConstant.WS_SCRUTINY_FEE);
+					// EMI will be applicable from first billing onwards
+					scrutinyFee = BigDecimal.ZERO;
 				}
+			} else {
+				scrutinyFee = BigDecimal.ZERO;
 			}
 		}
 
