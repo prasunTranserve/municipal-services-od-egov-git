@@ -16,4 +16,6 @@ public class WSConnection {
 	private String tenantId;
 	private String connectionNo;
 	private String businessservice;
+	
+	private BulkBillCriteria BulkBillCriteria;
 }
