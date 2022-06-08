@@ -127,5 +127,12 @@ public class BPARepository {
 		List<BPA> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
 		return BPAData;
 	}
+	
+	public List<String> getApprover(String tenantId, String applicationNo) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getApplicationApprover(tenantId, applicationNo, preparedStmtList);
+		List<String> approvers = jdbcTemplate.queryForList(query, preparedStmtList.toArray(), String.class);
+		return approvers;
+	}
 
 }

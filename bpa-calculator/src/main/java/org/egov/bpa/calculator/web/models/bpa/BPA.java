@@ -84,6 +84,9 @@ public class BPA   {
 
   @JsonProperty("additionalDetails")
   private Object additionalDetails = null;
+  
+  @JsonProperty("reWorkHistory")
+  private Object reWorkHistory = null;
 
   public BPA id(String id) {
     this.id = id;
@@ -410,6 +413,11 @@ public class BPA   {
     this.additionalDetails = additionalDetails;
     return this;
   }
+  
+  public BPA reWorkHistory(Object reWorkHistory) {
+	this.reWorkHistory = reWorkHistory;
+	return this;
+  }
 
   /**
    * The json to capturing the custom fields
@@ -423,6 +431,14 @@ public class BPA   {
 
   public void setAdditionalDetails(Object additionalDetails) {
     this.additionalDetails = additionalDetails;
+  }
+  
+  public Object getReWorkHistory() {
+	return reWorkHistory;
+  }
+
+  public void setReWorkHistory(Object reWorkHistory) {
+	this.reWorkHistory = reWorkHistory;
   }
 
 
@@ -448,12 +464,13 @@ public class BPA   {
         Objects.equals(this.landInfo, BPA.landInfo) &&
         Objects.equals(this.workflow, BPA.workflow) &&
         Objects.equals(this.auditDetails, BPA.auditDetails) &&
-        Objects.equals(this.additionalDetails, BPA.additionalDetails);
+        Objects.equals(this.additionalDetails, BPA.additionalDetails) &&
+        Objects.equals(this.reWorkHistory, BPA.reWorkHistory);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, applicationNo, approvalNo, accountId, edcrNumber, riskType, landId, tenantId, status, documents, landInfo, workflow, auditDetails, additionalDetails);
+    return Objects.hash(id, applicationNo, approvalNo, accountId, edcrNumber, riskType, landId, tenantId, status, documents, landInfo, workflow, auditDetails, additionalDetails, reWorkHistory);
   }
 
   @Override
@@ -475,6 +492,7 @@ public class BPA   {
     sb.append("    workflow: ").append(toIndentedString(workflow)).append("\n");
     sb.append("    auditDetails: ").append(toIndentedString(auditDetails)).append("\n");
     sb.append("    additionalDetails: ").append(toIndentedString(additionalDetails)).append("\n");
+    sb.append("    reWorkHistory: ").append(toIndentedString(reWorkHistory)).append("\n");
     sb.append("}");
     return sb.toString();
   }

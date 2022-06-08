@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.apache.tomcat.jni.BIOCallback;
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
 import org.egov.bpa.calculator.kafka.broker.BPACalculatorProducer;
+import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.utils.CalculationUtils;
 import org.egov.bpa.calculator.web.models.BillingSlabSearchCriteria;
@@ -66,6 +67,9 @@ public class CalculationService {
 	
 	@Autowired
 	private AlterationCalculationService alterationCalculationService;
+	
+	@Autowired
+	ServiceRequestRepository serviceRequestRepository;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -795,6 +799,7 @@ public class CalculationService {
 		paramMap.put("mdmsData", extraParamsForCalculationMap.get("mdmsData"));
 		paramMap.put("tenantId", extraParamsForCalculationMap.get("tenantId"));
 		paramMap.put("BPA", extraParamsForCalculationMap.get("BPA"));
+		paramMap.put("requestInfo", requestInfo);
 		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap, estimates);
 		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
@@ -1927,6 +1932,10 @@ public class CalculationService {
 			return alterationCalculationService.calculateTotalSanctionFeeForPermit(paramMap, estimates);
 		}
 		
+		// calculate application fees again if reworkhistory is there and compare with
+		// payment done and add calculations for adjustments in separate taxheads--
+		processApplicationFeesAfterRework(paramMap, estimates);
+		
 		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
 		BigDecimal sanctionFee = calculateSanctionFee(paramMap, estimates);
 		BigDecimal constructionWorkerWelfareCess = calculateConstructionWorkerWelfareCess(paramMap, estimates);
@@ -1941,6 +1950,86 @@ public class CalculationService {
 				.add(shelterFee).add(temporaryRetentionFee).add(securityDeposit).add(purchasableFAR).add(adjustmentAmount)).setScale(2,
 						BigDecimal.ROUND_UP);
 		return calculatedTotalPermitFee;
+	}
+	
+	private void processApplicationFeesAfterRework(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
+		// calculate application fees again if reworkhistory is there--
+		if (Objects.nonNull(paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA))
+				&& Objects.nonNull(((BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA)).getReWorkHistory())) {
+			ArrayList<TaxHeadEstimate> scrutinyFeeEstimates = new ArrayList<>();
+			calculateTotalScrutinyFee(paramMap, scrutinyFeeEstimates);
+			BigDecimal buildingOperationFeeReCalculated = BigDecimal.ZERO;
+			BigDecimal landDevelopmentFeeReCalculated = BigDecimal.ZERO;
+			BigDecimal buildingOperationFeePaid = BigDecimal.ZERO;
+			BigDecimal landDevelopmentFeePaid = BigDecimal.ZERO;
+
+			for (TaxHeadEstimate estimate : scrutinyFeeEstimates) {
+				if (estimate.getTaxHeadCode().equals(BPACalculatorConstants.TAXHEAD_BPA_BUILDING_OPERATION_FEE))
+					buildingOperationFeeReCalculated = estimate.getEstimateAmount();
+				else if (estimate.getTaxHeadCode().equals(BPACalculatorConstants.TAXHEAD_BPA_LAND_DEVELOPMENT_FEE))
+					landDevelopmentFeeReCalculated = estimate.getEstimateAmount();
+			}
+
+			// fetch payment details-
+			Object paymentResponse = fetchPaymentDetails(paramMap);
+			int paymentsLength = ((List) ((Map) paymentResponse).get("Payments")).size();
+			String paymentAmountbyTaxHeadPath = BPACalculatorConstants.PAYMENT_TAXHEAD_AMOUNT_PATH;
+			String buildingOpernFeePaidString = getValue((Map) paymentResponse,
+					String.format(paymentAmountbyTaxHeadPath, (paymentsLength - 1),
+							BPACalculatorConstants.TAXHEAD_BPA_BUILDING_OPERATION_FEE));
+			paymentAmountbyTaxHeadPath = BPACalculatorConstants.PAYMENT_TAXHEAD_AMOUNT_PATH;
+			buildingOpernFeePaidString = buildingOpernFeePaidString.replace("[", "").replace("]", "");
+			buildingOpernFeePaidString = buildingOpernFeePaidString.isEmpty() ? "0" : buildingOpernFeePaidString;
+			String landDevelopmentFeePaidString = getValue((Map) paymentResponse,
+					String.format(paymentAmountbyTaxHeadPath, (paymentsLength - 1),
+							BPACalculatorConstants.TAXHEAD_BPA_LAND_DEVELOPMENT_FEE));
+			landDevelopmentFeePaidString = landDevelopmentFeePaidString.replace("[", "").replace("]", "");
+			landDevelopmentFeePaidString = landDevelopmentFeePaidString.isEmpty() ? "0" : landDevelopmentFeePaidString;
+			buildingOperationFeePaid = new BigDecimal(buildingOpernFeePaidString);
+			landDevelopmentFeePaid = new BigDecimal(landDevelopmentFeePaidString);
+			calculateBuildingOperationFeeReWorkAdjustment(buildingOperationFeeReCalculated, buildingOperationFeePaid,
+					estimates);
+			calculateLandDevelopmentFeeReWorkAdjustment(landDevelopmentFeeReCalculated, landDevelopmentFeePaid,
+					estimates);
+		}
+	}
+	
+	private Object fetchPaymentDetails(Map<String, Object> paramMap) {
+		StringBuilder fetchPaymentUrl = new StringBuilder(config.getCollectionServiceHost())
+				.append(config.getCollectionServiceSearchPermitFeeEndpoint()).append("?consumerCodes=")
+				.append(((BPA) paramMap.get("BPA")).getApplicationNo()).append("&tenantId=")
+				.append(paramMap.get("tenantId"));
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("RequestInfo", paramMap.get("requestInfo"));
+		Object paymentResponse = serviceRequestRepository.fetchResult(fetchPaymentUrl, payload);
+		return paymentResponse;
+	}
+	
+	private BigDecimal calculateBuildingOperationFeeReWorkAdjustment(BigDecimal buildingOperationFeeReCalculated,
+			BigDecimal buildingOperationFeePaid, ArrayList<TaxHeadEstimate> estimates) {
+		BigDecimal buildingOperationFeeReWorkAdjustmentAmount = buildingOperationFeeReCalculated
+				.compareTo(buildingOperationFeePaid) > 0
+						? buildingOperationFeeReCalculated.subtract(buildingOperationFeePaid)
+						: BigDecimal.ZERO;
+		generateTaxHeadEstimate(estimates, buildingOperationFeeReWorkAdjustmentAmount,
+				BPACalculatorConstants.TAXHEAD_BPA_BLDNG_OPRN_FEE_REWORK_ADJUSTMENT, Category.FEE);
+		return buildingOperationFeeReWorkAdjustmentAmount;
+	}
+
+	private BigDecimal calculateLandDevelopmentFeeReWorkAdjustment(BigDecimal landDevelopmentFeeReCalculated,
+			BigDecimal landDevelopmentFeePaid, ArrayList<TaxHeadEstimate> estimates) {
+		BigDecimal landDevelopmentFeeReWorkAdjustmentAmount = landDevelopmentFeeReCalculated
+				.compareTo(landDevelopmentFeePaid) > 0 ? landDevelopmentFeeReCalculated.subtract(landDevelopmentFeePaid)
+						: BigDecimal.ZERO;
+		generateTaxHeadEstimate(estimates, landDevelopmentFeeReWorkAdjustmentAmount,
+				BPACalculatorConstants.TAXHEAD_BPA_LAND_DEV_FEE_REWORK_ADJUSTMENT, Category.FEE);
+		return landDevelopmentFeeReWorkAdjustmentAmount;
+	}
+	
+	public String getValue(Map dataMap, String key) {
+		String jsonString = new JSONObject(dataMap).toString();
+		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
+		return context.read(key) + "";
 	}
 	
 	private BigDecimal calculateAdjustmentAmount(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {

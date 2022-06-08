@@ -337,6 +337,8 @@ public class BPACalculatorConstants {
 	public static final String TAXHEAD_BPA_SANCTION_FEE = "BPA_SANC_SANC_FEE";
 	public static final String TAXHEAD_BPA_EIDP_FEE = "BPA_SANC_EIDP_FEE";
 	public static final String TAXHEAD_BPA_ADJUSTMENT_AMOUNT = "BPA_SANC_ADJUSTMENT_AMOUNT";
+	public static final String TAXHEAD_BPA_BLDNG_OPRN_FEE_REWORK_ADJUSTMENT = "BPA_BLDNG_OPRN_FEE_REWORK_ADJUSTMENT";
+	public static final String TAXHEAD_BPA_LAND_DEV_FEE_REWORK_ADJUSTMENT = "BPA_LAND_DEV_FEE_REWORK_ADJUSTMENT";
 	
 	/* Tax heads for BPA OC*/
 	public static final String TAXHEAD_BPA_OC_SANC_CWWC_FEE = "BPA_OC_SANC_WORKER_WELFARE_CESS";
@@ -364,4 +366,7 @@ public class BPACalculatorConstants {
 	public static final String BPA_FATHER_NAME_MISSING = "BPA FATHER OR HUSBAND NAME MISSING";
 	
 	public static final String BPA_ADD_DETAILS_SANCTION_FEE_ADJUSTMENT_AMOUNT_KEY = "sanctionFeeAdjustmentAmount";
+	
+	public static final String PARAM_MAP_BPA="BPA";
+	public static final String PAYMENT_TAXHEAD_AMOUNT_PATH = "$.Payments[%s].paymentDetails[0].bill.billDetails[0].billAccountDetails[?(@.taxHeadCode == '%s')].adjustedAmount";
 }
