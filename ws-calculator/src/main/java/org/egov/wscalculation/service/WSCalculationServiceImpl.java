@@ -83,8 +83,6 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 	 */
 	public List<Calculation> getCalculation(CalculationReq request) {
 		
-		boolean isForApplication = false;
-		
 		List<Calculation> calculations;
 
 		Map<String, Object> masterMap;
@@ -106,14 +104,8 @@ public class WSCalculationServiceImpl implements WSCalculationService {
 			masterMap = masterDataService.loadExemptionMaster(request.getRequestInfo(),
 					request.getCalculationCriteria().get(0).getTenantId());
 			calculations = getFeeCalculation(request, masterMap, false);
-			isForApplication = true;
 		}
 		List<Demand> demands = demandService.generateDemand(request.getRequestInfo(), calculations, masterMap, request.getIsconnectionCalculation());
-		
-		if(isForApplication) {
-			//Update demand id in case of installment for new approved connection
-			installmentService.updateInstallmentsWithDemands(request.getRequestInfo(), demands, isForApplication);
-		}
 		
 		unsetWaterConnection(calculations);
 		return calculations;
