@@ -1088,7 +1088,7 @@ public class EstimationService {
 		BigDecimal rebateAmt = BigDecimal.ZERO;
 		Map<String, Object> rebate = getApplicableMaster(rebateMasterList);
 
-		if (null == rebate || (!Objects.isNull(rebate) && Objects.isNull(rebate.get(MUTATION_PAYMENT_PERIOD_IN_MONTH)))) return rebateAmt;
+		if (null == rebate) return rebateAmt;
 		Integer mutationPaymentPeriodInMonth = Integer.parseInt(String.valueOf(rebate.get(MUTATION_PAYMENT_PERIOD_IN_MONTH)));
 		Long deadlineDate = getDeadlineDate(docDate,mutationPaymentPeriodInMonth);
 
@@ -1110,7 +1110,7 @@ public class EstimationService {
 		BigDecimal penaltyAmt = BigDecimal.ZERO;
 		Map<String, Object> penalty = getApplicableMaster(penaltyMasterList);
 
-		if (null == penalty || (!Objects.isNull(penalty) && Objects.isNull(penalty.get(MUTATION_PAYMENT_PERIOD_IN_MONTH)))) return penaltyAmt;
+		if (null == penalty) return penaltyAmt;
 		Integer mutationPaymentPeriodInMonth = Integer.parseInt(String.valueOf(penalty.get(MUTATION_PAYMENT_PERIOD_IN_MONTH)));
 		Long deadlineDate = getDeadlineDate(docDate,mutationPaymentPeriodInMonth);
 
