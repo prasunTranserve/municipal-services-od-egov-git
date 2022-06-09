@@ -125,5 +125,60 @@ public class BPAController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+	
+	/**
+	 * Wrapper API to bpa-calculator /_estimate API as
+	 * cannot access bpa-calculator APIs from UI directly
+	 * 
+	 * @param bpaReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@PostMapping(value = { "/_estimate" })
+	public ResponseEntity<Object> getFeeEstimate(@RequestBody Object bpaRequest) {
+		Object response = bpaService.getFeeEstimateFromBpaCalculator(bpaRequest);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping(value = { "/_mergeScrutinyReportToPermit" })
+	public ResponseEntity<Object> mergeScrutinyReportToPermit(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @RequestBody BPARequest bpaRequest) {
+		return new ResponseEntity<>(
+				bpaService.mergeScrutinyReportToPermit(bpaRequest, requestInfoWrapper.getRequestInfo()), HttpStatus.OK);
+	}
+	
+	@PostMapping(value = "/_get")
+	public ResponseEntity<BPAResponse> get(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper) {
+
+		List<BPA> bpas = bpaService.searchApplications(requestInfoWrapper.getRequestInfo());
+
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping(value = "/_plainsearch")
+	public ResponseEntity<BPAResponse> plainSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria) {
+
+		List<BPA> bpas = bpaService.plainSearch(criteria, requestInfoWrapper.getRequestInfo());
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true)).build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
+	@PostMapping(value = "/_reportsearch")
+	public ResponseEntity<BPAResponse> reportSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria) {
+
+		List<BPA> bpas = bpaService.reportSearch(criteria, requestInfoWrapper.getRequestInfo());
+
+		BPAResponse response = BPAResponse.builder().BPA(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 
 }

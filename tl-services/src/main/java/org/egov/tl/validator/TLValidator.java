@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import javax.validation.Valid;
+
 import org.apache.commons.lang.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tl.config.TLConfiguration;
@@ -1085,6 +1087,57 @@ public class TLValidator {
 
         });
     }
+
+
+	public void validateSearchReport(RequestInfo requestInfo, @Valid TradeLicenseSearchCriteria criteria,
+			String servicename, boolean isInterServiceCall) {
+		// TODO Auto-generated method stub
+		
+		// TODO Auto-generated method stub
+		  String serviceInSearchCriteria = criteria.getBusinessService();
+	        if ((serviceInSearchCriteria != null) && (!StringUtils.equals(servicename, serviceInSearchCriteria))) {
+	            throw new CustomException("INVALID SEARCH", "Business service in Path param and requestbody not matching");
+	        }
+
+	        List<String> allowedservices = Arrays.asList(allowedBusinessService.split(","));
+	        if ((servicename != null) && (!allowedservices.contains(servicename))) {
+	            throw new CustomException("INVALID SEARCH", "Search not allowed on this business service");
+	        }
+
+//	        if(!requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" )&& criteria.isEmpty())
+//	            throw new CustomException("INVALID SEARCH","Search without any paramters is not allowed");
+
+	        if(!requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" )&& criteria.tenantIdOnly())
+	            throw new CustomException("INVALID SEARCH","Search based only on tenantId is not allowed");
+
+//	        if(!requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" )&& !criteria.tenantIdOnly()
+//	                && criteria.getTenantId()==null)
+//	            throw new CustomException("INVALID SEARCH","TenantId is mandatory in search");
+
+	        if(requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" ) && !criteria.isEmpty()
+	                && !criteria.tenantIdOnly() && criteria.getTenantId()==null)
+	            throw new CustomException("INVALID SEARCH","TenantId is mandatory in search");
+
+	        if(requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" )&& criteria.tenantIdOnly())
+	            throw new CustomException("INVALID SEARCH","Search only on tenantId is not allowed");
+
+	        String allowedParamStr = null;
+
+	        if(requestInfo.getUserInfo().getType().equalsIgnoreCase("CITIZEN" ))
+	            allowedParamStr = config.getAllowedCitizenSearchParameters();
+	        else if(requestInfo.getUserInfo().getType().equalsIgnoreCase("EMPLOYEE" ))
+	            allowedParamStr = config.getAllowedEmployeeSearchParameters();
+	        else throw new CustomException("INVALID SEARCH","The userType: "+requestInfo.getUserInfo().getType()+
+	                    " does not have any search config");
+
+	        if(StringUtils.isEmpty(allowedParamStr) && !criteria.isEmpty())
+	            throw new CustomException("INVALID SEARCH","No search parameters are expected");
+	        else {
+	            List<String> allowedParams = Arrays.asList(allowedParamStr.split(","));
+	            validateSearchParams(criteria, allowedParams, isInterServiceCall, requestInfo);
+	        }
+		
+	}
    
 
 

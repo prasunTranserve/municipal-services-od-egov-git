@@ -328,5 +328,17 @@ public class BPAConfiguration {
 	//digital certificate integration
 	@Value("${persister.update.bpa.dscdetails.topic}")
 	private String updateDscDetailsTopic;
+	
+	@Value("${egov.bpa.calculator.estimate.endpoint}")
+	private String bpaCalculationEstimateEndpoint;
+	
+	@Value("${egov.filestore.host}")
+	private String filestoreHost;
+	
+	@Value("${egov.filestore.fetch.path}")
+	private String filestoreFetchPath;
+	
+	@Value("${egov.filestore.upload.path}")
+	private String filestoreUploadPath;
 
 }

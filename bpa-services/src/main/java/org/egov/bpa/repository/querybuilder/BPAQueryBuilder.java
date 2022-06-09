@@ -19,7 +19,7 @@ public class BPAQueryBuilder {
 
 	private static final String QUERY = "SELECT bpa.*,bpadoc.*,bpa.id as bpa_id,bpa.tenantid as bpa_tenantId,bpa.lastModifiedTime as "
 			+ "bpa_lastModifiedTime,bpa.createdBy as bpa_createdBy,bpa.lastModifiedBy as bpa_lastModifiedBy,bpa.createdTime as "
-			+ "bpa_createdTime,bpa.additionalDetails,bpa.landId as bpa_landId, bpadoc.id as bpa_doc_id, bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore"
+			+ "bpa_createdTime,bpa.additionalDetails,bpa.reworkhistory as reWorkHistory,bpa.landId as bpa_landId, bpadoc.id as bpa_doc_id, bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore"
 			+ ",bpadsc.id as dsc_id,bpadsc.additionaldetails as dsc_additionaldetails,bpadsc.documenttype as dsc_doctype,bpadsc.documentid as dsc_docid,bpadsc.approvedby as dsc_approvedby,bpadsc.applicationno as dsc_applicationno,bpadsc.buildingplanid as dsc_buildingplanid,bpadsc.createdBy as dsc_createdby,bpadsc.lastmodifiedby as dsc_lastmodifiedby,bpadsc.createdtime as dsc_createdtime,bpadsc.lastmodifiedtime as dsc_lastmodifiedtime "
 			+ " FROM eg_bpa_buildingplan bpa"
 			+ LEFT_OUTER_JOIN_STRING
@@ -37,7 +37,15 @@ public class BPAQueryBuilder {
             "({})" +
             " result) result_offset " +
             "WHERE offset_ > ? AND offset_ <= ?";
+	
+	private static final String BPA_QUERY = "SELECT bpa.*,bpa.id as bpa_id,bpa.tenantid as bpa_tenantId,bpa.lastModifiedTime as "
+			+ "bpa_lastModifiedTime,bpa.createdBy as bpa_createdBy,bpa.lastModifiedBy as bpa_lastModifiedBy,bpa.createdTime as "
+			+ "bpa_createdTime,bpa.additionalDetails,bpa.landId as bpa_landId from eg_bpa_buildingplan bpa";
 
+	private final String countWrapper = "SELECT COUNT(DISTINCT(bpa_id)) FROM ({INTERNAL_QUERY}) as bpa_count";
+	
+	private static final String BPA_APPROVER_QUERY = "select distinct approvedby from eg_bpa_dscdetails ";
+	 
 	/**
 	 * To give the Search query based on the requirements.
 	 * 
@@ -179,6 +187,10 @@ public class BPAQueryBuilder {
 		int limit = config.getDefaultLimit();
 		int offset = config.getDefaultOffset();
 		String finalQuery = paginationWrapper.replace("{}", query);
+		
+		if(criteria.getLimit() == null && criteria.getOffset() == null) {
+        	limit = config.getMaxSearchLimit();
+        } 
 
 		if (criteria.getLimit() != null && criteria.getLimit() <= config.getMaxSearchLimit())
 			limit = criteria.getLimit();
@@ -281,5 +293,53 @@ public class BPAQueryBuilder {
 		preparedStmtList.add(limit + offset);
 
 		return finalQuery;
+	}
+
+	public String getBPAsSearchQuery(List<Object> preparedStmtList) {
+		StringBuilder builder = new StringBuilder(BPA_QUERY);
+		return builder.toString();
+	}
+	
+	private String addCountWrapper(String query) {
+        return countWrapper.replace("{INTERNAL_QUERY}", query);
+    }
+	
+	public String getBPASearchQueryForPlainSearch(BPASearchCriteria criteria, List<Object> preparedStmtList, List<String> edcrNos, boolean isCount) {
+
+        StringBuilder builder = new StringBuilder(QUERY);
+
+        if (criteria.getTenantId() != null) {
+            if (criteria.getTenantId().split("\\.").length == 1) {
+
+                addClauseIfRequired(preparedStmtList, builder);
+                builder.append(" bpa.tenantid like ?");
+                preparedStmtList.add('%' + criteria.getTenantId() + '%');
+            } else {
+                addClauseIfRequired(preparedStmtList, builder);
+                builder.append(" bpa.tenantid=? ");
+                preparedStmtList.add(criteria.getTenantId());
+            }
+        }
+
+
+        if(isCount)
+            return addCountWrapper(builder.toString());
+
+        return addPaginationWrapper(builder.toString(), preparedStmtList, criteria);
+
+    }
+
+	public String getApplicationApprover(String tenantId, String applicationNo, List<Object> preparedStmtList) {
+		StringBuilder queryBuilder = new StringBuilder(BPA_APPROVER_QUERY);
+		
+		addClauseIfRequired(preparedStmtList, queryBuilder);
+		queryBuilder.append(" tenantid = ? ");
+		preparedStmtList.add(tenantId);
+		
+		addClauseIfRequired(preparedStmtList, queryBuilder);
+		queryBuilder.append(" applicationno = ? ");
+		preparedStmtList.add(applicationNo);
+		
+		return queryBuilder.toString();
 	}
 }

@@ -2,6 +2,7 @@ package org.egov.bpa.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.egov.bpa.config.BPAConfiguration;
+import org.egov.bpa.repository.BPARepository;
 import org.egov.bpa.repository.IdGenRepository;
 import org.egov.bpa.util.BPAConstants;
 import org.egov.bpa.util.BPAErrorConstants;
@@ -34,6 +36,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
@@ -41,7 +44,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.TypeRef;
 
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
 
 @Service
 @Slf4j
@@ -73,6 +75,9 @@ public class EnrichmentService {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private BPARepository bpaRepository;
 
 	/**
 	 * encrich create BPA Reqeust by adding audidetails and uuids
@@ -187,7 +192,7 @@ public class EnrichmentService {
 		// dsc integration after approval-
 		List<String> roles = bpaRequest.getRequestInfo().getUserInfo().getRoles().stream().map(role -> role.getCode())
 				.collect(Collectors.toList());
-		if ((bpaRequest.getBPA().getStatus() != null) && roles.contains("EMPLOYEE")
+		if ((bpaRequest.getBPA().getStatus() != null) && (roles.contains("EMPLOYEE") || roles.contains("BPA_ARC_APPROVER"))
 				&& bpaRequest.getBPA().getWorkflow().getAction().equalsIgnoreCase("APPROVE")) {
 			List<DscDetails> dscDetailss = new ArrayList<>();
 			DscDetails dscDetails = new DscDetails();
@@ -368,11 +373,23 @@ public class EnrichmentService {
 		// Double buildingHeight = extractBuildingHeight(context);
 
 		// boolean isSpecialBuilding = isSpecialBuilding(context);
-
-		String businessService = extractBusinessService(context);
-		log.info("businessService "+businessService);
-		bpaRequest.getBPA().setBusinessService(businessService);
-
+		
+		String businessServiceFromReq = bpaRequest.getBPA().getBusinessService();
+		
+		String businessServiceFromEdcr = extractBusinessService(context);
+		List<String> edcrSuggestedList = Arrays.asList(businessServiceFromEdcr.split("\\|"));
+				
+		if(StringUtils.hasText(businessServiceFromReq)
+				&& !edcrSuggestedList.contains(businessServiceFromReq)) {
+			throw new CustomException(BPAErrorConstants.BPA_BUSINESS_SERVICE_ISSUE,
+					"Business service is not found in EDCR suggested list.");
+		}
+		
+		if(!StringUtils.hasText(businessServiceFromReq)) {
+			bpaRequest.getBPA().setBusinessService(edcrSuggestedList.get(0));
+		}
+		log.info("businessService "+bpaRequest.getBPA().getBusinessService());
+		
 		// setBusinessService(bpaRequest, buildingHeight, plotArea, isSpecialBuilding);
 
 	}
@@ -566,6 +583,11 @@ public class EnrichmentService {
 	public void enrichAssignes(BPA bpa) {
 		Workflow wf = bpa.getWorkflow();
 		Set<String> assignes = new HashSet<>();
+		// Add assignes from request
+		if(bpa.getWorkflow() != null && bpa.getWorkflow().getAssignes() != null) {
+			assignes.addAll(bpa.getWorkflow().getAssignes());
+		}
+		
 		if (wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SENDBACKTOCITIZEN)) {
 
 			// Adding owners to assignes list
@@ -596,6 +618,12 @@ public class EnrichmentService {
 			// Adding creator of BPA(Licensee)
 			if (bpa.getAccountId() != null)
 				assignes.add(bpa.getAccountId());
+		} else if(wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SHOW_CAUSE)) {
+			// get Approver
+			List<String> approvers = bpaRepository.getApprover(bpa.getTenantId(), bpa.getApplicationNo());
+			if(!CollectionUtils.isEmpty(approvers)) {
+				assignes.addAll(approvers);
+			}
 		}
 		if(bpa.getWorkflow() == null) {
 			Workflow wfNew = new Workflow();

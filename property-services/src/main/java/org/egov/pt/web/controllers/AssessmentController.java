@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.pt.models.Assessment;
 import org.egov.pt.models.AssessmentSearchCriteria;
+import org.egov.pt.models.BulkAssesmentCreationCriteriaWrapper;
 import org.egov.pt.service.AssessmentService;
 import org.egov.pt.util.ResponseInfoFactory;
 import org.egov.pt.web.contracts.AssessmentRequest;
@@ -80,6 +81,11 @@ public class AssessmentController {
 				.responseInfo(resInfo)
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/_jobscheduler")
+	public void jobscheduler(@Valid @RequestBody BulkAssesmentCreationCriteriaWrapper bulkAssesmentCreationCriteriaWrapper ) {
+		assessmentService.createNewAssesmentFromPropertyForNewFinYear(bulkAssesmentCreationCriteriaWrapper);
 	}
 
 }

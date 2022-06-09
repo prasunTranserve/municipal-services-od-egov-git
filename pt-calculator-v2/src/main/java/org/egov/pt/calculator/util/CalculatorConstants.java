@@ -135,6 +135,10 @@ public class CalculatorConstants {
 	public static final String CANCER_CESS_MASTER = "CancerCess";
 
 	public static final String INTEREST_MASTER = "Interest";
+	
+	public static final String MUTATION_PENANLTY_MASTER = "MutationPenalty";
+	
+	public static final String MUTATION_REBATE_MASTER = "MutationRebate";
 
 	public static final List<String> PROPERTY_BASED_EXEMPTION_MASTERS = Collections.unmodifiableList(Arrays.asList(
 			USAGE_MAJOR_MASTER, USAGE_MINOR_MASTER, USAGE_SUB_MINOR_MASTER, USAGE_DETAIL_MASTER, OWNER_TYPE_MASTER));
@@ -367,6 +371,13 @@ public class CalculatorConstants {
     public static final List<String> ULB_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
 			.asList("od.cuttack"));
     public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY = Collections.unmodifiableList(Arrays
-			.asList(PT_TIME_PENALTY));
+			.asList(PT_TIME_PENALTY,PT_TIME_REBATE));
+    public static final List<String> TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_REBATE = Collections.unmodifiableList(Arrays
+			.asList(PT_TIME_REBATE, PT_OTHER_DUES));
+    public static final List<String> TAXES_WITH_EXCEMPTION = Collections.unmodifiableList(Arrays
+			.asList(PT_OWNERSHIP_EXCEMPTION, PT_USAGE_EXCEMPTION));
+    public static final List<String> TAXES_NOT_ALLOWED_TO_MODIFY = Collections.unmodifiableList(Arrays
+			.asList(PT_TIME_PENALTY, PT_TIME_REBATE));
+    public static final String PROPERTYID_FIELD_SEARCH = "propertyDetailids=";
 	
 }

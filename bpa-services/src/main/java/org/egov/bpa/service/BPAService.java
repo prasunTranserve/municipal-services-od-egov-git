@@ -17,7 +17,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -49,6 +53,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -103,6 +108,9 @@ public class BPAService {
 
 	@Autowired
 	private BPAConfiguration config;
+	
+	@Autowired
+	private FileStoreService fileStoreService;
 
 	/**
 	 * does all the validations required to create BPA Record in the system
@@ -393,6 +401,12 @@ public class BPAService {
 		if (bpa.getId() == null) {
 			throw new CustomException(BPAErrorConstants.UPDATE_ERROR, "Application Not found in the System" + bpa);
 		}
+		if (isRequestForEdcrNoUpdation(bpaRequest)) {
+			return processEdcrNoUpdation(bpaRequest);
+		}
+		if (isRequestForBuildingPlanLayoutSignature(bpaRequest)) {
+			return processBuildingPlanLayoutSignature(bpaRequest);
+		}
 
 		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
@@ -449,6 +463,52 @@ public class BPAService {
 		repository.update(bpaRequest, workflowService.isStateUpdatable(bpa.getStatus(), businessService));
 		return bpaRequest.getBPA();
 
+	}
+	
+	private BPA processBuildingPlanLayoutSignature(BPARequest bpaRequest) {
+		//update the eg_bpa_document table to unlink the old filestoreid and link the new filestoreid
+		//for the document BPD.BPL.BPL
+		log.info("inside method processBuildingPlanLayoutSignature");
+		List<BPA> searchResult = getBPAWithBPAId(bpaRequest);
+		if (CollectionUtils.isEmpty(searchResult) || searchResult.size() > 1) {
+			throw new CustomException(BPAErrorConstants.UPDATE_ERROR,
+					"Failed to Update the Application, Found None or multiple applications!");
+		}
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).remove("applicationType");
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).put("buildingPlanLayoutIsSigned",true);
+		bpaRequest.getBPA().setAuditDetails(searchResult.get(0).getAuditDetails());
+		repository.update(bpaRequest, true);
+		return bpaRequest.getBPA();
+	}
+	
+	private BPA processEdcrNoUpdation(BPARequest bpaRequest) {
+		log.info("inside method processEdcrNoUpdation");
+		List<BPA> searchResult = getBPAWithBPAId(bpaRequest);
+		if (CollectionUtils.isEmpty(searchResult) || searchResult.size() > 1) {
+			throw new CustomException(BPAErrorConstants.UPDATE_ERROR,
+					"Failed to Update the Application, Found None or multiple applications!");
+		}
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).remove("applicationType");
+		bpaRequest.getBPA().setAuditDetails(searchResult.get(0).getAuditDetails());
+		repository.update(bpaRequest, true);
+		return bpaRequest.getBPA();
+	}
+	
+	private boolean isRequestForBuildingPlanLayoutSignature(BPARequest bpaRequest) {
+		return ((bpaRequest.getBPA().getStatus().equalsIgnoreCase("APPROVED")
+				|| bpaRequest.getBPA().getStatus().equalsIgnoreCase("PENDING_SANC_FEE_PAYMENT"))
+				&& Objects.nonNull(bpaRequest.getBPA().getAdditionalDetails())
+				&& bpaRequest.getBPA().getAdditionalDetails() instanceof Map
+				&& "buildingPlanLayoutSignature"
+						.equals(((Map) bpaRequest.getBPA().getAdditionalDetails()).get("applicationType"))
+				&& !(Objects.nonNull(((Map) bpaRequest.getBPA().getAdditionalDetails()).get("buildingPlanLayoutIsSigned"))
+				&& ((boolean) ((Map) bpaRequest.getBPA().getAdditionalDetails()).get("buildingPlanLayoutIsSigned"))));
+	}
+	
+	private boolean isRequestForEdcrNoUpdation(BPARequest bpaRequest) {
+		return (Objects.nonNull(bpaRequest.getBPA().getAdditionalDetails())
+				&& bpaRequest.getBPA().getAdditionalDetails() instanceof Map
+				&& "edcrNoUpdation".equals(((Map) bpaRequest.getBPA().getAdditionalDetails()).get("applicationType")));
 	}
 
 	/**
@@ -642,6 +702,46 @@ public class BPAService {
 
 		document = PDDocument.load(new File(fileName));
 	}
+	
+	/**
+	 * download the edcr shortened report and create in tempfile
+	 * 
+	 * @param bpaRequest
+	 * @param fileName
+	 * @param document
+	 * @throws Exception
+	 */
+	private void createTempShortenedReport(BPARequest bpaRequest, String fileName, PDDocument document) throws Exception {
+		log.info("inside method createTempShortenedReport");
+		String downloadUrlString=edcrService.getEDCRShortenedPdfUrl(bpaRequest);
+		log.info("downloadUrlString:"+downloadUrlString);
+		if (downloadUrlString.contains("https")) {
+			//replace https with http as getting unable to download file-
+			downloadUrlString = downloadUrlString.replace("https", "http");
+		}
+		URL downloadUrl=new URL(downloadUrlString);
+		log.info("downloadUrl: "+downloadUrl);
+		// Read the PDF from the URL and save to a local file
+		FileOutputStream writeStream = new FileOutputStream(fileName);
+		byte[] byteChunck = new byte[1024];
+		int baLength;
+		InputStream readStream = downloadUrl.openStream();
+		log.info("input stream opened with downloadUrl");
+		while ((baLength = readStream.read(byteChunck)) != -1) {
+			writeStream.write(byteChunck, 0, baLength);
+		}
+		log.info("before flush writestream");
+		writeStream.flush();
+		writeStream.close();
+		log.info("write stream closed");
+		readStream.close();
+		log.info("read stream closed");
+
+		document = PDDocument.load(new File(fileName));
+		log.info("loaded PDDocument from fileName: "+fileName);
+		document.close();
+		log.info("finished execution of method createTempShortenedReport");
+	}
 
 	private void addDataToPdf(PDDocument document, BPARequest bpaRequest, String permitNo, String generatedOn,
 			String fileName) throws IOException {
@@ -719,5 +819,180 @@ public class BPAService {
 
 		return pendingDigitalsignDocuments;
 	}
+	
+	/**
+	 * call BPA-calculator and fetch the fee estimate
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 */
+	public Object getFeeEstimateFromBpaCalculator(Object bpaRequest) {
+		return calculationService.callBpaCalculatorEstimate(bpaRequest);
+	}
+	
+	public Object mergeScrutinyReportToPermit(BPARequest bpaRequest, RequestInfo requestInfo) {
+		String randomUuidPerThread=UUID.randomUUID().toString();
+		String fileName = "shortenedScrutinyReport_"+randomUuidPerThread+".pdf";
+		PDDocument document = null;
+		BPA bpa = bpaRequest.getBPA();
+
+		if (StringUtils.isEmpty(bpa.getApprovalNo())) {
+			throw new CustomException(BPAErrorConstants.INVALID_REQUEST, "Approval Number is required.");
+		}
+		File permitCertificateFile=null;
+		File shortenedScsrutinyReportFile=null;
+		String tempFileName="tempFile_"+randomUuidPerThread+".pdf";
+		String mergedFileName="mergedPdf_"+randomUuidPerThread+".pdf";
+		try {
+			this.createTempShortenedReport(bpaRequest, fileName, document);
+			Map<String, String> additionalDetails =  (Map<String, String>) bpaRequest.getBPA().getAdditionalDetails();
+			log.info("fetching permit certificate from filestore for filestoreid:"
+					+ additionalDetails.get("permitFileStoreId"));
+			permitCertificateFile = fileStoreService.fetch(additionalDetails.get("permitFileStoreId"), "BPA", tempFileName,
+					bpaRequest.getBPA().getTenantId());
+			shortenedScsrutinyReportFile=new File(fileName);
+			PDFMergerUtility obj = new PDFMergerUtility();
+			obj.setDestinationFileName(mergedFileName);
+			obj.addSource(permitCertificateFile);
+			obj.addSource(shortenedScsrutinyReportFile);
+			obj.mergeDocuments(null);
+
+			// push to filestore-
+			log.info("uploading merged pdf to filestore");
+			return fileStoreService.upload(new File(mergedFileName), mergedFileName, MediaType.APPLICATION_PDF_VALUE,
+					"BPA", bpa.getTenantId());
+		} catch (Exception ex) {
+			log.error("Exception occured while downloading pdf", ex);
+			throw new CustomException(BPAErrorConstants.UNABLE_TO_DOWNLOAD, "Unable to download the file");
+		} finally {
+			try {
+				if (document != null) {
+					document.close();
+				}
+				if (Objects.nonNull(permitCertificateFile))
+					FileUtils.forceDelete(permitCertificateFile);
+				if (Objects.nonNull(shortenedScsrutinyReportFile))
+					FileUtils.forceDelete(shortenedScsrutinyReportFile);
+				if (new File(tempFileName).exists())
+					FileUtils.forceDelete(new File(tempFileName));
+				if (new File(mergedFileName).exists())
+					FileUtils.forceDelete(new File(mergedFileName));
+			} catch (Exception ex) {
+				log.error("exception while closing and deleting the files",ex);
+				throw new CustomException(BPAErrorConstants.INVALID_FILE, "unable to close this file");
+			}
+		}
+	
+	}
+
+
+	public List<BPA> searchApplications(RequestInfo requestInfo) {
+		return repository.getBpaApplication(requestInfo);
+	}
+		
+	public List<BPA> plainSearch(BPASearchCriteria criteria, RequestInfo requestInfo) {
+		List<BPA> bpas = new LinkedList<>();
+		bpaValidator.validateSearch(requestInfo, criteria);
+		LandSearchCriteria landcriteria = new LandSearchCriteria();
+		List<String> edcrNos = null;
+
+		List<String> roles = new ArrayList<>();
+		for (Role role : requestInfo.getUserInfo().getRoles()) {
+			roles.add(role.getCode());
+		}
+
+		bpas = getBPAFromCriteriaForPlainSearch(criteria, requestInfo, edcrNos);
+		ArrayList<String> landIds = new ArrayList<>();
+		if (!bpas.isEmpty()) {	
+			for (int i = 0; i < bpas.size(); i++) {
+				landIds.add(bpas.get(i).getLandId());
+			}
+			landcriteria.setIds(landIds);
+			landcriteria.setTenantId(criteria.getTenantId());
+			ArrayList<LandInfo> landInfos = landService.searchLandInfoToBPAForPlaneSearch(requestInfo, landcriteria);
+
+			this.populateLandToBPAForPlainSearch(bpas, landInfos,requestInfo);
+		}
+
+
+		return bpas;
+	}
+
+	public List<BPA> getBPAFromCriteriaForPlainSearch(BPASearchCriteria criteria, RequestInfo requestInfo, List<String> edcrNos) {
+		List<BPA> bpa = repository.getBPADataForPlainSearch(criteria, edcrNos);
+		if (bpa.isEmpty())
+			return Collections.emptyList();
+		return bpa;
+	}
+
+	private void populateLandToBPAForPlainSearch(List<BPA> bpas, List<LandInfo> landInfos, RequestInfo requestInfo) {
+		for (int i = 0; i < bpas.size(); i++) {
+			for (int j = 0; j < landInfos.size(); j++) {
+				if (landInfos.get(j).getId().equalsIgnoreCase(bpas.get(i).getLandId())) {
+					bpas.get(i).setLandInfo(landInfos.get(j));
+				}
+			}
+			if(bpas.get(i).getLandId() != null && bpas.get(i).getLandInfo() == null) {
+				LandSearchCriteria missingLandcriteria = new LandSearchCriteria();
+				List<String> missingLandIds = new ArrayList<>();
+				missingLandIds.add(bpas.get(i).getLandId());
+				missingLandcriteria.setTenantId(bpas.get(i).getTenantId());
+				missingLandcriteria.setIds(missingLandIds);
+				log.debug("Call with land ids to Land::" + missingLandcriteria.getTenantId() + missingLandcriteria.getIds());
+				List<LandInfo> newLandInfo = landService.searchLandInfoToBPAForPlaneSearch(requestInfo, missingLandcriteria);
+				for (int j = 0; j < newLandInfo.size(); j++) {
+					if (newLandInfo.get(j).getId().equalsIgnoreCase(bpas.get(i).getLandId())) {
+						bpas.get(i).setLandInfo(newLandInfo.get(j));
+					}
+				}
+			}
+		}
+	}
+	
+	
+	/**
+	 * Searches the Bpa for the given criteria if search is on owner paramter then
+	 * first user service is called followed by query to db
+	 * 
+	 * @param criteria    The object containing the parameters on which to search
+	 * @param requestInfo The search request's requestInfo
+	 * @return List of bpa for the given criteria
+	 */
+	public List<BPA> reportSearch(BPASearchCriteria criteria, RequestInfo requestInfo) {
+		List<BPA> bpas = new LinkedList<>();
+		bpaValidator.validateReportSearch(requestInfo, criteria);
+		LandSearchCriteria landcriteria = new LandSearchCriteria();
+		landcriteria.setTenantId(criteria.getTenantId());
+		List<String> edcrNos = null;
+		if (criteria.getMobileNumber() != null) {
+			bpas = this.getBPAFromMobileNumber(criteria, landcriteria, requestInfo);
+		} else {
+			List<String> roles = new ArrayList<>();
+			for (Role role : requestInfo.getUserInfo().getRoles()) {
+				roles.add(role.getCode());
+			}
+			if ((criteria.tenantIdOnly() || criteria.isEmpty()) && roles.contains(BPAConstants.CITIZEN)) {
+				log.debug("loading data of created and by me");
+				bpas = this.getBPACreatedForByMe(criteria, requestInfo, landcriteria, edcrNos);
+				log.debug("no of bpas retuning by the search query" + bpas.size());
+			} else {
+				bpas = getBPAFromCriteria(criteria, requestInfo, edcrNos);
+				ArrayList<String> landIds = new ArrayList<String>();
+				if (bpas.size() > 0) {
+					for (int i = 0; i < bpas.size(); i++) {
+						landIds.add(bpas.get(i).getLandId());
+					}
+					landcriteria.setIds(landIds);
+					landcriteria.setTenantId(bpas.get(0).getTenantId());
+					log.debug("Call with tenantId to Land::" + landcriteria.getTenantId());
+					ArrayList<LandInfo> landInfos = landService.searchLandInfoToBPA(requestInfo, landcriteria);
+
+					this.populateLandToBPA(bpas, landInfos, requestInfo);
+				}
+			}
+		}
+		return bpas;
+	}
+
 
 }

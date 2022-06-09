@@ -129,7 +129,7 @@ import javax.servlet.http.HttpServletRequest;
     }
     
     
-    @RequestMapping(value = {"/{servicename}/_searchdscdetails", "/_searchdscdetails"}, method = RequestMethod.POST)
+    @RequestMapping(value = {"/_searchdscdetails"}, method = RequestMethod.POST)
     public ResponseEntity<DigitalSignCertificateResponse> searchDscDetails(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
                                                        @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
                                                        @PathVariable(required = false) String servicename
@@ -141,6 +141,19 @@ import javax.servlet.http.HttpServletRequest;
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     
+    }
+    
+    @PostMapping(value = "/_reportsearch")
+    public ResponseEntity<TradeLicenseResponse> reportSearch(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+                                                       @Valid @ModelAttribute TradeLicenseSearchCriteria criteria,
+                                                       @PathVariable(required = false) String servicename
+            , @RequestHeader HttpHeaders headers) {
+        List<TradeLicense> licenses = tradeLicenseService.reportSearch(criteria, requestInfoWrapper.getRequestInfo(), servicename, headers);
+
+        TradeLicenseResponse response = TradeLicenseResponse.builder().licenses(licenses).responseInfo(
+                responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
     

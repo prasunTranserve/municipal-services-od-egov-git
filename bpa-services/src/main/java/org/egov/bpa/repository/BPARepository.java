@@ -7,6 +7,7 @@ import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.producer.Producer;
 import org.egov.bpa.repository.querybuilder.BPAQueryBuilder;
 import org.egov.bpa.repository.rowmapper.BPADigitalSignedCertificateRowMapper;
+import org.egov.bpa.repository.rowmapper.BPAReportingRowMapper;
 import org.egov.bpa.repository.rowmapper.BPARowMapper;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
@@ -37,6 +38,9 @@ public class BPARepository {
 	
 	@Autowired
 	private BPADigitalSignedCertificateRowMapper dscRowMapper;
+	
+	@Autowired
+	private BPAReportingRowMapper bpaReportingRowMapper;
 
 	/**
 	 * Pushes the request on save topic through kafka
@@ -108,6 +112,27 @@ public class BPARepository {
 		BPA bpa = bpaRequest.getBPA();
 		producer.push(config.getUpdateDscDetailsTopic(), new BPARequest(requestInfo, bpa));
 
+	}
+
+	public List<BPA> getBpaApplication(RequestInfo requestInfo) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getBPAsSearchQuery(preparedStmtList);
+		List<BPA> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), bpaReportingRowMapper);
+		return BPAData;
+	}
+	
+	public List<BPA> getBPADataForPlainSearch(BPASearchCriteria criteria, List<String> edcrNos) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getBPASearchQueryForPlainSearch(criteria, preparedStmtList, edcrNos, false);
+		List<BPA> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
+		return BPAData;
+	}
+	
+	public List<String> getApprover(String tenantId, String applicationNo) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getApplicationApprover(tenantId, applicationNo, preparedStmtList);
+		List<String> approvers = jdbcTemplate.queryForList(query, preparedStmtList.toArray(), String.class);
+		return approvers;
 	}
 
 }

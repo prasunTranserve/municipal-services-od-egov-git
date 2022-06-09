@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 
 import static org.egov.pt.calculator.util.CalculatorConstants.TIMEZONE_OFFSET;
@@ -30,6 +31,7 @@ import static org.egov.pt.calculator.util.CalculatorUtils.getEODEpoch;
  * @author kavi elrey
  *
  */
+@Slf4j
 @Service
 public class PayService {
 
@@ -86,15 +88,23 @@ public class PayService {
 	public BigDecimal getRebate(BigDecimal taxAmt, String assessmentYear, JSONArray rebateMasterList) {
 
 		BigDecimal rebateAmt = BigDecimal.ZERO;
-		Map<String, Object> rebate = mDService.getApplicableMaster(assessmentYear, rebateMasterList);
+		Map<String, Object> rebate = mDService.getApplicableMasterForRebate(assessmentYear, rebateMasterList);
 
 		if (null == rebate) return rebateAmt;
 
-		String[] time = ((String) rebate.get(CalculatorConstants.ENDING_DATE_APPLICABLES)).split("/");
-		Calendar cal = Calendar.getInstance();
-		setDateToCalendar(assessmentYear, time, cal);
+		String[] starttime = ((String) rebate.get(CalculatorConstants.STARTING_DATE_APPLICABLES)).split("/");
+		Calendar startcal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, starttime, startcal);
+		
+		String[] endtime = ((String) rebate.get(CalculatorConstants.ENDING_DATE_APPLICABLES)).split("/");
+		Calendar endcal = Calendar.getInstance();
+		setDateToCalendar(assessmentYear, endtime, endcal);
+		endcal.set(Calendar.HOUR_OF_DAY, 23);
+		endcal.set(Calendar.MINUTE, 59);
+		endcal.set(Calendar.SECOND, 59);
+		endcal.set(Calendar.MILLISECOND, 999);
 
-		if (cal.getTimeInMillis() > System.currentTimeMillis())
+		if (startcal.getTimeInMillis() <= System.currentTimeMillis() && endcal.getTimeInMillis() > System.currentTimeMillis())
 			rebateAmt = mDService.calculateApplicables(taxAmt, rebate);
 
 		return rebateAmt;
@@ -111,15 +121,19 @@ public class PayService {
 
 		BigDecimal penaltyAmt = BigDecimal.ZERO;
 		Map<String, Object> penalty = mDService.getApplicableMaster(assessmentYear, penaltyMasterList);
+		log.info("Config found for penalty ["+penalty+"]");
+		
 		if (null == penalty) return penaltyAmt;
-
+		
 		String[] time = getStartTime(assessmentYear,penalty);
 		Calendar cal = Calendar.getInstance();
 		setDateToCalendar(time, cal);
 		Long currentIST = System.currentTimeMillis()+TIMEZONE_OFFSET;
 
-		if (cal.getTimeInMillis() < currentIST)
+		if (cal.getTimeInMillis() < currentIST) {
+			log.info("Penalty is applicable");
 			penaltyAmt = mDService.calculateApplicables(taxAmt, penalty);
+		}
 
 		return penaltyAmt;
 	}
@@ -411,7 +425,7 @@ public class PayService {
 
 		if(roundOff.doubleValue() != 0)
 			roundOff = roundOff.subtract(totalRoundOffAmount);
-
+		
 		if (roundOff.doubleValue() != 0)
 			return TaxHeadEstimate.builder().estimateAmount(roundOff)
 					.taxHeadCode(CalculatorConstants.PT_ROUNDOFF).build();
@@ -502,6 +516,12 @@ public class PayService {
 	public BigDecimal applyPenalty(BigDecimal taxAmt,BigDecimal collectedPtTax,
 			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
 
+		log.info("applyPenalty >>");
+		
+		log.info("taxAmt ["+taxAmt+"]");
+		log.info("assessmentYear ["+assessmentYear+"]");
+		log.info("timeBasedExmeptionMasterMap ["+timeBasedExmeptionMasterMap+"]");
+		
 		if (BigDecimal.ZERO.compareTo(taxAmt) >= 0)
 			return BigDecimal.ZERO;
 
@@ -509,6 +529,7 @@ public class PayService {
 
 		penalty = getPenalty(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.PENANLTY_MASTER));
 
+		log.info("<< applyPenalty");
 		return !Objects.isNull(penalty) ? penalty : BigDecimal.ZERO;
 	}
 	
@@ -538,6 +559,32 @@ public class PayService {
 		return !Objects.isNull(interest) ? interest : BigDecimal.ZERO;
 	}
 
+	/**
+	 * Updates the incoming demand with latest penalty values if applicable
+	 * 
+	 * @param taxAmt
+	 * @param collectedPtTax
+	 * @param assessmentYear
+	 * @param timeBasedExmeptionMasterMap
+	 * @param payments
+	 * @param taxPeriod
+	 * @return
+	 */
+	public BigDecimal applyPenaltyForModifiedDemand(BigDecimal taxAmt,BigDecimal collectedPtTax,
+			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
 
+		log.info("applyPenaltyForModifiedDemand >>");
+		
+		log.info("taxAmt ["+taxAmt+"]");
+		log.info("assessmentYear ["+assessmentYear+"]");
+		log.info("timeBasedExmeptionMasterMap ["+timeBasedExmeptionMasterMap+"]");
+		
+		BigDecimal penalty = BigDecimal.ZERO;
+
+		penalty = getPenalty(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.PENANLTY_MASTER));
+
+		log.info("<< applyPenaltyForModifiedDemand");
+		return !Objects.isNull(penalty) ? penalty : BigDecimal.ZERO;
+	}
 
 }

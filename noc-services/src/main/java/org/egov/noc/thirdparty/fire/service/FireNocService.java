@@ -1,5 +1,6 @@
 package org.egov.noc.thirdparty.fire.service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -59,67 +61,55 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 	@Autowired
 	NOCUtil nocUtil;
 
-	private static final String GET_DISTRICTS_ENDPOINT = "/fire_safety/webservices/getFiredistricts";
-	private static final String GET_FIRESTATIONS_ENDPOINT = "/fire_safety/webservices/getFirestations";
-	private static final String SUBMIT_FIRE_NOC_APPL_ENDPOINT = "/fire_safety/webservices/recommendationApi";
-	private static final String FETCH_FIRE_NOC_STATUS_ENDPOINT = "/fire_safety/webservices/recommendationStatus";
-	private static final String FETCH_APPLICATION_IDS_ENDPOINT = "/fire_safety/webservices/recommendationID";
-
 	@Override
 	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
-		try {
-			// submit fire noc application -
-			StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
-			submitFireNocUrl.append(SUBMIT_FIRE_NOC_APPL_ENDPOINT);
-			DocumentContext edcrDetail = infoWrapper.getEdcr();
-			Map<String, String> paramMap = getParamsFromEdcr(edcrDetail);
+		// submit fire noc application -
+		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
+		submitFireNocUrl.append(config.getRecommendationApiEndpoint());
+		DocumentContext edcrDetail = infoWrapper.getEdcr();
+		Map<String, String> paramMap = getParamsFromEdcr(edcrDetail);
 
-			String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.BuildingPlan");
-			String plainApplicationDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
-					"NOC.FIRE.PlainApplication");
-			String applicantSignature = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
-					"NOC.FIRE.ApplicantSignature");
-			String applicantPhoto = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.ApplicantPhoto");
-			String identityProofDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.IdentityProofDoc");
-			String ownershipDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.OwnershipDoc");
+		String sitePlanDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.BuildingPlan");
+		String plainApplicationDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
+				"NOC.FIRE.PlainApplication");
+		String applicantSignature = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC",
+				"NOC.FIRE.ApplicantSignature");
+		String applicantPhoto = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.ApplicantPhoto");
+		String identityProofDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.IdentityProofDoc");
+		String ownershipDoc = getBinaryEncodedDocFromDocuments(infoWrapper, "NOC", "NOC.FIRE.OwnershipDoc");
 
-			Map<String, String> additionalDetails = (Map<String, String>) infoWrapper.getNoc().getAdditionalDetails();
-			SubmitFireNocContract sfnc = SubmitFireNocContract.builder()
-					.name(infoWrapper.getUserResponse().getUserName()).email(infoWrapper.getUserResponse().getEmailId())
-					.mobile(infoWrapper.getUserResponse().getMobileNumber()).isOwner("NO")
-					.noofBuilding(paramMap.get("noOfBlocks")).buidlingType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.buildingType.id"))
-					.buildingName(infoWrapper.getBpa().getLandInfo().getAddress().getBuildingName())
-					.proposedOccupany(paramMap.get("occupancyTypeEdcr")).noOfFloor(paramMap.get("noOfStorey"))
-					.height(paramMap.get("buildingHeight")).measureType("Mtr")
-					.category(paramMap.get("proposedOccupancy")).builtupArea(paramMap.get("builtupAreaEdcr"))
-					.areameasureType("Mtr").fireDistrict(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireDistrict.id"))
-					.fireStation(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireStation.id"))
-					.adreesOfBuilding(mapper.writeValueAsString(infoWrapper.getBpa().getLandInfo().getAddress()))
-					.buildingPlan(sitePlanDoc).buildingPlanext("pdf")
-					.plainApplication(plainApplicationDoc).plainApplicationext("pdf")
-					.applicantSignature(applicantSignature).applicantSignatureext("jpg").applicantPhoto(applicantPhoto)
-					.applicantPhotoext("jpg").identyProofDoc(identityProofDoc).identyProofDocext("pdf")
-					.identyProofType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofType.id"))
-					.identyProofNo(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofNo"))
-					.ownershipDoc(ownershipDoc).ownershipDocext("pdf").token(config.getFireNocToken())
-					.suyogApplicationId(infoWrapper.getNoc().getApplicationNo()).build();
+		Map<String, String> additionalDetails = (Map<String, String>) infoWrapper.getNoc().getAdditionalDetails();
+		SubmitFireNocContract sfnc = SubmitFireNocContract.builder()
+				.name(infoWrapper.getUserResponse().getName()).email(infoWrapper.getUserResponse().getEmailId())
+				.mobile(infoWrapper.getUserResponse().getMobileNumber()).isOwner("NO")
+				.noofBuilding(paramMap.get("noOfBlocks")).buidlingType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.buildingType.id"))
+				.buildingName(infoWrapper.getBpa().getLandInfo().getAddress().getBuildingName())
+				.proposedOccupany(paramMap.get("occupancyTypeEdcr")).noOfFloor(paramMap.get("noOfStorey"))
+				.height(paramMap.get("buildingHeight")).measureType("Mtr")
+				.category(paramMap.get("proposedOccupancy")).builtupArea(paramMap.get("builtupAreaEdcr"))
+				.areameasureType("Mtr").fireDistrict(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireDistrict.id"))
+				.fireStation(nocUtil.getValue(additionalDetails, "thirdPartyNOC.fireStation.id"))
+				.adreesOfBuilding(infoWrapper.getBpa().getLandInfo().getAddress().getCity().split("\\.")[1])
+				.buildingPlan(sitePlanDoc).buildingPlanext("pdf")
+				.plainApplication(plainApplicationDoc).plainApplicationext("pdf")
+				.applicantSignature(applicantSignature).applicantSignatureext("jpg").applicantPhoto(applicantPhoto)
+				.applicantPhotoext("jpg").identyProofDoc(identityProofDoc).identyProofDocext("pdf")
+				.identyProofType(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofType.id"))
+				.identyProofNo(nocUtil.getValue(additionalDetails, "thirdPartyNOC.identityProofNo"))
+				.ownershipDoc(ownershipDoc).ownershipDocext("pdf").token(config.getFireNocToken())
+				.suyogApplicationId(infoWrapper.getNoc().getApplicationNo()).build();
 
-			Object submitFireNocResponse = serviceRequestRepository.fetchResult(submitFireNocUrl, sfnc);
-			if (submitFireNocResponse instanceof Map) {
-				Map<String, Object> fireNocResponse = (Map<String, Object>) submitFireNocResponse;
-				String responseMessage = String.valueOf(fireNocResponse.get("message"));
-				if (!"Recommendation saved successfully".equalsIgnoreCase(responseMessage))
-					throw new CustomException("fire noc submission failed", "fire noc submission failed");
-			}
-
-			String comment = "Recommendation saved successfully";
-
-			return comment;
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new CustomException("error while parsing json", "error while parsing json");
+		Object submitFireNocResponse = serviceRequestRepository.fetchResult(submitFireNocUrl, sfnc);
+		if (submitFireNocResponse instanceof Map) {
+			Map<String, Object> fireNocResponse = (Map<String, Object>) submitFireNocResponse;
+			String responseMessage = String.valueOf(fireNocResponse.get("message"));
+			if (!"Recommendation saved successfully".equalsIgnoreCase(responseMessage))
+				throw new CustomException("fire noc submission failed", "fire noc submission failed");
 		}
+
+		String comment = "Recommendation saved successfully";
+
+		return comment;
 	}
 
 	private Map<String, String> getParamsFromEdcr(DocumentContext edcrDetail) {
@@ -165,6 +155,11 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 					.filter(doc -> doc.getDocumentType().contains(docName)).collect(Collectors.toList());
 			break;
 		}
+		if ("NOC.FIRE.ApplicantSignature".equalsIgnoreCase(docName)
+				|| "NOC.FIRE.ApplicantPhoto".equalsIgnoreCase(docName)) {
+			return !CollectionUtils.isEmpty(documents) ? fileStoreService.getBinaryEncodedDocumentAfterPdfToJpg(
+					infoWrapper.getUserResponse().getTenantId(), documents.get(0).getFileStoreId()) : "";
+		}
 		return !CollectionUtils.isEmpty(documents) ? fileStoreService.getBinaryEncodedDocument(
 				infoWrapper.getUserResponse().getTenantId(), documents.get(0).getFileStoreId()) : "";
 	}
@@ -178,14 +173,17 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		//step2. if applicationId is there, then call status API below-
 		// recommendationStatus API--
 		StringBuilder fetchStatusUrl = new StringBuilder(config.getFireNocHost());
-		fetchStatusUrl.append(FETCH_FIRE_NOC_STATUS_ENDPOINT);
+		fetchStatusUrl.append(config.getRecommendationStatusEndpoint());
+		String fireApplicationId=additionalDetails.get("applicationId");
 		Object fetchStatusResponse = serviceRequestRepository.fetchResult(fetchStatusUrl,
-				new FetchRecommendationStatusContract(config.getFireNocToken(), null));
+				new FetchRecommendationStatusContract(config.getFireNocToken(), fireApplicationId));
 		String applicationStatus = "";
+		String certificate = "";
 		if (fetchStatusResponse instanceof Map) {
 			Map<String, Object> statusResponse = (Map<String, Object>) fetchStatusResponse;
 			Map<String, Object> result = (Map<String, Object>) statusResponse.get("result");
 			applicationStatus = String.valueOf(result.get("applicationStatus"));
+			certificate = String.valueOf(result.get("certificate"));
 		}
 		
 		switch (applicationStatus) {
@@ -197,6 +195,11 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		case "Approved Recommendation Issued":
 			workflow.setAction(NOCConstants.ACTION_APPROVE);
 			workflow.setComment("noc approved by fire department");
+			String decodedLocalFileName=fileStoreService.getBinaryDecodedDocument(certificate);
+			//hardcoded documentType=Fire-NOC
+			List<Document> fireNocDoc= fileStoreService.upload(new File(decodedLocalFileName), decodedLocalFileName,
+					MediaType.APPLICATION_PDF_VALUE, "NOC", pullRequestWrapper.getNoc().getTenantId(),"Fire-NOC");
+			workflow.setDocuments(fireNocDoc);
 		}
 		}
 		else {
@@ -205,7 +208,7 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 			//two scenarios in in response of fetchapplicationId api- it returns non-null applicationid then set it in db.it returns null then set comment
 			//and status=submit
 			StringBuilder fetchApplicationIdsUrl = new StringBuilder(config.getFireNocHost());
-			fetchApplicationIdsUrl.append(FETCH_APPLICATION_IDS_ENDPOINT);
+			fetchApplicationIdsUrl.append(config.getRecommendationIdEndpoint());
 			Object fetchApplicationIdsResponse = serviceRequestRepository.fetchResult(fetchApplicationIdsUrl,
 					new FetchApplicationIdsContract(config.getFireNocToken(), pullRequestWrapper.getNoc().getApplicationNo()));
 			//String str="{\"status\":1,\"message\":\"Application ID\",\"result\":{\"applicationID\":[\"123456\"]}}";

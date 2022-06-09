@@ -29,11 +29,13 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,7 @@ import org.egov.pt.calculator.web.models.demand.*;
 import org.egov.pt.calculator.web.models.property.AuditDetails;
 import org.egov.pt.calculator.web.models.property.OwnerInfo;
 import org.egov.pt.calculator.web.models.property.Property;
+import org.egov.pt.calculator.web.models.property.PropertyCriteria;
 import org.egov.pt.calculator.web.models.property.PropertyRequest;
 import org.egov.pt.calculator.web.models.property.PropertyResponse;
 import org.egov.pt.calculator.web.models.property.RequestInfoWrapper;
@@ -827,11 +830,202 @@ public class CalculatorUtils {
         }
         
         //Penalty will not be calculated if the amount has already been collected
-        if(collectedAmt == taxAmt) {
+        if(taxAmt.compareTo(collectedAmt) == 0) {
         	taxAmt = BigDecimal.ZERO;
         }
         
         return taxAmt;
     }
+    
+    /**
+	 * Creates demand Search url based on tenantId,businessService, period from, period to and
+	 * ConsumerCode 
+	 * 
+	 * @return demand search url
+	 */
+    public StringBuilder getDemandSearchURL(String tenantId, Set<String> consumerCodes, Long taxPeriodFrom, Long taxPeriodTo, String businessService) {
+		StringBuilder url = new StringBuilder(configurations.getBillingServiceHost());
+		url.append(configurations.getDemandSearchEndPoint());
+		url.append("?");
+		url.append("tenantId=");
+		url.append(tenantId);
+		url.append("&");
+		url.append("businessService=");
+		url.append(businessService);
+		url.append("&");
+		url.append("consumerCode=");
+		url.append(StringUtils.join(consumerCodes, ','));
+		if (taxPeriodFrom != null) {
+			url.append("&");
+			url.append("periodFrom=");
+			url.append(taxPeriodFrom.toString());
+		}
+		if (taxPeriodTo != null) {
+			url.append("&");
+			url.append("periodTo=");
+			url.append(taxPeriodTo.toString());
+		}
+		return url;
+	}
+    
+    
+    /**
+	 * 
+	 * @param criteria - Property Search Criteria
+	 * @return URL to Search Property
+	 */
+	public StringBuilder getPropertySearchQuery(PropertyCriteria criteria) {
+		StringBuilder url = new StringBuilder(configurations.getPropertyServicesHost());
+		url.append(configurations.getPropertyServicesSearchEndpoint());
+		
+		boolean isAnyParameterMatch = false;
+		url.append("?");
+		if (!StringUtils.isEmpty(criteria.getTenantId())) {
+			isAnyParameterMatch = true;
+			url.append("tenantId=").append(criteria.getTenantId());
+		}
+		if (!CollectionUtils.isEmpty(criteria.getPropertyIds())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			isAnyParameterMatch = true;
+			String propertyIdsString = criteria.getPropertyIds().stream().map(propertyId -> propertyId)
+					.collect(Collectors.toSet()).stream().collect(Collectors.joining(","));
+			url.append("propertyIds=").append(propertyIdsString);
+		}
+		if (!StringUtils.isEmpty(criteria.getMobileNumber())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			isAnyParameterMatch = true;
+			url.append("mobileNumber=").append(criteria.getMobileNumber());
+		}
+		if (!CollectionUtils.isEmpty(criteria.getOwnerids())) {
+			if (isAnyParameterMatch)
+				url.append("&");
+			String uuidString = criteria.getOwnerids().stream().map(uuid -> uuid).collect(Collectors.toSet()).stream()
+					.collect(Collectors.joining(","));
+			url.append("uuids=").append(uuidString);
+		}
+		return url;
+	}
+	
+	/**
+     * Returns the applicable total tax amount to be paid on a demand
+     *
+     * @param demand
+     * @return
+     */
+    public BigDecimal getTaxAmtForDemandForRebateGeneration(Demand demand) {
+        BigDecimal taxAmt = BigDecimal.ZERO;
+        BigDecimal collectedAmt = BigDecimal.ZERO;
+        BigDecimal dueAmt = BigDecimal.ZERO;
+        BigDecimal adjustedRebateAmount = BigDecimal.ZERO;
+        
+        for (DemandDetail detail : demand.getDemandDetails()) {
+        	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_REBATE.contains(detail.getTaxHeadMasterCode())) {
+        		collectedAmt = collectedAmt.add(detail.getCollectionAmount());
+            	taxAmt = taxAmt.add(detail.getTaxAmount());
+        	}else if(CalculatorConstants.PT_TIME_REBATE.equalsIgnoreCase(detail.getTaxHeadMasterCode())
+        			&& detail.getCollectionAmount().compareTo(BigDecimal.ZERO) != 0
+        			&& detail.getTaxAmount().subtract(detail.getCollectionAmount()).compareTo(BigDecimal.ZERO) == 0) {
+        		//Add the adjusted previous rebate amount 
+        		adjustedRebateAmount = adjustedRebateAmount.add(detail.getCollectionAmount().negate());
+        	}
+        }
+        
+        dueAmt = taxAmt.subtract(collectedAmt) ;
+        
+        //No rebate allowed for 0 or negative value
+        if(dueAmt.compareTo(BigDecimal.ZERO) <= 0) {
+        	dueAmt = BigDecimal.ZERO;
+        }
+        //In case of partial payment the rebate is nullified and adjusted with existing tax heads
+        if(dueAmt.compareTo(BigDecimal.ZERO) >0 && adjustedRebateAmount.compareTo(BigDecimal.ZERO) > 0) {
+        	dueAmt = dueAmt.add(adjustedRebateAmount);
+        }
+        
+        return dueAmt;
+    }
+    
+    public static String getFinancialYear() {
+		int year = Calendar.getInstance().get(Calendar.YEAR);
+		int finFirstYear =  year;
+		int finLastYear =  year;
+	    int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+	    if (month <= 3) {
+	    	finFirstYear = (year - 1);
+	    } else {
+	    	finLastYear = (year + 1);
+	    }
+	    return String.format("%s-%s", finFirstYear, finLastYear%100);
+	}
+    
+    /**
+     * Returns the applicable total tax amount to be paid on a demand
+     *
+     * @param demand
+     * @return
+     */
+    public BigDecimal getTaxAmtForModifiedDemandForPenaltyGeneration(Demand demand, Demand oldDemand) {
+        BigDecimal taxAmt = BigDecimal.ZERO;
+        BigDecimal collectedAmt = BigDecimal.ZERO;
+        
+        BigDecimal oldTaxAmt = BigDecimal.ZERO;
+        BigDecimal oldCollectedAmt = BigDecimal.ZERO;
+        
+        boolean isPenaltyAmountDue = false;
+        boolean isPenaltyApplied = false;
+        
+        for (DemandDetail detail : demand.getDemandDetails()) {
+        	
+
+    		//Check if the penalty has been applied or not
+        	if(CalculatorConstants.PT_TIME_PENALTY.equals(detail.getTaxHeadMasterCode())){
+        		isPenaltyApplied  = true;
+        		if(detail.getTaxAmount().compareTo(BigDecimal.ZERO) > 0
+        			&& detail.getTaxAmount().subtract(detail.getCollectionAmount()).compareTo(BigDecimal.ZERO) >= 0) {
+        			isPenaltyAmountDue = true;
+        		}
+        	}
+        	
+        	//Consider all taxheads other than PT_TIME_PENALTY
+        	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(detail.getTaxHeadMasterCode())) {
+        		collectedAmt = collectedAmt.add(detail.getCollectionAmount());
+            	taxAmt = taxAmt.add(detail.getTaxAmount());
+        	}
+        }
+        
+        if(!Objects.isNull(oldDemand)) {
+        	for (DemandDetail detail : oldDemand.getDemandDetails()) {
+            	
+            	//Consider all taxheads other than PT_TIME_PENALTY
+            	if (!CalculatorConstants.TAXES_NOT_TO_BE_CONSIDERD_WHEN_CALUCLATING_PENALTY.contains(detail.getTaxHeadMasterCode())) {
+            		oldCollectedAmt = oldCollectedAmt.add(detail.getCollectionAmount());
+            		oldTaxAmt = oldTaxAmt.add(detail.getTaxAmount());
+            	}
+            }
+        	
+        	/**
+        	 * Penalty will not be calculated on the modified amount if penalty is 
+        	 * already applied else apply penalty on the total tax amount
+        	 */
+        	
+        	if(isPenaltyApplied) {
+        		return taxAmt.subtract(oldTaxAmt);
+        	}else {
+        		if(taxAmt.compareTo(collectedAmt) == 0) {
+                	taxAmt = BigDecimal.ZERO;
+                }
+        		return taxAmt;
+        	}
+        	
+        }
+        
+        if(isPenaltyApplied && isPenaltyAmountDue) {
+        	taxAmt = BigDecimal.ZERO;
+        }
+        
+        return taxAmt;
+    }
+    
 
 }

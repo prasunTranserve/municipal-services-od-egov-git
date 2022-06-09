@@ -252,6 +252,9 @@ public class PropertyConfiguration {
 
     @Value("${egbs.fetchbill.endpoint}")
     private String egbsFetchBill;
+    
+    @Value("${egbs.demand.search.endpoint}")
+    private String egbsDemandSearchEndpoint;
     	
     // Registry 
     
@@ -316,4 +319,14 @@ public class PropertyConfiguration {
 
     @Value("${state.level.tenant.id}")
     private String stateLevelTenantId;
+    
+    
+    @Value("${egov.demand.tenants}")
+	private String schedulerTenants;
+
+	@Value("${egov.demand.tenants.skip}")
+	private String skipSchedulerTenants;
+	
+	@Value("${egov.bulk.assessment.generation.audit.topic}")
+	private String bulkAssessmentGenAutidTopic;
 }

@@ -1,5 +1,7 @@
 package org.egov.noc.thirdparty.fire.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,5 +18,6 @@ import lombok.ToString;
 public class FetchRecommendationStatusContract {
 
 	private String token;
+	@JsonProperty("applicationId")
 	private String applicationId;
 }

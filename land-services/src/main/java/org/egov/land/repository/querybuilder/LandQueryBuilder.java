@@ -103,6 +103,10 @@ public class LandQueryBuilder {
 		int limit = config.getDefaultLimit();
 		int offset = config.getDefaultOffset();
 		String finalQuery = paginationWrapper.replace("{}", query);
+		
+		if(criteria.getLimit() == null && criteria.getOffset() == null) {
+        	limit = config.getMaxSearchLimit();
+        } 
 
 		if (criteria.getLimit() != null && criteria.getLimit() <= config.getMaxSearchLimit())
 			limit = criteria.getLimit();

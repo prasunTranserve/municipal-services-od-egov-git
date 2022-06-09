@@ -93,7 +93,7 @@ public class CalculationUtils {
 		String billingBusinessService;
 		switch (feeType) {
 		case BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE:
-			if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4)) {
+			if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA5)) {
 				billingBusinessService = config.getApplFeeBusinessService();
 			} 
 			else if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA_LOW)) {
@@ -103,7 +103,7 @@ public class CalculationUtils {
 			}
 			break;
 		case BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE:
-			if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4)) {
+			if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA5)) {
 				billingBusinessService = config.getSanclFeeBusinessService();
 			}
 			else if (businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA_LOW)) {
@@ -136,7 +136,7 @@ public class CalculationUtils {
 		String billingTaxHead;
 		switch (feeType) {
 		case BPACalculatorConstants.MDMS_CALCULATIONTYPE_APL_FEETYPE:
-			if(businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4)){
+			if(businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA5)){
 			billingTaxHead = config.getBaseApplFeeHead();
 			}
 			else if(businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA_LOW)){
@@ -147,7 +147,7 @@ public class CalculationUtils {
 			}
 			break;
 		case BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE:
-			if(businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4))
+			if(businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA1) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA2) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA3) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA4) || businessService.equalsIgnoreCase(BPACalculatorConstants.MDMS_BPA5))
 	{
 			billingTaxHead = config.getBaseSancFeeHead();
 			}
