@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 
 import static org.egov.pt.calculator.util.CalculatorConstants.TIMEZONE_OFFSET;
@@ -31,7 +30,6 @@ import static org.egov.pt.calculator.util.CalculatorUtils.getEODEpoch;
  * @author kavi elrey
  *
  */
-@Slf4j
 @Service
 public class PayService {
 
@@ -113,19 +111,15 @@ public class PayService {
 
 		BigDecimal penaltyAmt = BigDecimal.ZERO;
 		Map<String, Object> penalty = mDService.getApplicableMaster(assessmentYear, penaltyMasterList);
-		log.info("Config found for penalty ["+penalty+"]");
-		
 		if (null == penalty) return penaltyAmt;
-		
+
 		String[] time = getStartTime(assessmentYear,penalty);
 		Calendar cal = Calendar.getInstance();
 		setDateToCalendar(time, cal);
 		Long currentIST = System.currentTimeMillis()+TIMEZONE_OFFSET;
 
-		if (cal.getTimeInMillis() < currentIST) {
-			log.info("Penalty is applicable");
+		if (cal.getTimeInMillis() < currentIST)
 			penaltyAmt = mDService.calculateApplicables(taxAmt, penalty);
-		}
 
 		return penaltyAmt;
 	}
@@ -508,12 +502,6 @@ public class PayService {
 	public BigDecimal applyPenalty(BigDecimal taxAmt,BigDecimal collectedPtTax,
 			 String assessmentYear, Map<String, JSONArray> timeBasedExmeptionMasterMap,List<Payment> payments,TaxPeriod taxPeriod) {
 
-		log.info("applyPenalty >>");
-		
-		log.info("taxAmt ["+taxAmt+"]");
-		log.info("assessmentYear ["+assessmentYear+"]");
-		log.info("timeBasedExmeptionMasterMap ["+timeBasedExmeptionMasterMap+"]");
-		
 		if (BigDecimal.ZERO.compareTo(taxAmt) >= 0)
 			return BigDecimal.ZERO;
 
@@ -521,7 +509,6 @@ public class PayService {
 
 		penalty = getPenalty(taxAmt, assessmentYear, timeBasedExmeptionMasterMap.get(CalculatorConstants.PENANLTY_MASTER));
 
-		log.info("<< applyPenalty");
 		return !Objects.isNull(penalty) ? penalty : BigDecimal.ZERO;
 	}
 	
