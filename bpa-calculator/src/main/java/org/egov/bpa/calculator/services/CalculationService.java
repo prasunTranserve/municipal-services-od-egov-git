@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.apache.tomcat.jni.BIOCallback;
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
 import org.egov.bpa.calculator.kafka.broker.BPACalculatorProducer;
+import org.egov.bpa.calculator.repository.PreapprovedPlanRepository;
 import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.utils.CalculationUtils;
@@ -21,6 +22,8 @@ import org.egov.bpa.calculator.web.models.Calculation;
 import org.egov.bpa.calculator.web.models.CalculationReq;
 import org.egov.bpa.calculator.web.models.CalculationRes;
 import org.egov.bpa.calculator.web.models.CalulationCriteria;
+import org.egov.bpa.calculator.web.models.PreapprovedPlan;
+import org.egov.bpa.calculator.web.models.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.EstimatesAndSlabs;
 import org.egov.bpa.calculator.web.models.demand.Category;
@@ -69,7 +72,10 @@ public class CalculationService {
 	private AlterationCalculationService alterationCalculationService;
 	
 	@Autowired
-	ServiceRequestRepository serviceRequestRepository;
+	private ServiceRequestRepository serviceRequestRepository;
+	
+	@Autowired
+	private PreapprovedPlanRepository preapprovedPlanRepository;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -794,7 +800,7 @@ public class CalculationService {
 	 */
 	private void calculateTotalFee(RequestInfo requestInfo, CalulationCriteria criteria,
 			ArrayList<TaxHeadEstimate> estimates, String feeType, Map<String, Object> extraParamsForCalculationMap) {
-		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType);
+		Map<String, Object> paramMap = prepareMaramMap(requestInfo, criteria, feeType, extraParamsForCalculationMap);
 		//move all extra parameters from extraParamsForCalculationMap to paramMap-
 		paramMap.put("mdmsData", extraParamsForCalculationMap.get("mdmsData"));
 		paramMap.put("tenantId", extraParamsForCalculationMap.get("tenantId"));
@@ -814,6 +820,69 @@ public class CalculationService {
 		// estimate.setTaxHeadCode(taxHeadCode);
 		// estimates.add(estimate);
 	}
+	
+	private Map<String, Object> prepareMaramMap(RequestInfo requestInfo, CalulationCriteria criteria, String feeType,
+			Map<String, Object> extraParamsForCalculationMap) {
+		String businessService = "";
+		if (Objects.nonNull(extraParamsForCalculationMap.get("BPA"))
+				&& !StringUtils.isEmpty(((BPA) extraParamsForCalculationMap.get("BPA")).getBusinessService()))
+			businessService = ((BPA) extraParamsForCalculationMap.get("BPA")).getBusinessService();
+
+		if (BPACalculatorConstants.BUSINESSSERVICE_PREAPPROVEDPLAN.equalsIgnoreCase(businessService)) {
+			// for BPA 6(preapproved plan) -
+			return prepareParamMapForPreapprovedPlan(requestInfo, criteria, feeType, extraParamsForCalculationMap);
+		} else {
+			// for BPA 1,2,3,4 -
+			return prepareParamMapForBpa1to4(requestInfo, criteria, feeType);
+		}
+	}
+	
+	/**
+	 * @param requestInfo
+	 * @param criteria
+	 * @param feeType
+	 * @return
+	 */
+	private Map<String, Object> prepareParamMapForPreapprovedPlan(RequestInfo requestInfo, CalulationCriteria criteria,
+			String feeType, Map<String, Object> extraParamsForCalculationMap) {
+		String applicationType = criteria.getApplicationType();
+		String serviceType = criteria.getServiceType();
+		String riskType = criteria.getBpa().getRiskType();
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
+		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
+		paramMap.put(BPACalculatorConstants.RISK_TYPE, riskType);
+		paramMap.put(BPACalculatorConstants.FEE_TYPE, feeType);
+		
+		//fetch preapproved plan-
+		PreapprovedPlan preapprovedPlan = fetchPreapprovedPlanFromDrawingNo(criteria.getBpa().getEdcrNumber());
+		Map<String, String> drawingDetail = (Map) preapprovedPlan.getDrawingDetail();
+		
+		//TODO remove hardcoded parameters and replace with proper parameters from preapproved plan
+		//"edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea"
+		paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR, drawingDetail.get("totalBuitUpArea"));
+		//edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.type.code
+		paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, "A");
+		//
+		//edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code"
+		paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE, "A-P");
+		//paramMap.put("", );
+		
+		
+		return paramMap;
+	}
+	
+	private PreapprovedPlan fetchPreapprovedPlanFromDrawingNo(String drawingNo) {
+		PreapprovedPlanSearchCriteria criteria = new PreapprovedPlanSearchCriteria();
+		criteria.setDrawingNo(drawingNo);
+		List<PreapprovedPlan> preapprovedPlans = preapprovedPlanRepository.getPreapprovedPlansData(criteria);
+		if (CollectionUtils.isEmpty(preapprovedPlans)) {
+			log.error("No preapproved plan with provided drawingNo:" + drawingNo);
+			throw new CustomException("No preapproved plan with provided drawingNo",
+					"No preapproved plan with provided drawingNo");
+		}
+		return preapprovedPlans.get(0);
+	}
 
 	/**
 	 * @param requestInfo
@@ -821,13 +890,14 @@ public class CalculationService {
 	 * @param feeType
 	 * @return
 	 */
-	private Map<String, Object> prepareMaramMap(RequestInfo requestInfo, CalulationCriteria criteria, String feeType) {
+	private Map<String, Object> prepareParamMapForBpa1to4(RequestInfo requestInfo, CalulationCriteria criteria,
+			String feeType) {
 		String applicationType = criteria.getApplicationType();
 		String serviceType = criteria.getServiceType();
 		String riskType = criteria.getBpa().getRiskType();
-
 		@SuppressWarnings("unchecked")
 		LinkedHashMap<String, Object> edcr = edcrService.getEDCRDetails(requestInfo, criteria.getBpa());
+		
 		String jsonString = new JSONObject(edcr).toString();
 		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
 

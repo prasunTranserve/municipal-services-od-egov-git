@@ -41,6 +41,8 @@ import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.DscDetails;
+import org.egov.bpa.web.model.PreapprovedPlan;
+import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.web.model.landInfo.LandInfo;
 import org.egov.bpa.web.model.landInfo.LandSearchCriteria;
 import org.egov.bpa.web.model.user.UserDetailResponse;
@@ -111,6 +113,9 @@ public class BPAService {
 	
 	@Autowired
 	private FileStoreService fileStoreService;
+	
+	@Autowired
+	private PreapprovedPlanService preapprovedPlanService;
 
 	/**
 	 * does all the validations required to create BPA Record in the system
@@ -122,6 +127,7 @@ public class BPAService {
 		RequestInfo requestInfo = bpaRequest.getRequestInfo();
 		String tenantId = bpaRequest.getBPA().getTenantId().split("\\.")[0];
 		Object mdmsData = util.mDMSCall(requestInfo, tenantId);
+		String businessService = bpaRequest.getBPA().getBusinessService();
 		if (bpaRequest.getBPA().getTenantId().split("\\.").length == 1) {
 			throw new CustomException(BPAErrorConstants.INVALID_TENANT, " Application cannot be create at StateLevel");
 		}
@@ -130,11 +136,17 @@ public class BPAService {
 		if (!StringUtils.isEmpty(bpaRequest.getBPA().getApprovalNo())) {
 			bpaRequest.getBPA().setApprovalNo(null);
 		}
-		@SuppressWarnings("unchecked")
-		LinkedHashMap<String, Object> edcr = edcrService.getEDCRDetails(bpaRequest);
-		log.info("EDCR responce "+edcr);
-		//Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
-		Map<String, String> values = edcrService.validateEdcrPlanV2(bpaRequest, mdmsData, edcr);
+		LinkedHashMap<String, Object> edcr = new LinkedHashMap<>();
+		Map<String, String> values = new HashMap<>();
+		if (StringUtils.isNotEmpty(businessService) && "BPA6".equals(businessService)) {
+			setEdcrDetailsForPreapprovedPlan(values, edcr, bpaRequest);
+		}
+		else {
+			edcr = edcrService.getEDCRDetails(bpaRequest);
+			log.info("EDCR responce "+edcr);
+			//Map<String, String> values = edcrService.validateEdcrPlan(bpaRequest, mdmsData);
+			values.putAll(edcrService.validateEdcrPlanV2(bpaRequest, mdmsData, edcr));
+		}
 		String applicationType = values.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = values.get(BPAConstants.SERVICETYPE);
 		this.validateCreateOC(applicationType, values, requestInfo, bpaRequest);
@@ -147,11 +159,57 @@ public class BPAService {
 		enrichmentService.enrichBPACreateRequestV2(bpaRequest, mdmsData, values, edcr);		
 		log.info("bpaRequest after  enrichBPACreateRequestV2 "+bpaRequest);
 		wfIntegrator.callWorkFlow(bpaRequest);
-		nocService.createNocRequest(bpaRequest, mdmsData,edcrService.getEdcrSuggestedRequiredNocs(edcr));
+		nocService.createNocRequest(bpaRequest, mdmsData, edcrService.getEdcrSuggestedRequiredNocs(edcr),
+				applicationType, serviceType);
 		// this.addCalculation(applicationType, bpaRequest);
+		
 		calculationService.addCalculationV2(bpaRequest, BPAConstants.APPLICATION_FEE_KEY, applicationType, serviceType);
+		
 		repository.save(bpaRequest);
 		return bpaRequest.getBPA();
+	}
+	
+	private void setEdcrDetailsForPreapprovedPlan(Map<String, String> values, LinkedHashMap<String, Object> edcr,
+			BPARequest bpaRequest) {
+
+		// if preapproved plan, then we need to populate serviceType,applicationType and
+		// permitNumber in values map
+		PreapprovedPlanSearchCriteria preapprovedPlanSearchCriteria = new PreapprovedPlanSearchCriteria();
+		preapprovedPlanSearchCriteria.setDrawingNo(bpaRequest.getBPA().getEdcrNumber());
+		List<PreapprovedPlan> preapprovedPlans = preapprovedPlanService
+				.getPreapprovedPlanFromCriteria(preapprovedPlanSearchCriteria);
+		if (CollectionUtils.isEmpty(preapprovedPlans)) {
+			log.error("no preapproved plan found for provided drawingNo:" + bpaRequest.getBPA().getEdcrNumber());
+			throw new CustomException("no preapproved plan found for provided drawingNo",
+					"no preapproved plan found for provided drawingNo");
+		}
+		PreapprovedPlan preapprovedPlanFromDb = preapprovedPlans.get(0);
+		Map<String, Object> drawingDetail = (Map<String, Object>) preapprovedPlanFromDb.getDrawingDetail();
+		// TODO: make sure serviceType,applicationType will be provided
+		// from preapprovedPlan(cannot read from UI as no such field to take them into
+		// BPA object.)These need to be mandatorily populated here into valuesMap as
+		// used later,do not remove-
+		values.put(BPAConstants.SERVICETYPE, drawingDetail.get("serviceType") + "");// NEW_CONSTRUCTION
+		values.put(BPAConstants.APPLICATIONTYPE, drawingDetail.get("applicationType") + "");// BUILDING_PLAN_SCRUTINY
+		List<String> requiredNOCs = !CollectionUtils.isEmpty((List<String>) drawingDetail.get("requiredNOCs"))
+				? (List<String>) drawingDetail.get("requiredNOCs")
+				: new ArrayList<>();
+		if ("someConditionToCheckPermitNoShouldBePopulated".equals(""))
+			values.put(BPAConstants.PERMIT_NO, "hardcodedTemporarily");
+		// prepare the edcr map with same path structure as in scrutiny details as same
+		// path extracted later-
+		LinkedHashMap<String, Object> planInformation = new LinkedHashMap<>();
+		planInformation.put("businessService", bpaRequest.getBPA().getBusinessService());
+		planInformation.put("requiredNOCs", requiredNOCs);
+		LinkedHashMap<String, LinkedHashMap> planDetail = new LinkedHashMap<>();
+		planDetail.put("planInformation", planInformation);
+		LinkedHashMap<String, LinkedHashMap> planDetailObject = new LinkedHashMap<>();
+		planDetailObject.put("planDetail", planDetail);
+		List<LinkedHashMap> edcrDetail = new ArrayList<>();
+		edcrDetail.add(planDetailObject);
+		edcr.put("edcrDetail", edcrDetail);
+		// String edcrString = "{\"edcrDetail\":[{\"planDetail\":{\"planInformation\":{\"businessService\":\"BPA6\",\"requiredNOCs\":[]}}}]}";
+
 	}
 
 	

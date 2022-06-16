@@ -46,11 +46,12 @@ public class NocService {
 	private ObjectMapper mapper;
 
 	@SuppressWarnings("unchecked")
-	public void createNocRequest(BPARequest bpaRequest, Object mdmsData,List<String> edcrSuggestedNocs) {
+	public void createNocRequest(BPARequest bpaRequest, Object mdmsData, List<String> edcrSuggestedNocs,
+			String applicationType, String serviceType) {
 		BPA bpa = bpaRequest.getBPA();
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
-		log.debug("applicationType in NOC is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
-		log.debug("serviceType in NOC is " + edcrResponse.get(BPAConstants.SERVICETYPE));
+		//Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		//log.debug("applicationType in NOC is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
+		//log.debug("serviceType in NOC is " + edcrResponse.get(BPAConstants.SERVICETYPE));
 
 		String riskType = "ALL";
 		if (StringUtils.isEmpty(bpa.getRiskType()) || bpa.getRiskType().equalsIgnoreCase("LOW")) {
@@ -59,8 +60,8 @@ public class NocService {
 		log.debug("Fetching NocTypeMapping record of riskType : " + riskType);
 
 		String nocPath = BPAConstants.NOCTYPE_REQUIRED_MAP
-				.replace("{1}", edcrResponse.get(BPAConstants.APPLICATIONTYPE))
-				.replace("{2}", edcrResponse.get(BPAConstants.SERVICETYPE)).replace("{3}", riskType);
+				.replace("{1}", applicationType)
+				.replace("{2}", serviceType).replace("{3}", riskType);
 
 		Map<String, String> nocSourceCnofig = config.getNocSourceConfig();
 
@@ -87,7 +88,7 @@ public class NocService {
 							.noc(Noc.builder().tenantId(bpa.getTenantId())
 									.applicationType(ApplicationType.valueOf(BPAConstants.NOC_APPLICATIONTYPE))
 									.sourceRefId(bpa.getApplicationNo()).nocType(nocType)
-									.source(nocSourceCnofig.get(edcrResponse.get(BPAConstants.APPLICATIONTYPE)))
+									.source(nocSourceCnofig.get(applicationType))
 									.build())
 							.requestInfo(bpaRequest.getRequestInfo()).build();
 					try {
