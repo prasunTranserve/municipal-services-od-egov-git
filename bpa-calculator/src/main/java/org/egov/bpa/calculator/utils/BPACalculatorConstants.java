@@ -32,6 +32,7 @@ public class BPACalculatorConstants {
 	public static final String MDMS_BPA3 = "BPA3";
 	public static final String MDMS_BPA4 = "BPA4";
 	public static final String MDMS_BPA5 = "BPA5";
+	public static final String MDMS_BPA6 = "BPA6";
 	
 	public static final String MDMS_BPA_LOW = "BPA_LOW";
 	
@@ -369,4 +370,6 @@ public class BPACalculatorConstants {
 	
 	public static final String PARAM_MAP_BPA="BPA";
 	public static final String PAYMENT_TAXHEAD_AMOUNT_PATH = "$.Payments[%s].paymentDetails[0].bill.billDetails[0].billAccountDetails[?(@.taxHeadCode == '%s')].adjustedAmount";
+	
+	public static final String BUSINESSSERVICE_PREAPPROVEDPLAN = "BPA6";
 }
