@@ -101,6 +101,17 @@ public class CalculationService {
 	private static final BigDecimal SQMT_SQFT_MULTIPLIER = new BigDecimal("10.764");// BigDecimal.valueOf(10.764);
 	private static final BigDecimal ACRE_SQMT_MULTIPLIER = new BigDecimal("4046.85");// BigDecimal.valueOf(4046.85);
 
+	private static final BigDecimal ONE_HUNDRED_FIFTY = new BigDecimal("150");
+
+	private static final BigDecimal TWO_HUNDRED_TWENTYFIVE = new BigDecimal("225");
+
+	private static final BigDecimal SIX_HUNDRED = new BigDecimal("600");
+
+	private static final BigDecimal EIGHT_HUNDRED_SVENTYFIVE = new BigDecimal("875");
+
+	private static final BigDecimal THREE_HUNDRED_SEVENTYFIVE = new BigDecimal("375");
+	
+
 	/**
 	 * Calculates tax estimates and creates demand
 	 * 
@@ -3051,11 +3062,32 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal calculatedTotalScrutinyFee = BigDecimal.ZERO;
+		Boolean isSparit = checkUlbForSparit(paramMap);
 		BigDecimal feeForDevelopmentOfLand = calculateFeeForDevelopmentOfLand(paramMap, estimates);
 		BigDecimal feeForBuildingOperation = calculateFeeForBuildingOperation(paramMap, estimates);
 		calculatedTotalScrutinyFee = (calculatedTotalScrutinyFee.add(feeForDevelopmentOfLand)
 				.add(feeForBuildingOperation)).setScale(2, BigDecimal.ROUND_UP);
 		return calculatedTotalScrutinyFee;
+	}
+	
+	private Boolean checkUlbForSparit(Map<String, Object> paramMap) {
+		Boolean isSparit = null;
+		Object mdmsData = paramMap.get("mdmsData");
+		String tenantId = String.valueOf(paramMap.get("tenantId"));
+		List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_CATEGORY_SPARIT_RESPONSE_PATH);
+		String filterExp = "$.[?(@.ulb == '" + tenantId + "')]";
+		List<Map<String, String>> checkCategoryTenantJson = JsonPath.read(jsonOutput, filterExp);
+		if (!CollectionUtils.isEmpty(checkCategoryTenantJson)) {
+			String sparitCheck = checkCategoryTenantJson.get(0)
+					.get(BPACalculatorConstants.MDMS_CATEGORY_SPARIT);
+			
+			isSparit = Boolean.parseBoolean(sparitCheck);
+			
+			 
+		}
+		paramMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
+		
+		return isSparit;
 	}
 
 	/**
@@ -3070,6 +3102,7 @@ public class CalculationService {
 		String serviceType = null;
 		String riskType = null;
 		Double plotArea = null;
+		Boolean isSparit = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -3082,6 +3115,9 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.PLOT_AREA)) {
 			plotArea = (Double) paramMap.get(BPACalculatorConstants.PLOT_AREA);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+		}
 		
 		if(!BPACalculatorConstants.RISK_TYPE_LOW.equalsIgnoreCase(riskType)) {
 			if ((StringUtils.hasText(applicationType)
@@ -3091,7 +3127,12 @@ public class CalculationService {
 				if (null != plotArea) {
 					paramMap.put(BPACalculatorConstants.AREA_TYPE, BPACalculatorConstants.AREA_TYPE_PLOT);
 					// feeForDevelopmentOfLand = calculateConstantFee(paramMap, 5);
+
+					if(isSparit) {
+									feeForDevelopmentOfLand = calculateConstantFeeNew(plotArea, 1);	
+								}else {
 					feeForDevelopmentOfLand = calculateConstantFeeNew(plotArea, 5);
+								}
 					paramMap.put(BPACalculatorConstants.AREA_TYPE, null);
 				}
 	
@@ -3233,6 +3274,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		Double totalBuitUpArea = null;
+		Boolean isSparit = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -3242,6 +3284,9 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+		}
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.F))) {
 			if ((StringUtils.hasText(applicationType)
@@ -3249,7 +3294,11 @@ public class CalculationService {
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				if(isSparit) {
+					feeForBuildingOperation = calculateConstantSparitFee(totalBuitUpArea);
+				}else {
 				feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
+				}
 			}
 		}
 		return feeForBuildingOperation;
@@ -3296,6 +3345,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		Double totalBuitUpArea = null;
+		Boolean isSparit = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -3305,6 +3355,9 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+		}
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.D))) {
 			if ((StringUtils.hasText(applicationType)
@@ -3312,7 +3365,11 @@ public class CalculationService {
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
 				// feeForBuildingOperation = calculateConstantFee(paramMap, 5);
+				if(isSparit) {
+					feeForBuildingOperation = calculateConstantSparitFee(totalBuitUpArea);
+				}else {
 				feeForBuildingOperation = calculateConstantFeeNew(totalBuitUpArea, 5);
+				}
 
 			}
 		}
@@ -3432,6 +3489,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		Double totalBuitUpArea = null;
+		Boolean isSparit = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -3441,13 +3499,21 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+		}
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.B))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
+				
+				if(isSparit) {
+					feeForBuildingOperation = calculateVariableFeeForSparitUlbs2(totalBuitUpArea);
+				}else {
 				feeForBuildingOperation = calculateVariableFee2(totalBuitUpArea);
+				}
 			}
 
 		}
@@ -3464,6 +3530,7 @@ public class CalculationService {
 		String serviceType = null;
 		String occupancyType = null;
 		Double totalBuitUpArea = null;
+		Boolean isSparit = null;
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -3473,19 +3540,87 @@ public class CalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
+		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+		}
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
 					&& (StringUtils.hasText(serviceType)
 							&& serviceType.equalsIgnoreCase(BPACalculatorConstants.NEW_CONSTRUCTION))) {
+				if(isSparit) {
+					feeForBuildingOperation = calculateVariableFeeForSparitUlbs1(totalBuitUpArea);
+				}else {
 				feeForBuildingOperation = calculateVariableFee1(totalBuitUpArea);
+				}
 			}
 
 		}
 		return feeForBuildingOperation;
 	}
 
+	
+	private BigDecimal calculateVariableFeeForSparitUlbs1(Double totalBuitUpArea) {
+		BigDecimal amount = BigDecimal.ZERO;
+		//totalBuitUpArea = 351.00;
+		if (null != totalBuitUpArea) {
+			if (totalBuitUpArea <= 100) {
+				amount = ONE_HUNDRED_FIFTY;
+			} else if (totalBuitUpArea <= 150) {
+				amount =  TWO_HUNDRED_TWENTYFIVE;
+			}else if (totalBuitUpArea <= 300) {
+				amount = THREE_HUNDRED;
+			} else if (totalBuitUpArea > 300) {
+				BigDecimal value = ((BigDecimal.valueOf(totalBuitUpArea).subtract(THREE_HUNDRED)).divide(FIFTY)).setScale(2,
+							BigDecimal.ROUND_UP);
+				int count = value.intValue();
+				if(count>=1 ) {
+					amount =  (SIX_HUNDRED.add((THREE_HUNDRED.multiply(new BigDecimal(count)))));
+				}else {
+					amount = SIX_HUNDRED;
+				}
+			}
+		}
+		return amount;
+}
+	
+	
+	private BigDecimal calculateVariableFeeForSparitUlbs2(Double totalBuitUpArea) {
+		//totalBuitUpArea =122.00;
+		BigDecimal amount = BigDecimal.ZERO;
+		if (null != totalBuitUpArea) {
+			if (totalBuitUpArea <= 20) {
+				amount = TWO_HUNDRED_FIFTY;
+			} else if (totalBuitUpArea <= 50) {
+				amount = THREE_HUNDRED_SEVENTYFIVE;
+			} else if (totalBuitUpArea > 50) {
+				BigDecimal value = ((BigDecimal.valueOf(totalBuitUpArea).subtract(FIFTY)).divide(FIFTY)).setScale(2,
+						BigDecimal.ROUND_UP);
+			int count = value.intValue();
+			System.out.println("check:"+count);
+			if(count>=1) {
+				amount =  (EIGHT_HUNDRED_SVENTYFIVE.add((FIVE_HUNDRED.multiply(new BigDecimal(count)))));
+			}else {
+				amount = EIGHT_HUNDRED_SVENTYFIVE;
+			}
+			}
+
+		}
+		//System.out.println("sparitcheck:"+amount);
+		return amount;
+
+	}
+	
+private BigDecimal calculateConstantSparitFee(Double totalBuitUpArea) {
+		
+		BigDecimal amount = BigDecimal.ZERO;
+		amount = (BigDecimal.valueOf(totalBuitUpArea).multiply(new BigDecimal(0.50)))
+				.setScale(2, BigDecimal.ROUND_UP);
+		
+		return amount;
+		
+	}
 	/**
 	 * @param totalBuitUpArea
 	 * @return
