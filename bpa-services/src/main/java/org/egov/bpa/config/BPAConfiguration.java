@@ -340,5 +340,17 @@ public class BPAConfiguration {
 	
 	@Value("${egov.filestore.upload.path}")
 	private String filestoreUploadPath;
+	
+	@Value("${persister.save.preapprovedplan.topic}")
+	private String savePreApprovedPlanTopicName;
+
+	@Value("${egov.idgen.bpa.drawingNum.name}")
+	private String drawingNoIdGenName;
+
+	@Value("${egov.idgen.bpa.drawingNum.format}")
+	private String drawingNoIdGenFormat;
+
+	@Value("${persister.update.preapprovedplan.topic}")
+	private String updatePreApprovedPlanTopicName;
 
 }
