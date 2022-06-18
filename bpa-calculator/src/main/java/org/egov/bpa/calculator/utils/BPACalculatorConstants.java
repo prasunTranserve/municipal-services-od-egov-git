@@ -21,9 +21,9 @@ public class BPACalculatorConstants {
 	public static final String MDMS_RETENTION_FEE = "retentionFee";
 	
 	//Sparit
-	 public static final String MDMS_CATEGORY_MASTER_NAME = "Sparit";
-	 public static final String MDMS_CATEGORY_SPARIT_RESPONSE_PATH ="$.MdmsRes.BPA.Sparit";
-	 public static final String MDMS_CATEGORY_SPARIT ="sparit";
+	public static final String MDMS_CATEGORY_MASTER_NAME ="Category";
+	public static final String MDMS_CATEGORY_SPARIT_RESPONSE_PATH = "$.MdmsRes.BPA.Category";
+	public static final String MDMS_CATEGORY_SPARIT ="sparit";
 	 public static final String SPARIT_CHECK ="sparit";
 
 	public static final String MDMS_CALCULATIONTYPE_PATH = "$.MdmsRes.BPA.CalculationType";

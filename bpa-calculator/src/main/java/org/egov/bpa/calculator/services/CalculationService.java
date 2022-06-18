@@ -147,9 +147,12 @@ public class CalculationService {
 		utils.validateOwnerDetails(calculationReq);
 		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
 		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
+		Boolean isSparit = mdmsService.getMdmsSparitValue(calculationReq,tenantId);
 		Map<String,Object> extraParamsForCalculationMap = new HashMap<>();
 		extraParamsForCalculationMap.put("tenantId", tenantId);
 		extraParamsForCalculationMap.put("mdmsData", mdmsData);
+		extraParamsForCalculationMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
+		System.out.println("checkSparit:"+isSparit);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
@@ -817,6 +820,7 @@ public class CalculationService {
 		paramMap.put("tenantId", extraParamsForCalculationMap.get("tenantId"));
 		paramMap.put("BPA", extraParamsForCalculationMap.get("BPA"));
 		paramMap.put("requestInfo", requestInfo);
+		paramMap.put(BPACalculatorConstants.SPARIT_CHECK, extraParamsForCalculationMap.get(BPACalculatorConstants.SPARIT_CHECK));
 		BigDecimal calculatedTotalAmout = calculateTotalFeeAmount(paramMap, estimates);
 		if (calculatedTotalAmout.compareTo(BigDecimal.ZERO) == -1) {
 			throw new CustomException(BPACalculatorConstants.INVALID_AMOUNT, "Tax amount is negative");
@@ -3062,7 +3066,7 @@ public class CalculationService {
 	 */
 	private BigDecimal calculateTotalScrutinyFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal calculatedTotalScrutinyFee = BigDecimal.ZERO;
-		Boolean isSparit = checkUlbForSparit(paramMap);
+		//Boolean isSparit = checkUlbForSparit(paramMap);
 		BigDecimal feeForDevelopmentOfLand = calculateFeeForDevelopmentOfLand(paramMap, estimates);
 		BigDecimal feeForBuildingOperation = calculateFeeForBuildingOperation(paramMap, estimates);
 		calculatedTotalScrutinyFee = (calculatedTotalScrutinyFee.add(feeForDevelopmentOfLand)
@@ -3070,25 +3074,7 @@ public class CalculationService {
 		return calculatedTotalScrutinyFee;
 	}
 	
-	private Boolean checkUlbForSparit(Map<String, Object> paramMap) {
-		Boolean isSparit = null;
-		Object mdmsData = paramMap.get("mdmsData");
-		String tenantId = String.valueOf(paramMap.get("tenantId"));
-		List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_CATEGORY_SPARIT_RESPONSE_PATH);
-		String filterExp = "$.[?(@.ulb == '" + tenantId + "')]";
-		List<Map<String, String>> checkCategoryTenantJson = JsonPath.read(jsonOutput, filterExp);
-		if (!CollectionUtils.isEmpty(checkCategoryTenantJson)) {
-			String sparitCheck = checkCategoryTenantJson.get(0)
-					.get(BPACalculatorConstants.MDMS_CATEGORY_SPARIT);
-			
-			isSparit = Boolean.parseBoolean(sparitCheck);
-			
-			 
-		}
-		paramMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
-		
-		return isSparit;
-	}
+
 
 	/**
 	 * @param paramMap
