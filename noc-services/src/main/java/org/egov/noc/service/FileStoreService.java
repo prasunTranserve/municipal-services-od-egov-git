@@ -175,9 +175,11 @@ public class FileStoreService {
 	public List<Document> upload(File file, String fileName, String mimeType, String moduleName, String tenantId,
 			String documentType) {
 		String url = config.getFilestoreHost() + config.getFilestoreContext() + config.getFilestorefilestorepath();
+		log.info("inside method upload,url:"+url);
 		fileName = normalizeString(fileName);
 		mimeType = normalizeString(mimeType);
 		moduleName = normalizeString(moduleName);
+		log.info("fileName:" + fileName + ",mimeType:" + mimeType + ",moduleName" + moduleName);
 		HttpHeaders headers = new HttpHeaders();
 		log.info("Uploading file to filestore:" + fileName);
 
@@ -192,17 +194,22 @@ public class FileStoreService {
 			HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map,
 					headers);
 			result = restTemplate.postForEntity(url, request, String.class);
+			log.info("result:"+result);
 			DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(result.getBody());
 			List<String> list = context.read("files.*.fileStoreId");
 			String fileStoreId = null;
-			if (!CollectionUtils.isEmpty(list))
+			if (!CollectionUtils.isEmpty(list)) {
 				fileStoreId = list.get(0);
+				log.info("fileStoreId:" + fileStoreId);
+			}
 			Document document = new Document();
 			document.setFileStoreId(fileStoreId);
 			document.setDocumentType(documentType);
 			documents.add(document);
-			if (file.exists())
+			if (file.exists()) {
 				FileUtils.forceDelete(file);
+				log.info("successfully deleted file");
+			}
 		} catch (RestClientException e) {
 			log.error("Rest Exception occurred while uploading file", e);
 			throw new CustomException("Error while uploading file to filestore",
@@ -222,6 +229,7 @@ public class FileStoreService {
         Matcher matcher = pattern.matcher(fileName);
         if (matcher.find()) {
             // Found blacklisted tag
+        	log.error("found blacklisted tag inside method normalizeString");
             throw new IllegalStateException();
         }
         return fileName;
