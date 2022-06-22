@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.repository.BPARepository;
 import org.egov.bpa.repository.IdGenRepository;
@@ -25,14 +27,17 @@ import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.DscDetails;
+import org.egov.bpa.web.model.NoticeRequest;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanRequest;
+
 import org.egov.bpa.web.model.Workflow;
 import org.egov.bpa.web.model.idgen.IdResponse;
 import org.egov.bpa.web.model.workflow.BusinessService;
 import org.egov.bpa.workflow.WorkflowIntegrator;
 import org.egov.bpa.workflow.WorkflowService;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -694,4 +699,23 @@ public class EnrichmentService {
 			bpa.getWorkflow().setAssignes(new LinkedList<>(assignes));
 		}
 	}
+
+public void enrichScnCreateRequestV2(@Valid NoticeRequest request) {
+	
+	RequestInfo requestInfo = request.getRequestInfo();
+	//requestInfo.setUserInfo(User.builder().uuid("b111659f-7b4c-4cb8-acab-0187407d9d47").build());
+	AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
+	Map<String, String> errorMap = new HashMap<>();
+
+	
+	if(request.getnotice().getLetterNo()!=null && request.getnotice().getBusinessid()!=null && request.getnotice().getLetterType()!=null
+		&&	request.getnotice().getFilestoreid()!=null && request.getnotice().getTenantid()!=null	) {
+	request.getnotice().setAuditDetails(auditDetails);
+	request.getnotice().setId(UUID.randomUUID().toString());
+	}else {
+		errorMap.put("NoticeCreateError","please provide valid details to create a  notice.");
+	}
+	if (!errorMap.isEmpty())
+		throw new CustomException(errorMap);
+}
 }
