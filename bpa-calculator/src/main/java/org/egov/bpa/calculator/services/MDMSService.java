@@ -74,6 +74,7 @@ public class MDMSService {
         		.build());
         bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_OC_COMPOUNDING_FEE).build());
         bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_RETENTION_FEES_MASTER_NAME).build());
+       // bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_CATEGORY_MASTER_NAME).build());
         
         ModuleDetail bpaModuleDtls = ModuleDetail.builder().masterDetails(bpaMasterDetails)
                 .moduleName(BPACalculatorConstants.MDMS_BPA).build();
@@ -180,5 +181,43 @@ public class MDMSService {
 		return ocCompoundingFee;
 	}
 
+public Boolean getMdmsSparitValue(CalculationReq calculationReq,String tenantIds) {
+		
+		RequestInfo requestInfo = 	calculationReq.getRequestInfo();
+        List<MasterDetail> bpaMasterDetails = new ArrayList<>();
+        String tenantId = "od";
+        Boolean isSparit =null;
+        bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_CATEGORY_MASTER_NAME).build());
+        ModuleDetail bpaModuleDtls = ModuleDetail.builder().masterDetails(bpaMasterDetails)
+                .moduleName(BPACalculatorConstants.MDMS_BPA).build();
+
+        List<ModuleDetail> moduleDetails = new ArrayList<>();
+        
+        moduleDetails.add(bpaModuleDtls);
+
+        MdmsCriteria mdmsCriteria = MdmsCriteria.builder().moduleDetails(moduleDetails).tenantId(tenantId)
+                .build();
+        MdmsCriteriaReq mdmscrieterias =    MdmsCriteriaReq.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteria).build();
+        StringBuilder url = getMdmsSearchUrl();
+        // String url = "http://localhost:8094/egov-mdms-service/v1/_search";
+         // System.out.println("mdmscrieteria:"+url);
+          Object mdmsSparitData = serviceRequestRepository.fetchResult(url , mdmscrieterias);
+          System.out.println("result:"+mdmsSparitData);
+      
+       List jsonOutput = JsonPath.read(mdmsSparitData, BPACalculatorConstants.MDMS_CATEGORY_SPARIT_RESPONSE_PATH);
+		String filterExp = "$.[?(@.ulb == '" + tenantIds + "')]";
+		List<Map<String, String>> checkCategoryTenantJson = JsonPath.read(jsonOutput, filterExp);
+		if (!CollectionUtils.isEmpty(checkCategoryTenantJson)) {
+			String sparitCheck = checkCategoryTenantJson.get(0)
+					.get(BPACalculatorConstants.MDMS_CATEGORY_SPARIT);
+			
+			isSparit = Boolean.parseBoolean(sparitCheck);
+			
+			
+			// System.out.println("spaitcheck:"+isSparit);
+		}
+		
+      return isSparit;
+	}
 
 }

@@ -19,6 +19,12 @@ public class BPACalculatorConstants {
 	public static final String MDMS_OC_COMPOUNDING_FEE = "ocCompoundingFee";
 	public static final String MDMS_RETENTION_FEES_MASTER_NAME = "RetentionFees";
 	public static final String MDMS_RETENTION_FEE = "retentionFee";
+	
+	//Sparit
+	public static final String MDMS_CATEGORY_MASTER_NAME ="Category";
+	public static final String MDMS_CATEGORY_SPARIT_RESPONSE_PATH = "$.MdmsRes.BPA.Category";
+	public static final String MDMS_CATEGORY_SPARIT ="sparit";
+	 public static final String SPARIT_CHECK ="sparit";
 
 	public static final String MDMS_CALCULATIONTYPE_PATH = "$.MdmsRes.BPA.CalculationType";
 	public static final String MDMS_OC_COMPOUNDING_FEE_PATH = "$.MdmsRes.BPA.ocCompoundingFee";
@@ -372,4 +378,8 @@ public class BPACalculatorConstants {
 	public static final String PAYMENT_TAXHEAD_AMOUNT_PATH = "$.Payments[%s].paymentDetails[0].bill.billDetails[0].billAccountDetails[?(@.taxHeadCode == '%s')].adjustedAmount";
 	
 	public static final String BUSINESSSERVICE_PREAPPROVEDPLAN = "BPA6";
+
+//	public static final String SPARIT_CHECK = null;
+
+	//public static final String MDMS_CATEGORY_MASTER_NAME = null;
 }

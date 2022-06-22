@@ -352,5 +352,8 @@ public class BPAConfiguration {
 
 	@Value("${persister.update.preapprovedplan.topic}")
 	private String updatePreApprovedPlanTopicName;
+	
+	@Value("${persister.save.notice.topic}")
+	private String savenoticeTopicName;
 
 }
