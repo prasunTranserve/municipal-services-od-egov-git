@@ -131,7 +131,7 @@ public class CalculationService {
 		extraParamsForCalculationMap.put("tenantId", tenantId);
 		extraParamsForCalculationMap.put("mdmsData", mdmsData);
 		extraParamsForCalculationMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
-		log.info("checkSparit:"+isSparit);
+		System.out.println("checkSparit:"+isSparit);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		demandService.generateDemand(calculationReq.getRequestInfo(), calculations, mdmsData);
@@ -155,7 +155,7 @@ public class CalculationService {
 		extraParamsForCalculationMap.put("tenantId", tenantId);
 		extraParamsForCalculationMap.put("mdmsData", mdmsData);
 		extraParamsForCalculationMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
-		log.info("checkSparit:"+isSparit);
+		System.out.println("checkSparit:"+isSparit);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
