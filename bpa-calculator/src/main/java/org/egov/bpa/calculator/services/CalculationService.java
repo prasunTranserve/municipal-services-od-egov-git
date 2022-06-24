@@ -123,12 +123,15 @@ public class CalculationService {
 		utils.validateOwnerDetails(calculationReq);
 		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
 		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
+		Boolean isSparit = mdmsService.getMdmsSparitValue(calculationReq,tenantId);
 		// List<Calculation> calculations =
 		// getCalculation(calculationReq.getRequestInfo(),calculationReq.getCalulationCriteria(),
 		// mdmsData);
 		Map<String,Object> extraParamsForCalculationMap = new HashMap<>();
 		extraParamsForCalculationMap.put("tenantId", tenantId);
 		extraParamsForCalculationMap.put("mdmsData", mdmsData);
+		extraParamsForCalculationMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
+		System.out.println("checkSparit:"+isSparit);
 		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		demandService.generateDemand(calculationReq.getRequestInfo(), calculations, mdmsData);
