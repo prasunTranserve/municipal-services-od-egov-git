@@ -455,7 +455,8 @@ public class BPAService {
 		String tenantId = bpaRequest.getBPA().getTenantId().split("\\.")[0];
 		Object mdmsData = util.mDMSCall(requestInfo, tenantId);
 		BPA bpa = bpaRequest.getBPA();
-
+		String businessServices = bpaRequest.getBPA().getBusinessService(); 
+          
 		if (bpa.getId() == null) {
 			throw new CustomException(BPAErrorConstants.UPDATE_ERROR, "Application Not found in the System" + bpa);
 		}
@@ -465,8 +466,17 @@ public class BPAService {
 		if (isRequestForBuildingPlanLayoutSignature(bpaRequest)) {
 			return processBuildingPlanLayoutSignature(bpaRequest);
 		}
+		//Map<String, String> values = new HashMap<>();
+		LinkedHashMap<String, Object> edcr = new LinkedHashMap<>();
+		Map<String, String> edcrResponse = new HashMap<>();
+		if (StringUtils.isNotEmpty(businessServices) && "BPA6".equals(businessServices)) {
+			getEdcrDetailsForPreapprovedPlan(edcrResponse,bpaRequest);
+		}
+		else {
 
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		}
+		
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
 		log.debug("applicationType is " + applicationType);
@@ -523,6 +533,14 @@ public class BPAService {
 
 	}
 	
+	private void getEdcrDetailsForPreapprovedPlan(Map<String, String> edcrResponse, BPARequest bpaRequest) {
+		
+				edcrResponse.put(BPAConstants.SERVICETYPE,  "NEW_CONSTRUCTION");// NEW_CONSTRUCTION
+				edcrResponse.put(BPAConstants.APPLICATIONTYPE,   "BUILDING_PLAN_SCRUTINY");// BUILDING_PLAN_SCRUTINY
+				
+				 
+	}
+
 	private BPA processBuildingPlanLayoutSignature(BPARequest bpaRequest) {
 		//update the eg_bpa_document table to unlink the old filestoreid and link the new filestoreid
 		//for the document BPD.BPL.BPL
