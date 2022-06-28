@@ -479,15 +479,17 @@ public class BPAService {
 		
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
+		System.out.println("applicationType is"+applicationType);
 		log.debug("applicationType is " + applicationType);
-		BusinessService businessService = workflowService.getBusinessService(bpa, bpaRequest.getRequestInfo(),
+	BusinessService businessService = workflowService.getBusinessService(bpa, bpaRequest.getRequestInfo(),
 				bpa.getApplicationNo());
 
 		List<BPA> searchResult = getBPAWithBPAId(bpaRequest);
+		
 		if (CollectionUtils.isEmpty(searchResult) || searchResult.size() > 1) {
 			throw new CustomException(BPAErrorConstants.UPDATE_ERROR,
-					"Failed to Update the Application, Found None or multiple applications!");
-		}
+					"Failed to Update the Application, Found None or multiple applications!");		
+			}
 
 		Map<String, String> additionalDetails = bpa.getAdditionalDetails() != null ? (Map) bpa.getAdditionalDetails()
 				: new HashMap<String, String>();
@@ -500,16 +502,17 @@ public class BPAService {
 
 		this.processOcUpdate(applicationType, edcrResponse.get(BPAConstants.PERMIT_NO), bpaRequest, requestInfo,
 				additionalDetails);
+		//System.out.println("working fine ");
 
 		bpaRequest.getBPA().setAuditDetails(searchResult.get(0).getAuditDetails());
 
 		nocService.manageOfflineNocs(bpaRequest, mdmsData);
 		bpaValidator.validatePreEnrichData(bpaRequest, mdmsData);
 		enrichmentService.enrichBPAUpdateRequest(bpaRequest, businessService);
-
+//System.out.println("working here also");
 		this.handleRejectSendBackActions(applicationType, bpaRequest, businessService, searchResult, mdmsData,
 				edcrResponse);
-
+//System.out.println("working here also");
 		wfIntegrator.callWorkFlow(bpaRequest);
 		log.debug("===> workflow done =>" + bpaRequest.getBPA().getStatus());
 		enrichmentService.postStatusEnrichment(bpaRequest);
@@ -518,7 +521,7 @@ public class BPAService {
 
 		// Generate the sanction Demand
 		if (bpa.getStatus().equalsIgnoreCase(BPAConstants.SANC_FEE_STATE)) {
-			// calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
+			calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
 			calculationService.addCalculationV2(bpaRequest, BPAConstants.SANCTION_FEE_KEY, applicationType,
 					serviceType);
 		}
@@ -535,8 +538,25 @@ public class BPAService {
 	
 	private void getEdcrDetailsForPreapprovedPlan(Map<String, String> edcrResponse, BPARequest bpaRequest) {
 		
-				edcrResponse.put(BPAConstants.SERVICETYPE,  "NEW_CONSTRUCTION");// NEW_CONSTRUCTION
-				edcrResponse.put(BPAConstants.APPLICATIONTYPE,   "BUILDING_PLAN_SCRUTINY");// BUILDING_PLAN_SCRUTINY
+		
+		
+		PreapprovedPlanSearchCriteria preapprovedPlanSearchCriteria = new PreapprovedPlanSearchCriteria();
+		preapprovedPlanSearchCriteria.setDrawingNo(bpaRequest.getBPA().getEdcrNumber());
+		List<PreapprovedPlan> preapprovedPlans = preapprovedPlanService
+				.getPreapprovedPlanFromCriteria(preapprovedPlanSearchCriteria);
+		if (CollectionUtils.isEmpty(preapprovedPlans)) {
+			log.error("no preapproved plan found for provided drawingNo:" + bpaRequest.getBPA().getEdcrNumber());
+			throw new CustomException("no preapproved plan found for provided drawingNo",
+					"no preapproved plan found for provided drawingNo");
+		}
+		PreapprovedPlan preapprovedPlanFromDb = preapprovedPlans.get(0);
+		Map<String, Object> drawingDetail = (Map<String, Object>) preapprovedPlanFromDb.getDrawingDetail();
+		
+		edcrResponse.put(BPAConstants.SERVICETYPE, drawingDetail.get("serviceType") + "");// NEW_CONSTRUCTION
+		edcrResponse.put(BPAConstants.APPLICATIONTYPE, drawingDetail.get("applicationType") + "");// BUILDING_PLAN_SCRUTINY
+		
+				//edcrResponse.put(BPAConstants.SERVICETYPE,  "NEW_CONSTRUCTION");// NEW_CONSTRUCTION
+				//edcrResponse.put(BPAConstants.APPLICATIONTYPE,   "BUILDING_PLAN_SCRUTINY");// BUILDING_PLAN_SCRUTINY
 				
 				 
 	}
@@ -614,7 +634,7 @@ public class BPAService {
 		} else {
 
 			if (!bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_SENDBACKTOCITIZEN)) {
-				actionValidator.validateUpdateRequest(bpaRequest, businessService);
+				//sactionValidator.validateUpdateRequest(bpaRequest, businessService);
 				bpaValidator.validateUpdate(bpaRequest, searchResult, mdmsData,
 						workflowService.getCurrentState(bpa.getStatus(), businessService), edcrResponse);
 				if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
