@@ -355,5 +355,8 @@ public class BPAConfiguration {
 	
 	@Value("${persister.save.notice.topic}")
 	private String savenoticeTopicName;
+	
+	@Value("${egov.bpa.calculator.installments.search.endpoint}")
+	private String fetchAllInstallmentsEndpoint;
 
 }

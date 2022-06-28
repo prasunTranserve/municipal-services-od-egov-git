@@ -10,6 +10,8 @@ import org.egov.bpa.calculator.services.DemandService;
 import org.egov.bpa.calculator.web.models.Calculation;
 import org.egov.bpa.calculator.web.models.CalculationReq;
 import org.egov.bpa.calculator.web.models.CalculationRes;
+import org.egov.bpa.calculator.web.models.RequestInfoWrapper;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -84,6 +86,18 @@ public class BPACalculatorController {
 		List<Calculation> calculations = calculationService.calculateInInstallments(calculationReq);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
+	
+	/**
+	 * Fetch the installments
+	 * 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = "/_getAllInstallments", method = RequestMethod.POST)
+	public ResponseEntity<Object> getAllInstallments(@Valid @RequestBody RequestInfoWrapper requestInfo) {
+		log.debug("inside _getAllInstallments");
+		return new ResponseEntity<Object>(calculationService.getAllInstallments(), HttpStatus.OK);
 	}
 
 

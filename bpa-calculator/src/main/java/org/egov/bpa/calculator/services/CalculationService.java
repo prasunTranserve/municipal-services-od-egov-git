@@ -191,6 +191,16 @@ public class CalculationService {
 		return calculations;
 	}
 	
+	/**
+	 * Fetch all installments from db
+	 * 
+	 */
+	public Object getAllInstallments() {
+		String allInstallments="{\"installments\":{\"1\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8f\",\"tenantid\":\"od.cuttack\",\"installmentno\":1,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]},{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8i\",\"tenantid\":\"od.cuttack\",\"installmentno\":1,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_SANC_FEE\",\"taxamount\":20000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}],\"2\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8g\",\"tenantid\":\"od.cuttack\",\"installmentno\":2,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]},{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8j\",\"tenantid\":\"od.cuttack\",\"installmentno\":2,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_SANC_FEE\",\"taxamount\":20000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}],\"3\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8h\",\"tenantid\":\"od.cuttack\",\"installmentno\":3,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}]}}";
+		JSONObject allInstallmentsJson = new JSONObject(allInstallments);
+		return allInstallmentsJson.toMap();
+	}
+	
 	private List<Installment> generateInstallmentsFromCalculations(CalculationReq calculationReq, List<Calculation> calculations) {
 		List<Installment> installmentsToInsert = new ArrayList<>();
 		int maxNoOfInstallmentsForAllTaxHeadCodes = 3;

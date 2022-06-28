@@ -84,5 +84,16 @@ public class CalculationService {
 		url.append(this.config.getBpaCalculationEstimateEndpoint());
 		return this.serviceRequestRepository.fetchResult(url, bpaRequest);
 	}
+	
+	/**
+	 * call bpa-calculator /_getAllInstallments API
+	 * @param bpaRequest
+	 */
+	public Object getAllInstallments(Object bpaRequest) { 
+		StringBuilder url = new StringBuilder();
+		url.append(this.config.getCalculatorHost());
+		url.append(this.config.getFetchAllInstallmentsEndpoint());
+		return this.serviceRequestRepository.fetchResult(url, bpaRequest);
+	}
 
 }
