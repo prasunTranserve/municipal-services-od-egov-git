@@ -16,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.service.EDCRService;
 import org.egov.bpa.service.NocService;
+import org.egov.bpa.service.PreapprovedPlanService;
 import org.egov.bpa.util.BPAConstants;
 import org.egov.bpa.util.BPAErrorConstants;
 import org.egov.bpa.util.BPAUtil;
@@ -24,6 +25,8 @@ import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.Document;
 import org.egov.bpa.web.model.DscDetails;
+import org.egov.bpa.web.model.PreapprovedPlan;
+import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.web.model.NOC.Noc;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -45,6 +48,9 @@ public class BPAValidator {
 
 	@Autowired
 	private BPAConfiguration config;
+	
+	@Autowired
+	private PreapprovedPlanService preapprovedPlanService;
 	
 	@Autowired
 	private EDCRService edcrService;
@@ -328,13 +334,46 @@ public class BPAValidator {
 	 */
 	public void validateCheckList(Object mdmsData, BPARequest bpaRequest, String wfState) {
 		BPA bpa = bpaRequest.getBPA();
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		String businessServices = bpaRequest.getBPA().getBusinessService(); 
+        
+	     
+		Map<String, String> edcrResponse = new HashMap<>();
+		if (StringUtils.isNotEmpty(businessServices) && "BPA6".equals(businessServices)) {
+			//System.out.println("inside this");
+			getEdcrDetailsForPreapprovedPlan(edcrResponse,bpaRequest);
+		}else
+		 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		
 		log.debug("applicationType is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
         log.debug("serviceType is " + edcrResponse.get(BPAConstants.SERVICETYPE));
         
 		validateQuestions(mdmsData, bpa, wfState, edcrResponse);
 		validateFIDocTypes(mdmsData, bpa, wfState, edcrResponse);
 	}
+
+	private void getEdcrDetailsForPreapprovedPlan(Map<String, String> edcrResponse, BPARequest bpaRequest) {
+		
+		PreapprovedPlanSearchCriteria preapprovedPlanSearchCriteria = new PreapprovedPlanSearchCriteria();
+		preapprovedPlanSearchCriteria.setDrawingNo(bpaRequest.getBPA().getEdcrNumber());
+		List<PreapprovedPlan> preapprovedPlans = preapprovedPlanService
+				.getPreapprovedPlanFromCriteria(preapprovedPlanSearchCriteria);
+		if (CollectionUtils.isEmpty(preapprovedPlans)) {
+			log.error("no preapproved plan found for provided drawingNo:" + bpaRequest.getBPA().getEdcrNumber());
+			throw new CustomException("no preapproved plan found for provided drawingNo",
+					"no preapproved plan found for provided drawingNo");
+		}
+		PreapprovedPlan preapprovedPlanFromDb = preapprovedPlans.get(0);
+		Map<String, Object> drawingDetail = (Map<String, Object>) preapprovedPlanFromDb.getDrawingDetail();
+		
+		edcrResponse.put(BPAConstants.SERVICETYPE, drawingDetail.get("serviceType") + "");// NEW_CONSTRUCTION
+		edcrResponse.put(BPAConstants.APPLICATIONTYPE, drawingDetail.get("applicationType") + "");// BUILDING_PLAN_SCRUTINY
+		
+			//	edcrResponse.put(BPAConstants.SERVICETYPE,  "NEW_CONSTRUCTION");// NEW_CONSTRUCTION
+				//edcrResponse.put(BPAConstants.APPLICATIONTYPE,   "BUILDING_PLAN_SCRUTINY");// BUILDING_PLAN_SCRUTINY
+				
+		
+	}
+
 
 	/**
 	 * validate the fields insepction report questions agains the MDMS
