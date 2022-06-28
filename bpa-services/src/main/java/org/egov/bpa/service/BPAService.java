@@ -634,7 +634,7 @@ public class BPAService {
 		} else {
 
 			if (!bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_SENDBACKTOCITIZEN)) {
-				//sactionValidator.validateUpdateRequest(bpaRequest, businessService);
+				actionValidator.validateUpdateRequest(bpaRequest, businessService);
 				bpaValidator.validateUpdate(bpaRequest, searchResult, mdmsData,
 						workflowService.getCurrentState(bpa.getStatus(), businessService), edcrResponse);
 				if (!applicationType.equalsIgnoreCase(BPAConstants.BUILDING_PLAN_OC)) {
