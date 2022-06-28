@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.tomcat.jni.BIOCallback;
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
@@ -22,11 +23,13 @@ import org.egov.bpa.calculator.web.models.Calculation;
 import org.egov.bpa.calculator.web.models.CalculationReq;
 import org.egov.bpa.calculator.web.models.CalculationRes;
 import org.egov.bpa.calculator.web.models.CalulationCriteria;
+import org.egov.bpa.calculator.web.models.Installment;
 import org.egov.bpa.calculator.web.models.PreapprovedPlan;
 import org.egov.bpa.calculator.web.models.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.EstimatesAndSlabs;
 import org.egov.bpa.calculator.web.models.demand.Category;
+import org.egov.bpa.calculator.web.models.Installment.StatusEnum;
 import org.egov.bpa.calculator.web.models.demand.TaxHeadEstimate;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -160,6 +163,55 @@ public class CalculationService {
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		return calculations;
+	}
+	
+	/**
+	 * Calculates tax estimates and stores them in installments table
+	 * 
+	 * @param calculationReq The calculationCriteria request
+	 * @return List of calculations for all applicationNumbers in calculationReq
+	 */
+	public List<Calculation> calculateInInstallments(CalculationReq calculationReq) {
+		utils.validateOwnerDetails(calculationReq);
+		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
+		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
+		Boolean isSparit = mdmsService.getMdmsSparitValue(calculationReq,tenantId);
+		Map<String,Object> extraParamsForCalculationMap = new HashMap<>();
+		extraParamsForCalculationMap.put("tenantId", tenantId);
+		extraParamsForCalculationMap.put("mdmsData", mdmsData);
+		extraParamsForCalculationMap.put(BPACalculatorConstants.SPARIT_CHECK, isSparit);
+		List<Calculation> calculations = getCalculationV2(calculationReq.getRequestInfo(),
+				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
+		//store the calculations in installments table
+		List<Installment> installmentsToInsert = generateInstallmentsFromCalculations(calculationReq, calculations);
+		//
+		Map<String, List<Installment>> persisterMap = new HashMap<>();
+		persisterMap.put("installments", installmentsToInsert);
+		//producer.push(config.getSaveInstallmentTopic(), persisterMap);
+		return calculations;
+	}
+	
+	private List<Installment> generateInstallmentsFromCalculations(CalculationReq calculationReq, List<Calculation> calculations) {
+		List<Installment> installmentsToInsert = new ArrayList<>();
+		int maxNoOfInstallmentsForAllTaxHeadCodes = 3;
+		for (Calculation calculation : calculations) {
+			for (TaxHeadEstimate taxHeadEstimate : calculation.getTaxHeadEstimates()) {
+				for (int i = 0; i < maxNoOfInstallmentsForAllTaxHeadCodes; i++) {
+					Installment installment = Installment.builder().id(UUID.randomUUID().toString())
+							.tenantId(calculation.getTenantId()).status(StatusEnum.ACTIVE)
+							.consumerCode(calculation.getApplicationNumber())
+							.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
+							.taxAmount(taxHeadEstimate.getEstimateAmount().divide(
+									new BigDecimal(maxNoOfInstallmentsForAllTaxHeadCodes), 2,
+									BigDecimal.ROUND_HALF_DOWN))
+							.auditDetails(utils.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(),
+									true))
+							.build();
+					installmentsToInsert.add(installment);
+				}
+			}
+		}
+		return installmentsToInsert;
 	}
 
 	/**

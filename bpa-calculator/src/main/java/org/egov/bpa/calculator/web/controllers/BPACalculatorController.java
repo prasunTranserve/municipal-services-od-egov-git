@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,20 @@ public class BPACalculatorController {
 	public ResponseEntity<CalculationRes> estimate(@Valid @RequestBody CalculationReq calculationReq) {
 		log.debug("CalculationReaquest:: " + calculationReq);
 		List<Calculation> calculations = calculationService.getEstimate(calculationReq);
+		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
+		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
+	
+	/**
+	 * Calculates the BPA fee and stores in installments
+	 * 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = "/_calculateInInstallments", method = RequestMethod.POST)
+	public ResponseEntity<CalculationRes> calculateInInstallments(@Valid @RequestBody CalculationReq calculationReq) {
+		log.debug("calculateInInstallments request:: " + calculationReq);
+		List<Calculation> calculations = calculationService.calculateInInstallments(calculationReq);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
 	}
