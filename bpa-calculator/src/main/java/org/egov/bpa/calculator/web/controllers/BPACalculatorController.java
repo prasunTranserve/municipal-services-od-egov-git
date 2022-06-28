@@ -10,6 +10,8 @@ import org.egov.bpa.calculator.services.DemandService;
 import org.egov.bpa.calculator.web.models.Calculation;
 import org.egov.bpa.calculator.web.models.CalculationReq;
 import org.egov.bpa.calculator.web.models.CalculationRes;
+import org.egov.bpa.calculator.web.models.RequestInfoWrapper;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +72,32 @@ public class BPACalculatorController {
 		List<Calculation> calculations = calculationService.getEstimate(calculationReq);
 		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
 		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
+	
+	/**
+	 * Calculates the BPA fee and stores in installments
+	 * 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = "/_calculateInInstallments", method = RequestMethod.POST)
+	public ResponseEntity<CalculationRes> calculateInInstallments(@Valid @RequestBody CalculationReq calculationReq) {
+		log.debug("calculateInInstallments request:: " + calculationReq);
+		List<Calculation> calculations = calculationService.calculateInInstallments(calculationReq);
+		CalculationRes calculationRes = CalculationRes.builder().calculations(calculations).build();
+		return new ResponseEntity<CalculationRes>(calculationRes, HttpStatus.OK);
+	}
+	
+	/**
+	 * Fetch the installments
+	 * 
+	 * @param calculationReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@RequestMapping(value = "/_getAllInstallments", method = RequestMethod.POST)
+	public ResponseEntity<Object> getAllInstallments(@Valid @RequestBody RequestInfoWrapper requestInfo) {
+		log.debug("inside _getAllInstallments");
+		return new ResponseEntity<Object>(calculationService.getAllInstallments(), HttpStatus.OK);
 	}
 
 

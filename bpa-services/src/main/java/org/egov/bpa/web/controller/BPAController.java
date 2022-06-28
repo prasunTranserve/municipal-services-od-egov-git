@@ -139,6 +139,19 @@ public class BPAController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	/**
+	 * Wrapper API to bpa-calculator /_getAllInstallments API as
+	 * cannot access bpa-calculator APIs from UI directly
+	 * 
+	 * @param bpaReq The calculation Request
+	 * @return Calculation Response
+	 */
+	@PostMapping(value = { "/_getAllInstallments" })
+	public ResponseEntity<Object> getAllInstallments(@RequestBody Object bpaRequest) {
+		Object response = bpaService.getAllInstallmentsFromBpaCalculator(bpaRequest);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	@PostMapping(value = { "/_mergeScrutinyReportToPermit" })
 	public ResponseEntity<Object> mergeScrutinyReportToPermit(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
 			@Valid @RequestBody BPARequest bpaRequest) {

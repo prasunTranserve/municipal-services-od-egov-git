@@ -926,6 +926,16 @@ public class BPAService {
 		return calculationService.callBpaCalculatorEstimate(bpaRequest);
 	}
 	
+	/**
+	 * call BPA-calculator and fetch all installments
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 */
+	public Object getAllInstallmentsFromBpaCalculator(Object bpaRequest) {
+		return calculationService.getAllInstallments(bpaRequest);
+	}
+	
 	public Object mergeScrutinyReportToPermit(BPARequest bpaRequest, RequestInfo requestInfo) {
 		String randomUuidPerThread=UUID.randomUUID().toString();
 		String fileName = "shortenedScrutinyReport_"+randomUuidPerThread+".pdf";

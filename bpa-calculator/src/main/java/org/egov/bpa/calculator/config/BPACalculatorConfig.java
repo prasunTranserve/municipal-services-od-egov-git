@@ -135,5 +135,7 @@ public class BPACalculatorConfig {
 //    @Value("${egov.tl.calculationtype.accessory.default}")
 //    private String defaultAccessoryCalculationType;
 
+	@Value("${persister.save.bpa.installment}")
+	private String saveInstallmentTopic;
 
 }
