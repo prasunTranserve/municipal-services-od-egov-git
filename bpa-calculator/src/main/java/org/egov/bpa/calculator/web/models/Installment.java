@@ -24,7 +24,7 @@ public class Installment {
 	private String tenantId;
 	
 	@JsonProperty("installmentNo")
-	private String installmentNo;
+	private int installmentNo;
 
 	/**
 	 * Gets or Sets status
@@ -73,7 +73,10 @@ public class Installment {
 	private BigDecimal taxAmount;
 	
 	@JsonProperty("demandId")
-	private BigDecimal demandId;
+	private String demandId;
+	
+	@JsonProperty("isPaymentCompletedInDemand")
+	private boolean isPaymentCompletedInDemand;
 
 	@JsonProperty("auditDetails")
 	private AuditDetails auditDetails;

@@ -3,6 +3,7 @@ package org.egov.bpa.calculator.services;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -10,10 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.tomcat.jni.BIOCallback;
 import org.egov.bpa.calculator.config.BPACalculatorConfig;
 import org.egov.bpa.calculator.kafka.broker.BPACalculatorProducer;
+import org.egov.bpa.calculator.repository.InstallmentRepository;
 import org.egov.bpa.calculator.repository.PreapprovedPlanRepository;
 import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
@@ -30,6 +33,8 @@ import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.EstimatesAndSlabs;
 import org.egov.bpa.calculator.web.models.demand.Category;
 import org.egov.bpa.calculator.web.models.Installment.StatusEnum;
+import org.egov.bpa.calculator.web.models.InstallmentRequest;
+import org.egov.bpa.calculator.web.models.InstallmentSearchCriteria;
 import org.egov.bpa.calculator.web.models.demand.TaxHeadEstimate;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -79,6 +84,8 @@ public class CalculationService {
 	
 	@Autowired
 	private PreapprovedPlanRepository preapprovedPlanRepository;
+	
+	@Autowired InstallmentRepository installmentRepository;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -187,7 +194,7 @@ public class CalculationService {
 		//
 		Map<String, List<Installment>> persisterMap = new HashMap<>();
 		persisterMap.put("installments", installmentsToInsert);
-		//producer.push(config.getSaveInstallmentTopic(), persisterMap);
+		producer.push(config.getSaveInstallmentTopic(), persisterMap);
 		return calculations;
 	}
 	
@@ -201,18 +208,36 @@ public class CalculationService {
 		return allInstallmentsJson.toMap();
 	}
 	
+	/**
+	 * Fetch all installments from db
+	 * 
+	 */
+	public Object getAllInstallmentsV2(InstallmentRequest request) {
+		List<Installment> installments = installmentRepository.getInstallments(request.getInstallmentSearchCriteria());
+		Map<Integer, List<Installment>> groupedInstallmentsMap = installments.stream()
+				.collect(Collectors.groupingBy(installment -> installment.getInstallmentNo()));
+		Collection<List<Installment>> installmentsGroupedByInstallmentNo = groupedInstallmentsMap
+				.values();
+		Map<String, Object> returnMap = new HashMap<>();
+		returnMap.put("installments", installmentsGroupedByInstallmentNo);
+		return returnMap;
+	}
+	
 	private List<Installment> generateInstallmentsFromCalculations(CalculationReq calculationReq, List<Calculation> calculations) {
 		List<Installment> installmentsToInsert = new ArrayList<>();
+		//TODO: read maxNoOfInstallmentsForAllTaxHeadCodes for each taxHeadCode from mdms
 		int maxNoOfInstallmentsForAllTaxHeadCodes = 3;
 		for (Calculation calculation : calculations) {
 			for (TaxHeadEstimate taxHeadEstimate : calculation.getTaxHeadEstimates()) {
 				for (int i = 0; i < maxNoOfInstallmentsForAllTaxHeadCodes; i++) {
 					Installment installment = Installment.builder().id(UUID.randomUUID().toString())
-							.tenantId(calculation.getTenantId()).status(StatusEnum.ACTIVE)
-							.consumerCode(calculation.getApplicationNumber())
+							.tenantId(calculation.getTenantId())
+							.installmentNo(i+1)
+							.status(StatusEnum.ACTIVE)
+							.consumerCode(calculationReq.getCalulationCriteria().get(0).getApplicationNo())
 							.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
 							.taxAmount(taxHeadEstimate.getEstimateAmount().divide(
-									new BigDecimal(maxNoOfInstallmentsForAllTaxHeadCodes), 2,
+									new BigDecimal(maxNoOfInstallmentsForAllTaxHeadCodes), 0,
 									BigDecimal.ROUND_HALF_DOWN))
 							.auditDetails(utils.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(),
 									true))
