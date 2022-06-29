@@ -2,6 +2,7 @@ package org.egov.bpa.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -246,8 +247,19 @@ public class NocService {
 	@SuppressWarnings("unchecked")
 	private void initiateNocWorkflow(BPARequest bpaRequest, Object mdmsData, List<Noc> nocs) {
 		BPA bpa = bpaRequest.getBPA();
+		String businessServices = bpaRequest.getBPA().getBusinessService(); 
+		Map<String, String> edcrResponse = new HashMap<>();
+		if (StringUtils.isNotEmpty(businessServices) && "BPA6".equals(businessServices)) {
+			//System.out.println("inside this");
+			edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse,bpaRequest);
+		}
+		else {
 
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
+		}
+		
+
+		//Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(), bpaRequest.getBPA());
 		String nocPath = BPAConstants.NOC_TRIGGER_STATE_MAP
 				.replace("{1}", edcrResponse.get(BPAConstants.APPLICATIONTYPE))
 				.replace("{2}", edcrResponse.get(BPAConstants.SERVICETYPE)).replace("{3}",
