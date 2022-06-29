@@ -358,5 +358,8 @@ public class BPAConfiguration {
 	
 	@Value("${egov.bpa.calculator.installments.search.endpoint}")
 	private String fetchAllInstallmentsEndpoint;
+	
+	@Value("${egov.bpa.calculator.installments.create.endpoint}")
+	private String createInstallmentsEndpoint;
 
 }

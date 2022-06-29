@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.repository.ServiceRequestRepository;
+import org.egov.bpa.util.BPAConstants;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.CalculationReq;
 import org.egov.bpa.web.model.CalulationCriteria;
@@ -68,7 +69,11 @@ public class CalculationService {
 		calulcationRequest.setCalulationCriteria(criterias);
 		StringBuilder url = new StringBuilder();
 		url.append(this.config.getCalculatorHost());
-		url.append(this.config.getCalulatorEndPoint());
+		//installment feature for Permit fee for all servicetypes-
+		if (feeType.equalsIgnoreCase(BPAConstants.SANCTION_FEE_KEY))
+			url.append(this.config.getCreateInstallmentsEndpoint());
+		else
+			url.append(this.config.getCalulatorEndPoint());
 
 		this.serviceRequestRepository.fetchResult(url, calulcationRequest);
 
