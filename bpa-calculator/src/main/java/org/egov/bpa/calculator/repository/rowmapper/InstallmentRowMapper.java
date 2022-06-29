@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.egov.bpa.calculator.web.models.AuditDetails;
 import org.egov.bpa.calculator.web.models.Installment;
@@ -45,7 +46,8 @@ public class InstallmentRowMapper implements ResultSetExtractor<List<Installment
 					lastModifiedTime = null;
 				}
 
-				Object additionalDetails = new Gson().fromJson(rs.getString("ebi_additional_details").equals("{}")
+				Object additionalDetails = new Gson().fromJson(Objects.isNull(rs.getString("ebi_additional_details"))
+						|| rs.getString("ebi_additional_details").equals("{}")
 						|| rs.getString("ebi_additional_details").equals("null") ? null
 								: rs.getString("ebi_additional_details"),
 						Object.class);

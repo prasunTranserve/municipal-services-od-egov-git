@@ -19,6 +19,7 @@ import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.utils.CalculationUtils;
 import org.egov.bpa.calculator.web.models.Calculation;
+import org.egov.bpa.calculator.web.models.Installment;
 import org.egov.bpa.calculator.web.models.RequestInfoWrapper;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.demand.Demand;
@@ -277,6 +278,52 @@ public class DemandService {
                     .businessService(utils.getBillingBusinessService(bpa.getBusinessService(),calculation.getFeeType()))
                     .build());
         }
+        return demandRepository.saveDemand(requestInfo,demands);
+    }
+    
+    /**
+     * Creates demand for the given list of installments
+     * @param requestInfo The RequestInfo of the calculation request
+     * @param calculations List of calculation object
+     * @param installments List of installments object
+     * @return Demands that are created
+     */
+	public List<Demand> createDemandFromInstallment(RequestInfo requestInfo, List<Installment> installments) {
+        List<Demand> demands = new LinkedList<>();
+        BPA bpa = bpaService.getBuildingPlan(requestInfo, installments.get(0).getTenantId(), installments.get(0).getConsumerCode(), null);
+        if (bpa == null)
+            throw new CustomException(BPACalculatorConstants.INVALID_APPLICATION_NUMBER, "Demand cannot be generated for applicationNumber " +
+                    installments.get(0).getConsumerCode() + "  Building plan application with this number does not exist ");
+        List<DemandDetail> demandDetails = new LinkedList<>();
+        User owner = bpa.getLandInfo().getOwners().get(0).toCommonUser();
+        String tenantId = bpa.getTenantId();
+        for(Installment installment:installments) {
+			demandDetails.add(DemandDetail.builder().taxAmount(installment.getTaxAmount())
+					.taxHeadMasterCode(installment.getTaxHeadCode()).collectionAmount(BigDecimal.ZERO)
+					.tenantId(tenantId).build());
+        }
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        Calendar startCal = Calendar.getInstance();
+        startCal.set(Calendar.YEAR,year);
+        startCal.set(Calendar.DAY_OF_YEAR, 1);  
+        
+        Calendar endCal = Calendar.getInstance();
+        endCal.set(Calendar.YEAR, year);
+        endCal.set(Calendar.MONTH, 11); // 11 = december
+        endCal.set(Calendar.DAY_OF_MONTH, 31);
+        
+         demands.add(Demand.builder()
+                .consumerCode(bpa.getApplicationNo())
+                .demandDetails(demandDetails)
+                .payer(owner)
+                .minimumAmountPayable(config.getMinimumPayableAmount())
+                .tenantId(tenantId)
+                .taxPeriodFrom( startCal.getTimeInMillis())
+                .taxPeriodTo(endCal.getTimeInMillis())
+                .consumerType("BPA")
+					.businessService(utils.getBillingBusinessService(bpa.getBusinessService(),
+							BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE))
+                .build());
         return demandRepository.saveDemand(requestInfo,demands);
     }
 

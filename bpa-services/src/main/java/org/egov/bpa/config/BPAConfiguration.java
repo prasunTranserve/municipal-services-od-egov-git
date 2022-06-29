@@ -361,5 +361,11 @@ public class BPAConfiguration {
 	
 	@Value("${egov.bpa.calculator.installments.create.endpoint}")
 	private String createInstallmentsEndpoint;
+	
+	@Value("${egov.bpa.calculator.installments.generateDemands.endpoint}")
+	private String generateDemandsFromInstallmentsEndpoint;
+	
+	@Value("${egov.bpa.enableInstallmentOnApproval}")
+	private boolean enableInstallmentOnApproval;
 
 }

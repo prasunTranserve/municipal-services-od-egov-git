@@ -26,8 +26,8 @@ public class InstallmentSearchCriteria {
 	@JsonProperty("tenantId")
 	private String tenantId;
 
-	@JsonProperty("installmentNo")
-	private Integer installmentNo;
+	@JsonProperty("installmentNos")
+	private List<Integer> installmentNos;
 
 	@JsonProperty("status")
 	private StatusEnum status;
@@ -60,7 +60,7 @@ public class InstallmentSearchCriteria {
 	private List<String> createdBy;
 
 	public boolean isEmpty() {
-		return (this.ids == null && this.tenantId == null && this.installmentNo == null && this.status == null
+		return (this.ids == null && this.tenantId == null && this.installmentNos == null && this.status == null
 				&& this.consumerCode == null && this.taxHeadCode == null && this.demandId == null
 				&& this.isPaymentCompletedInDemand == null && this.fromDate == null && this.toDate == null
 				&& this.createdBy == null);
