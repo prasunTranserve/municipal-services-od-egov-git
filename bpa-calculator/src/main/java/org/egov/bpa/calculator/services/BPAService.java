@@ -43,8 +43,10 @@ public class BPAService {
 		} else {
 			url.append("&");
 			url.append("applicationNo=");
+			// fix incorrect parameter usage.This was working so far as either seacrrhed by
+			// approvalNo or non-null bpa object passed in parameter wherever called
+			url.append(applicationNo);
 		}
-		url.append(approvalNo);
 		LinkedHashMap responseMap = null;
 		responseMap = (LinkedHashMap) serviceRequestRepository.fetchResult(url, new RequestInfoWrapper(requestInfo));
 

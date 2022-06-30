@@ -40,10 +40,11 @@ public class InstallmentQueryBuilder {
 			}
 		}
 
-		if (criteria.getInstallmentNo() != null) {
+		if (criteria.getInstallmentNos() != null) {
 			addClauseIfRequired(preparedStmtList, builder);
-			builder.append(" ebi.installmentno=? ");
-			preparedStmtList.add(criteria.getInstallmentNo());
+			builder.append(" ebi.installmentno IN (").append(createQueryInInteger(criteria.getInstallmentNos()))
+					.append(")");
+			addToPreparedStatementIntegervalues(preparedStmtList, criteria.getInstallmentNos());
 		}
 		if (criteria.getStatus() != null) {
 			addClauseIfRequired(preparedStmtList, builder);
@@ -164,6 +165,19 @@ public class InstallmentQueryBuilder {
 		});
 
 	}
+	
+	/**
+	 * add integer values to the preparedStatment List
+	 * 
+	 * @param preparedStmtList
+	 * @param values
+	 */
+	private void addToPreparedStatementIntegervalues(List<Object> preparedStmtList, List<Integer> values) {
+		values.forEach(value -> {
+			preparedStmtList.add(value);
+		});
+
+	}
 
 	/**
 	 * produce a query input for the multiple values
@@ -174,6 +188,23 @@ public class InstallmentQueryBuilder {
 	private Object createQuery(List<String> ids) {
 		StringBuilder builder = new StringBuilder();
 		int length = ids.size();
+		for (int i = 0; i < length; i++) {
+			builder.append(" ?");
+			if (i != length - 1)
+				builder.append(",");
+		}
+		return builder.toString();
+	}
+	
+	/**
+	 * produce a query input for the multiple values of integer column
+	 * 
+	 * @param values
+	 * @return
+	 */
+	private Object createQueryInInteger(List<Integer> values) {
+		StringBuilder builder = new StringBuilder();
+		int length = values.size();
 		for (int i = 0; i < length; i++) {
 			builder.append(" ?");
 			if (i != length - 1)

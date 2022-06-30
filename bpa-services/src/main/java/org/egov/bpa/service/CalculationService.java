@@ -70,7 +70,7 @@ public class CalculationService {
 		StringBuilder url = new StringBuilder();
 		url.append(this.config.getCalculatorHost());
 		//installment feature for Permit fee for all servicetypes-
-		if (feeType.equalsIgnoreCase(BPAConstants.SANCTION_FEE_KEY))
+		if (feeType.equalsIgnoreCase(BPAConstants.SANCTION_FEE_KEY) && config.isEnableInstallmentOnApproval())
 			url.append(this.config.getCreateInstallmentsEndpoint());
 		else
 			url.append(this.config.getCalulatorEndPoint());
@@ -98,6 +98,17 @@ public class CalculationService {
 		StringBuilder url = new StringBuilder();
 		url.append(this.config.getCalculatorHost());
 		url.append(this.config.getFetchAllInstallmentsEndpoint());
+		return this.serviceRequestRepository.fetchResult(url, bpaRequest);
+	}
+	
+	/**
+	 * call bpa-calculator /_generateDemandFromInstallments API
+	 * @param bpaRequest
+	 */
+	public Object generateDemandFromInstallments(Object bpaRequest) { 
+		StringBuilder url = new StringBuilder();
+		url.append(this.config.getCalculatorHost());
+		url.append(this.config.getGenerateDemandsFromInstallmentsEndpoint());
 		return this.serviceRequestRepository.fetchResult(url, bpaRequest);
 	}
 

@@ -32,6 +32,7 @@ import org.egov.bpa.calculator.web.models.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.EstimatesAndSlabs;
 import org.egov.bpa.calculator.web.models.demand.Category;
+import org.egov.bpa.calculator.web.models.demand.Demand;
 import org.egov.bpa.calculator.web.models.Installment.StatusEnum;
 import org.egov.bpa.calculator.web.models.InstallmentRequest;
 import org.egov.bpa.calculator.web.models.InstallmentSearchCriteria;
@@ -216,11 +217,27 @@ public class CalculationService {
 		List<Installment> installments = installmentRepository.getInstallments(request.getInstallmentSearchCriteria());
 		Map<Integer, List<Installment>> groupedInstallmentsMap = installments.stream()
 				.collect(Collectors.groupingBy(installment -> installment.getInstallmentNo()));
+		Map<String, Object> returnMap = new HashMap<>();
+		if(groupedInstallmentsMap.containsKey(-1)) {
+			returnMap.put("fullPayment", groupedInstallmentsMap.get(-1));
+		}
+		groupedInstallmentsMap.remove(-1);
 		Collection<List<Installment>> installmentsGroupedByInstallmentNo = groupedInstallmentsMap
 				.values();
-		Map<String, Object> returnMap = new HashMap<>();
 		returnMap.put("installments", installmentsGroupedByInstallmentNo);
 		return returnMap;
+	}
+	
+	/**
+	 * Generate demands from installment
+	 * 
+	 */
+	public Object generateDemandsFromInstallment(InstallmentRequest request) {
+		List<Installment> installments = installmentRepository.getInstallments(request.getInstallmentSearchCriteria());
+		List<Demand> demands = demandService.createDemandFromInstallment(request.getRequestInfo(), installments);
+		Map<String,Object> returnObject = new HashMap<>();
+		returnObject.put("demands", demands);
+		return returnObject;
 	}
 	
 	private List<Installment> generateInstallmentsFromCalculations(CalculationReq calculationReq, List<Calculation> calculations) {
@@ -229,6 +246,19 @@ public class CalculationService {
 		int maxNoOfInstallmentsForAllTaxHeadCodes = 3;
 		for (Calculation calculation : calculations) {
 			for (TaxHeadEstimate taxHeadEstimate : calculation.getTaxHeadEstimates()) {
+				//full payment installment -1--
+				Installment installmentEntryForFullPayment = Installment.builder().id(UUID.randomUUID().toString())
+						.tenantId(calculation.getTenantId())
+						.installmentNo(-1)
+						.status(StatusEnum.ACTIVE)
+						.consumerCode(calculationReq.getCalulationCriteria().get(0).getApplicationNo())
+						.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
+						.taxAmount(taxHeadEstimate.getEstimateAmount())
+						.auditDetails(utils.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(),
+								true))
+						.build();
+				installmentsToInsert.add(installmentEntryForFullPayment);
+				// installment breakdowns--
 				for (int i = 0; i < maxNoOfInstallmentsForAllTaxHeadCodes; i++) {
 					Installment installment = Installment.builder().id(UUID.randomUUID().toString())
 							.tenantId(calculation.getTenantId())

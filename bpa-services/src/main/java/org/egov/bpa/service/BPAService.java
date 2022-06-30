@@ -932,6 +932,16 @@ public class BPAService {
 	 * @param bpaRequest
 	 * @return
 	 */
+	public Object generateDemandFromInstallments(Object bpaRequest) {
+		return calculationService.generateDemandFromInstallments(bpaRequest);
+	}
+	
+	/**
+	 * call BPA-calculator and fetch all installments
+	 * 
+	 * @param bpaRequest
+	 * @return
+	 */
 	public Object getAllInstallmentsFromBpaCalculator(Object bpaRequest) {
 		return calculationService.getAllInstallments(bpaRequest);
 	}
