@@ -509,23 +509,23 @@ public class BPAService {
 		nocService.manageOfflineNocs(bpaRequest, mdmsData);
 		bpaValidator.validatePreEnrichData(bpaRequest, mdmsData);
 		enrichmentService.enrichBPAUpdateRequest(bpaRequest, businessService);
-//System.out.println("working here also");
+		log.info("enrichment service call completed");
 		this.handleRejectSendBackActions(applicationType, bpaRequest, businessService, searchResult, mdmsData,
 				edcrResponse);
-//System.out.println("working here also");
+		log.info("enrichment service call completed");
 		wfIntegrator.callWorkFlow(bpaRequest);
-		log.debug("===> workflow done =>" + bpaRequest.getBPA().getStatus());
+		log.info("===> workflow done =>" + bpaRequest.getBPA().getStatus());
 		enrichmentService.postStatusEnrichment(bpaRequest);
 
-		log.debug("Bpa status is : " + bpa.getStatus());
+		log.info("Bpa status is : " + bpa.getStatus());
 
 		// Generate the sanction Demand
 		if (bpa.getStatus().equalsIgnoreCase(BPAConstants.SANC_FEE_STATE)) {
-			calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
+			//calculationService.addCalculation(bpaRequest, BPAConstants.SANCTION_FEE_KEY);
 			calculationService.addCalculationV2(bpaRequest, BPAConstants.SANCTION_FEE_KEY, applicationType,
 					serviceType);
 		}
-
+		log.info("BPA CAlcutaion service call compelted : " );
 		if (Arrays.asList(config.getSkipPaymentStatuses().split(",")).contains(bpa.getStatus())) {
 			enrichmentService.skipPayment(bpaRequest);
 			enrichmentService.postStatusEnrichment(bpaRequest);
@@ -539,7 +539,7 @@ public class BPAService {
 	private void getEdcrDetailsForPreapprovedPlan(Map<String, String> edcrResponse, BPARequest bpaRequest) {
 		
 		
-		
+		log.info("edcr details for preapproved plan: " );
 		PreapprovedPlanSearchCriteria preapprovedPlanSearchCriteria = new PreapprovedPlanSearchCriteria();
 		preapprovedPlanSearchCriteria.setDrawingNo(bpaRequest.getBPA().getEdcrNumber());
 		List<PreapprovedPlan> preapprovedPlans = preapprovedPlanService
