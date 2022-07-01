@@ -347,8 +347,16 @@ public class BPAValidator {
 		log.debug("applicationType is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
         log.debug("serviceType is " + edcrResponse.get(BPAConstants.SERVICETYPE));
         
-		validateQuestions(mdmsData, bpa, wfState, edcrResponse);
-		validateFIDocTypes(mdmsData, bpa, wfState, edcrResponse);
+		// allow validation of questions and checklist documents only for
+		// field-inspection forward action,
+		// as getting error when sendback action performed from field-inspection
+		if (BPAConstants.FI_STATUS.equalsIgnoreCase(bpa.getStatus()) && Objects.nonNull(bpa.getWorkflow())
+				&& StringUtils.isNotEmpty(bpa.getWorkflow().getAction())
+				&& BPAConstants.ACTION_FORWORD.equalsIgnoreCase(bpa.getWorkflow().getAction())) {
+			validateQuestions(mdmsData, bpa, wfState, edcrResponse);
+			validateFIDocTypes(mdmsData, bpa, wfState, edcrResponse);
+		}
+		
 	}
 
 	private void getEdcrDetailsForPreapprovedPlan(Map<String, String> edcrResponse, BPARequest bpaRequest) {
