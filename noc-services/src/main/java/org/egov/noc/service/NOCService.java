@@ -218,10 +218,15 @@ public class NOCService {
 		switch (dataType) {
 		case "getFiredistricts":
 			submitFireNocUrl.append(config.getGetFiredistrictsEndpoint());
+			break;
 		case "getFireStations":
 			submitFireNocUrl.append(config.getGetFireStationsEndpoint());
+			break;
 		case "getBuildingtypes":
 			submitFireNocUrl.append(config.getGetBuildingtypesEndpoint());
+			break;
+		default:
+			log.info("datatype not supported:" + dataType);
 		}
 		Map<String, String> fetchDataFromFireContract = new HashMap<>();
 		fetchDataFromFireContract.put("token", config.getFireNocToken());

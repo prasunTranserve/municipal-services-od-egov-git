@@ -150,7 +150,6 @@ public class NOCController {
 	 */
 	@PostMapping(value = "/thirdPartyData/{dataType}")
 	public ResponseEntity<FetchMastersResponse> getThirdPartyData(@PathVariable("dataType") String dataType){
-		nocService.getThirdPartyData(dataType);
 		FetchMastersResponse fetchMastersResponse = nocService.getThirdPartyData(dataType);
 		return new ResponseEntity<>(fetchMastersResponse,HttpStatus.OK);
 	}
