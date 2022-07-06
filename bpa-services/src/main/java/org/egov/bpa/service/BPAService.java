@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -40,6 +43,7 @@ import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
+import org.egov.bpa.web.model.BpaApplicationSearch;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
@@ -1108,6 +1112,164 @@ public class BPAService {
 			}
 		}
 		return bpas;
+	}
+
+	public List<BpaApplicationSearch> searchBPAApplication(@Valid BPASearchCriteria criteria, RequestInfo requestInfo) {
+		List<BpaApplicationSearch> bpas = new LinkedList<>();
+		bpaValidator.validateSearch(requestInfo, criteria);
+		LandSearchCriteria landcriteria = new LandSearchCriteria();
+		landcriteria.setTenantId(criteria.getTenantId());
+		List<String> edcrNos = null;
+		if (criteria.getMobileNumber() != null) {
+			bpas = this.getBPASearchApplicationFromMobileNumber(criteria, landcriteria, requestInfo);
+		} else {
+			List<String> roles = new ArrayList<>();
+			for (Role role : requestInfo.getUserInfo().getRoles()) {
+			roles.add(role.getCode());
+			}
+			if ((criteria.tenantIdOnly() || criteria.isEmpty()) && roles.contains(BPAConstants.CITIZEN)) {
+				log.info("loading data of created and by me");
+				bpas = this.getBPASearchApplicationCreatedForByMe(criteria, requestInfo, landcriteria, edcrNos);
+				log.info("no of bpas retuning by the search query" + bpas.size());
+			} else {
+				bpas = getBPASearchApplicationFromCriteria(criteria, requestInfo, edcrNos);
+				ArrayList<String> landIds = new ArrayList<String>();
+				if (bpas.size() > 0) {
+					for (int i = 0; i < bpas.size(); i++) {
+						landIds.add(bpas.get(i).getLandId());
+					}
+					
+					landcriteria.setIds(landIds);
+					landcriteria.setTenantId(bpas.get(0).getTenantId());
+					log.debug("Call with tenantId to Land::" + landcriteria.getTenantId());
+					ArrayList<LandInfo> landInfos = landService.searchLandInfoToBPA(requestInfo, landcriteria);
+
+					this.populateLandToBPAApplication(bpas, landInfos, requestInfo);
+				}
+			}
+		}
+		
+		return bpas;
+	
+	}
+
+	
+
+	private List<BpaApplicationSearch> getBPASearchApplicationFromCriteria(@Valid BPASearchCriteria criteria,
+			RequestInfo requestInfo, List<String> edcrNos) {
+     
+		List<BpaApplicationSearch> bpa = repository.getBPAApplicationData(criteria, edcrNos);
+		
+		if (bpa.isEmpty())
+		return Collections.emptyList();
+		return bpa;
+	}
+
+	private List<BpaApplicationSearch> getBPASearchApplicationCreatedForByMe(@Valid BPASearchCriteria criteria,
+			RequestInfo requestInfo, LandSearchCriteria landcriteria, List<String> edcrNos) {
+		List<BpaApplicationSearch> bpas = null;
+		UserSearchRequest userSearchRequest = new UserSearchRequest();
+		if (criteria.getTenantId() != null) {
+			userSearchRequest.setTenantId(criteria.getTenantId());
+		}
+		List<String> uuids = new ArrayList<String>();
+		if (requestInfo.getUserInfo() != null && !StringUtils.isEmpty(requestInfo.getUserInfo().getUuid())) {
+			uuids.add(requestInfo.getUserInfo().getUuid());
+			criteria.setOwnerIds(uuids);
+			criteria.setCreatedBy(uuids);
+		}
+		log.debug("loading data of created and by me" + uuids.toString());
+		UserDetailResponse userInfo = userService.getUser(criteria, requestInfo);
+		if (userInfo != null) {
+			landcriteria.setMobileNumber(userInfo.getUser().get(0).getMobileNumber());
+		}
+		log.debug("Call with multiple to Land::" + landcriteria.getTenantId() + landcriteria.getMobileNumber());
+		ArrayList<LandInfo> landInfos = landService.searchLandInfoToBPA(requestInfo, landcriteria);
+		ArrayList<String> landIds = new ArrayList<String>();
+		if (landInfos.size() > 0) {
+			landInfos.forEach(land -> {
+				landIds.add(land.getId());
+			});
+			criteria.setLandId(landIds);
+		}
+		bpas = getBPAApplicationFromCriteria(criteria, requestInfo, edcrNos);
+		log.debug("no of bpas queried" + bpas.size());
+		this.populateLandToBPAApplication(bpas, landInfos, requestInfo);
+		return bpas;
+	}
+
+	private void populateLandToBPAApplication(List<BpaApplicationSearch> bpas, ArrayList<LandInfo> landInfos,
+			RequestInfo requestInfo) {
+		for (int i = 0; i < bpas.size(); i++) {
+			for (int j = 0; j < landInfos.size(); j++) {
+				if (landInfos.get(j).getId().equalsIgnoreCase(bpas.get(i).getLandId())) {
+					bpas.get(i).setLandInfo(landInfos.get(j));
+				}
+			}
+			if (bpas.get(i).getLandId() != null && bpas.get(i).getLandInfo() == null) {
+				LandSearchCriteria missingLandcriteria = new LandSearchCriteria();
+				List<String> missingLandIds = new ArrayList<String>();
+				missingLandIds.add(bpas.get(i).getLandId());
+				missingLandcriteria.setTenantId(bpas.get(0).getTenantId());
+				missingLandcriteria.setIds(missingLandIds);
+				log.debug("Call with land ids to Land::" + missingLandcriteria.getTenantId()
+						+ missingLandcriteria.getIds());
+				List<LandInfo> newLandInfo = landService.searchLandInfoToBPA(requestInfo, missingLandcriteria);
+				
+				for (int j = 0; j < newLandInfo.size(); j++) {
+					if (newLandInfo.get(j).getId().equalsIgnoreCase(bpas.get(i).getLandId())) {
+						bpas.get(i).setLandInfo(newLandInfo.get(j));
+					}
+				}
+			}
+		}
+	}
+
+	private List<BpaApplicationSearch> getBPAApplicationFromCriteria(@Valid BPASearchCriteria criteria,
+			RequestInfo requestInfo, List<String> edcrNos) {
+		List<BpaApplicationSearch> bpa = repository.getBPAApplicationData(criteria, edcrNos);
+		
+		if (bpa.isEmpty())
+			return Collections.emptyList();
+		return bpa;
+	}
+
+	private List<BpaApplicationSearch> getBPASearchApplicationFromMobileNumber(@Valid BPASearchCriteria criteria,
+			LandSearchCriteria landcriteria, RequestInfo requestInfo) {
+		
+		List<BpaApplicationSearch> bpas = null;
+		log.debug("Call with mobile number to Land::" + criteria.getMobileNumber());
+		landcriteria.setMobileNumber(criteria.getMobileNumber());
+		ArrayList<LandInfo> landInfo = landService.searchLandInfoToBPA(requestInfo, landcriteria);
+		ArrayList<String> landId = new ArrayList<String>();
+		if (landInfo.size() > 0) {
+			landInfo.forEach(land -> {
+				landId.add(land.getId());
+			});
+			criteria.setLandId(landId);
+		}
+		bpas = getBPAApplicationFromLandId(criteria, requestInfo, null);
+		if (landInfo.size() > 0) {
+			for (int i = 0; i < bpas.size(); i++) {
+				for (int j = 0; j < landInfo.size(); j++) {
+					if (landInfo.get(j).getId().equalsIgnoreCase(bpas.get(i).getLandId())) {
+						bpas.get(i).setLandInfo(landInfo.get(j));
+					}
+				}
+			}
+		}
+		return bpas;
+	}
+
+	private List<BpaApplicationSearch> getBPAApplicationFromLandId(@Valid BPASearchCriteria criteria,
+			RequestInfo requestInfo, List<String> edcrNos) {
+		List<BpaApplicationSearch> bpa = new LinkedList<>();
+		bpa = repository.getBPAApplicationData(criteria, edcrNos);
+		if (bpa.size() == 0) {
+			return Collections.emptyList();
+		}
+		return bpa;
+		
 	}
 
 
