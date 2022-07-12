@@ -14,10 +14,12 @@ import org.egov.bpa.util.BPAUtil;
 import org.egov.bpa.util.ResponseInfoFactory;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPAApplicationResponse;
+import org.egov.bpa.web.model.BPAApprovedByApplicationResponse;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPAResponse;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.BpaApplicationSearch;
+import org.egov.bpa.web.model.BpaApprovedByApplicationSearch;
 import org.egov.bpa.web.model.DigitalSignCertificateResponse;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.RequestInfoWrapper;
@@ -215,6 +217,20 @@ public class BPAController {
 		List<BpaApplicationSearch> bpas = bpaService.searchBPAApplication(criteria, requestInfoWrapper.getRequestInfo());
 
 		BPAApplicationResponse response = BPAApplicationResponse.builder().BpaApplicationSearch(bpas).responseInfo(
+				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
+				.build();
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping(value = "/_ApprovedByMe")
+	public ResponseEntity<BPAApprovedByApplicationResponse> searchApplicationApprovedBy(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute BPASearchCriteria criteria) {
+		//String uuid ="";
+
+		List<BpaApprovedByApplicationSearch> bpas = bpaService.searchApplicationApprovedBy(criteria, requestInfoWrapper.getRequestInfo().getUserInfo().getUuid());
+		//List<BpaApprovedByApplicationSearch> bpas = bpaService.searchApplicationApprovedBy(criteria, uuid);
+
+		BPAApprovedByApplicationResponse response = BPAApprovedByApplicationResponse.builder().bpaApprovedByApplicationSearch(bpas).responseInfo(
 				responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);

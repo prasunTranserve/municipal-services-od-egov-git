@@ -132,10 +132,19 @@ public class EnrichmentService {
 	private void setIdgenIds(BPARequest request) {
 		RequestInfo requestInfo = request.getRequestInfo();
 		String tenantId = request.getBPA().getTenantId();
+		//String tenantId ="od.cuttack";
 		BPA bpa = request.getBPA();
-
-		List<String> applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenName(),
+		List<String> applicationNumbers = new ArrayList<>();
+        if(BPAConstants.BPA_AC_MODULE_CODE.equalsIgnoreCase(request.getBPA().getBusinessService())) {
+        	 applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenNameforBPA5(),
+    				config.getApplicationNoIdgenFormatforBPA5(), 1);
+        	 //System.out.println("idgen:"+applicationNumbers);
+        }
+        else {
+		 applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenName(),
 				config.getApplicationNoIdgenFormat(), 1);
+		 //System.out.println("idgen1:"+applicationNumbers);
+        }
 		ListIterator<String> itr = applicationNumbers.listIterator();
 
 		Map<String, String> errorMap = new HashMap<>();

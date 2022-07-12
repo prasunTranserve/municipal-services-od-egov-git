@@ -368,4 +368,10 @@ public class BPAConfiguration {
 	@Value("${egov.bpa.enableInstallmentOnApproval:false}")
 	private boolean enableInstallmentOnApproval;
 
+	@Value("${egov.idgen.bpa.applicationNum.BPA5name}")
+	private String applicationNoIdgenNameforBPA5;
+	
+	@Value("${egov.idgen.bpa.applicationNum.BPA5format}")
+	private String applicationNoIdgenFormatforBPA5;
+
 }

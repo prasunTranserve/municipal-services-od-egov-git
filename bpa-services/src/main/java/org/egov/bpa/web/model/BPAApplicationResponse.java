@@ -72,10 +72,10 @@ public class BPAApplicationResponse {
 	  
 	  public String toString() {
 		    StringBuilder sb = new StringBuilder();
-		    sb.append("class BPAResponse {\n");
+		    sb.append("class BPAApplicationResponse {\n");
 		    
 		    sb.append("    responseInfo: ").append(toIndentedString(responseInfo)).append("\n");
-		    sb.append("    BPA: ").append(toIndentedString(BpaApplicationSearch)).append("\n");
+		    sb.append("    BPASearch: ").append(toIndentedString(BpaApplicationSearch)).append("\n");
 		    sb.append("}");
 		    return sb.toString();
 		  }

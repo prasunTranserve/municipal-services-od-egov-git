@@ -52,6 +52,10 @@ public class BPAQueryBuilder {
 	private static final String BPA_APPLICATION_QUERY ="select distinct on(bpa.applicationno)  bpa.applicationno as applicationno, bpa.id,bpa.tenantid as tenantId,bpa.lastmodifiedtime as bpa_lastModifiedTime,bpa.businessService as businessService,st.state as workflowstate,st.applicationstatus,asg.assignee as assigneeuuid,bpa.landId as landId,pi.businessservicesla,pi.statesla as statesla from eg_bpa_buildingplan bpa\r\n"
 			+ "					  join eg_wf_processinstance_v2 pi on pi.businessid = bpa.applicationno left outer join eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id left outer join eg_wf_state_v2 st ON st.uuid = pi.status ";
 			
+	
+	private static final String BPA_APPLICATION_APPROVEDBY_QUERY ="select distinct on(dsc.applicationno) dsc.applicationno,st.state as workflowstate,st.applicationstatus,dsc.id,dsc.lastModifiedTime from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join eg_wf_state_v2 st ON st.uuid = pi.status   \r\n"
+			+ "";
+	
 	/**
 	 * To give the Search query based on the requirements.
 	 * 
@@ -466,4 +470,23 @@ public class BPAQueryBuilder {
 		builder.append("  order by bpa.applicationno,pi.createdtime desc");
 		return addPaginationWrapper(builder.toString(), preparedStmtList, criteria);
 	}
-}
+
+	public String getApplicationAprovedBy(String uuid, List<Object> preparedStmtList,
+			@Valid BPASearchCriteria criteria) {
+		
+	//	uuid ="f8c99a50-e29e-42da-8a99-ed304ba86062";
+		
+		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
+		addClauseIfRequired(preparedStmtList, builder);
+		if (uuid != null) {
+			
+			builder.append(" dsc.approvedby = ? ");
+			preparedStmtList.add(uuid);
+		}
+		builder.append("  order by dsc.applicationno,pi.createdtime desc");
+		return addDscPaginationWrapper(builder.toString(), preparedStmtList, criteria);
+	
+		}
+		
+	}
+

@@ -44,7 +44,9 @@ import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.BpaApplicationSearch;
+import org.egov.bpa.web.model.BpaApprovedByApplicationSearch;
 import org.egov.bpa.web.model.DscDetails;
+import org.egov.bpa.web.model.Notice;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.web.model.landInfo.LandInfo;
@@ -1271,6 +1273,32 @@ public class BPAService {
 		return bpa;
 		
 	}
+
+
+		
+		public List<BpaApprovedByApplicationSearch> searchApplicationApprovedBy(@Valid BPASearchCriteria criteria,
+				String uuid) {
+			Map<String, String> errorMap = new HashMap<>();
+			if(criteria.getBusinessService()==null) {
+				errorMap.put("SearchError","please provide bussiness service to search approved application.");
+			}
+			if (!errorMap.isEmpty())
+				throw new CustomException(errorMap);
+			else {
+			List<BpaApprovedByApplicationSearch> bpaApprovedByApplicationSearch = repository.getApprovedbyData(uuid,criteria);
+			
+			if(bpaApprovedByApplicationSearch.isEmpty()) {
+				return Collections.emptyList();
+			}else {
+			return bpaApprovedByApplicationSearch;
+			}
+			}
+			
+			
+		
+	}
+
+	
 
 
 }
