@@ -572,4 +572,5 @@ public class BPAConstants {
 	public static final String EDCR_REQUIRED_NOCs="requiredNOCs";
 	
 	public static final String ACTION_SHOW_CAUSE = "SHOW_CAUSE";
+	public static final String INSTALLMENTS_FIELD = "installments";
 }

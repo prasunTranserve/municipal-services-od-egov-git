@@ -367,5 +367,8 @@ public class BPAConfiguration {
 	
 	@Value("${egov.bpa.enableInstallmentOnApproval:false}")
 	private boolean enableInstallmentOnApproval;
+	
+	@Value("${persister.update.bpa.installment}")
+	private String updateInstallmentTopic;
 
 }

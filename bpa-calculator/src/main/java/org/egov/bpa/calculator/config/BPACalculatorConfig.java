@@ -137,5 +137,11 @@ public class BPACalculatorConfig {
 
 	@Value("${persister.save.bpa.installment}")
 	private String saveInstallmentTopic;
+	
+	@Value("${egov.installment.defaultNoOfInstallments:1}")
+	private int defaultNoOfInstallments;
+	
+	@Value("${persister.update.bpa.installment}")
+	private String updateInstallmentTopic;
 
 }

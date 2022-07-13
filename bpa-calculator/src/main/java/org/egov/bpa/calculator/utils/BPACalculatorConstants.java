@@ -19,6 +19,7 @@ public class BPACalculatorConstants {
 	public static final String MDMS_OC_COMPOUNDING_FEE = "ocCompoundingFee";
 	public static final String MDMS_RETENTION_FEES_MASTER_NAME = "RetentionFees";
 	public static final String MDMS_RETENTION_FEE = "retentionFee";
+	public static final String MDMS_INSTALLMENTS = "Installments";
 	
 	//Sparit
 	public static final String MDMS_CATEGORY_MASTER_NAME ="Category";
@@ -29,6 +30,7 @@ public class BPACalculatorConstants {
 	public static final String MDMS_CALCULATIONTYPE_PATH = "$.MdmsRes.BPA.CalculationType";
 	public static final String MDMS_OC_COMPOUNDING_FEE_PATH = "$.MdmsRes.BPA.ocCompoundingFee";
 	public static final String MDMS_RETENTION_FEE_PATH = "$.MdmsRes.BPA.RetentionFees";
+	public static final String MDMS_INSTALLMENT_PATH = "$.MdmsRes.BPA.Installments";
 
 	public static final String MDMS_BPA_PATH = "$.MdmsRes.BPA";
 
@@ -55,6 +57,8 @@ public class BPACalculatorConstants {
 	public static final String MDMS_ROUNDOFF_TAXHEAD = "TL_ROUNDOFF";
 
 	public static final String MDMS_CALCULATIONTYPE_AMOUNT = "amount";
+	
+	public static final String MDMS_NO_OF_INSTALLMENTS = "noOfInstallments";
 
 	public static final String MDMS_CALCULATIONTYPE_APL_FEETYPE = "ApplicationFee";
 

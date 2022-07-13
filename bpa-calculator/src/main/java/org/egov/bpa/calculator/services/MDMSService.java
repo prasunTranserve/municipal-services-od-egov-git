@@ -220,4 +220,48 @@ public Boolean getMdmsSparitValue(CalculationReq calculationReq,String tenantIds
       return isSparit;
 	}
 
+	public Object fetchInstallmentsApplicableForTaxheads(CalculationReq calculationReq, String tenantId) {
+		MdmsCriteriaReq mdmsCriteriaReq = prepareMdmsRequestForInstallment(calculationReq, tenantId);
+		StringBuilder url = getMdmsSearchUrl();
+		Object result = serviceRequestRepository.fetchResult(url, mdmsCriteriaReq);
+		return result;
+	}
+	
+	public Map getInstallmentforTaxHeadCode(String taxHeadCode, Object mdmsData) {
+
+		List jsonOutput = JsonPath.read(mdmsData, BPACalculatorConstants.MDMS_INSTALLMENT_PATH);
+		String filterExp = "$.[?(@.code == '" + taxHeadCode + "')]";
+		List<Object> calTypes = JsonPath.read(jsonOutput, filterExp);
+
+		if (calTypes.size() == 0) {
+			return defaultNoOfInstallmentsMap();
+		}
+		HashMap<String, Object> installmentDetails = (HashMap<String, Object>) calTypes.get(0);
+		return installmentDetails;
+	}
+
+	private MdmsCriteriaReq prepareMdmsRequestForInstallment(CalculationReq calculationReq, String tenantId) {
+		List<MasterDetail> bpaMasterDetails = new ArrayList<>();
+		bpaMasterDetails.add(MasterDetail.builder().name(BPACalculatorConstants.MDMS_INSTALLMENTS).build());
+		ModuleDetail bpaModuleDtls = ModuleDetail.builder().masterDetails(bpaMasterDetails)
+				.moduleName(BPACalculatorConstants.MDMS_BPA).build();
+		List<ModuleDetail> moduleDetails = new ArrayList<>();
+		moduleDetails.add(bpaModuleDtls);
+		MdmsCriteria mdmsCriteria = MdmsCriteria.builder().moduleDetails(moduleDetails).tenantId(tenantId).build();
+		return MdmsCriteriaReq.builder().requestInfo(calculationReq.getRequestInfo()).mdmsCriteria(mdmsCriteria)
+				.build();
+	}
+	
+	/**
+	 * Creates and return default no of installment as map
+	 * 
+	 * @return default noOfInstallments Map
+	 */
+	private Map defaultNoOfInstallmentsMap() {
+		Map defaultMap = new HashMap();
+		int defaultNoOfInstallments = config.getDefaultNoOfInstallments();
+		defaultMap.put(BPACalculatorConstants.MDMS_NO_OF_INSTALLMENTS, defaultNoOfInstallments);
+		return defaultMap;
+	}
+
 }
