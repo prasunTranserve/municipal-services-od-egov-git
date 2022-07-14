@@ -101,7 +101,9 @@ public class Demand {
 
     @JsonProperty("status")
     private StatusEnum status;
-
+    
+    @JsonProperty("billExpiryTime")
+	private Long billExpiryTime;
 
     public Demand addDemandDetailsItem(DemandDetail demandDetailsItem) {
         this.demandDetails.add(demandDetailsItem);

@@ -35,6 +35,9 @@ import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class DemandService {
 
@@ -62,6 +65,8 @@ public class DemandService {
 
     @Autowired
     private BPAService bpaService;
+    
+	private static Long BILL_EXPIRY_TIME = 2629800000L;
     
 	
     /**
@@ -270,6 +275,7 @@ public class DemandService {
                     .consumerCode(consumerCode)
                     .demandDetails(demandDetails)
                     .payer(owner)
+                    .billExpiryTime(BILL_EXPIRY_TIME)
                     .minimumAmountPayable(config.getMinimumPayableAmount())
                     .tenantId(tenantId)
                     .taxPeriodFrom( startCal.getTimeInMillis())
@@ -290,6 +296,11 @@ public class DemandService {
      */
 	public List<Demand> createDemandFromInstallment(RequestInfo requestInfo, List<Installment> installments) {
         List<Demand> demands = new LinkedList<>();
+		// if installments not available, it means old application before installments-
+		if (CollectionUtils.isEmpty(installments)) {
+			log.error("No installments found.Could be an old application");
+			throw new CustomException("no installments found for application", "no installments found for application");
+		}
         BPA bpa = bpaService.getBuildingPlan(requestInfo, installments.get(0).getTenantId(), installments.get(0).getConsumerCode(), null);
         if (bpa == null)
             throw new CustomException(BPACalculatorConstants.INVALID_APPLICATION_NUMBER, "Demand cannot be generated for applicationNumber " +
@@ -316,6 +327,7 @@ public class DemandService {
                 .consumerCode(bpa.getApplicationNo())
                 .demandDetails(demandDetails)
                 .payer(owner)
+                .billExpiryTime(BILL_EXPIRY_TIME)
                 .minimumAmountPayable(config.getMinimumPayableAmount())
                 .tenantId(tenantId)
                 .taxPeriodFrom( startCal.getTimeInMillis())

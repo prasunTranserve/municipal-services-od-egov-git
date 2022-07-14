@@ -2,7 +2,10 @@ package org.egov.bpa.calculator.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.egov.bpa.calculator.config.BPACalculatorConfig;
+import org.egov.bpa.calculator.kafka.broker.BPACalculatorProducer;
 import org.egov.bpa.calculator.repository.querybuilder.InstallmentQueryBuilder;
 import org.egov.bpa.calculator.repository.rowmapper.InstallmentRowMapper;
 import org.egov.bpa.calculator.web.models.Installment;
@@ -22,6 +25,12 @@ public class InstallmentRepository {
 
 	@Autowired
 	private InstallmentRowMapper rowMapper;
+	
+	@Autowired
+	private BPACalculatorProducer producer;
+	
+	@Autowired
+	private BPACalculatorConfig config;
 
 	/**
 	 * Installment search in database
@@ -35,5 +44,14 @@ public class InstallmentRepository {
 		List<Installment> installments = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
 		return installments;
 	}
-
+	
+	/**
+	 * pushes the request on update topic through kafka
+	 * 
+	 * @param installments The list of installments
+	 */
+	public void update(Map<String, List<Installment>> installments) {
+		// map should contain 'installments' key within which list of Installment object
+		producer.push(config.getUpdateInstallmentTopic(), installments);
+	}
 }

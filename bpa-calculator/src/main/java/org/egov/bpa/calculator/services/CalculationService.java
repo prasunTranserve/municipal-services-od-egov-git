@@ -21,6 +21,7 @@ import org.egov.bpa.calculator.repository.PreapprovedPlanRepository;
 import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.utils.CalculationUtils;
+import org.egov.bpa.calculator.validators.InstallmentValidator;
 import org.egov.bpa.calculator.web.models.BillingSlabSearchCriteria;
 import org.egov.bpa.calculator.web.models.Calculation;
 import org.egov.bpa.calculator.web.models.CalculationReq;
@@ -87,6 +88,9 @@ public class CalculationService {
 	private PreapprovedPlanRepository preapprovedPlanRepository;
 	
 	@Autowired InstallmentRepository installmentRepository;
+	
+	@Autowired
+	private InstallmentValidator installmentValidator;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -121,6 +125,7 @@ public class CalculationService {
 	private static final BigDecimal EIGHT_HUNDRED_SVENTYFIVE = new BigDecimal("875");
 
 	private static final BigDecimal THREE_HUNDRED_SEVENTYFIVE = new BigDecimal("375");
+	private static final String INSTALLMENTS_FIELD = "installments";
 	
 
 	/**
@@ -192,21 +197,22 @@ public class CalculationService {
 				calculationReq.getCalulationCriteria(), extraParamsForCalculationMap);
 		//store the calculations in installments table
 		List<Installment> installmentsToInsert = generateInstallmentsFromCalculations(calculationReq, calculations);
-		//
+		
+		/*uncomment to generate installments script
+		StringBuilder query = new StringBuilder();
+		installmentsToInsert.forEach(installment->{
+			query.append("("+"'"+installment.getId()+"','"+"od.cuttack"+"',"+installment.getInstallmentNo()+",'ACTIVE','"+installment.getConsumerCode()
+			+"','"+installment.getTaxHeadCode()+"',"+installment.getTaxAmount()+",null,false,null,'"+installment.getAuditDetails().getCreatedBy()
+			+"','"+installment.getAuditDetails().getLastModifiedBy()+"',"+installment.getAuditDetails().getCreatedTime()+","
+			+installment.getAuditDetails().getLastModifiedTime()+"),\n");
+		});
+		System.out.println("********\n"+query.toString());
+		*/
+		
 		Map<String, List<Installment>> persisterMap = new HashMap<>();
-		persisterMap.put("installments", installmentsToInsert);
+		persisterMap.put(INSTALLMENTS_FIELD, installmentsToInsert);
 		producer.push(config.getSaveInstallmentTopic(), persisterMap);
 		return calculations;
-	}
-	
-	/**
-	 * Fetch all installments from db
-	 * 
-	 */
-	public Object getAllInstallments() {
-		String allInstallments="{\"installments\":{\"1\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8f\",\"tenantid\":\"od.cuttack\",\"installmentno\":1,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]},{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8i\",\"tenantid\":\"od.cuttack\",\"installmentno\":1,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_SANC_FEE\",\"taxamount\":20000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}],\"2\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8g\",\"tenantid\":\"od.cuttack\",\"installmentno\":2,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]},{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8j\",\"tenantid\":\"od.cuttack\",\"installmentno\":2,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_SANC_FEE\",\"taxamount\":20000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}],\"3\":[{\"id\":\"6ea8f6d8-74a2-4781-8621-135c3089ea8h\",\"tenantid\":\"od.cuttack\",\"installmentno\":3,\"status\":\"ACTIVE\",\"consumercode\":\"BP-CTC-2022-06-27-001854\",\"taxheadcode\":\"BPA_SANC_WORKER_WELFARE_CESS\",\"taxamount\":10000000,\"demandid\":null,\"ispaymentcompletedindemand\":false,\"additional_details\":null,\"auditDetails\":[]}]}}";
-		JSONObject allInstallmentsJson = new JSONObject(allInstallments);
-		return allInstallmentsJson.toMap();
 	}
 	
 	/**
@@ -224,7 +230,7 @@ public class CalculationService {
 		groupedInstallmentsMap.remove(-1);
 		Collection<List<Installment>> installmentsGroupedByInstallmentNo = groupedInstallmentsMap
 				.values();
-		returnMap.put("installments", installmentsGroupedByInstallmentNo);
+		returnMap.put(INSTALLMENTS_FIELD, installmentsGroupedByInstallmentNo);
 		return returnMap;
 	}
 	
@@ -233,19 +239,54 @@ public class CalculationService {
 	 * 
 	 */
 	public Object generateDemandsFromInstallment(InstallmentRequest request) {
-		List<Installment> installments = installmentRepository.getInstallments(request.getInstallmentSearchCriteria());
-		List<Demand> demands = demandService.createDemandFromInstallment(request.getRequestInfo(), installments);
-		Map<String,Object> returnObject = new HashMap<>();
+		installmentValidator.validateConsumerCode(request);
+		InstallmentSearchCriteria allInstallmentsCriteria = new InstallmentSearchCriteria();
+		allInstallmentsCriteria.setConsumerCode(request.getInstallmentSearchCriteria().getConsumerCode());
+		List<Installment> allInstallments = installmentRepository.getInstallments(allInstallmentsCriteria);
+		if (CollectionUtils.isEmpty(allInstallments))
+			throw new CustomException(
+					"no installments found for this consumercode:"
+							+ request.getInstallmentSearchCriteria().getConsumerCode(),
+					"no installments found for this consumercode:"
+							+ request.getInstallmentSearchCriteria().getConsumerCode());
+		installmentValidator.validateInstallmentNoSequence(request, allInstallments);
+		List<Installment> installmentsToGenerateDemand = installmentRepository
+				.getInstallments(request.getInstallmentSearchCriteria());
+		installmentValidator.validateForDemandGeneration(request, allInstallments, installmentsToGenerateDemand);
+		//
+		List<Demand> demands = demandService.createDemandFromInstallment(request.getRequestInfo(),
+				installmentsToGenerateDemand);
+		
+		//update installments only demandId and auditDetails field-
+		String demandId = demands.get(0).getId();
+		String lastModifiedBy = request.getRequestInfo().getUserInfo().getUuid();
+		updateInstallmentsWithDemandId(installmentsToGenerateDemand, demandId, lastModifiedBy);
+		
+		//add installment audit table
+		Map<String, Object> returnObject = new HashMap<>();
 		returnObject.put("demands", demands);
 		return returnObject;
 	}
 	
+	private void updateInstallmentsWithDemandId(List<Installment> installments, String demandId, String modifiedBy) {
+		Long time = System.currentTimeMillis();
+		for (Installment installment : installments) {
+			installment.setDemandId(demandId);
+			installment.getAuditDetails().setLastModifiedBy(modifiedBy);
+			installment.getAuditDetails().setLastModifiedTime(time);
+		}
+		Map<String, List<Installment>> persisterMap = new HashMap<>();
+		persisterMap.put(INSTALLMENTS_FIELD, installments);
+		installmentRepository.update(persisterMap);
+	}
+	
 	private List<Installment> generateInstallmentsFromCalculations(CalculationReq calculationReq, List<Calculation> calculations) {
 		List<Installment> installmentsToInsert = new ArrayList<>();
-		//TODO: read maxNoOfInstallmentsForAllTaxHeadCodes for each taxHeadCode from mdms
-		int maxNoOfInstallmentsForAllTaxHeadCodes = 3;
+		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
+		Object installmentsMdms = mdmsService.fetchInstallmentsApplicableForTaxheads(calculationReq, tenantId);
 		for (Calculation calculation : calculations) {
 			for (TaxHeadEstimate taxHeadEstimate : calculation.getTaxHeadEstimates()) {
+				Map<String,Object> installmentDetail=mdmsService.getInstallmentforTaxHeadCode(taxHeadEstimate.getTaxHeadCode(), installmentsMdms);
 				//full payment installment -1--
 				Installment installmentEntryForFullPayment = Installment.builder().id(UUID.randomUUID().toString())
 						.tenantId(calculation.getTenantId())
@@ -258,8 +299,9 @@ public class CalculationService {
 								true))
 						.build();
 				installmentsToInsert.add(installmentEntryForFullPayment);
-				// installment breakdowns--
-				for (int i = 0; i < maxNoOfInstallmentsForAllTaxHeadCodes; i++) {
+				int noOfInstallments = (int) installmentDetail.get(BPACalculatorConstants.MDMS_NO_OF_INSTALLMENTS);
+					
+				for (int i = 0; i < noOfInstallments; i++) {
 					Installment installment = Installment.builder().id(UUID.randomUUID().toString())
 							.tenantId(calculation.getTenantId())
 							.installmentNo(i+1)
@@ -267,8 +309,8 @@ public class CalculationService {
 							.consumerCode(calculationReq.getCalulationCriteria().get(0).getApplicationNo())
 							.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
 							.taxAmount(taxHeadEstimate.getEstimateAmount().divide(
-									new BigDecimal(maxNoOfInstallmentsForAllTaxHeadCodes), 0,
-									BigDecimal.ROUND_HALF_DOWN))
+									new BigDecimal(noOfInstallments), 0,
+									BigDecimal.ROUND_HALF_UP))
 							.auditDetails(utils.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(),
 									true))
 							.build();
