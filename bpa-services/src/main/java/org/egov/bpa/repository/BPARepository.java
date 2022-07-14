@@ -3,15 +3,21 @@ package org.egov.bpa.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.producer.Producer;
 import org.egov.bpa.repository.querybuilder.BPAQueryBuilder;
+import org.egov.bpa.repository.rowmapper.BPAApplicationRowMapper;
+import org.egov.bpa.repository.rowmapper.BPAApprovedByRowMapper;
 import org.egov.bpa.repository.rowmapper.BPADigitalSignedCertificateRowMapper;
 import org.egov.bpa.repository.rowmapper.BPAReportingRowMapper;
 import org.egov.bpa.repository.rowmapper.BPARowMapper;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
+import org.egov.bpa.web.model.BpaApplicationSearch;
+import org.egov.bpa.web.model.BpaApprovedByApplicationSearch;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +41,12 @@ public class BPARepository {
 
 	@Autowired
 	private BPARowMapper rowMapper;
+	
+	@Autowired
+	private BPAApplicationRowMapper rowMapperApplication;
+	
+	@Autowired
+	private BPAApprovedByRowMapper rowMapperApplicationApprovedBy;
 	
 	@Autowired
 	private BPADigitalSignedCertificateRowMapper dscRowMapper;
@@ -133,6 +145,23 @@ public class BPARepository {
 		String query = queryBuilder.getApplicationApprover(tenantId, applicationNo, preparedStmtList);
 		List<String> approvers = jdbcTemplate.queryForList(query, preparedStmtList.toArray(), String.class);
 		return approvers;
+	}
+
+	public List<BpaApplicationSearch> getBPAApplicationData(@Valid BPASearchCriteria criteria, List<String> edcrNos) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getBPAApplicationSearchQuery(criteria, preparedStmtList, edcrNos);
+		List<BpaApplicationSearch> BPAData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapperApplication);
+		return BPAData;
+	}
+
+	
+
+	public List<BpaApprovedByApplicationSearch> getApprovedbyData(String uuid, @Valid BPASearchCriteria criteria) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		
+		String query = queryBuilder.getApplicationAprovedBy(uuid, preparedStmtList,criteria);
+		List<BpaApprovedByApplicationSearch> bpaData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapperApplicationApprovedBy);
+		return bpaData;
 	}
 
 }
