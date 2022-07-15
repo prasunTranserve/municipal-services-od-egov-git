@@ -25,7 +25,7 @@ public class BPAApprovedByRowMapper implements ResultSetExtractor<List<BpaApprov
 			if(bpas==null) {
 				
 				bpas = BpaApprovedByApplicationSearch.builder().applicationNo(rs.getString("applicationNo")).applicationstatus(rs.getString("applicationstatus"))
-						.workflowstate(rs.getString("workflowstate")).build();
+						.workflowstate(rs.getString("workflowstate")).tenantId(rs.getString("tenantid")).build();
 				
 				approvalMap.put(id, bpas);
 			}
