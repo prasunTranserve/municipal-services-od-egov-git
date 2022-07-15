@@ -474,7 +474,7 @@ public class BPAQueryBuilder {
 	public String getApplicationAprovedBy(String uuid, List<Object> preparedStmtList,
 			@Valid BPASearchCriteria criteria) {
 		
-		//uuid ="f8c99a50-e29e-42da-8a99-ed304ba86062";
+		
 		
 		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
 		addClauseIfRequired(preparedStmtList, builder);
