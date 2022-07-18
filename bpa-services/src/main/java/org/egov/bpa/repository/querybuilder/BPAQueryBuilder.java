@@ -300,8 +300,12 @@ public class BPAQueryBuilder {
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
 
+		if (limit == -1) {
+			finalQuery = finalQuery.replace("WHERE offset_ > ? AND offset_ <= ?", "");
+		}else  {
 		preparedStmtList.add(offset);
 		preparedStmtList.add(limit + offset);
+		}
 
 		return finalQuery;
 	}
