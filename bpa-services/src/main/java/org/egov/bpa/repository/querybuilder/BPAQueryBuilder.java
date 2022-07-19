@@ -53,7 +53,7 @@ public class BPAQueryBuilder {
 			+ "					  join eg_wf_processinstance_v2 pi on pi.businessid = bpa.applicationno left outer join eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id left outer join eg_wf_state_v2 st ON st.uuid = pi.status ";
 			
 	
-	private static final String BPA_APPLICATION_APPROVEDBY_QUERY ="select distinct on(dsc.applicationno) dsc.applicationno,st.state as workflowstate,st.applicationstatus,dsc.id,dsc.lastModifiedTime from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join eg_wf_state_v2 st ON st.uuid = pi.status   \r\n"
+	private static final String BPA_APPLICATION_APPROVEDBY_QUERY ="select distinct on(dsc.applicationno) dsc.applicationno,dsc.tenantid,st.state as workflowstate,st.applicationstatus,dsc.id,dsc.lastModifiedTime from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join eg_wf_state_v2 st ON st.uuid = pi.status   \r\n"
 			+ "";
 	
 	/**
@@ -300,8 +300,12 @@ public class BPAQueryBuilder {
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
 
+		if (limit == -1) {
+			finalQuery = finalQuery.replace("WHERE offset_ > ? AND offset_ <= ?", "");
+		}else  {
 		preparedStmtList.add(offset);
 		preparedStmtList.add(limit + offset);
+		}
 
 		return finalQuery;
 	}
@@ -474,7 +478,7 @@ public class BPAQueryBuilder {
 	public String getApplicationAprovedBy(String uuid, List<Object> preparedStmtList,
 			@Valid BPASearchCriteria criteria) {
 		
-	//	uuid ="f8c99a50-e29e-42da-8a99-ed304ba86062";
+		
 		
 		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
 		addClauseIfRequired(preparedStmtList, builder);
