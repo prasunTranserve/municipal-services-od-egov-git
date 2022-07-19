@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -41,7 +40,6 @@ import org.egov.bpa.web.model.AuditDetails;
 import org.egov.bpa.web.model.BPA;
 import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
-import org.egov.bpa.web.model.Document;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
@@ -572,24 +570,9 @@ public class BPAService {
 			throw new CustomException(BPAErrorConstants.UPDATE_ERROR,
 					"Failed to Update the Application, Found None or multiple applications!");
 		}
-		Map<String, Object> additionalDetails = (Map) bpaRequest.getBPA().getAdditionalDetails();
-		// additionalDetails will always be a Map and will surely contain applicationType then only this method invoked-
-		additionalDetails.remove("applicationType");
-		additionalDetails.put("buildingPlanLayoutIsSigned",true);
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).remove("applicationType");
+		((Map) bpaRequest.getBPA().getAdditionalDetails()).put("buildingPlanLayoutIsSigned",true);
 		bpaRequest.getBPA().setAuditDetails(searchResult.get(0).getAuditDetails());
-		Optional<Document> buildingPlanLayoutDocument = searchResult.get(0).getDocuments().stream()
-				.filter(document -> document.getDocumentType().equals(BPAConstants.DOCUMENT_TYPE_BUILDING_PLAN_LAYOUT))
-				.findFirst();
-		if (buildingPlanLayoutDocument.isPresent()) {
-			Map<String, Object> unsignedBuildingPlanLayoutDetails = new HashMap<>();
-			unsignedBuildingPlanLayoutDetails.put(BPAConstants.CODE,
-					buildingPlanLayoutDocument.get().getDocumentType());
-			unsignedBuildingPlanLayoutDetails.put(BPAConstants.FILESTOREID,
-					buildingPlanLayoutDocument.get().getFileStoreId());
-			additionalDetails.put(BPAConstants.UNSIGNED_BUILDING_PLAN_LAYOUT_DETAILS,
-					unsignedBuildingPlanLayoutDetails);
-		}
-			
 		repository.update(bpaRequest, true);
 		return bpaRequest.getBPA();
 	}

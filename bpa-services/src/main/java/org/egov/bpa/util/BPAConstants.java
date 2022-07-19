@@ -573,6 +573,4 @@ public class BPAConstants {
 	
 	public static final String ACTION_SHOW_CAUSE = "SHOW_CAUSE";
 	public static final String INSTALLMENTS_FIELD = "installments";
-	public static final String DOCUMENT_TYPE_BUILDING_PLAN_LAYOUT = "BPD.BPL.BPL";
-	public static final String UNSIGNED_BUILDING_PLAN_LAYOUT_DETAILS = "unsignedBuildingPlanLayoutDetails";
 }
