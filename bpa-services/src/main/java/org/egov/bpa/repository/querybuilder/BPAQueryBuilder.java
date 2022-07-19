@@ -3,6 +3,8 @@ package org.egov.bpa.repository.querybuilder;
 import java.util.Calendar;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,14 @@ public class BPAQueryBuilder {
 	
 	private static final String BPA_APPROVER_QUERY = "select distinct approvedby from eg_bpa_dscdetails ";
 	 
+
+	private static final String BPA_APPLICATION_QUERY ="select distinct on(bpa.applicationno)  bpa.applicationno as applicationno, bpa.id,bpa.tenantid as tenantId,bpa.lastmodifiedtime as bpa_lastModifiedTime,bpa.businessService as businessService,st.state as workflowstate,st.applicationstatus,asg.assignee as assigneeuuid,bpa.landId as landId,pi.businessservicesla,pi.statesla as statesla from eg_bpa_buildingplan bpa\r\n"
+			+ "					  join eg_wf_processinstance_v2 pi on pi.businessid = bpa.applicationno left outer join eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id left outer join eg_wf_state_v2 st ON st.uuid = pi.status ";
+			
+	
+	private static final String BPA_APPLICATION_APPROVEDBY_QUERY ="select distinct on(dsc.applicationno) dsc.applicationno,dsc.tenantid,st.state as workflowstate,st.applicationstatus,dsc.id,dsc.lastModifiedTime from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join eg_wf_state_v2 st ON st.uuid = pi.status   \r\n"
+			+ "";
+	
 	/**
 	 * To give the Search query based on the requirements.
 	 * 
@@ -221,6 +231,7 @@ public class BPAQueryBuilder {
 	private void addClauseIfRequired(List<Object> values, StringBuilder queryString) {
 		if (values.isEmpty())
 			queryString.append(" WHERE ");
+		
 		else {
 			queryString.append(" AND");
 		}
@@ -289,8 +300,12 @@ public class BPAQueryBuilder {
 		if (criteria.getOffset() != null)
 			offset = criteria.getOffset();
 
+		if (limit == -1) {
+			finalQuery = finalQuery.replace("WHERE offset_ > ? AND offset_ <= ?", "");
+		}else  {
 		preparedStmtList.add(offset);
 		preparedStmtList.add(limit + offset);
+		}
 
 		return finalQuery;
 	}
@@ -342,4 +357,140 @@ public class BPAQueryBuilder {
 		
 		return queryBuilder.toString();
 	}
-}
+
+	public String getBPAApplicationSearchQuery(@Valid BPASearchCriteria criteria, List<Object> preparedStmtList,
+			List<String> edcrNos) {
+		StringBuilder builder = new StringBuilder(BPA_APPLICATION_QUERY);
+
+		if (criteria.getTenantId() != null) {
+			if (criteria.getTenantId().split("\\.").length == 1) {
+
+				addClauseIfRequired(preparedStmtList, builder);
+				builder.append(" bpa.tenantid like ?");
+				preparedStmtList.add('%' + criteria.getTenantId() + '%');
+			} else {
+				addClauseIfRequired(preparedStmtList, builder);
+				builder.append(" bpa.tenantid=? ");
+				preparedStmtList.add(criteria.getTenantId());
+			}
+		}
+
+		List<String> ids = criteria.getIds();
+		if (!CollectionUtils.isEmpty(ids)) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.id IN (").append(createQuery(ids)).append(")");
+			addToPreparedStatement(preparedStmtList, ids);
+		}
+
+		String edcrNumbers = criteria.getEdcrNumber();
+		if (edcrNumbers!=null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.edcrNumber = ?");
+			preparedStmtList.add(criteria.getEdcrNumber());
+		}
+		
+		
+
+		String applicationNo = criteria.getApplicationNo();
+		if (applicationNo!=null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.applicationNo =?");
+			preparedStmtList.add(criteria.getApplicationNo());
+		}
+		
+		String approvalNo = criteria.getApprovalNo();
+		if (approvalNo!=null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.approvalNo = ?");
+			preparedStmtList.add(criteria.getApprovalNo());
+		}
+		
+		String status = criteria.getStatus();
+		if (status!=null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.status = ?");
+			preparedStmtList.add(criteria.getStatus());
+			
+		}
+		Long permitDt = criteria.getApprovalDate();
+		if ( permitDt != null) {
+			
+			Calendar permitDate = Calendar.getInstance();
+			permitDate.setTimeInMillis(permitDt);
+			
+			int year = permitDate.get(Calendar.YEAR);
+		    int month = permitDate.get(Calendar.MONTH);
+		    int day = permitDate.get(Calendar.DATE);
+			
+			Calendar permitStrDate = Calendar.getInstance();
+			permitStrDate.setTimeInMillis(0);
+			permitStrDate.set(year, month, day, 0, 0, 0);
+			
+			Calendar permitEndDate = Calendar.getInstance();
+			permitEndDate.setTimeInMillis(0);
+			permitEndDate.set(year, month, day, 23, 59, 59);
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.approvalDate BETWEEN ").append(permitStrDate.getTimeInMillis()).append(" AND ")
+			.append(permitEndDate.getTimeInMillis());	
+		}
+		if (criteria.getFromDate() != null && criteria.getToDate() != null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.createdtime BETWEEN ").append(criteria.getFromDate()).append(" AND ")
+					.append(criteria.getToDate());
+		} else if (criteria.getFromDate() != null && criteria.getToDate() == null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.createdtime >= ").append(criteria.getFromDate());
+		}
+
+		List<String> businessService = criteria.getBusinessService();
+		if (!CollectionUtils.isEmpty(businessService)) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.businessService IN (").append(createQuery(businessService)).append(")");
+			addToPreparedStatement(preparedStmtList, businessService);
+		}
+		List<String>landId  = criteria.getLandId();
+		List<String> createdBy = criteria.getCreatedBy();
+		if (!CollectionUtils.isEmpty(landId)) {
+			addClauseIfRequired(preparedStmtList, builder);
+			if(!CollectionUtils.isEmpty(createdBy)){
+				builder.append("(");
+			}
+			builder.append(" bpa.landId IN (").append(createQuery(landId)).append(")");
+			addToPreparedStatement(preparedStmtList, landId);
+		}
+		
+		if (!CollectionUtils.isEmpty(createdBy)) {
+			if (!CollectionUtils.isEmpty(landId)) {
+				builder.append(" OR ");
+			} else {
+				addClauseIfRequired(preparedStmtList, builder);
+			}
+			builder.append(" bpa.createdby IN (").append(createQuery(createdBy)).append(")");
+			if (!CollectionUtils.isEmpty(landId)) {
+				builder.append(")");
+			}
+			addToPreparedStatement(preparedStmtList, createdBy);
+		}
+		builder.append("  order by bpa.applicationno,pi.createdtime desc");
+		return addPaginationWrapper(builder.toString(), preparedStmtList, criteria);
+	}
+
+	public String getApplicationAprovedBy(String uuid, List<Object> preparedStmtList,
+			@Valid BPASearchCriteria criteria) {
+		
+		
+		
+		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
+		addClauseIfRequired(preparedStmtList, builder);
+		if (uuid != null) {
+			
+			builder.append(" dsc.approvedby = ? ");
+			preparedStmtList.add(uuid);
+		}
+		builder.append("  order by dsc.applicationno,pi.createdtime desc");
+		return addDscPaginationWrapper(builder.toString(), preparedStmtList, criteria);
+	
+		}
+		
+	}
+

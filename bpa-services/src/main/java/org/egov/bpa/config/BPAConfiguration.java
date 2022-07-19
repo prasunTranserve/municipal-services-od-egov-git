@@ -371,4 +371,10 @@ public class BPAConfiguration {
 	@Value("${persister.update.bpa.installment}")
 	private String updateInstallmentTopic;
 
+	@Value("${egov.idgen.bpa.applicationNum.BPA5name}")
+	private String applicationNoIdgenNameforBPA5;
+	
+	@Value("${egov.idgen.bpa.applicationNum.BPA5format}")
+	private String applicationNoIdgenFormatforBPA5;
+
 }
