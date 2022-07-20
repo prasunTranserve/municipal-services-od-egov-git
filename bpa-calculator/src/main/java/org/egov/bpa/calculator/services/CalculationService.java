@@ -3092,7 +3092,7 @@ public class CalculationService {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
-			applicationType = (String) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
 		}
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.G))) {
@@ -3131,7 +3131,7 @@ public class CalculationService {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
 		if (null != paramMap.get(BPACalculatorConstants.SPARIT_CHECK)) {
-			occupancyType = (String) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
+			isSparit = (Boolean) paramMap.get(BPACalculatorConstants.SPARIT_CHECK);
 		}
 
 		totalBuitUpArea=getAreaParameterForBPFeesCalculation(paramMap);
