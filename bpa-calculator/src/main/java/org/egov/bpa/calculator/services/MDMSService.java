@@ -202,7 +202,7 @@ public Boolean getMdmsSparitValue(CalculationReq calculationReq,String tenantIds
         // String url = "http://localhost:8094/egov-mdms-service/v1/_search";
          // System.out.println("mdmscrieteria:"+url);
           Object mdmsSparitData = serviceRequestRepository.fetchResult(url , mdmscrieterias);
-          System.out.println("result:"+mdmsSparitData);
+        //  System.out.println("result:"+mdmsSparitData);
       
        List jsonOutput = JsonPath.read(mdmsSparitData, BPACalculatorConstants.MDMS_CATEGORY_SPARIT_RESPONSE_PATH);
 		String filterExp = "$.[?(@.ulb == '" + tenantIds + "')]";
