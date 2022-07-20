@@ -1,10 +1,16 @@
 package org.egov.bpa.web.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.egov.bpa.web.model.landInfo.LandInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
@@ -29,17 +35,29 @@ import lombok.Setter;
 public class BpaApprovedByApplicationSearch {
 	
 	
-	@JsonProperty("applicationNo")
-	private String applicationNo = null;
+	@JsonProperty("dscDetails")
+	private DscDetails dscDetails = null;
 	
+	@JsonProperty("buildingAdditionalDetails")
+	private Object buildingAdditionalDetails = null;
 	
-	 @JsonProperty("tenantId")
-	 private String tenantId = null;
+	@JsonProperty("documents")
+	@Valid
+	private List<Document> documents = null;
+	 
 	 
 	 @JsonProperty("applicationstatus")
 	 private String applicationstatus = null;
 	 
 	 @JsonProperty("workflowstate")
 	 private String workflowstate;
+	 
+	 public BpaApprovedByApplicationSearch addDocumentsItem(Document documentsItem) {
+		    if (this.documents == null) {
+		      this.documents = new ArrayList<Document>();
+		    }
+		    this.documents.add(documentsItem);
+		    return this;
+		  }
 
 }
