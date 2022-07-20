@@ -43,6 +43,9 @@ public class InstallmentSearchCriteria {
 
 	@JsonProperty("isPaymentCompletedInDemand")
 	private Boolean isPaymentCompletedInDemand;
+	
+	@JsonProperty("additionalDetails")
+	private Object additionalDetails;
 
 	@JsonProperty("offset")
 	private Integer offset;

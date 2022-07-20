@@ -268,10 +268,19 @@ public class CalculationService {
 		List<Demand> demands = demandService.createDemandFromInstallment(request.getRequestInfo(),
 				installmentsToGenerateDemand);
 		
-		//update installments only demandId and auditDetails field-
+		// update installments demandId,additionalDetails(for document on 2nd
+		// installment onwards) and auditDetails field-
+		Map<String,Object> additionalDetailsToUpdateFromRequest = null;
+		if (Objects.nonNull(request.getInstallmentSearchCriteria().getAdditionalDetails())
+				&& request.getInstallmentSearchCriteria().getAdditionalDetails() instanceof Map
+				&& !CollectionUtils.isEmpty((Map) request.getInstallmentSearchCriteria().getAdditionalDetails())) {
+			additionalDetailsToUpdateFromRequest = (Map<String, Object>) request.getInstallmentSearchCriteria()
+					.getAdditionalDetails();
+		}
 		String demandId = demands.get(0).getId();
 		String lastModifiedBy = request.getRequestInfo().getUserInfo().getUuid();
-		updateInstallmentsWithDemandId(installmentsToGenerateDemand, demandId, lastModifiedBy);
+		updateInstallments(installmentsToGenerateDemand, demandId, lastModifiedBy,
+				additionalDetailsToUpdateFromRequest);
 		
 		//add installment audit table
 		Map<String, Object> returnObject = new HashMap<>();
@@ -279,10 +288,18 @@ public class CalculationService {
 		return returnObject;
 	}
 	
-	private void updateInstallmentsWithDemandId(List<Installment> installments, String demandId, String modifiedBy) {
+	private void updateInstallments(List<Installment> installments, String demandId, String modifiedBy,
+			Map<String, Object> additionalDetails) {
 		Long time = System.currentTimeMillis();
 		for (Installment installment : installments) {
 			installment.setDemandId(demandId);
+			if (Objects.nonNull(additionalDetails)) {
+				Map<String, Object> additionalDetailsExisting = Objects.nonNull(installment.getAdditionalDetails())
+						? (Map<String, Object>) installment.getAdditionalDetails()
+						: new HashMap<>();
+				additionalDetailsExisting.putAll(additionalDetails);
+				installment.setAdditionalDetails(additionalDetailsExisting);
+			}
 			installment.getAuditDetails().setLastModifiedBy(modifiedBy);
 			installment.getAuditDetails().setLastModifiedTime(time);
 		}
