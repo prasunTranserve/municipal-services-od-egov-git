@@ -53,8 +53,15 @@ public class BPAQueryBuilder {
 			+ "					  join eg_wf_processinstance_v2 pi on pi.businessid = bpa.applicationno left outer join eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id left outer join eg_wf_state_v2 st ON st.uuid = pi.status ";
 			
 	
-	private static final String BPA_APPLICATION_APPROVEDBY_QUERY ="select distinct on(dsc.applicationno) dsc.applicationno,dsc.tenantid,st.state as workflowstate,st.applicationstatus,dsc.id,dsc.lastModifiedTime from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join eg_wf_state_v2 st ON st.uuid = pi.status   \r\n"
-			+ "";
+	
+	
+	private static final String BPA_APPLICATION_APPROVEDBY_QUERY="select distinct on(dsc.applicationno) dsc.*,st.state as workflowstate,st.applicationstatus,ebb.additionaldetails as buildingadditionaldetails, bpadoc.id as bpa_doc_id,bpadoc.documentuid,\r\n"
+			+ "bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore\r\n"
+			+ "from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join\r\n"
+			+ " eg_wf_state_v2 st ON st.uuid = pi.status left outer join eg_bpa_buildingplan ebb on ebb.applicationno =dsc.applicationno \r\n"
+			+ "left outer join eg_bpa_document bpadoc on bpadoc.buildingplanid = ebb.id ";
+	
+	
 	
 	/**
 	 * To give the Search query based on the requirements.
@@ -477,17 +484,15 @@ public class BPAQueryBuilder {
 
 	public String getApplicationAprovedBy(String uuid, List<Object> preparedStmtList,
 			@Valid BPASearchCriteria criteria) {
-		
-		
-		
 		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
 		addClauseIfRequired(preparedStmtList, builder);
+		
 		if (uuid != null) {
 			
 			builder.append(" dsc.approvedby = ? ");
-			preparedStmtList.add(uuid);
+			preparedStmtList.add(uuid);			
 		}
-		builder.append("  order by dsc.applicationno,pi.createdtime desc");
+	builder.append("  order by dsc.applicationno, pi.createdtime desc");
 		return addDscPaginationWrapper(builder.toString(), preparedStmtList, criteria);
 	
 		}
