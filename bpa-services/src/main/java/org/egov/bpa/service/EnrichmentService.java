@@ -693,13 +693,16 @@ public class EnrichmentService {
 			// Adding creator of BPA(Licensee)
 			if (bpa.getAccountId() != null)
 				assignes.add(bpa.getAccountId());
-		} else if(wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SHOW_CAUSE)) {
+		} 
+		/*
+		 * commenting out as show cause notice to be replied by any of citizen,architect,accredited person
+		else if(wf != null && wf.getAction().equalsIgnoreCase(BPAConstants.ACTION_SHOW_CAUSE)) {
 			// get Approver
 			List<String> approvers = bpaRepository.getApprover(bpa.getTenantId(), bpa.getApplicationNo());
 			if(!CollectionUtils.isEmpty(approvers)) {
 				assignes.addAll(approvers);
 			}
-		}
+		}*/
 		if(bpa.getWorkflow() == null) {
 			Workflow wfNew = new Workflow();
 			wfNew.setAssignes(new LinkedList<>(assignes));
