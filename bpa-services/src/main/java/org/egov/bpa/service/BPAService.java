@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.BpaApplicationSearch;
 import org.egov.bpa.web.model.BpaApprovedByApplicationSearch;
 import org.egov.bpa.web.model.Document;
+import org.egov.bpa.web.model.DocumentList;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.Notice;
 import org.egov.bpa.web.model.PreapprovedPlan;
@@ -1307,6 +1309,7 @@ public class BPAService {
 			if(bpaApprovedByApplicationSearch.isEmpty()) {
 				return Collections.emptyList();
 			}else {
+				this.populatedocumentdetailstoSearch(bpaApprovedByApplicationSearch);
 			return bpaApprovedByApplicationSearch;
 			}
 			}
@@ -1314,6 +1317,20 @@ public class BPAService {
 			
 		
 	}
+
+		private void populatedocumentdetailstoSearch(
+				   List<BpaApprovedByApplicationSearch> bpaApprovedByApplicationSearch) {
+			List<String> bpids = bpaApprovedByApplicationSearch.stream().filter(bpa->bpa.getBpaid()!=null).map(BpaApprovedByApplicationSearch::getBpaid).collect(Collectors.toList());
+			List<DocumentList>  documentList = repository.getdocumentDataForApproveBy(bpids);
+			//List<String>
+			
+			//System.out.println("size1:"+(documentList.stream().map(DocumentList::getBuildingPlanid).collect(Collectors.toList())).size());
+			for(BpaApprovedByApplicationSearch bpas :bpaApprovedByApplicationSearch) {
+				List<DocumentList> docList = documentList.stream().filter(doc->doc.getBuildingPlanid().equals(bpas.getBpaid())).collect(Collectors.toList());
+				bpas.setDocuments(docList);
+			}
+			
+		}
 
 	
 

@@ -82,43 +82,16 @@ public class BPAApprovedByRowMapper implements ResultSetExtractor<List<BpaApprov
 				
 				bpas = BpaApprovedByApplicationSearch.builder().applicationstatus(rs.getString("applicationstatus"))
 						.workflowstate(rs.getString("workflowstate")).buildingAdditionalDetails(buildingadditionaldetails)
-						.dscDetails(dscDetail).build();
+						.bpaid(rs.getString("bpa_id")).dscDetails(dscDetail).build();
 				
 				approvalMap.put(id, bpas);
 			}
-			addChildrenToProperty(rs, bpas);
+			//addChildrenToProperty(rs, bpas);
 		}
 		return new ArrayList<>(approvalMap.values());
 	}
 
-	private void addChildrenToProperty(ResultSet rs, BpaApprovedByApplicationSearch bpas) throws SQLException {
-		
-		String documentId = rs.getString("bpa_doc_id");
-		if(documentId !=null){
-		
-		
-		
-		
-		Object docDetails = null;
-		if(rs.getString("doc_details") != null) {
-			docDetails = new Gson().fromJson(rs.getString("doc_details").equals("{}")
-					|| rs.getString("doc_details").equals("null") ? null : rs.getString("doc_details"),
-					Object.class);
-		}
-		
-		if (documentId != null) {
-		Document documents = Document.builder().documentType(rs.getString("bpa_doc_documenttype"))
-					.fileStoreId(rs.getString("bpa_doc_filestore"))
-					.id(documentId)
-					.additionalDetails(docDetails)
-					.documentUid(rs.getString("documentuid")).build();
-		bpas.addDocumentsItem(documents);
-			
-		
-		
-	}
-		}
+	
 
-}
 }
 	

@@ -43,7 +43,7 @@ public class BpaApprovedByApplicationSearch {
 	
 	@JsonProperty("documents")
 	@Valid
-	private List<Document> documents = null;
+	private List<DocumentList> documents = null;
 	 
 	 
 	 @JsonProperty("applicationstatus")
@@ -52,12 +52,12 @@ public class BpaApprovedByApplicationSearch {
 	 @JsonProperty("workflowstate")
 	 private String workflowstate;
 	 
-	 public BpaApprovedByApplicationSearch addDocumentsItem(Document documentsItem) {
-		    if (this.documents == null) {
-		      this.documents = new ArrayList<Document>();
-		    }
-		    this.documents.add(documentsItem);
-		    return this;
-		  }
+	 @JsonProperty("id")
+	 private String id =null;
+	 
+	 @JsonProperty("bpaid")
+	 private String bpaid =null;
+	 
+	 
 
 }
