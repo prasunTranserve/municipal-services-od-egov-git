@@ -55,11 +55,12 @@ public class BPAQueryBuilder {
 	
 	
 	
-	private static final String BPA_APPLICATION_APPROVEDBY_QUERY="select distinct on(dsc.applicationno) dsc.*,st.state as workflowstate,st.applicationstatus,ebb.additionaldetails as buildingadditionaldetails, bpadoc.id as bpa_doc_id,bpadoc.documentuid,\r\n"
-			+ "bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore\r\n"
-			+ "from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join\r\n"
-			+ " eg_wf_state_v2 st ON st.uuid = pi.status left outer join eg_bpa_buildingplan ebb on ebb.applicationno =dsc.applicationno \r\n"
-			+ "left outer join eg_bpa_document bpadoc on bpadoc.buildingplanid = ebb.id ";
+	private static final String BPA_APPLICATION_APPROVEDBY_QUERY="	select distinct on(dsc.applicationno) dsc.*,st.state as workflowstate,st.applicationstatus,ebb.additionaldetails as buildingadditionaldetails,ebb.id as bpa_id\r\n"
+			+ "			from eg_bpa_dscdetails dsc left outer join eg_wf_processinstance_v2 pi on pi.businessid = dsc.applicationno left outer join\r\n"
+			+ "			eg_wf_state_v2 st ON st.uuid = pi.status left outer join eg_bpa_buildingplan ebb on ebb.applicationno =dsc.applicationno ";
+
+	private static final String BPA_APPLICATION_APPROVEDBYDOCUMENTLIST_QUERY = "select additionalDetails as doc_details,documenttype as bpa_doc_documenttype,filestoreid as bpa_doc_filestore, id as bpa_doc_id,documentuid,buildingplanid \r\n"
+			+ "	from eg_bpa_document" ;
 	
 	
 	
@@ -487,6 +488,7 @@ public class BPAQueryBuilder {
 		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBY_QUERY);
 		addClauseIfRequired(preparedStmtList, builder);
 		
+		
 		if (uuid != null) {
 			
 			builder.append(" dsc.approvedby = ? ");
@@ -496,6 +498,23 @@ public class BPAQueryBuilder {
 		return addDscPaginationWrapper(builder.toString(), preparedStmtList, criteria);
 	
 		}
+
+	public String getDocumentApprovedBy(List<String> bpids, List<Object> preparedStmtList) {
+		
+		StringBuilder builder = new StringBuilder(BPA_APPLICATION_APPROVEDBYDOCUMENTLIST_QUERY);
+		
+		
+           if (bpids != null) {
+        	   addClauseIfRequired(preparedStmtList, builder);
+			//buildingplanid
+        	   builder.append(" buildingplanid IN (").append(createQuery(bpids)).append(")");
+        	   addToPreparedStatement(preparedStmtList, bpids);
+						
+		   } 
+		return builder.toString();
+	}
+	
+
 		
 	}
 

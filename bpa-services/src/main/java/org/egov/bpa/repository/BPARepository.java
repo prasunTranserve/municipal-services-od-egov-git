@@ -9,6 +9,7 @@ import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.producer.Producer;
 import org.egov.bpa.repository.querybuilder.BPAQueryBuilder;
 import org.egov.bpa.repository.rowmapper.BPAApplicationRowMapper;
+import org.egov.bpa.repository.rowmapper.BPAApprovedByDocListRowMapper;
 import org.egov.bpa.repository.rowmapper.BPAApprovedByRowMapper;
 import org.egov.bpa.repository.rowmapper.BPADigitalSignedCertificateRowMapper;
 import org.egov.bpa.repository.rowmapper.BPAReportingRowMapper;
@@ -18,6 +19,7 @@ import org.egov.bpa.web.model.BPARequest;
 import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.BpaApplicationSearch;
 import org.egov.bpa.web.model.BpaApprovedByApplicationSearch;
+import org.egov.bpa.web.model.DocumentList;
 import org.egov.bpa.web.model.DscDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,10 @@ public class BPARepository {
 	
 	@Autowired
 	private BPAApprovedByRowMapper rowMapperApplicationApprovedBy;
+	
+	@Autowired
+	private  BPAApprovedByDocListRowMapper rowMapperApprovedByDocList;
+	
 	
 	@Autowired
 	private BPADigitalSignedCertificateRowMapper dscRowMapper;
@@ -161,7 +167,17 @@ public class BPARepository {
 		
 		String query = queryBuilder.getApplicationAprovedBy(uuid, preparedStmtList,criteria);
 		List<BpaApprovedByApplicationSearch> bpaData = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapperApplicationApprovedBy);
+		
 		return bpaData;
+	}
+
+	public List<DocumentList> getdocumentDataForApproveBy(List<String> bpids) {
+		List<Object> preparedStmtList = new ArrayList<>();
+		String query = queryBuilder.getDocumentApprovedBy(bpids,preparedStmtList);
+		
+		List<DocumentList> docData = jdbcTemplate.query(query,preparedStmtList.toArray(), rowMapperApprovedByDocList);
+		
+		return docData;
 	}
 
 }
