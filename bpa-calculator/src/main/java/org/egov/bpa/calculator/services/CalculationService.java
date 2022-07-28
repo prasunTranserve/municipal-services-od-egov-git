@@ -5,11 +5,14 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,7 @@ import org.egov.bpa.calculator.config.BPACalculatorConfig;
 import org.egov.bpa.calculator.kafka.broker.BPACalculatorProducer;
 import org.egov.bpa.calculator.repository.InstallmentRepository;
 import org.egov.bpa.calculator.repository.PreapprovedPlanRepository;
+import org.egov.bpa.calculator.repository.RevisionRepository;
 import org.egov.bpa.calculator.repository.ServiceRequestRepository;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.utils.CalculationUtils;
@@ -30,10 +34,13 @@ import org.egov.bpa.calculator.web.models.CalulationCriteria;
 import org.egov.bpa.calculator.web.models.Installment;
 import org.egov.bpa.calculator.web.models.PreapprovedPlan;
 import org.egov.bpa.calculator.web.models.PreapprovedPlanSearchCriteria;
+import org.egov.bpa.calculator.web.models.Revision;
+import org.egov.bpa.calculator.web.models.RevisionSearchCriteria;
 import org.egov.bpa.calculator.web.models.bpa.BPA;
 import org.egov.bpa.calculator.web.models.bpa.EstimatesAndSlabs;
 import org.egov.bpa.calculator.web.models.demand.Category;
 import org.egov.bpa.calculator.web.models.demand.Demand;
+import org.egov.bpa.calculator.web.models.demand.DemandDetail;
 import org.egov.bpa.calculator.web.models.Installment.StatusEnum;
 import org.egov.bpa.calculator.web.models.InstallmentRequest;
 import org.egov.bpa.calculator.web.models.InstallmentSearchCriteria;
@@ -87,10 +94,14 @@ public class CalculationService {
 	@Autowired
 	private PreapprovedPlanRepository preapprovedPlanRepository;
 	
-	@Autowired InstallmentRepository installmentRepository;
+	@Autowired
+	private InstallmentRepository installmentRepository;
 	
 	@Autowired
 	private InstallmentValidator installmentValidator;
+	
+	@Autowired
+	private RevisionRepository revisionRepository;
 
 	private static final BigDecimal ZERO_TWO_FIVE = new BigDecimal("0.25");// BigDecimal.valueOf(0.25);
 	private static final BigDecimal ZERO_FIVE = new BigDecimal("0.5");// BigDecimal.valueOf(0.5);
@@ -2228,6 +2239,61 @@ public class CalculationService {
 		calculatedTotalPermitFee = (calculatedTotalPermitFee.add(sanctionFee).add(constructionWorkerWelfareCess)
 				.add(shelterFee).add(temporaryRetentionFee).add(securityDeposit).add(purchasableFAR).add(adjustmentAmount)).setScale(2,
 						BigDecimal.ROUND_UP);
+		// if revision application then calculate total amount after adjustments-
+		BPA bpa = (BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA);
+		if (Boolean.TRUE.equals(bpa.getIsRevisionApplication())) {
+			
+			//fetch revision details-
+			RevisionSearchCriteria revisionSearchCriteria = RevisionSearchCriteria.builder()
+					.bpaApplicationNo(bpa.getApplicationNo()).build();
+			List<Revision> revisions = revisionRepository.getRevisionData(revisionSearchCriteria);
+			if(CollectionUtils.isEmpty(revisions)) {
+				throw new CustomException(
+						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
+								+ bpa.getApprovalNo(),
+						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
+								+ bpa.getApprovalNo());
+			}
+			//TODO: could there be multiple revisions for one application as using first element-
+			calculateEstimatesForRevision(paramMap, estimates, revisions.get(0));
+			calculatedTotalPermitFee = calculateTotalAmountForRevision(estimates);
+		}
+			
+		return calculatedTotalPermitFee;
+	}
+	
+	private void calculateEstimatesForRevision(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates,
+			Revision revision) {
+		BPA bpa = (BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA);
+		String tenantId = String.valueOf(paramMap.get("tenantId"));
+		Set<String> consumerCode = new HashSet<>();
+		consumerCode.add(revision.getRefBpaApplicationNo());
+		Calculation calculation = Calculation.builder().applicationNumber(revision.getRefBpaApplicationNo())
+				.feeType(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE).tenantId(tenantId).bpa(bpa).build();
+		RequestInfo requestInfo = (RequestInfo) paramMap.get("requestInfo");
+		List<Demand> demands = demandService.searchDemand(tenantId, consumerCode, requestInfo, calculation);
+		if (CollectionUtils.isEmpty(demands))
+			return;
+		// assuming only one demand-
+		Demand demand = demands.get(0);
+		for (TaxHeadEstimate estimate : estimates) {
+			Optional<DemandDetail> demandDetail = demand.getDemandDetails().stream()
+					.filter(dd -> dd.getTaxHeadMasterCode().equals(estimate.getTaxHeadCode())).findFirst();
+			if (demandDetail.isPresent()) {
+				DemandDetail dd = demandDetail.get();
+				if (estimate.getEstimateAmount().compareTo(dd.getTaxAmount()) > 0)
+					estimate.setEstimateAmount(estimate.getEstimateAmount().subtract(dd.getTaxAmount()));
+				else
+					estimate.setEstimateAmount(BigDecimal.ZERO);
+			}
+		}
+	}
+
+	private BigDecimal calculateTotalAmountForRevision(ArrayList<TaxHeadEstimate> estimates) {
+		BigDecimal calculatedTotalPermitFee = BigDecimal.ZERO;
+		for (TaxHeadEstimate estimate : estimates) {
+			calculatedTotalPermitFee.add(estimate.getEstimateAmount());
+		}
 		return calculatedTotalPermitFee;
 	}
 	

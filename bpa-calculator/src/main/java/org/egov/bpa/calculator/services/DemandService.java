@@ -196,7 +196,7 @@ public class DemandService {
      * @param requestInfo The RequestInfo of the incoming request
      * @return Lis to demands for the given consumerCode
      */
-    private List<Demand> searchDemand(String tenantId,Set<String> consumerCodes,RequestInfo requestInfo,Calculation calculation){
+    public List<Demand> searchDemand(String tenantId,Set<String> consumerCodes,RequestInfo requestInfo,Calculation calculation){
     	String feeType = calculation.getFeeType();
         String uri = utils.getDemandSearchURL();
         uri = uri.replace("{1}",tenantId);
