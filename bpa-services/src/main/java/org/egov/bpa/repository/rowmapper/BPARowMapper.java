@@ -81,6 +81,7 @@ public class BPARowMapper implements ResultSetExtractor<List<BPA>> {
 						.additionalDetails(additionalDetails)
 						.businessService(rs.getString("businessService"))
 						.reWorkHistory(reWorkHistory)
+						.isRevisionApplication(rs.getBoolean("bpa_isRevisionApplication"))
 						.build();
 
 				buildingMap.put(id, currentbpa);

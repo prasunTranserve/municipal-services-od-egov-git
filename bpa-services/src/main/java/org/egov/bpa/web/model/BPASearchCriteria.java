@@ -38,6 +38,9 @@ public class BPASearchCriteria {
 
 	    @JsonProperty("mobileNumber")
 	    private String mobileNumber;
+	    
+	    @JsonProperty("isRevisionApplication")
+	    private boolean isRevisionApplication;
 
 	    @JsonProperty("landId")
 	    @JsonIgnore

@@ -30,7 +30,7 @@ import org.egov.bpa.web.model.DscDetails;
 import org.egov.bpa.web.model.NoticeRequest;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanRequest;
-
+import org.egov.bpa.web.model.RevisionRequest;
 import org.egov.bpa.web.model.Workflow;
 import org.egov.bpa.web.model.idgen.IdResponse;
 import org.egov.bpa.web.model.workflow.BusinessService;
@@ -398,6 +398,28 @@ public class EnrichmentService {
 			});
 		setIdgenIdsForPreapprovedPlan(request);
 	}
+	
+	/**
+	 * enrich create Revision Request by adding auditdetails and uuids
+	 * 
+	 * @param request
+	 * @param mdmsData
+	 */
+	public void enrichRevisionCreateRequest(RevisionRequest request) {
+		log.info(" Inside enrichRevisionCreateRequest ");
+		RequestInfo requestInfo = request.getRequestInfo();
+		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
+		request.getRevision().setAuditDetails(auditDetails);
+		request.getRevision().setId(UUID.randomUUID().toString());
+
+		// Documents-
+		if (!CollectionUtils.isEmpty(request.getRevision().getDocuments()))
+			request.getRevision().getDocuments().forEach(document -> {
+				if (document.getId() == null) {
+					document.setId(UUID.randomUUID().toString());
+				}
+			});
+	}
 
 	/**
 	 * enchrich the updateRequest
@@ -412,6 +434,20 @@ public class EnrichmentService {
 		auditDetails.setCreatedTime(preapprovedPlanRequest.getPreapprovedPlan().getAuditDetails().getCreatedTime());
 		preapprovedPlanRequest.getPreapprovedPlan().getAuditDetails()
 				.setLastModifiedTime(auditDetails.getLastModifiedTime());
+	}
+	
+	/**
+	 * enchrich the updateRequest
+	 * 
+	 * @param revisionRequest
+	 */
+	public void enrichRevisionUpdateRequest(RevisionRequest revisionRequest) {
+
+		RequestInfo requestInfo = revisionRequest.getRequestInfo();
+		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), false);
+		auditDetails.setCreatedBy(revisionRequest.getRevision().getAuditDetails().getCreatedBy());
+		auditDetails.setCreatedTime(revisionRequest.getRevision().getAuditDetails().getCreatedTime());
+		revisionRequest.getRevision().getAuditDetails().setLastModifiedTime(auditDetails.getLastModifiedTime());
 	}
 
 	/**
