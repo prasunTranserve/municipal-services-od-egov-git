@@ -21,7 +21,7 @@ public class BPAQueryBuilder {
 
 	private static final String QUERY = "SELECT bpa.*,bpadoc.*,bpa.id as bpa_id,bpa.tenantid as bpa_tenantId,bpa.lastModifiedTime as "
 			+ "bpa_lastModifiedTime,bpa.createdBy as bpa_createdBy,bpa.lastModifiedBy as bpa_lastModifiedBy,bpa.createdTime as "
-			+ "bpa_createdTime,bpa.additionalDetails,bpa.reworkhistory as reWorkHistory,bpa.landId as bpa_landId, bpadoc.id as bpa_doc_id, bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore"
+			+ "bpa_createdTime,bpa.additionalDetails,bpa.reworkhistory as reWorkHistory,bpa.isRevisionApplication as bpa_isRevisionApplication,bpa.landId as bpa_landId, bpadoc.id as bpa_doc_id, bpadoc.additionalDetails as doc_details, bpadoc.documenttype as bpa_doc_documenttype,bpadoc.filestoreid as bpa_doc_filestore"
 			+ ",bpadsc.id as dsc_id,bpadsc.additionaldetails as dsc_additionaldetails,bpadsc.documenttype as dsc_doctype,bpadsc.documentid as dsc_docid,bpadsc.approvedby as dsc_approvedby,bpadsc.applicationno as dsc_applicationno,bpadsc.buildingplanid as dsc_buildingplanid,bpadsc.createdBy as dsc_createdby,bpadsc.lastmodifiedby as dsc_lastmodifiedby,bpadsc.createdtime as dsc_createdtime,bpadsc.lastmodifiedtime as dsc_lastmodifiedtime "
 			+ " FROM eg_bpa_buildingplan bpa"
 			+ LEFT_OUTER_JOIN_STRING
@@ -127,6 +127,13 @@ public class BPAQueryBuilder {
 			preparedStmtList.add(criteria.getStatus());
 			
 		}
+		
+		if (Boolean.TRUE.equals(criteria.isRevisionApplication())) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" bpa.isRevisionApplication = ?");
+			preparedStmtList.add(criteria.isRevisionApplication());
+		}
+		
 		Long permitDt = criteria.getApprovalDate();
 		if ( permitDt != null) {
 			

@@ -87,6 +87,9 @@ public class BPA   {
   
   @JsonProperty("reWorkHistory")
   private Object reWorkHistory = null;
+  
+  @JsonProperty("isRevisionApplication")
+  private boolean isRevisionApplication = Boolean.FALSE;
 
   public BPA id(String id) {
     this.id = id;
@@ -418,6 +421,11 @@ public class BPA   {
 	this.reWorkHistory = reWorkHistory;
 	return this;
   }
+  
+  public BPA isRevisionApplication(boolean isRevisionApplication) {
+	this.isRevisionApplication = isRevisionApplication;
+	return this;
+  }
 
   /**
    * The json to capturing the custom fields
@@ -439,6 +447,14 @@ public class BPA   {
 
   public void setReWorkHistory(Object reWorkHistory) {
 	this.reWorkHistory = reWorkHistory;
+  }
+  
+  public boolean getIsRevisionApplication() {
+	return isRevisionApplication;
+  }
+	
+	public void setIsRevisionApplication(boolean isRevisionApplication) {
+	this.isRevisionApplication = isRevisionApplication;
   }
 
 
@@ -465,7 +481,8 @@ public class BPA   {
         Objects.equals(this.workflow, BPA.workflow) &&
         Objects.equals(this.auditDetails, BPA.auditDetails) &&
         Objects.equals(this.additionalDetails, BPA.additionalDetails) &&
-        Objects.equals(this.reWorkHistory, BPA.reWorkHistory);
+        Objects.equals(this.reWorkHistory, BPA.reWorkHistory) &&
+        Objects.equals(this.isRevisionApplication, BPA.isRevisionApplication);
   }
 
   @Override
@@ -493,6 +510,7 @@ public class BPA   {
     sb.append("    auditDetails: ").append(toIndentedString(auditDetails)).append("\n");
     sb.append("    additionalDetails: ").append(toIndentedString(additionalDetails)).append("\n");
     sb.append("    reWorkHistory: ").append(toIndentedString(reWorkHistory)).append("\n");
+    sb.append("    isRevisionApplication: ").append(toIndentedString(isRevisionApplication)).append("\n");
     sb.append("}");
     return sb.toString();
   }
