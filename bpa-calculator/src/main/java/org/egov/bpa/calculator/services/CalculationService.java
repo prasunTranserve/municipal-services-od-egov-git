@@ -343,19 +343,19 @@ public class CalculationService {
 				int noOfInstallments = (int) installmentDetail.get(BPACalculatorConstants.MDMS_NO_OF_INSTALLMENTS);
 					
 				for (int i = 0; i < noOfInstallments; i++) {
-					Installment installment = Installment.builder().id(UUID.randomUUID().toString())
-							.tenantId(calculation.getTenantId())
-							.installmentNo(i+1)
-							.status(StatusEnum.ACTIVE)
-							.consumerCode(calculationReq.getCalulationCriteria().get(0).getApplicationNo())
-							.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
-							.taxAmount(taxHeadEstimate.getEstimateAmount().divide(
-									new BigDecimal(noOfInstallments), 0,
-									BigDecimal.ROUND_HALF_UP))
-							.auditDetails(utils.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(),
-									true))
-							.build();
-					installmentsToInsert.add(installment);
+					// create installment only if estimateAmount is not 0-
+					if (BigDecimal.ZERO.compareTo(taxHeadEstimate.getEstimateAmount()) != 0) {
+						Installment installment = Installment.builder().id(UUID.randomUUID().toString())
+								.tenantId(calculation.getTenantId()).installmentNo(i + 1).status(StatusEnum.ACTIVE)
+								.consumerCode(calculationReq.getCalulationCriteria().get(0).getApplicationNo())
+								.taxHeadCode(taxHeadEstimate.getTaxHeadCode())
+								.taxAmount(taxHeadEstimate.getEstimateAmount().divide(new BigDecimal(noOfInstallments),
+										0, BigDecimal.ROUND_HALF_UP))
+								.auditDetails(utils
+										.getAuditDetails(calculationReq.getRequestInfo().getUserInfo().getUuid(), true))
+								.build();
+						installmentsToInsert.add(installment);
+					}
 				}
 			}
 		}
@@ -1039,20 +1039,173 @@ public class CalculationService {
 		// estimates.add(estimate);
 	}
 	
+	private void setRevisionDataInParamMap(BPA bpa, Map<String, Object> paramMap) {
+		if (Boolean.TRUE.equals(bpa.getIsRevisionApplication())) {
+			//part1 - set entire revision in paramMap irrespective of isSujogExistingApplication true or false-
+			// fetch revision data and set in paramMap-
+			RevisionSearchCriteria revisionSearchCriteria = RevisionSearchCriteria.builder()
+					.bpaApplicationNo(bpa.getApplicationNo()).build();
+			List<Revision> revisions = revisionRepository.getRevisionData(revisionSearchCriteria);
+			if (CollectionUtils.isEmpty(revisions)) {
+				throw new CustomException(
+						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
+								+ bpa.getApprovalNo(),
+						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
+								+ bpa.getApprovalNo());
+			}
+			// TODO: could there be multiple revisions for one application as using first element-
+			paramMap.put(BPACalculatorConstants.REVISION, revisions.get(0));
+			
+		}
+	}
+	
 	private Map<String, Object> prepareMaramMap(RequestInfo requestInfo, CalulationCriteria criteria, String feeType,
 			Map<String, Object> extraParamsForCalculationMap) {
 		String businessService = "";
+		Boolean isRevisionApplication = Boolean.FALSE;
 		if (Objects.nonNull(extraParamsForCalculationMap.get("BPA"))
-				&& !StringUtils.isEmpty(((BPA) extraParamsForCalculationMap.get("BPA")).getBusinessService()))
-			businessService = ((BPA) extraParamsForCalculationMap.get("BPA")).getBusinessService();
+				&& !StringUtils.isEmpty(((BPA) extraParamsForCalculationMap.get("BPA")).getBusinessService())) {
+			BPA bpa = (BPA) extraParamsForCalculationMap.get("BPA");
+			businessService = bpa.getBusinessService();
+			isRevisionApplication = bpa.getIsRevisionApplication(); 
+		}
 
 		if (BPACalculatorConstants.BUSINESSSERVICE_PREAPPROVEDPLAN.equalsIgnoreCase(businessService)) {
 			// for BPA 6(preapproved plan) -
 			return prepareParamMapForPreapprovedPlan(requestInfo, criteria, feeType, extraParamsForCalculationMap);
+		} else if (isRevisionApplication){
+			//Assumption: application on top of a preapproved plan could never be a revision application.
+			BPA bpa = (BPA) extraParamsForCalculationMap.get("BPA");
+			Map<String, Object> paramMap = new HashMap<>();
+			setRevisionDataInParamMap(bpa, paramMap);
+			Revision revision = (Revision) paramMap.get(BPACalculatorConstants.REVISION);
+			if(revision.isSujogExistingApplication()) {
+				// need to prepare paramMap as usual for BPA1,2,3,4 -
+				paramMap.putAll(prepareParamMapForBpa1to4(requestInfo, criteria, feeType));
+			}
+			else {
+				// need to prepare paramMap from refApplicationDetails - 
+				prepareParamMapForRevisionNonSujogApplication(requestInfo, criteria, feeType, paramMap, bpa);
+			}
+			return paramMap;
 		} else {
 			// for BPA 1,2,3,4 -
 			return prepareParamMapForBpa1to4(requestInfo, criteria, feeType);
 		}
+	}
+	
+	private void prepareParamMapForRevisionNonSujogApplication(RequestInfo requestInfo, CalulationCriteria criteria,
+			String feeType, Map<String, Object> paramMap, BPA bpa) {
+		Revision revision = (Revision) paramMap.get(BPACalculatorConstants.REVISION);
+		if(revision.isSujogExistingApplication())
+			return;
+		String applicationType = criteria.getApplicationType();
+		String serviceType = criteria.getServiceType();
+		// assumption : applicationType, serviceType of old non-sujog application was same as that of new revision application- 
+		paramMap.put(BPACalculatorConstants.APPLICATION_TYPE, applicationType);
+		paramMap.put(BPACalculatorConstants.SERVICE_TYPE, serviceType);
+		paramMap.put(BPACalculatorConstants.FEE_TYPE, feeType);
+		if (Objects.isNull(revision.getRefApplicationDetails()) || !(revision.getRefApplicationDetails() instanceof Map)
+				|| CollectionUtils.isEmpty(((Map) revision.getRefApplicationDetails()))) {
+			throw new CustomException("refApplicationDetails must not be null or empty for non-sujog permit numbers",
+					"refApplicationDetails must not be null or empty for non-sujog permit numbers");
+		}
+		Map<String, Object> refApplicationDetails = (Map<String, Object>) revision.getRefApplicationDetails();
+
+		// edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.type.code
+		paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE,
+				refApplicationDetails.get(BPACalculatorConstants.OCCUPANCY_TYPE));
+		// edcrDetail.*.planDetail.virtualBuilding.mostRestrictiveFarHelper.subtype.code"
+		paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,
+				refApplicationDetails.get(BPACalculatorConstants.SUB_OCCUPANCY_TYPE));
+		// edcrDetail.*.planDetail.plot.area
+		paramMap.put(BPACalculatorConstants.PLOT_AREA,
+				getValueInDoubleFormat(BPACalculatorConstants.PLOT_AREA,
+						refApplicationDetails.get(BPACalculatorConstants.PLOT_AREA)));
+		// edcrDetail.*.planDetail.virtualBuilding.totalFloorArea
+		paramMap.put(BPACalculatorConstants.TOTAL_FLOOR_AREA,
+				getValueInDoubleFormat(BPACalculatorConstants.TOTAL_FLOOR_AREA,
+						refApplicationDetails.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)));
+		// edcrDetail.*.planDetail.virtualBuilding.totalBuitUpArea
+		paramMap.put(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR,
+				getValueInDoubleFormat(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR,
+						refApplicationDetails.get(BPACalculatorConstants.TOTAL_BUILTUP_AREA_EDCR)));
+		// edcrDetail.*.planDetail.totalEWSFeeEffectiveArea
+		paramMap.put(BPACalculatorConstants.EWS_AREA,
+				getValueInDoubleFormat(BPACalculatorConstants.EWS_AREA,
+						refApplicationDetails.get(BPACalculatorConstants.EWS_AREA)));
+		// edcrDetail.*.planDetail.planInformation.benchmarkValuePerAcre
+		paramMap.put(BPACalculatorConstants.BMV_ACRE,
+				getValueInDoubleFormat(BPACalculatorConstants.BMV_ACRE,
+						refApplicationDetails.get(BPACalculatorConstants.BMV_ACRE)));
+		// edcrDetail.*.planDetail.farDetails.baseFar
+		paramMap.put(BPACalculatorConstants.BASE_FAR,
+				getValueInDoubleFormat(BPACalculatorConstants.BASE_FAR,
+						refApplicationDetails.get(BPACalculatorConstants.BASE_FAR)));
+		// edcrDetail.*.planDetail.farDetails.providedFar
+		paramMap.put(BPACalculatorConstants.PROVIDED_FAR,
+				getValueInDoubleFormat(BPACalculatorConstants.PROVIDED_FAR,
+						refApplicationDetails.get(BPACalculatorConstants.PROVIDED_FAR)));
+		// edcrDetail.*.planDetail.farDetails.permissableFar
+		paramMap.put(BPACalculatorConstants.PERMISSABLE_FAR,
+				getValueInDoubleFormat(BPACalculatorConstants.PERMISSABLE_FAR,
+						refApplicationDetails.get(BPACalculatorConstants.PERMISSABLE_FAR)));
+		// edcrDetail.*.planDetail.farDetails.tdrFarRelaxation
+		paramMap.put(BPACalculatorConstants.TDR_FAR_RELAXATION,
+				getValueInDoubleFormat(BPACalculatorConstants.TDR_FAR_RELAXATION,
+						refApplicationDetails.get(BPACalculatorConstants.TDR_FAR_RELAXATION)));
+		// edcrDetail.*.planDetail.planInformation.totalNoOfDwellingUnits
+		paramMap.put(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS,
+				getValueInIntegerFormat(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS,
+						refApplicationDetails.get(BPACalculatorConstants.TOTAL_NO_OF_DWELLING_UNITS)));
+		// edcrDetail.*.planDetail.planInformation.shelterFeeRequired
+		paramMap.put(BPACalculatorConstants.SHELTER_FEE, refApplicationDetails.get(BPACalculatorConstants.SHELTER_FEE));
+		// edcrDetail.*.planDetail.planInformation.isSecurityDepositRequired
+		paramMap.put(BPACalculatorConstants.SECURITY_DEPOSIT,
+				refApplicationDetails.get(BPACalculatorConstants.SECURITY_DEPOSIT));
+		// edcrDetail.*.planDetail.planInformation.projectValueForEIDP
+		paramMap.put(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP,
+				getValueInDoubleFormat(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP,
+						refApplicationDetails.get(BPACalculatorConstants.PROJECT_VALUE_FOR_EIDP)));
+		// edcrDetail.*.planDetail.planInformation.isRetentionFeeApplicable
+		paramMap.put(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE,
+				refApplicationDetails.get(BPACalculatorConstants.IS_RETENTION_FEE_APPLICABLE));
+		// edcrDetail.*.planDetail.planInformation.numberOfTemporaryStructures
+		paramMap.put(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES,
+				getValueInDoubleFormat(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES,
+						refApplicationDetails.get(BPACalculatorConstants.NUMBER_OF_TEMP_STRUCTURES)));
+		paramMap.put(BPACalculatorConstants.RISK_TYPE, refApplicationDetails.get(BPACalculatorConstants.RISK_TYPE));
+	}
+	
+	private Double getValueInDoubleFormat(String key, Object value) {
+		Double doubleValue = Double.parseDouble("0");
+		if (StringUtils.isEmpty(value)) {
+			log.info("setting 0 value of key:" + key + " as value is null/empty");
+			;
+			return doubleValue;
+		}
+		try {
+			doubleValue = Double.parseDouble(String.valueOf(value));
+		} catch (NumberFormatException nfe) {
+			log.error("NumberFormatException: setting value as 0 as value of key:" + key + " is not a Double:" + value);
+		}
+		return doubleValue;
+	}
+	
+	private Integer getValueInIntegerFormat(String key, Object value) {
+		Integer integerValue = Integer.parseInt("0");
+		if (StringUtils.isEmpty(value)) {
+			log.info("setting 0 value of key:" + key + " as value is null/empty");
+			;
+			return integerValue;
+		}
+		try {
+			integerValue = Integer.parseInt(String.valueOf(value));
+		} catch (NumberFormatException nfe) {
+			log.error(
+					"NumberFormatException: setting value as 0 as value of key:" + key + " is not a Integer:" + value);
+		}
+		return integerValue;
 	}
 	
 	/**
@@ -2242,51 +2395,91 @@ public class CalculationService {
 		// if revision application then calculate total amount after adjustments-
 		BPA bpa = (BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA);
 		if (Boolean.TRUE.equals(bpa.getIsRevisionApplication())) {
-			
-			//fetch revision details-
-			RevisionSearchCriteria revisionSearchCriteria = RevisionSearchCriteria.builder()
-					.bpaApplicationNo(bpa.getApplicationNo()).build();
-			List<Revision> revisions = revisionRepository.getRevisionData(revisionSearchCriteria);
-			if(CollectionUtils.isEmpty(revisions)) {
-				throw new CustomException(
-						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
-								+ bpa.getApprovalNo(),
-						"No revision data found for refBpaApplicationNo:" + bpa.getApplicationNo() + ",refPermitNo:"
-								+ bpa.getApprovalNo());
+			Revision revision = (Revision) paramMap.get(BPACalculatorConstants.REVISION);
+			if(!revision.isSujogExistingApplication()) {
+				calculateForRevisionNonSujogAppl(paramMap, estimates, revision);
+				calculatedTotalPermitFee = calculateTotalAmountForRevision(estimates);
+				return calculatedTotalPermitFee;
 			}
-			//TODO: could there be multiple revisions for one application as using first element-
-			calculateEstimatesForRevision(paramMap, estimates, revisions.get(0));
+			calculateForRevisionSujogExistingAppl(paramMap, estimates, revision);
 			calculatedTotalPermitFee = calculateTotalAmountForRevision(estimates);
 		}
 			
 		return calculatedTotalPermitFee;
 	}
 	
-	private void calculateEstimatesForRevision(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates,
+	private void calculateForRevisionNonSujogAppl(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates,
 			Revision revision) {
-		BPA bpa = (BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA);
-		String tenantId = String.valueOf(paramMap.get("tenantId"));
-		Set<String> consumerCode = new HashSet<>();
-		consumerCode.add(revision.getRefBpaApplicationNo());
-		Calculation calculation = Calculation.builder().applicationNumber(revision.getRefBpaApplicationNo())
-				.feeType(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE).tenantId(tenantId).bpa(bpa).build();
-		RequestInfo requestInfo = (RequestInfo) paramMap.get("requestInfo");
-		List<Demand> demands = demandService.searchDemand(tenantId, consumerCode, requestInfo, calculation);
-		if (CollectionUtils.isEmpty(demands))
-			return;
-		// assuming only one demand-
-		Demand demand = demands.get(0);
-		for (TaxHeadEstimate estimate : estimates) {
-			Optional<DemandDetail> demandDetail = demand.getDemandDetails().stream()
-					.filter(dd -> dd.getTaxHeadMasterCode().equals(estimate.getTaxHeadCode())).findFirst();
-			if (demandDetail.isPresent()) {
-				DemandDetail dd = demandDetail.get();
-				if (estimate.getEstimateAmount().compareTo(dd.getTaxAmount()) > 0)
-					estimate.setEstimateAmount(estimate.getEstimateAmount().subtract(dd.getTaxAmount()));
-				else
-					estimate.setEstimateAmount(BigDecimal.ZERO);
+		BPA bpa = (BPA) paramMap.get("BPA");
+		// set IsRevisionApplication to false for normal calculation-
+		bpa.setIsRevisionApplication(false);
+		CalulationCriteria calculationCriteria = CalulationCriteria.builder()
+				.applicationNo(revision.getBpaApplicationNo())
+				.applicationType(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY).bpa(bpa)
+				.feeType(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)
+				.serviceType(BPACalculatorConstants.NEW_CONSTRUCTION).tenantId(bpa.getTenantId()).build();
+		List<CalulationCriteria> calculationCriterias = new ArrayList<>();
+		calculationCriterias.add(calculationCriteria);
+		CalculationReq calculationReq = CalculationReq.builder().calulationCriteria(calculationCriterias)
+				.requestInfo((RequestInfo) paramMap.get("requestInfo")).build();
+		// note that we calculate the estimates as per old parameters so that we could
+		// know how much the user would have paid for old permit.We have to subtract
+		// that much amount from current application's calculation-
+		List<Calculation> calculationsForCurrentApplicationWithoutRevision = getEstimate(calculationReq);
+		List<TaxHeadEstimate> estimatesForCurrentApplicationWithoutRevision = calculationsForCurrentApplicationWithoutRevision
+				.get(0).getTaxHeadEstimates();
+		for (TaxHeadEstimate estimateAsPerCurrentApplicationWORevision : estimatesForCurrentApplicationWithoutRevision) {
+			Optional<TaxHeadEstimate> taxHeadEstimateSearchAsPerOldParameters = estimates.stream()
+					.filter(estimate -> estimate.getTaxHeadCode()
+							.equals(estimateAsPerCurrentApplicationWORevision.getTaxHeadCode()))
+					.findFirst();
+			if (taxHeadEstimateSearchAsPerOldParameters.isPresent()
+					&& estimateAsPerCurrentApplicationWORevision.getEstimateAmount()
+							.compareTo(taxHeadEstimateSearchAsPerOldParameters.get().getEstimateAmount()) > 0) {
+				estimateAsPerCurrentApplicationWORevision
+						.setEstimateAmount(estimateAsPerCurrentApplicationWORevision.getEstimateAmount()
+								.subtract(taxHeadEstimateSearchAsPerOldParameters.get().getEstimateAmount()));
+			}
+			else if (taxHeadEstimateSearchAsPerOldParameters.isPresent()) {
+				estimateAsPerCurrentApplicationWORevision.setEstimateAmount(BigDecimal.ZERO);
 			}
 		}
+		estimates.clear();
+		estimates.addAll(estimatesForCurrentApplicationWithoutRevision);
+		bpa.setIsRevisionApplication(true);
+
+	}
+	
+	private void calculateForRevisionSujogExistingAppl(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates,
+			Revision revision) {
+		// part1 :if isSujogExistingApplication=true, then fetch old application demand details-
+		if (revision.isSujogExistingApplication()) {
+			BPA bpa = (BPA) paramMap.get(BPACalculatorConstants.PARAM_MAP_BPA);
+			String tenantId = String.valueOf(paramMap.get("tenantId"));
+			Set<String> consumerCode = new HashSet<>();
+			consumerCode.add(revision.getRefBpaApplicationNo());
+			Calculation calculation = Calculation.builder().applicationNumber(revision.getRefBpaApplicationNo())
+					.feeType(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE).tenantId(tenantId).bpa(bpa)
+					.build();
+			RequestInfo requestInfo = (RequestInfo) paramMap.get("requestInfo");
+			List<Demand> demands = demandService.searchDemand(tenantId, consumerCode, requestInfo, calculation);
+			if (CollectionUtils.isEmpty(demands))
+				return;
+			// assuming only one demand-
+			Demand demand = demands.get(0);
+			for (TaxHeadEstimate estimate : estimates) {
+				Optional<DemandDetail> demandDetail = demand.getDemandDetails().stream()
+						.filter(dd -> dd.getTaxHeadMasterCode().equals(estimate.getTaxHeadCode())).findFirst();
+				if (demandDetail.isPresent()) {
+					DemandDetail dd = demandDetail.get();
+					if (estimate.getEstimateAmount().compareTo(dd.getTaxAmount()) > 0)
+						estimate.setEstimateAmount(estimate.getEstimateAmount().subtract(dd.getTaxAmount()));
+					else
+						estimate.setEstimateAmount(BigDecimal.ZERO);
+				}
+			}
+		}
+
 	}
 
 	private BigDecimal calculateTotalAmountForRevision(ArrayList<TaxHeadEstimate> estimates) {

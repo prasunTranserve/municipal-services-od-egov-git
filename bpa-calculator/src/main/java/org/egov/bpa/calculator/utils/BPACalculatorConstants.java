@@ -382,6 +382,7 @@ public class BPACalculatorConstants {
 	public static final String PAYMENT_TAXHEAD_AMOUNT_PATH = "$.Payments[%s].paymentDetails[0].bill.billDetails[0].billAccountDetails[?(@.taxHeadCode == '%s')].adjustedAmount";
 	
 	public static final String BUSINESSSERVICE_PREAPPROVEDPLAN = "BPA6";
+	public static final String REVISION = "revision";
 
 //	public static final String SPARIT_CHECK = null;
 
