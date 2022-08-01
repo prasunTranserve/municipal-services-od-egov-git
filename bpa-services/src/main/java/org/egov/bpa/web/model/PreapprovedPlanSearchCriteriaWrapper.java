@@ -17,8 +17,7 @@ import lombok.Setter;
 @Builder
 public class PreapprovedPlanSearchCriteriaWrapper {
 
-	@JsonProperty("RequestInfo")
-	private RequestInfo requestInfo;
+	
 
 	@JsonProperty("preapprovedPlanSearchCriteria")
 	private PreapprovedPlanSearchCriteria preapprovedPlanSearchCriteria;

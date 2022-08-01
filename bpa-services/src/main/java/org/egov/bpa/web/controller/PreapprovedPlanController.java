@@ -8,13 +8,17 @@ import javax.validation.Valid;
 import org.egov.bpa.service.PreapprovedPlanService;
 import org.egov.bpa.util.BPAUtil;
 import org.egov.bpa.util.ResponseInfoFactory;
+import org.egov.bpa.web.model.BPASearchCriteria;
 import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanRequest;
 import org.egov.bpa.web.model.PreapprovedPlanResponse;
+import org.egov.bpa.web.model.PreapprovedPlanSearchCriteria;
 import org.egov.bpa.web.model.PreapprovedPlanSearchCriteriaWrapper;
+import org.egov.bpa.web.model.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,14 +52,16 @@ public class PreapprovedPlanController {
 	}
 
 	@PostMapping(value = "/_search")
-	public ResponseEntity<PreapprovedPlanResponse> search(
-			@Valid @RequestBody PreapprovedPlanSearchCriteriaWrapper criteria) {
+	public ResponseEntity<PreapprovedPlanResponse> search(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+			@Valid @ModelAttribute PreapprovedPlanSearchCriteria criteria) {
+		
+		
 
 		List<PreapprovedPlan> preApprovedPlans = preapprovedPlanService
-				.getPreapprovedPlanFromCriteria(criteria.getPreapprovedPlanSearchCriteria());
+				.getPreapprovedPlanFromCriteria(criteria);
 
 		PreapprovedPlanResponse response = PreapprovedPlanResponse.builder().preapprovedPlan(preApprovedPlans)
-				.responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(criteria.getRequestInfo(), true))
+				.responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true))
 				.build();
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
