@@ -17,6 +17,7 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,42 +55,51 @@ public class RevisionService {
 	
 	private void validateRevisionAlreadyExists(RevisionRequest revisionRequest) {
 		// validate if revision request already exists for given applicationNo-
-		RevisionSearchCriteria revisionSearchCriteriaForApplicationNo = RevisionSearchCriteria.builder()
-				.bpaApplicationNo(revisionRequest.getRevision().getBpaApplicationNo()).build();
-		List<Revision> revisionByApplicationNo = repository.getRevisionData(revisionSearchCriteriaForApplicationNo);
-		if (Objects.nonNull(revisionByApplicationNo) && revisionByApplicationNo.size() > 0) {
-			throw new CustomException(
-					"Found already existing revision data for given bpaApplicationNo:"
-							+ revisionRequest.getRevision().getBpaApplicationNo(),
-					"Found already existing revision data for given bpaApplicationNo:"
-							+ revisionRequest.getRevision().getBpaApplicationNo());
-		}
-		// validate if revision request already exists for given refApplicationNo-
-		RevisionSearchCriteria revisionSearchCriteriaForRefApplicationNo = RevisionSearchCriteria.builder()
-				.refBpaApplicationNo(revisionRequest.getRevision().getRefBpaApplicationNo()).build();
-		List<Revision> revisionByRefApplicationNo = repository
-				.getRevisionData(revisionSearchCriteriaForRefApplicationNo);
-		if (Objects.nonNull(revisionByRefApplicationNo) && revisionByRefApplicationNo.size() > 0) {
-			throw new CustomException(
-					"Found already existing revision data for given RefBpaApplicationNo:"
-							+ revisionRequest.getRevision().getRefBpaApplicationNo(),
-					"Found already existing revision data for given RefBpaApplicationNo:"
-							+ revisionRequest.getRevision().getRefBpaApplicationNo());
-		}
-		
-		// validate if revision request already exists for given refPermitNo if isSujogExistingApplication=false -
-		if (!revisionRequest.getRevision().isSujogExistingApplication()) {
-			RevisionSearchCriteria revisionSearchCriteriaForRefPermitNo = RevisionSearchCriteria.builder()
-					.refPermitNo(revisionRequest.getRevision().getRefPermitNo()).build();
-			List<Revision> revisionByRefPermitNo = repository.getRevisionData(revisionSearchCriteriaForRefPermitNo);
-			if (Objects.nonNull(revisionByRefPermitNo) && revisionByRefPermitNo.size() > 0) {
+		if (!StringUtils.isEmpty(revisionRequest.getRevision().getBpaApplicationNo())) {
+			RevisionSearchCriteria revisionSearchCriteriaForApplicationNo = RevisionSearchCriteria.builder()
+					.bpaApplicationNo(revisionRequest.getRevision().getBpaApplicationNo()).build();
+			List<Revision> revisionByApplicationNo = repository.getRevisionData(revisionSearchCriteriaForApplicationNo);
+			if (Objects.nonNull(revisionByApplicationNo) && revisionByApplicationNo.size() > 0) {
 				throw new CustomException(
-						"Found already existing revision data for given RefPermitNo:"
-								+ revisionRequest.getRevision().getRefPermitNo(),
-						"Found already existing revision data for given RefPermitNo:"
-								+ revisionRequest.getRevision().getRefPermitNo());
+						"Found already existing revision data for given bpaApplicationNo:"
+								+ revisionRequest.getRevision().getBpaApplicationNo(),
+						"Found already existing revision data for given bpaApplicationNo:"
+								+ revisionRequest.getRevision().getBpaApplicationNo());
 			}
 		}
+		
+		// validate if revision request already exists for given refApplicationNo-
+		if (!StringUtils.isEmpty(revisionRequest.getRevision().getRefBpaApplicationNo())) {
+			RevisionSearchCriteria revisionSearchCriteriaForRefApplicationNo = RevisionSearchCriteria.builder()
+					.refBpaApplicationNo(revisionRequest.getRevision().getRefBpaApplicationNo()).build();
+			List<Revision> revisionByRefApplicationNo = repository
+					.getRevisionData(revisionSearchCriteriaForRefApplicationNo);
+			if (Objects.nonNull(revisionByRefApplicationNo) && revisionByRefApplicationNo.size() > 0) {
+				throw new CustomException(
+						"Found already existing revision data for given RefBpaApplicationNo:"
+								+ revisionRequest.getRevision().getRefBpaApplicationNo(),
+						"Found already existing revision data for given RefBpaApplicationNo:"
+								+ revisionRequest.getRevision().getRefBpaApplicationNo());
+			}
+		}
+		
+		
+		// validate if revision request already exists for given refPermitNo if isSujogExistingApplication=false -
+		if (!StringUtils.isEmpty(revisionRequest.getRevision().getRefPermitNo())) {
+			if (!revisionRequest.getRevision().isSujogExistingApplication()) {
+				RevisionSearchCriteria revisionSearchCriteriaForRefPermitNo = RevisionSearchCriteria.builder()
+						.refPermitNo(revisionRequest.getRevision().getRefPermitNo()).build();
+				List<Revision> revisionByRefPermitNo = repository.getRevisionData(revisionSearchCriteriaForRefPermitNo);
+				if (Objects.nonNull(revisionByRefPermitNo) && revisionByRefPermitNo.size() > 0) {
+					throw new CustomException(
+							"Found already existing revision data for given RefPermitNo:"
+									+ revisionRequest.getRevision().getRefPermitNo(),
+							"Found already existing revision data for given RefPermitNo:"
+									+ revisionRequest.getRevision().getRefPermitNo());
+				}
+			}
+		}
+		
 	}
 
 	/**

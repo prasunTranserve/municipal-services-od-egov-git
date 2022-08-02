@@ -1073,7 +1073,8 @@ public class CalculationService {
 		if (BPACalculatorConstants.BUSINESSSERVICE_PREAPPROVEDPLAN.equalsIgnoreCase(businessService)) {
 			// for BPA 6(preapproved plan) -
 			return prepareParamMapForPreapprovedPlan(requestInfo, criteria, feeType, extraParamsForCalculationMap);
-		} else if (isRevisionApplication){
+		} else if (Boolean.TRUE.equals(isRevisionApplication)
+				&& criteria.getFeeType().equalsIgnoreCase(BPACalculatorConstants.MDMS_CALCULATIONTYPE_SANC_FEETYPE)) {
 			//Assumption: application on top of a preapproved plan could never be a revision application.
 			BPA bpa = (BPA) extraParamsForCalculationMap.get("BPA");
 			Map<String, Object> paramMap = new HashMap<>();
