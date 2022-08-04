@@ -565,6 +565,7 @@ public class BPAConstants {
 	public static final String BPA_PM_MODULE_CODE = "BPA3";
 	public static final String BPA_DP_BP_MODULE_CODE = "BPA4";
 	public static final String BPA_AC_MODULE_CODE = "BPA5";
+	public static final String BPA_PAP_MODULE_CODE = "BPA6";
 	
 	public static final String YES = "YES";
 	
