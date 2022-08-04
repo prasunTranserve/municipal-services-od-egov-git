@@ -2430,9 +2430,12 @@ public class CalculationService {
 		List<TaxHeadEstimate> estimatesForCurrentApplicationWithoutRevision = calculationsForCurrentApplicationWithoutRevision
 				.get(0).getTaxHeadEstimates();
 		for (TaxHeadEstimate estimateAsPerCurrentApplicationWORevision : estimatesForCurrentApplicationWithoutRevision) {
+			//note: do not touch other fee(adjustment amount) as it might be required in new estimate
 			Optional<TaxHeadEstimate> taxHeadEstimateSearchAsPerOldParameters = estimates.stream()
-					.filter(estimate -> estimate.getTaxHeadCode()
-							.equals(estimateAsPerCurrentApplicationWORevision.getTaxHeadCode()))
+					.filter(estimate -> (!BPACalculatorConstants.TAXHEAD_BPA_ADJUSTMENT_AMOUNT
+							.equals(estimate.getTaxHeadCode()))
+							&& estimate.getTaxHeadCode()
+									.equals(estimateAsPerCurrentApplicationWORevision.getTaxHeadCode()))
 					.findFirst();
 			if (taxHeadEstimateSearchAsPerOldParameters.isPresent()
 					&& estimateAsPerCurrentApplicationWORevision.getEstimateAmount()
