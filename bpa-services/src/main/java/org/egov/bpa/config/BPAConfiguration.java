@@ -377,6 +377,12 @@ public class BPAConfiguration {
 	@Value("${egov.idgen.bpa.applicationNum.BPA5format}")
 	private String applicationNoIdgenFormatforBPA5;
 	
+	@Value("${egov.idgen.bpa.applicationNum.BPA6name}")
+	private String applicationNoIdgenNameforBPA6;
+	
+	@Value("${egov.idgen.bpa.applicationNum.BPA6format}")
+	private String applicationNoIdgenFormatforBPA6;
+	
 	@Value("${persister.save.revision.topic}")
 	private String saveRevisionTopicName;
 	

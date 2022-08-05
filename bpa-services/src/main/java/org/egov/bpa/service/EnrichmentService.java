@@ -139,8 +139,10 @@ public class EnrichmentService {
         	 applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenNameforBPA5(),
     				config.getApplicationNoIdgenFormatforBPA5(), 1);
         	 //System.out.println("idgen:"+applicationNumbers);
-        }
-        else {
+        }else if(BPAConstants.BPA_PAP_MODULE_CODE.equalsIgnoreCase(request.getBPA().getBusinessService())) {
+        	 applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenNameforBPA6(),
+     				config.getApplicationNoIdgenFormatforBPA6(), 1);
+        } else {
 		 applicationNumbers = getIdList(requestInfo, tenantId, config.getApplicationNoIdgenName(),
 				config.getApplicationNoIdgenFormat(), 1);
 		 //System.out.println("idgen1:"+applicationNumbers);
