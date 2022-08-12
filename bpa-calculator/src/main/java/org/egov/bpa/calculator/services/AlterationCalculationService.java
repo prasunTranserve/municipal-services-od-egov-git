@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.egov.bpa.calculator.edcr.model.Occupancy;
 import org.egov.bpa.calculator.utils.BPACalculatorConstants;
 import org.egov.bpa.calculator.web.models.demand.Category;
 import org.egov.bpa.calculator.web.models.demand.TaxHeadEstimate;
@@ -49,9 +52,26 @@ public class AlterationCalculationService {
 	public BigDecimal calculateFeeForBuildingOperation(Map<String, Object> paramMap,
 			ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal feeForBuildingOperation = BigDecimal.ZERO;
+		BigDecimal feesForBuildingOperation = BigDecimal.ZERO;
+		Double totalexistingBuitUpArea=null;
 		Double totalBuitUpArea = null;
 		String occupancyType = null;
+		List<Occupancy> occupancyies = null;
 		totalBuitUpArea = getProposedAreaParameterForAlteration(paramMap);
+		log.info("totalBuitUpArea outside:"+totalBuitUpArea);
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		for(Occupancy occupancy : occupancyies) {
+			totalBuitUpArea = occupancy.getBuiltUpArea();
+			totalexistingBuitUpArea = occupancy.getExistingBuiltUpArea();
+			log.info("totalBuitUpArea inside:"+totalBuitUpArea);
+			occupancyType = occupancy.getOccupancyCode();
+			paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+			paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA,(totalBuitUpArea-totalexistingBuitUpArea));
+			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,occupancy.getSubOccupancyCode());
+			log.info("occupancy inside:"+occupancyType);
+			log.info("suboccupancy inside:"+occupancy.getSubOccupancyCode());
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -81,12 +101,14 @@ public class AlterationCalculationService {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.H))) {
 				feeForBuildingOperation = calculateBuildingOperationFeeForAgricultureOccupancy(paramMap);
 			}
-
+			 feesForBuildingOperation = feesForBuildingOperation.add(feeForBuildingOperation) ;
 		}
-		generateTaxHeadEstimate(estimates, feeForBuildingOperation,
+		
+		}
+		generateTaxHeadEstimate(estimates, feesForBuildingOperation,
 				BPACalculatorConstants.TAXHEAD_BPA_BUILDING_OPERATION_FEE, Category.FEE);
-		log.info("FeeForBuildingOperation:::::::::::" + feeForBuildingOperation);
-		return feeForBuildingOperation;
+		log.info("FeeForBuildingOperationAlteration:::::::::::" + feesForBuildingOperation);
+		return feesForBuildingOperation;
 	}
 	
 	/**
@@ -109,6 +131,8 @@ public class AlterationCalculationService {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
 		totalBuitUpArea = getProposedAreaParameterForAlteration(paramMap);
+		log.info("totalBuitUpArea residentialAlteration:"+totalBuitUpArea);
+		
 		if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 			if ((StringUtils.hasText(applicationType)
 					&& applicationType.equalsIgnoreCase(BPACalculatorConstants.BUILDING_PLAN_SCRUTINY))
@@ -523,12 +547,30 @@ public class AlterationCalculationService {
 	 */
 	private BigDecimal calculateSanctionFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal sanctionFee = BigDecimal.ZERO;
+		BigDecimal sanctionFees = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
+		Double totalExistBuitUpArea = null;
 		String occupancyType = null;
+		List<Occupancy> occupancyies= new ArrayList<>();
 		totalBuitUpArea = getProposedAreaParameterForAlteration(paramMap);
-		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
-			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+//		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
+//			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
+//		}
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
 		}
+        for(Occupancy occupancy : occupancyies) {
+			
+			totalBuitUpArea = occupancy.getBuiltUpArea();
+			totalExistBuitUpArea=occupancy.getExistingBuiltUpArea();
+			log.info("totalBuitUpArea inside:"+totalBuitUpArea+			totalExistBuitUpArea);
+			occupancyType = occupancy.getOccupancyCode();
+			paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+			paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA,(totalBuitUpArea-totalExistBuitUpArea));
+			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,occupancy.getSubOccupancyCode());
+			log.info("occupancy inside:"+occupancyType);
+			log.info("suboccupancy inside:"+occupancy.getSubOccupancyCode());
+			
 		if (totalBuitUpArea != null) {
 			if ((occupancyType.equalsIgnoreCase(BPACalculatorConstants.A))) {
 				sanctionFee = calculateSanctionFeeForResidentialOccupancy(paramMap);
@@ -556,12 +598,14 @@ public class AlterationCalculationService {
 			}
 
 		}
+		sanctionFees =  sanctionFees.add(sanctionFee);
+        }
 
-		generateTaxHeadEstimate(estimates, sanctionFee, BPACalculatorConstants.TAXHEAD_BPA_SANCTION_FEE, Category.FEE);
+		generateTaxHeadEstimate(estimates, sanctionFees, BPACalculatorConstants.TAXHEAD_BPA_SANCTION_FEE, Category.FEE);
 
 		// System.out.println("SanctionFee::::::::" + sanctionFee);
-		log.info("SanctionFee::::::::" + sanctionFee);
-		return sanctionFee;
+		log.info("SanctionFee::::::::" + sanctionFees);
+		return sanctionFees;
 	}
 	
 	/**
@@ -909,6 +953,23 @@ public class AlterationCalculationService {
 		Double totalFloorArea = null;
 		Double alterationTotalBuiltupAreaProposed = null;
 		Double alterationTotalBuiltupArea = null;
+		Double totalBuiltup =0.0;
+		Double totalexistinguiltuparea =0.0;
+		List<Occupancy> occupancyies = new ArrayList<>();
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		for(Occupancy occupancy : occupancyies) {
+			
+			totalexistinguiltuparea += occupancy.getExistingBuiltUpArea();
+			log.info("totalexistinguiltuparea inside:"+totalexistinguiltuparea);
+			totalBuiltup += occupancy.getBuiltUpArea();
+			log.info("totalBuitUpArea inside:"+totalBuiltup);
+			
+		
+		}
+		paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA,(totalBuiltup-totalexistinguiltuparea));
+		paramMap.put(BPACalculatorConstants.ALTERATION_TOTAL_BUILTUP_AREA,totalBuiltup);
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -918,6 +979,7 @@ public class AlterationCalculationService {
 		if (null != paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA)) {
 			totalFloorArea = (Double) paramMap.get(BPACalculatorConstants.TOTAL_FLOOR_AREA);
 		}
+		
 		alterationTotalBuiltupAreaProposed = getProposedAreaParameterForAlteration(paramMap);
 		alterationTotalBuiltupArea = getTotalAreaParameterForAlteration(paramMap);
 		if ((StringUtils.hasText(applicationType)
@@ -935,7 +997,7 @@ public class AlterationCalculationService {
 						.multiply(BigDecimal.valueOf(alterationTotalBuiltupAreaProposed))
 						.multiply(SQMT_SQFT_MULTIPLIER)).setScale(2, BigDecimal.ROUND_UP);
 			}
-
+		
 		}
 		generateTaxHeadEstimate(estimates, welfareCess, BPACalculatorConstants.TAXHEAD_BPA_WORKER_WELFARE_CESS, Category.FEE);
 
@@ -952,9 +1014,26 @@ public class AlterationCalculationService {
 	 */
 	private BigDecimal calculateShelterFee(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal shelterFee = BigDecimal.ZERO;
+		BigDecimal shelterFees = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
+		Double totalExistBuitUpArea = null;
 		String occupancyType = null;
 		totalBuitUpArea = getProposedAreaParameterForAlteration(paramMap);
+         List<Occupancy> occupancyies = new ArrayList<>();
+		
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		for(Occupancy occupancy : occupancyies) {
+		totalBuitUpArea = occupancy.getFloorArea();
+		totalExistBuitUpArea =occupancy.getExistingBuiltUpArea();
+		log.info("totalBuitUpArea inside:"+totalBuitUpArea);
+		occupancyType = occupancy.getOccupancyCode();
+		paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+		paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA,(totalBuitUpArea-totalExistBuitUpArea));
+		paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,occupancy.getSubOccupancyCode());
+		log.info("occupancy inside:"+occupancyType);
+		log.info("suboccupancy inside:"+occupancy.getSubOccupancyCode());
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -963,12 +1042,16 @@ public class AlterationCalculationService {
 				shelterFee = calculateShelterFeeForResidentialOccupancy(paramMap);
 			}
 		}
-
-		generateTaxHeadEstimate(estimates, shelterFee, BPACalculatorConstants.TAXHEAD_BPA_SHELTER_FEE, Category.FEE);
+		shelterFees = shelterFees.add(shelterFee);
+		if(shelterFees.compareTo(BigDecimal.ZERO)>0) {
+			break;
+		}
+		}
+		generateTaxHeadEstimate(estimates, shelterFees, BPACalculatorConstants.TAXHEAD_BPA_SHELTER_FEE, Category.FEE);
 
 		// System.out.println("ShelterFee::::::::::::::::" + shelterFee);
-		log.info("ShelterFee::::::::::::::::" + shelterFee);
-		return shelterFee;
+		log.info("ShelterFee::::::::::::::::" + shelterFees);
+		return shelterFees;
 
 	}
 	
@@ -1091,10 +1174,29 @@ public class AlterationCalculationService {
 	 */
 	private BigDecimal calculateSecurityDeposit(Map<String, Object> paramMap, ArrayList<TaxHeadEstimate> estimates) {
 		BigDecimal securityDeposit = BigDecimal.ZERO;
+		BigDecimal securityDeposits = BigDecimal.ZERO;
 		Double totalBuitUpArea = null;
+		Double totalexistingBuiltUpArea =null;
 		String occupancyType = null;
 		boolean isSecurityDepositRequired = false;
 		totalBuitUpArea = getProposedAreaParameterForAlteration(paramMap);
+		List<Occupancy> occupancyies = new ArrayList<>();
+		
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		for(Occupancy occupancy : occupancyies) {
+		totalBuitUpArea = occupancy.getFloorArea();
+		totalexistingBuiltUpArea = occupancy.getExistingBuiltUpArea();
+		log.info("totalBuitUpArea inside:"+totalBuitUpArea);
+		occupancyType = occupancy.getOccupancyCode();
+		paramMap.put(BPACalculatorConstants.OCCUPANCY_TYPE, occupancyType);
+		paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA,(totalBuitUpArea-totalexistingBuiltUpArea));
+		paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,occupancy.getSubOccupancyCode());
+		log.info("occupancy inside:"+occupancyType);
+		log.info("suboccupancy inside:"+occupancy.getSubOccupancyCode());
+		
+		
 		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE)) {
 			occupancyType = (String) paramMap.get(BPACalculatorConstants.OCCUPANCY_TYPE);
 		}
@@ -1116,12 +1218,13 @@ public class AlterationCalculationService {
 				securityDeposit = calculateSecurityDepositForEducationOccupancy(paramMap);
 			}
 		}
-
-		generateTaxHeadEstimate(estimates, securityDeposit, BPACalculatorConstants.TAXHEAD_BPA_SECURITY_DEPOSIT, Category.FEE);
+               securityDeposits = securityDeposits.add(securityDeposit);
+		}
+		generateTaxHeadEstimate(estimates, securityDeposits, BPACalculatorConstants.TAXHEAD_BPA_SECURITY_DEPOSIT, Category.FEE);
 		// System.out.println("SecurityDeposit::::::::::::::" + securityDeposit);
-		log.info("SecurityDeposit::::::::::::::" + securityDeposit);
+		log.info("SecurityDeposit::::::::::::::" + securityDeposits);
 
-		return securityDeposit;
+		return securityDeposits;
 
 	}
 	
@@ -1309,6 +1412,20 @@ public class AlterationCalculationService {
 		Double proposedArea = null;
 		Double existingArea = null;
 		String subOccupancyType = null;
+        List<Occupancy> occupancyies = new ArrayList<>();
+		
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		Set<String>  occCode = occupancyies.stream().filter(o->o.getSubOccupancyCode()!=null).map(Occupancy::getSubOccupancyCode).collect(Collectors.toSet());
+		String code = occCode.stream().filter(occ->occ.equalsIgnoreCase(BPACalculatorConstants.A_MIH)).findAny().orElse(null);
+		if (code!=null) {
+			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,code);
+		}else {
+			code =occCode.stream().findFirst().get();
+			if(code!=null)
+			paramMap.put(BPACalculatorConstants.SUB_OCCUPANCY_TYPE,code);
+		}
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
@@ -1402,6 +1519,23 @@ public class AlterationCalculationService {
 		Double projectValue = null;
 		Double alterationTotalBuiltupAreaProposed = null;
 		Double alterationTotalBuiltupArea = null;
+		Double totalexistinguiltuparea = 0.0;
+		Double totalBuiltup = 0.0;
+		List<Occupancy> occupancyies = new ArrayList<>();
+		if (null != paramMap.get(BPACalculatorConstants.OCCUPANCYLIST)) {
+			occupancyies = (List<Occupancy>) paramMap.get(BPACalculatorConstants.OCCUPANCYLIST);
+		}
+		for(Occupancy occupancy : occupancyies) {
+			
+			totalexistinguiltuparea += occupancy.getExistingBuiltUpArea();
+			log.info("totalexistinguiltuparea inside:"+totalexistinguiltuparea);
+			totalBuiltup += occupancy.getBuiltUpArea();
+			log.info("totalBuitUpArea inside:"+totalBuiltup);
+			
+		
+		}
+		paramMap.put(BPACalculatorConstants.ALTERATION_PROPOSED_BUILTUP_AREA, (totalBuiltup-totalexistinguiltuparea));
+		paramMap.put(BPACalculatorConstants.ALTERATION_TOTAL_BUILTUP_AREA,totalBuiltup);
 		if (null != paramMap.get(BPACalculatorConstants.APPLICATION_TYPE)) {
 			applicationType = (String) paramMap.get(BPACalculatorConstants.APPLICATION_TYPE);
 		}
