@@ -14,6 +14,8 @@ import org.egov.mdms.model.ModuleDetail;
 import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.ServiceRequestRepository;
 import org.egov.noc.web.model.AuditDetails;
+import org.egov.noc.web.model.Noc;
+import org.egov.noc.web.model.NocSearchCriteria;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -126,6 +128,19 @@ public class NOCUtil {
 		String jsonString = new JSONObject(dataMap).toString();
 		DocumentContext context = JsonPath.using(Configuration.defaultConfiguration()).parse(jsonString);
 		return context.read(key) + "";
+	}
+	
+	/**
+	 * prepare noc search criteria from NOC
+	 * 
+	 * @param noc the noc
+	 * @return nocSearchCriteria
+	 */
+	public NocSearchCriteria getNocSearchCriteriaForSearchUser(Noc noc) {
+		NocSearchCriteria nocSearchCriteria = new NocSearchCriteria();
+		nocSearchCriteria.setOwnerIds(Arrays.asList(new String[] { noc.getAuditDetails().getCreatedBy() }));
+		nocSearchCriteria.setTenantId(noc.getTenantId());
+		return nocSearchCriteria;
 	}
 	
 }
