@@ -1,5 +1,7 @@
 package org.egov.bpa.calculator.utils;
 
+
+
 import com.jayway.jsonpath.JsonPath;
 
 public class BPACalculatorConstants {
@@ -383,8 +385,17 @@ public class BPACalculatorConstants {
 	
 	public static final String BUSINESSSERVICE_PREAPPROVEDPLAN = "BPA6";
 	public static final String REVISION = "revision";
+	
+	
 
 //	public static final String SPARIT_CHECK = null;
 
 	//public static final String MDMS_CATEGORY_MASTER_NAME = null;
+	
+	
+	
+	
+	//Occupancy implementation
+	
+	public static final String OCCUPANCYLIST="OccupancyList"; 
 }
