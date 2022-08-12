@@ -190,7 +190,10 @@ public class CalculationService {
 	 * @return List of calculations for all applicationNumbers in calculationReq
 	 */
 	public List<Calculation> getEstimate(CalculationReq calculationReq) {
-		utils.validateOwnerDetails(calculationReq);
+		if(!(calculationReq.getCalulationCriteria().get(0).getBpa().getBusinessService().equalsIgnoreCase("BPA6"))) {
+		     utils.validateOwnerDetails(calculationReq);
+			}
+		//utils.validateOwnerDetails(calculationReq);
 		String tenantId = calculationReq.getCalulationCriteria().get(0).getTenantId();
 		Object mdmsData = mdmsService.mDMSCall(calculationReq, tenantId);
 		Boolean isSparit = mdmsService.getMdmsSparitValue(calculationReq,tenantId);
@@ -367,6 +370,9 @@ public class CalculationService {
 		}
 		return installmentsToInsert;
 	}
+	
+	
+	
 
 	/**
 	 * @param requestInfo
