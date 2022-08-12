@@ -184,6 +184,11 @@ return finalList;
 		BigDecimal builtUpArea = new BigDecimal(builtArea.toString());
 		
 		occ.setBuiltUpArea(builtUpArea.doubleValue());
+		
+     Object fllrArea = ((Map)drawingDetail).get("totalFloorArea");
+		
+		BigDecimal floorArea = new BigDecimal(fllrArea.toString());
+		occ.setFloorArea(floorArea.doubleValue());
 		occ.setOccupancyCode("A");
          
 		
