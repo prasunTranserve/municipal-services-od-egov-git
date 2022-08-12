@@ -130,4 +130,11 @@ public class NOCConstants {
 	public static final String NMA_STATUS_CREATED="Application Received";
 	
 	public static final String FIRE_NOC_ERROR="FIRE_NOC_ERROR";
+	
+	public static final String AAI_NOC_TYPE = "AAI_NOC";
+	public static final String OWNERSHIP_MAJOR_TYPE_INDIVIDUAL = "INDIVIDUAL";
+	public static final String OWNERSHIP_MAJOR_TYPE_INSTITUTIONAL_PRIVATE = "INSTITUTIONALPRIVATE";
+	public static final String OWNERSHIP_MAJOR_TYPE_INSTITUTIONAL_GOVERNMENT = "INSTITUTIONALGOVERNMENT";
+	public static final String PLOT_AREA_PATH = "edcrDetail.*.planDetail.plot.area";
+	public static final String INSTITUTION_NAME = "institutionName";
 }
