@@ -42,3 +42,12 @@ CREATE TABLE IF NOT EXISTS  eg_bpa_preapprovedplan_documents(
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 );
+
+
+ALTER TABLE eg_bpa_preapprovedplan
+ADD COLUMN IF NOT EXISTS plot_length_in_feet numeric;
+
+ALTER TABLE eg_bpa_preapprovedplan
+ADD COLUMN IF NOT EXISTS plot_width_in_feet numeric;
+
+

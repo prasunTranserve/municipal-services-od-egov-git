@@ -38,6 +38,15 @@ public class PreapprovedPlan {
 
 	@JsonProperty("roadWidth")
 	private BigDecimal roadWidth = null;
+	
+	
+	@JsonProperty("plotLengthInFeet")
+	private BigDecimal plotLengthInFeet = null;
+
+	@JsonProperty("plotWidthInFeet")
+	private BigDecimal plotWidthInFeet = null;
+
+   
 
 	@JsonProperty("drawingDetail")
 	private Object drawingDetail = null;

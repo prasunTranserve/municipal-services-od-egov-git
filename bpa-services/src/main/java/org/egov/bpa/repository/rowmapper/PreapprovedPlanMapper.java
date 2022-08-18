@@ -64,7 +64,9 @@ public class PreapprovedPlanMapper implements ResultSetExtractor<List<Preapprove
 						.plotWidth(rs.getBigDecimal("plotWidth")).roadWidth(rs.getBigDecimal("roadWidth"))
 						.drawingDetail(drawingDetail).active(rs.getBoolean("active"))
 						.additionalDetails(additionalDetails)
-						.auditDetails(auditdetails).build();
+						.auditDetails(auditdetails)
+						.plotLengthInFeet(rs.getBigDecimal("plot_length_in_feet")).plotWidthInFeet(rs.getBigDecimal("plot_width_in_feet")).
+						build();
 				preapprovedPlanMap.put(id, currentPreapprovedPlan);
 			}
 
