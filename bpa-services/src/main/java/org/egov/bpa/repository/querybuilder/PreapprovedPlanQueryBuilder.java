@@ -16,7 +16,7 @@ public class PreapprovedPlanQueryBuilder {
 
 	private static final String LEFT_OUTER_JOIN_STRING = " LEFT OUTER JOIN ";
 
-	private static final String QUERY = "SELECT ebpap.id as id,ebpap.drawing_number as drawingNo,ebpap.tenantid as tenantId,ebpap.plot_length as plotLength,ebpap.plot_width as plotWidth,ebpap.road_width as roadWidth,ebpap.drawing_detail as drawingDetail,ebpap.active as active,ebpap.additional_details as additionalDetails,ebpap.createdby as createdBy,ebpap.lastmodifiedby as lastModifiedBy,ebpap.createdtime as createdTime,ebpap.lastmodifiedtime as lastModifiedTime"
+	private static final String QUERY = "SELECT ebpap.id as id,ebpap.drawing_number as drawingNo,ebpap.tenantid as tenantId,ebpap.plot_length as plotLength,ebpap.plot_width as plotWidth,ebpap.road_width as roadWidth,ebpap.drawing_detail as drawingDetail,ebpap.active as active,ebpap.additional_details as additionalDetails,ebpap.createdby as createdBy,ebpap.lastmodifiedby as lastModifiedBy,ebpap.createdtime as createdTime,ebpap.lastmodifiedtime as lastModifiedTime,ebpap.plot_length_in_feet,ebpap.plot_width_in_feet"
 			+ ", ebpapd.id as ebpapd_id, ebpapd.documenttype as ebpapd_documenttype, ebpapd.filestoreid as ebpapd_filestoreid, ebpapd.preapprovedplanid as ebpapd_preapprovedplanid, ebpapd.documentuid as ebpapd_documentuid, ebpapd.additionalDetails as ebpapd_additionalDetails, ebpapd.createdby as ebpapd_createdby, ebpapd.lastmodifiedby as ebpapd_lastmodifiedby, ebpapd.createdtime as ebpapd_createdtime, ebpapd.lastmodifiedtime as ebpapd_lastmodifiedtime "
 			+ " FROM eg_bpa_preapprovedplan ebpap "
 			+  LEFT_OUTER_JOIN_STRING
@@ -68,6 +68,18 @@ public class PreapprovedPlanQueryBuilder {
 			builder.append(" ebpap.road_width=? ");
 			preparedStmtList.add(criteria.getRoadWidth());
 		}
+		
+		if (criteria.getPlotLengthInFeet() != null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" ebpap.plot_length_in_feet=? ");
+			preparedStmtList.add(criteria.getPlotLengthInFeet());
+		}
+		if (criteria.getPlotWidthInFeet() != null) {
+			addClauseIfRequired(preparedStmtList, builder);
+			builder.append(" ebpap.plot_width_in_feet=? ");
+			preparedStmtList.add(criteria.getPlotWidthInFeet());
+		}
+		
 		if (criteria.getActive() != null) {
 			addClauseIfRequired(preparedStmtList, builder);
 			builder.append(" ebpap.active=? ");

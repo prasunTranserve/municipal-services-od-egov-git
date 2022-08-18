@@ -36,6 +36,14 @@ public class PreapprovedPlanSearchCriteria {
 
 	@JsonProperty("roadWidth")
 	private BigDecimal roadWidth;
+	
+	@JsonProperty("plotLengthInFeet")
+	private BigDecimal plotLengthInFeet;
+
+	@JsonProperty("plotWidthInFeet")
+	private BigDecimal plotWidthInFeet;
+
+  
 
 	@JsonProperty("active")
 	private Boolean active;
