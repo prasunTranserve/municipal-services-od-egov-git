@@ -393,8 +393,7 @@ public class EnrichmentService {
 	public void enrichPreapprovedPlanCreateRequestV2(PreapprovedPlanRequest request) {
 		log.info(" Inside enrichPreapprovedPlanCreateRequestV2 ");
 		RequestInfo requestInfo = request.getRequestInfo();
-		String Uuid ="2d7612b3-b7f5-4455-b3e9-f0dec03d4162";
-		AuditDetails auditDetails = bpaUtil.getAuditDetails(Uuid, true);
+		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
 		request.getPreapprovedPlan().setAuditDetails(auditDetails);
 		request.getPreapprovedPlan().setId(UUID.randomUUID().toString());
 
