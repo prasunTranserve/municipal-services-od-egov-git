@@ -296,8 +296,14 @@ public class EnrichmentService {
 			// {
 
 			Object mdmsData = bpaUtil.mDMSCall(bpaRequest.getRequestInfo(), bpaRequest.getBPA().getTenantId());
-			Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
+			Map<String, String> edcrResponse = new HashMap<>();
+			String businessService = bpaRequest.getBPA().getBusinessService();
+			if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+				edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+			}else {
+			 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
 					bpaRequest.getBPA());
+			}
 			log.debug("applicationType is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
 			log.debug("serviceType is " + edcrResponse.get(BPAConstants.SERVICETYPE));
 
@@ -387,7 +393,8 @@ public class EnrichmentService {
 	public void enrichPreapprovedPlanCreateRequestV2(PreapprovedPlanRequest request) {
 		log.info(" Inside enrichPreapprovedPlanCreateRequestV2 ");
 		RequestInfo requestInfo = request.getRequestInfo();
-		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
+		String Uuid ="2d7612b3-b7f5-4455-b3e9-f0dec03d4162";
+		AuditDetails auditDetails = bpaUtil.getAuditDetails(Uuid, true);
 		request.getPreapprovedPlan().setAuditDetails(auditDetails);
 		request.getPreapprovedPlan().setId(UUID.randomUUID().toString());
 

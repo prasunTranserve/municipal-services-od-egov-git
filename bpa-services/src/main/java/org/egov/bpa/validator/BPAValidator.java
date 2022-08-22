@@ -635,8 +635,15 @@ public class BPAValidator {
 					|| (bpa.getStatus().equalsIgnoreCase(BPAConstants.APPROVAL_INPROGRESS)
 					&& bpa.getWorkflow().getAction().equalsIgnoreCase(BPAConstants.ACTION_APPROVE))
 					) {
-				Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
+				
+				String businessService = 	bpa.getBusinessService();
+				Map<String, String> edcrResponse = new HashMap<>();
+				if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+					edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+				}else {
+				 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
 						bpaRequest.getBPA());
+				}
 				log.debug("===========> valdiateNocApprove method called, application is in noc verification pending");
 				String riskType = "ALL";
 				if (StringUtils.isEmpty(bpa.getRiskType()) || bpa.getRiskType().equalsIgnoreCase("LOW")) {

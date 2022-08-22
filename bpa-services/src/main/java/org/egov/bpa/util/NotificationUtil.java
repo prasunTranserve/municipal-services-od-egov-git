@@ -3,6 +3,7 @@ package org.egov.bpa.util;
 import static org.egov.bpa.util.BPAConstants.BILL_AMOUNT;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -72,8 +73,16 @@ public class NotificationUtil {
 	@SuppressWarnings("unchecked")
 	public String getCustomizedMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
 		String message = null, messageTemplate;
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
-
+		BPARequest bpaRequest = new BPARequest();
+		bpaRequest.setBPA(bpa);
+		bpaRequest.setRequestInfo(requestInfo);
+		String businessService = 	bpa.getBusinessService();
+		Map<String, String> edcrResponse = new HashMap<>();
+		if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+			edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+		}else {
+		 edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+		}
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
 
@@ -104,7 +113,16 @@ public class NotificationUtil {
 	@SuppressWarnings("unchecked")
 	public String getCustomizedEmailMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
 		String message = null, messageTemplate;
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+		BPARequest bpaRequest = new BPARequest();
+		bpaRequest.setBPA(bpa);
+		bpaRequest.setRequestInfo(requestInfo);
+		String businessService = 	bpa.getBusinessService();
+		Map<String, String> edcrResponse = new HashMap<>();
+		if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+			edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+		}else {
+		 edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+		}
 
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
@@ -142,7 +160,16 @@ public class NotificationUtil {
 	// so it will be same as the getCustomizedMsg
 	public String getEventsCustomizedMsg(RequestInfo requestInfo, BPA bpa, String localizationMessage) {
 		String message = null, messageTemplate;
-		Map<String, String> edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+		BPARequest bpaRequest = new BPARequest();
+		bpaRequest.setBPA(bpa);
+		bpaRequest.setRequestInfo(requestInfo);
+		String businessService = 	bpa.getBusinessService();
+		Map<String, String> edcrResponse = new HashMap<>();
+		if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+			edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+		}else {
+		edcrResponse = edcrService.getEDCRDetails(requestInfo, bpa);
+		}
 		String applicationType = edcrResponse.get(BPAConstants.APPLICATIONTYPE);
 		String serviceType = edcrResponse.get(BPAConstants.SERVICETYPE);
 
