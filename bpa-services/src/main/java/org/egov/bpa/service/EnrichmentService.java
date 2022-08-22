@@ -296,8 +296,14 @@ public class EnrichmentService {
 			// {
 
 			Object mdmsData = bpaUtil.mDMSCall(bpaRequest.getRequestInfo(), bpaRequest.getBPA().getTenantId());
-			Map<String, String> edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
+			Map<String, String> edcrResponse = new HashMap<>();
+			String businessService = bpaRequest.getBPA().getBusinessService();
+			if(!(businessService.isEmpty()) && businessService.equalsIgnoreCase(BPAConstants.BPA_PAP_MODULE_CODE)) {
+				edcrResponse = edcrService.getEdcrDetailsForPreapprovedPlan(edcrResponse, bpaRequest);
+			}else {
+			 edcrResponse = edcrService.getEDCRDetails(bpaRequest.getRequestInfo(),
 					bpaRequest.getBPA());
+			}
 			log.debug("applicationType is " + edcrResponse.get(BPAConstants.APPLICATIONTYPE));
 			log.debug("serviceType is " + edcrResponse.get(BPAConstants.SERVICETYPE));
 
