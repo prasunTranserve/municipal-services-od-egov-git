@@ -62,6 +62,9 @@ public class PreapprovedPlanSearchCriteria {
 
 	@JsonIgnore
 	private List<String> createdBy;
+	
+	@JsonProperty("preApprovedCode")
+	private String preApprovedCode;
 
 	public boolean isEmpty() {
 		return (this.ids == null && this.tenantId == null && this.drawingNo == null && this.plotLength == null

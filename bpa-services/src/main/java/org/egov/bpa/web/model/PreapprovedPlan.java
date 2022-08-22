@@ -66,6 +66,9 @@ public class PreapprovedPlan {
 	@JsonProperty("documents")
 	@Valid
 	private List<Document> documents = null;
+	
+	@JsonProperty("preApprovedCode")
+	private String preApprovedCode = null;
 
 	public PreapprovedPlan addDocumentsItem(Document documentsItem) {
 		if (this.documents == null) {

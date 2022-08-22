@@ -51,3 +51,7 @@ ALTER TABLE eg_bpa_preapprovedplan
 ADD COLUMN IF NOT EXISTS plot_width_in_feet numeric;
 
 
+ALTER TABLE eg_bpa_preapprovedplan
+ADD COLUMN IF NOT EXISTS preapproved_code character varying(64);
+
+
