@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
@@ -81,7 +83,7 @@ public class AAINocService {
 	private static final String IS_PERMISSION_TAKEN_PATH = "thirdPartyNOC.PERMISSIONTAKEN";
 	private static final String COORDINATES_PATH = "thirdPartyNOC.SiteDetails.Coordinates";
 	private static final String FILES_PATH = "thirdPartyNOC.FILES";
-	private static final String REQUIRED_DATE_FORMAT = "DD-MM-YYYY";
+	private static final String REQUIRED_DATE_FORMAT = "MM/dd/yyyy";
 
 	/**
 	 * fetch in-progress AAI nocs and prepares AAI format data
@@ -112,11 +114,15 @@ public class AAINocService {
 			ApplicationData applicationData = ApplicationData.builder().uniqueid(noc.getApplicationNo())
 					.applicationdate(getApplicationDateInProperFormat(noc)).applicantname(userSearchResponse.getName())
 					.applicantaddress(applicantAddress).applicantno(userSearchResponse.getMobileNumber())
-					.applicantemail(userSearchResponse.getEmailId()).applicantno(bpa.getApplicationNo())
+					.applicantemail(userSearchResponse.getEmailId()).applicationno(noc.getApplicationNo())
 					.ownername(getOwnerName(bpa)).owneraddress(ownerAddress)
 					.structuretype(nocUtil.getValue(additionalDetails, STRUCTURE_TYPE_PATH))
 					.structurepurpose(nocUtil.getValue(additionalDetails, STRUCTURE_PURPOSE_PATH))
-					.siteaddress(applicantAddress).sitecity(address.getCity()).sitestate(address.getState())
+					.siteaddress(applicantAddress)
+					//.sitecity(address.getCity()) commenting as coming like od.cuttack
+					.sitecity(bpa.getTenantId().split("\\.")[1])
+					//.sitestate(address.getState()) commenting as coming null
+					.sitestate("Odisha")
 					.plotsize(plotArea).isinairportpremises(nocUtil.getValue(additionalDetails, IS_IN_AIRPORT_PATH))
 					.permissiontaken(nocUtil.getValue(additionalDetails, IS_PERMISSION_TAKEN_PATH)).build();
 			List<Coordinates> coordinates = getCoordinates(additionalDetails);
@@ -203,10 +209,20 @@ public class AAINocService {
 
 	private String getApplicantAddress(BPA bpa) {
 		Address address = bpa.getLandInfo().getAddress();
-		String applicantAddress = address.getBuildingName() + "," + address.getStreet() + ","
-				+ address.getLocality().getName() + "," + bpa.getTenantId().split("\\.")[1] + "-"
-				+ address.getPincode();
-		return applicantAddress;
+		StringBuilder applicantAddressBuilder = new StringBuilder();
+		if (!StringUtils.isEmpty(address.getBuildingName()))
+			applicantAddressBuilder.append(address.getBuildingName() + ",");
+		if (!StringUtils.isEmpty(address.getStreet()))
+			applicantAddressBuilder.append(address.getStreet() + ",");
+		// mandatorily present-
+		applicantAddressBuilder.append(address.getLocality().getName() + ",");
+		applicantAddressBuilder.append(bpa.getTenantId().split("\\.")[1]);
+		if (!StringUtils.isEmpty(address.getStreet()))
+			applicantAddressBuilder.append("-" + address.getPincode());
+		//String applicantAddress = address.getBuildingName() + "," + address.getStreet() + ","
+		//		+ address.getLocality().getName() + "," + bpa.getTenantId().split("\\.")[1] + "-"
+		//		+ address.getPincode();
+		return applicantAddressBuilder.toString();
 	}
 
 	private Double getPlotArea(DocumentContext edcr) {
