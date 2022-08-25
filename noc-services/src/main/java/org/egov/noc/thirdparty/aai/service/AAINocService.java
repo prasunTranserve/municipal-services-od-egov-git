@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.egov.noc.config.NOCConfiguration;
 import org.egov.noc.repository.NOCRepository;
@@ -23,6 +24,7 @@ import org.egov.noc.thirdparty.aai.model.ServiceObpasData;
 import org.egov.noc.thirdparty.aai.model.SiteDetails;
 import org.egov.noc.thirdparty.aai.model.ToAAIData;
 import org.egov.noc.thirdparty.aai.model.UlbServiceResponse;
+import org.egov.noc.thirdparty.model.ThirdPartyNOCPushRequestWrapper;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.util.NOCUtil;
 import org.egov.noc.web.model.BPA;
@@ -84,6 +86,16 @@ public class AAINocService {
 	private static final String COORDINATES_PATH = "thirdPartyNOC.SiteDetails.Coordinates";
 	private static final String FILES_PATH = "thirdPartyNOC.FILES";
 	private static final String REQUIRED_DATE_FORMAT = "MM/dd/yyyy";
+	private static final ArrayList<String> MANDATORY_ADDITIONAL_DETAILS_THIRDPARTY = new ArrayList<String>() {
+		{
+			add("FILES");
+			add("SiteDetails");
+			add("STRUCTURETYPE");
+			add("PERMISSIONTAKEN");
+			add("STRUCTUREPURPOSE");
+			add("ISINAIRPORTPREMISES");
+		}
+	};
 
 	/**
 	 * fetch in-progress AAI nocs and prepares AAI format data
@@ -98,6 +110,11 @@ public class AAINocService {
 		List<ToAAIData> nocsToPush = new ArrayList<>();
 		// prepare AAI compliant data from sujog noc data-
 		for (Noc noc : nocs) {
+			// check if noc additionalDetails contains all mandatory fields before pushing to external dept-
+			if(!isMandatoryFieldsAndDocumentsPresent(noc)) {
+				// do not add this noc to push
+				continue;
+			}
 			UserResponse userResponse = getUser(noc, requestInfoWrapper);
 			UserSearchResponse userSearchResponse = userResponse.getUser().get(0);
 			BPA bpa = bpaService.getBuildingPlan(requestInfoWrapper.getRequestInfo(), noc.getTenantId(),
@@ -235,6 +252,28 @@ public class AAINocService {
 			}
 		}
 		return plotArea;
+	}
+	
+	private boolean isMandatoryFieldsAndDocumentsPresent(Noc noc) {
+		if (Objects.isNull(noc.getAdditionalDetails()) || !(noc.getAdditionalDetails() instanceof Map)) {
+			log.info("additionalDetails null or not a map in the noc");
+			return false;
+		}
+		Map<String, Object> additionalDetails = (Map<String, Object>) noc.getAdditionalDetails();
+		if (Objects.isNull(additionalDetails.get("thirdPartyNOC"))
+				|| !(additionalDetails.get("thirdPartyNOC") instanceof Map)) {
+			log.info("additionalDetails does not contain thirdPartyNOC node and thirdPartyNOC not a Map");
+			return false;
+		}
+		Map<String, Object> thirdPartyNocDetails = (Map<String, Object>) additionalDetails.get("thirdPartyNOC");
+		for (String key : MANDATORY_ADDITIONAL_DETAILS_THIRDPARTY) {
+			if (Objects.isNull(thirdPartyNocDetails.get(key))) {
+				log.info("mandatory key:" + key + " not present inside thirdPartyNOC node of additionalDetails");
+				return false;
+			}
+		}
+		// all checks done
+		return true;
 	}
 
 }

@@ -22,6 +22,7 @@ import org.egov.noc.thirdparty.service.ThirdPartyNocPushService;
 import org.egov.noc.util.NOCConstants;
 import org.egov.noc.util.NOCUtil;
 import org.egov.noc.web.model.Document;
+import org.egov.noc.web.model.Noc;
 import org.egov.noc.web.model.NocRequest;
 import org.egov.noc.web.model.Workflow;
 import org.egov.tracer.model.CustomException;
@@ -60,9 +61,24 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 	
 	@Autowired
 	NOCUtil nocUtil;
+	
+	private static final ArrayList<String> MANDATORY_ADDITIONAL_DETAILS_THIRDPARTY = new ArrayList<String>() {
+		{
+			add("buildingType");
+			add("fireDistrict");
+			add("fireStation");
+			add("identityProofType");
+			add("identityProofNo");
+		}
+	};
 
 	@Override
 	public String pushProcess(ThirdPartyNOCPushRequestWrapper infoWrapper) {
+		// check if noc contains the mandatory fields and documents before pushing to external dept-
+		if (!isMandatoryFieldsAndDocumentsPresent(infoWrapper)) {
+			String comment = "mandatory fields missing in additionalDetails.Cannot push to external dept";
+			return comment;
+		}
 		// submit fire noc application -
 		StringBuilder submitFireNocUrl = new StringBuilder(config.getFireNocHost());
 		submitFireNocUrl.append(config.getRecommendationApiEndpoint());
@@ -110,6 +126,29 @@ public class FireNocService implements ThirdPartyNocPushService, ThirdPartyNocPu
 		String comment = "Recommendation saved successfully";
 
 		return comment;
+	}
+	
+	private boolean isMandatoryFieldsAndDocumentsPresent(ThirdPartyNOCPushRequestWrapper infoWrapper) {
+		Noc noc = infoWrapper.getNoc();
+		if (Objects.isNull(noc.getAdditionalDetails()) || !(noc.getAdditionalDetails() instanceof Map)) {
+			log.info("additionalDetails null or not a map in the noc");
+			return false;
+		}
+		Map<String, Object> additionalDetails = (Map<String, Object>) noc.getAdditionalDetails();
+		if (Objects.isNull(additionalDetails.get("thirdPartyNOC"))
+				|| !(additionalDetails.get("thirdPartyNOC") instanceof Map)) {
+			log.info("additionalDetails does not contain thirdPartyNOC node and thirdPartyNOC not a Map");
+			return false;
+		}
+		Map<String, Object> thirdPartyNocDetails = (Map<String, Object>) additionalDetails.get("thirdPartyNOC");
+		for (String key : MANDATORY_ADDITIONAL_DETAILS_THIRDPARTY) {
+			if (Objects.isNull(thirdPartyNocDetails.get(key))) {
+				log.info("mandatory key:" + key + " not present inside thirdPartyNOC node of additionalDetails");
+				return false;
+			}
+		}
+		// all checks done
+		return true;
 	}
 
 	private Map<String, String> getParamsFromEdcr(DocumentContext edcrDetail) {
