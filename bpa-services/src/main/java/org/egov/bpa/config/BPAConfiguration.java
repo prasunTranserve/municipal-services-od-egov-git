@@ -388,5 +388,8 @@ public class BPAConfiguration {
 	
 	@Value("${persister.update.revision.topic}")
 	private String updateRevisionTopicName;
+	
+	@Value("${persister.save.accreditedperson.topic}")
+	private String saveAccreditedPersonTopicName;
 
 }

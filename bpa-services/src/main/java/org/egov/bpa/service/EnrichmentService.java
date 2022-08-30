@@ -32,6 +32,7 @@ import org.egov.bpa.web.model.PreapprovedPlan;
 import org.egov.bpa.web.model.PreapprovedPlanRequest;
 import org.egov.bpa.web.model.RevisionRequest;
 import org.egov.bpa.web.model.Workflow;
+import org.egov.bpa.web.model.accreditedperson.AccreditedPersonRequest;
 import org.egov.bpa.web.model.idgen.IdResponse;
 import org.egov.bpa.web.model.workflow.BusinessService;
 import org.egov.bpa.workflow.WorkflowIntegrator;
@@ -427,6 +428,20 @@ public class EnrichmentService {
 					document.setId(UUID.randomUUID().toString());
 				}
 			});
+	}
+	
+	/**
+	 * enrich create Accredited Person Request by adding auditdetails and uuids
+	 * 
+	 * @param request
+	 * @param mdmsData
+	 */
+	public void enrichAccreditedPersonCreateRequest(AccreditedPersonRequest request) {
+		log.info(" Inside enrichAccreditedPersonCreateRequest ");
+		RequestInfo requestInfo = request.getRequestInfo();
+		AuditDetails auditDetails = bpaUtil.getAuditDetails(requestInfo.getUserInfo().getUuid(), true);
+		request.getAccreditedPerson().setAuditDetails(auditDetails);
+		request.getAccreditedPerson().setId(UUID.randomUUID().toString());
 	}
 
 	/**
