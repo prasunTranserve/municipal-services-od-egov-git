@@ -1,6 +1,7 @@
 package org.egov.bpa.repository.querybuilder;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.egov.bpa.config.BPAConfiguration;
 import org.egov.bpa.web.model.accreditedperson.AccreditedPersonSearchCriteria;
@@ -31,6 +32,8 @@ public class AccreditedPersonQueryBuilder {
 	public String getAccreditedPersonSearchQuery(AccreditedPersonSearchCriteria criteria, List<Object> preparedStmtList) {
 
 		StringBuilder builder = new StringBuilder(QUERY);
+		if (Objects.isNull(criteria))
+			criteria = new AccreditedPersonSearchCriteria();
 
 		if (criteria.getUserUUID() != null) {
 			addClauseIfRequired(preparedStmtList, builder);
