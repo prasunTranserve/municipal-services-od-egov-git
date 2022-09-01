@@ -275,11 +275,12 @@ public class EnrichmentService {
 				|| (!bpa.getBusinessService().equalsIgnoreCase(BPAConstants.BPA_OC_MODULE_CODE)
 						&& state.equalsIgnoreCase(BPAConstants.APPROVED_STATE))) {
 			int vailidityInMonths = config.getValidityInMonths();
-			Calendar calendar = Calendar.getInstance();
-			bpa.setApprovalDate(Calendar.getInstance().getTimeInMillis());
+			//commenting out below line as approvaldate to be set while digitally signing permit letter-
+			//Calendar calendar = Calendar.getInstance();
+			//bpa.setApprovalDate(Calendar.getInstance().getTimeInMillis());
 
 			// Adding 3years (36 months) to Current Date
-			calendar.add(Calendar.MONTH, vailidityInMonths);
+			//calendar.add(Calendar.MONTH, vailidityInMonths);
 			Map<String, Object> additionalDetail = null;
 			if (bpa.getAdditionalDetails() != null) {
 				additionalDetail = (Map) bpa.getAdditionalDetails();
@@ -288,7 +289,7 @@ public class EnrichmentService {
 				bpa.setAdditionalDetails(additionalDetail);
 			}
 
-			additionalDetail.put("validityDate", calendar.getTimeInMillis());
+			//additionalDetail.put("validityDate", calendar.getTimeInMillis());
 			List<IdResponse> idResponses = idGenRepository.getId(bpaRequest.getRequestInfo(), bpa.getTenantId(),
 					config.getPermitNoIdgenName(), config.getPermitNoIdgenFormat(), 1).getIdResponses();
 			bpa.setApprovalNo(idResponses.get(0).getId());

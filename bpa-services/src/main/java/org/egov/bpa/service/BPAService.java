@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -919,10 +920,16 @@ public class BPAService {
 		criteria.setApplicationNo(bpaRequest.getBPA().getApplicationNo());
 		List<BPA> searchResult = getBPAFromCriteria(criteria, bpaRequest.getRequestInfo(), Collections.EMPTY_LIST);
 		bpaValidator.validateDscDetails(bpaRequest, searchResult);
-
+		// set approval date while digitally signing application rather than after payment-
+		setApprovalDateInBpa(bpaRequest);
 		repository.updateDscDetails(bpaRequest);
 		return bpaRequest.getBPA();
 
+	}
+	
+	private void setApprovalDateInBpa(BPARequest bpaRequest) {
+		Calendar calendar = Calendar.getInstance();
+		bpaRequest.getBPA().setApprovalDate(calendar.getTimeInMillis());
 	}
     
 	/**
