@@ -928,8 +928,20 @@ public class BPAService {
 	}
 	
 	private void setApprovalDateInBpa(BPARequest bpaRequest) {
+		bpaRequest.getBPA().setApprovalDate(Calendar.getInstance().getTimeInMillis());
 		Calendar calendar = Calendar.getInstance();
-		bpaRequest.getBPA().setApprovalDate(calendar.getTimeInMillis());
+		// Adding 3years (36 months) to Current Date
+		int validityInMonths = config.getValidityInMonths();
+		calendar.add(Calendar.MONTH, validityInMonths);
+
+		Map<String, Object> additionalDetail = null;
+		if (bpaRequest.getBPA().getAdditionalDetails() != null) {
+			additionalDetail = (Map) bpaRequest.getBPA().getAdditionalDetails();
+		} else {
+			additionalDetail = new HashMap<String, Object>();
+			bpaRequest.getBPA().setAdditionalDetails(additionalDetail);
+		}
+		additionalDetail.put("validityDate", calendar.getTimeInMillis());
 	}
     
 	/**
