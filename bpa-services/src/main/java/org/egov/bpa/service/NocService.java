@@ -71,7 +71,7 @@ public class NocService {
 
 		List<Object> nocMappingResponse = (List<Object>) JsonPath.read(mdmsData, nocPath);
 		List<String> nocTypes = JsonPath.read(nocMappingResponse, "$..type");
-		if (!CollectionUtils.isEmpty(nocTypes)) {
+		if (!CollectionUtils.isEmpty(nocTypes) && !BPAConstants.BPA_AC_MODULE_CODE.equals(bpa.getBusinessService())) {
 			for (String nocType : nocTypes) {
 //				if (requiredNOCs.contains(nocType)) {
 //					NocRequest nocRequest = NocRequest.builder()

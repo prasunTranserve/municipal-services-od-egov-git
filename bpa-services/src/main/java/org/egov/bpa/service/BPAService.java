@@ -10,6 +10,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -919,10 +920,28 @@ public class BPAService {
 		criteria.setApplicationNo(bpaRequest.getBPA().getApplicationNo());
 		List<BPA> searchResult = getBPAFromCriteria(criteria, bpaRequest.getRequestInfo(), Collections.EMPTY_LIST);
 		bpaValidator.validateDscDetails(bpaRequest, searchResult);
-
+		// set approval date while digitally signing application rather than after payment-
+		setApprovalDateInBpa(bpaRequest);
 		repository.updateDscDetails(bpaRequest);
 		return bpaRequest.getBPA();
 
+	}
+	
+	private void setApprovalDateInBpa(BPARequest bpaRequest) {
+		bpaRequest.getBPA().setApprovalDate(Calendar.getInstance().getTimeInMillis());
+		Calendar calendar = Calendar.getInstance();
+		// Adding 3years (36 months) to Current Date
+		int validityInMonths = config.getValidityInMonths();
+		calendar.add(Calendar.MONTH, validityInMonths);
+
+		Map<String, Object> additionalDetail = null;
+		if (bpaRequest.getBPA().getAdditionalDetails() != null) {
+			additionalDetail = (Map) bpaRequest.getBPA().getAdditionalDetails();
+		} else {
+			additionalDetail = new HashMap<String, Object>();
+			bpaRequest.getBPA().setAdditionalDetails(additionalDetail);
+		}
+		additionalDetail.put("validityDate", calendar.getTimeInMillis());
 	}
     
 	/**
